@@ -31,3 +31,6 @@ lazy val root = (project in file(".")).
     ),
     resolvers += "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/"
   )
+
+fork in run := true
+cancelable in Global := true

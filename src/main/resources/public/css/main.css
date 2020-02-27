@@ -1,3 +1,7 @@
-body {
-  color: red;
+.drt-dashboard {
+
+}
+.drt-dashboard__dashboard {
+    max-width: 50em;
+    font-size: 40px;
 }
