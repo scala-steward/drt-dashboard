@@ -1,3 +1,5 @@
+import sbt.Keys.resolvers
+
 lazy val akkaHttpVersion = "10.1.9"
 lazy val akkaVersion = "2.5.23"
 lazy val specs2 = "4.6.0"
@@ -29,8 +31,17 @@ lazy val root = (project in file(".")).
       "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
       "org.specs2" %% "specs2-core" % specs2 % Test
     ),
-    resolvers += "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/"
+
+    resolvers += "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/",
+    resolvers += "Artifactory Realm release local" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-release-local/",
+
+    dockerExposedPorts ++= Seq(8081)
+
   )
+  .enablePlugins(DockerPlugin)
+  .enablePlugins(JavaAppPackaging)
+
+
 
 fork in run := true
 cancelable in Global := true

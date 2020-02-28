@@ -1,8 +1,8 @@
 package uk.gov.homeoffice
 
-import akka.actor.{ActorSystem, Scheduler}
+import akka.actor.{ ActorSystem, Scheduler }
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
+import akka.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpResponse }
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.MethodDirectives.get
@@ -12,12 +12,12 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
 import uk.gov.homeoffice.drt.DashboardClient
-import uk.gov.homeoffice.drt.pages.{Cirium, Layout}
+import uk.gov.homeoffice.drt.pages.{ Cirium, Layout }
 
-import scala.concurrent.duration.{Duration, _}
-import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration.{ Duration, _ }
+import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 import uk.gov.homeoffice.cirium.JsonSupport._
 import uk.gov.homeoffice.cirium.services.health.CiriumAppHealthSummary
 
@@ -46,8 +46,7 @@ object DrtDashboardApp extends App {
               complete(
                 DashboardClient.get(ciriumDataUri)
                   .flatMap(res => Unmarshal[HttpResponse](res).to[CiriumAppHealthSummary])
-                  .map(s => HttpEntity(ContentTypes.`text/html(UTF-8)`, Layout(Cirium(s))))
-              )
+                  .map(s => HttpEntity(ContentTypes.`text/html(UTF-8)`, Layout(Cirium(s)))))
             })
         })
     }
@@ -70,5 +69,4 @@ object DrtDashboardApp extends App {
   }
   Await.result(system.whenTerminated, Duration.Inf)
 }
-
 

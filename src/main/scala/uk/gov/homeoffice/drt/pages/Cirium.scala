@@ -50,7 +50,6 @@ object StatusItem {
   def info(message: String) = StatusItem(message, InfoStatus)
 }
 
-
 object Cirium {
 
   def timeAgoInWords(millis: Long, now: () => Long = () => System.currentTimeMillis()): String = {
@@ -102,56 +101,50 @@ object Cirium {
         val timeAgo = timeSince(millis)
         StatusItem(
           timeAgoInWords(timeAgo),
-          timeWarningLevel(timeAgo, 30 seconds, 5 minutes)
-        )
+          timeWarningLevel(timeAgo, 30 seconds, 5 minutes))
       case None => StatusItem.error("Unable to connect to Cirium")
     }
 
     val lastMessageProcessedStatus = data
       .feedHealth
       .lastMessage.map(msg => (msg.processedMillis, msg.messageIssuedAt)) match {
-      case Some((lastProcessed, Some(lastIssued))) =>
-        val timeSinceProcessed = timeSince(lastProcessed)
-        val timeSinceIssued = timeSince(lastIssued)
-        StatusItem(
+        case Some((lastProcessed, Some(lastIssued))) =>
+          val timeSinceProcessed = timeSince(lastProcessed)
+          val timeSinceIssued = timeSince(lastIssued)
+          StatusItem(
 
-          timeAgoInWords(timeSinceProcessed),
-          timeWarningLevel(timeSinceIssued - timeSinceProcessed, 20 seconds, 40 seconds)
-        )
-      case Some((lastProcessed, None)) =>
-        val timeSinceProcessed = timeSince(lastProcessed)
+            timeAgoInWords(timeSinceProcessed),
+            timeWarningLevel(timeSinceIssued - timeSinceProcessed, 20 seconds, 40 seconds))
+        case Some((lastProcessed, None)) =>
+          val timeSinceProcessed = timeSince(lastProcessed)
 
-        StatusItem(
-          timeAgoInWords(timeSinceProcessed),
-          timeWarningLevel(lastProcessed, 30 seconds, 1 minute)
-        )
-      case _ => StatusItem.error("Unable to connect to Cirium")
-    }
+          StatusItem(
+            timeAgoInWords(timeSinceProcessed),
+            timeWarningLevel(lastProcessed, 30 seconds, 1 minute))
+        case _ => StatusItem.error("Unable to connect to Cirium")
+      }
 
     val upTimeMillis = data.feedHealth.upTime * 1000
     val upTimeStatus = StatusItem(timeAgoInWords(upTimeMillis), InfoStatus)
-
 
     val statuses = SortedMap(
       "App Status" -> readinessStatus,
       "Last Message Available" -> lastMessageStatus,
       "Last Message Processed" -> lastMessageProcessedStatus,
-      "Uptime" -> upTimeStatus
-    )
+      "Uptime" -> upTimeStatus)
     div(
 
       h1("Cirium Feed Status"),
-      div(cls := "status-box",
-        table(cls := "table drt-dashboard__dashboard",
+      div(
+        cls := "status-box",
+        table(
+          cls := "table drt-dashboard__dashboard",
           for ((title, status) <- statuses.toSeq) yield {
-            tr(cls := status.alertLevel.className,
+            tr(
+              cls := status.alertLevel.className,
               td(title),
-              td(status.value)
-            )
-          }
-        )
-      )
-    )
+              td(status.value))
+          })))
   }
 
 }

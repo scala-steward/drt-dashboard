@@ -2,7 +2,7 @@ package uk.gov.homeoffice.drt
 
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{HttpMethods, HttpRequest, HttpResponse}
+import akka.http.scaladsl.model.{ HttpMethods, HttpRequest, HttpResponse }
 
 import scala.concurrent.Future
 
