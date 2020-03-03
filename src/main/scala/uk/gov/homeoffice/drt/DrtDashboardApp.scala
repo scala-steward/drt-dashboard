@@ -11,15 +11,16 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
-import uk.gov.homeoffice.drt.DashboardClient
-import uk.gov.homeoffice.drt.pages.{ Cirium, Layout }
+import uk.gov.homeoffice.cirium.services.health.CiriumAppHealthSummary
+import uk.gov.homeoffice.drt.pages.{ Cirium, Drt, Layout }
+import uk.gov.homeoffice.drt.services.drt.JsonSupport._
+import uk.gov.homeoffice.drt.services.drt.{ DashboardPortStatus, FeedSourceStatus }
+import uk.gov.homeoffice.drt.{ Dashboard, DashboardClient }
 
 import scala.concurrent.duration.{ Duration, _ }
 import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.language.postfixOps
 import scala.util.{ Failure, Success }
-import uk.gov.homeoffice.cirium.JsonSupport._
-import uk.gov.homeoffice.cirium.services.health.CiriumAppHealthSummary
 
 object DrtDashboardApp extends App {
   val log = Logger(getClass)
@@ -32,31 +33,45 @@ object DrtDashboardApp extends App {
 
   lazy val routes: Route = dashRoutes ~ staticResources
 
-  //  val portCodes = sys.env("PORT_CODES")
-  //    .split(",")
+  val portCodes = sys.env("PORT_CODES")
+    .split(",")
 
   val ciriumDataUri = sys.env("CIRIUM_DATA_URI")
 
   lazy val dashRoutes: Route =
-    pathPrefix("cirium") {
-      concat(
+    concat(
+      pathPrefix("cirium") {
         pathEnd {
-          concat(
-            get {
-              complete(
-                DashboardClient.get(ciriumDataUri)
-                  .flatMap(res => Unmarshal[HttpResponse](res).to[CiriumAppHealthSummary])
-                  .map(s => HttpEntity(ContentTypes.`text/html(UTF-8)`, Layout(Cirium(s)))))
-            })
-        })
-    }
+          get {
+            import uk.gov.homeoffice.cirium.JsonSupport._
+            complete(
+              DashboardClient.get(ciriumDataUri)
+                .flatMap(res => Unmarshal[HttpResponse](res).to[CiriumAppHealthSummary])
+                .map(s => HttpEntity(ContentTypes.`text/html(UTF-8)`, Layout(Cirium(s)))))
+          }
+        }
+      },
+      pathPrefix("drt") {
+        get {
+          complete {
+            Future.sequence(portCodes.map(
+              pc => {
+                val portFeedStatus = Dashboard.drtUriForPortCode(pc) + "/feed-statuses"
+                DashboardClient.getWithRoles(portFeedStatus, List(pc.toUpperCase))
+                  .flatMap(res => Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
+                    .to[List[FeedSourceStatus]].map(portSources => pc -> portSources))
+              }).toList).map(_.map {
+              case (portCode, feedsStatus) => DashboardPortStatus(portCode, feedsStatus)
+            }).map(ps => HttpEntity(ContentTypes.`text/html(UTF-8)`, Layout(Drt(ps.toList))))
+          }
+        }
+      })
 
-  val staticResources =
-    (get & pathPrefix("public")) {
-      {
-        getFromResourceDirectory("public")
-      }
+  val staticResources = (get & pathPrefix("public")) {
+    {
+      getFromResourceDirectory("public")
     }
+  }
 
   val serverBinding: Future[Http.ServerBinding] = Http().bindAndHandle(routes, "0.0.0.0", 8081)
 
