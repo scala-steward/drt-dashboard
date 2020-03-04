@@ -66,7 +66,13 @@ object DrtDashboardApp extends App {
                 val portFeedStatus = Dashboard.drtUriForPortCode(pc) + "/feed-statuses"
                 DashboardClient.getWithRoles(portFeedStatus, List(pc.toUpperCase))
                   .flatMap(res => Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
-                    .to[List[FeedSourceStatus]].map(portSources => pc -> portSources))
+                    .to[List[FeedSourceStatus]].recover {
+                      case e: Throwable =>
+                        log.error(s"Error connecting to $pc", e)
+                        List[FeedSourceStatus]()
+                    }
+                    .map(portSources => pc -> portSources))
+
               }).toList)
               .recover {
                 case e: Throwable =>
@@ -76,7 +82,7 @@ object DrtDashboardApp extends App {
               .map(_.map {
                 case (portCode, feedsStatus) => DashboardPortStatus(portCode, feedsStatus)
               })
-              .map(ps => HttpEntity(ContentTypes.`text/html(UTF-8)`, Layout(Drt(ps.toList))))
+              .map(ps => HttpEntity(ContentTypes.`text/html(UTF-8)`, Layout(Drt(ps))))
           }
         }
       })

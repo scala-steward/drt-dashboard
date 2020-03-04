@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt
 
 import org.specs2.mutable.Specification
-import Dashboard.drtUriForPortCode
+import uk.gov.homeoffice.drt.Dashboard.drtUriForPortCode
 
 class DrtUrlSpec extends Specification {
 
@@ -14,5 +14,4 @@ class DrtUrlSpec extends Specification {
 
     result === expected
   }
-
 }
