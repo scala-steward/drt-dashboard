@@ -98,7 +98,6 @@ object Dashboard {
           .toFormatter
     }
 
-
     val curentTimeMillis = now()
     val intervalMillis = Math.round(millis / 1000) * 1000L
     val interval = new Interval(curentTimeMillis - intervalMillis, curentTimeMillis)

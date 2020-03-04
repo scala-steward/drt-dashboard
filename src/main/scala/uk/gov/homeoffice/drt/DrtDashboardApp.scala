@@ -12,7 +12,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.typesafe.scalalogging.Logger
 import uk.gov.homeoffice.cirium.services.health.CiriumAppHealthSummary
-import uk.gov.homeoffice.drt.pages.{ Cirium, Drt, Layout }
+import uk.gov.homeoffice.drt.pages.{ Cirium, Drt, Error, Layout }
 import uk.gov.homeoffice.drt.services.drt.JsonSupport._
 import uk.gov.homeoffice.drt.services.drt.{ DashboardPortStatus, FeedSourceStatus }
 import uk.gov.homeoffice.drt.{ Dashboard, DashboardClient }
@@ -47,7 +47,14 @@ object DrtDashboardApp extends App {
             complete(
               DashboardClient.get(ciriumDataUri)
                 .flatMap(res => Unmarshal[HttpResponse](res).to[CiriumAppHealthSummary])
-                .map(s => HttpEntity(ContentTypes.`text/html(UTF-8)`, Layout(Cirium(s)))))
+                .map(s => Layout(Cirium(s)))
+                .recover {
+                  case e: Throwable =>
+                    log.error("Unable to connect to Cirium Feed", e)
+                    Layout(Error("Unable to connect to Cirium Feed"))
+                }
+                .map(page => HttpEntity(ContentTypes.`text/html(UTF-8)`, page)))
+
           }
         }
       },
@@ -60,9 +67,16 @@ object DrtDashboardApp extends App {
                 DashboardClient.getWithRoles(portFeedStatus, List(pc.toUpperCase))
                   .flatMap(res => Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
                     .to[List[FeedSourceStatus]].map(portSources => pc -> portSources))
-              }).toList).map(_.map {
-              case (portCode, feedsStatus) => DashboardPortStatus(portCode, feedsStatus)
-            }).map(ps => HttpEntity(ContentTypes.`text/html(UTF-8)`, Layout(Drt(ps.toList))))
+              }).toList)
+              .recover {
+                case e: Throwable =>
+                  log.error("Failed to connect to DRT", e)
+                  List[(String, List[FeedSourceStatus])]()
+              }
+              .map(_.map {
+                case (portCode, feedsStatus) => DashboardPortStatus(portCode, feedsStatus)
+              })
+              .map(ps => HttpEntity(ContentTypes.`text/html(UTF-8)`, Layout(Drt(ps.toList))))
           }
         }
       })
