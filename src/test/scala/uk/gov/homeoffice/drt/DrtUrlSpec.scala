@@ -14,5 +14,5 @@ class DrtUrlSpec extends Specification {
 
     result === expected
   }
-  
+
 }

@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt
 
 import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
+import akka.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpResponse }
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.ActorMaterializer
 import akka.testkit.TestKit
@@ -14,7 +14,7 @@ import uk.gov.homeoffice.drt.services.drt._
 import scala.collection.immutable
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 
 class DrtPortDashboardSpec extends TestKit(ActorSystem("testActorSystem", ConfigFactory.empty()))
   with SpecificationLike
@@ -36,9 +36,7 @@ class DrtPortDashboardSpec extends TestKit(ActorSystem("testActorSystem", Config
       val expected = List(
         FeedSourceStatus(
           "LiveFeedSource",
-          FeedStatuses(List("100001"), List("100002"), List("100003"))
-        )
-      )
+          FeedStatuses(List("100001"), List("100002"), List("100003"))))
 
       result === expected
     }
@@ -53,13 +51,10 @@ class DrtPortDashboardSpec extends TestKit(ActorSystem("testActorSystem", Config
       val expected = List(
         FeedSourceStatus(
           "LiveFeedSource",
-          FeedStatuses(List("100001"), List("100002"), List("100003"))
-        ),
+          FeedStatuses(List("100001"), List("100002"), List("100003"))),
         FeedSourceStatus(
           "LiveBaseFeedSource",
-          FeedStatuses(List("200001"), List("200002"), List("200003"))
-        )
-      )
+          FeedStatuses(List("200001"), List("200002"), List("200003"))))
 
       result === expected
     }
@@ -83,18 +78,14 @@ class DrtPortDashboardSpec extends TestKit(ActorSystem("testActorSystem", Config
       val drtResponse = List(
         FeedSourceStatus(
           "LiveFeedSource",
-          FeedStatuses(List("100001"), List("100002"), List("100003"))
-        )
-      )
+          FeedStatuses(List("100001"), List("100002"), List("100003"))))
 
       val expected = DashboardPortStatus("TST", PortFeedStatuses(List(
         PortFeedStatus(
           "LiveFeedSource",
           lastSuccessAt = Option(100001),
           lastFailureAt = Option(100002),
-          lastUpdatesAt = Option(100003)
-        )
-      )))
+          lastUpdatesAt = Option(100003)))))
 
       val result = DashboardPortStatus("TST", drtResponse)
 
@@ -105,28 +96,22 @@ class DrtPortDashboardSpec extends TestKit(ActorSystem("testActorSystem", Config
       val drtResponse = List(
         FeedSourceStatus(
           "LiveFeedSource",
-          FeedStatuses(List("100001"), List("100002"), List("100003"))
-        ),
+          FeedStatuses(List("100001"), List("100002"), List("100003"))),
         FeedSourceStatus(
           "LiveBaseFeedSource",
-          FeedStatuses(List("200001"), List("200002"), List("200003"))
-        )
-      )
+          FeedStatuses(List("200001"), List("200002"), List("200003"))))
 
       val expected = DashboardPortStatus("TST", PortFeedStatuses(List(
         PortFeedStatus(
           "LiveFeedSource",
           lastSuccessAt = Option(100001),
           lastFailureAt = Option(100002),
-          lastUpdatesAt = Option(100003)
-        ),
+          lastUpdatesAt = Option(100003)),
         PortFeedStatus(
           "LiveBaseFeedSource",
           lastSuccessAt = Option(200001),
           lastFailureAt = Option(200002),
-          lastUpdatesAt = Option(200003)
-        )
-      )))
+          lastUpdatesAt = Option(200003)))))
 
       val result = DashboardPortStatus("TST", drtResponse)
 

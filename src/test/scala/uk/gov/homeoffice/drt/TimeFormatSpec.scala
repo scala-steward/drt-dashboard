@@ -104,5 +104,5 @@ class TimeFormatSpec extends Specification {
       result === expected
     }
   }
-  
+
 }
