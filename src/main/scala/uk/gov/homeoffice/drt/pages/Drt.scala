@@ -83,7 +83,7 @@ object Drt {
           tr(
             cls := "drt-dashboard__dashboard__last-status",
             td(),
-            feedOrder.map(_ => Seq(td("Last Success"), td("Last Failure"), td("Last Updated")))),
+            feedOrder.map(_ => Seq(td("Last Success"), td("Last Updated"), td("Last Failure")))),
           for (status <- portStatuses) yield {
             tr(
               td(status.portCode),
