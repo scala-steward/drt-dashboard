@@ -31,7 +31,6 @@ object Cirium {
           val timeSinceProcessed = timeSince(lastProcessed)
           val timeSinceIssued = timeSince(lastIssued)
           StatusItem(
-
             timeAgoInWords(timeSinceProcessed),
             timeWarningLevel(timeSinceIssued - timeSinceProcessed, 20 seconds, 40 seconds))
         case Some((lastProcessed, None)) =>
@@ -52,7 +51,6 @@ object Cirium {
       "Last Message Processed" -> lastMessageProcessedStatus,
       "Uptime" -> upTimeStatus)
     div(
-
       h1("Cirium Feed Status"),
       div(
         cls := "status-box",

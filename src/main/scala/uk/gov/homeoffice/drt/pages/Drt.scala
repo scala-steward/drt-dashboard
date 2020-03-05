@@ -10,16 +10,6 @@ import scala.language.postfixOps
 
 object Drt {
 
-  case class DrtFeedDisplay(sourceName: String,
-                            displayName: String,
-                            successWarningThreshold: FiniteDuration,
-                            successErrorThreshold: FiniteDuration,
-                            updatedWarningThreshold: FiniteDuration,
-                            updatedErrorThreshold: FiniteDuration,
-                            failureLessThanWarningThreshold: FiniteDuration,
-                            failureLessThanErrorThreshold: FiniteDuration,
-                           )
-
   val feedOrder = Seq(
     DrtFeedDisplay("ApiFeedSource",
       "API",
@@ -123,9 +113,7 @@ object Drt {
                 }
               }))
           })))
-
   }
-
 
   def maybeTimestampToWords(maybeLong: Option[Long]) = maybeLong
     .map(l => timeAgoInWords(timeSince(l))).getOrElse("")
@@ -136,5 +124,15 @@ object Drt {
   def uriForPortCode(portCode: String) = {
     "http://localhost:9000/feed-statuses"
   }
+
+  case class DrtFeedDisplay(sourceName: String,
+                            displayName: String,
+                            successWarningThreshold: FiniteDuration,
+                            successErrorThreshold: FiniteDuration,
+                            updatedWarningThreshold: FiniteDuration,
+                            updatedErrorThreshold: FiniteDuration,
+                            failureLessThanWarningThreshold: FiniteDuration,
+                            failureLessThanErrorThreshold: FiniteDuration,
+                           )
 }
 

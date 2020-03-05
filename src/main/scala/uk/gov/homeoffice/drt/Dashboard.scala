@@ -7,6 +7,11 @@ import scala.concurrent.duration.Duration
 
 object Dashboard {
 
+  val oneHourMillis = 60 * 60 * 1000L
+  val oneDayMillis = oneHourMillis * 24
+  val oneWeekMillis = oneDayMillis * 7
+  val twoWeeksMillis = oneWeekMillis * 2
+
   sealed trait StatusItemLike {
 
     def value: String
@@ -47,62 +52,65 @@ object Dashboard {
   }
 
   def timeAgoInWords(millis: Long, now: () => Long = () => System.currentTimeMillis()): String = {
-    val oneHourMillis = 60 * 60 * 1000L
-    val oneDayMillis = oneHourMillis * 24
-    val oneWeekMillis = oneDayMillis * 7
-    val twoWeeksMillis = oneWeekMillis * 2
 
-    val dateFormat = millis match {
-      case t if t < oneHourMillis =>
-        new PeriodFormatterBuilder()
-          .appendMinutes()
-          .appendSuffix(" minute", " minutes")
-          .appendSeparator(" ")
-          .appendSeconds
-          .appendSuffix(" second", " seconds")
-          .minimumPrintedDigits(0)
-          .printZeroAlways()
-          .toFormatter
-      case t if t < oneDayMillis =>
-        new PeriodFormatterBuilder()
-          .appendHours
-          .appendSuffix(" hour", " hours")
-          .printZeroAlways()
-          .toFormatter
-      case t if t < twoWeeksMillis =>
-        new PeriodFormatterBuilder()
-          .appendYears
-          .appendSuffix(" year", " years")
-          .appendSeparator(" ")
-          .appendMonths
-          .appendSuffix(" month", " months")
-          .appendSeparator(" ")
-          .appendWeeks
-          .appendSuffix(" week", " weeks")
-          .appendSeparator(" ")
-          .appendDays
-          .appendSuffix(" day", " days")
-          .printZeroAlways()
-          .toFormatter
-      case _ =>
-        new PeriodFormatterBuilder()
-          .appendYears
-          .appendSuffix(" year", " years")
-          .appendSeparator(" ")
-          .appendMonths
-          .appendSuffix(" month", " months")
-          .appendSeparator(" ")
-          .appendWeeks
-          .appendSuffix(" week", " weeks")
-          .printZeroAlways()
-          .toFormatter
-    }
+    val dateFormat = dateFormatter(millis)
 
     val curentTimeMillis = now()
     val intervalMillis = Math.round(millis / 1000) * 1000L
     val interval = new Interval(curentTimeMillis - intervalMillis, curentTimeMillis)
     dateFormat.print(interval.toPeriod)
   }
+
+  def dateFormatter(millis: Long) = millis match {
+    case t if t < oneHourMillis => minutesAndSecondsFormat
+    case t if t < oneDayMillis => hoursFormat
+    case t if t < twoWeeksMillis => daysAndWeeksFormatter
+    case _ =>
+      veryLongTimeFormat
+  }
+
+  def veryLongTimeFormat = new PeriodFormatterBuilder()
+    .appendYears
+    .appendSuffix(" year", " years")
+    .appendSeparator(" ")
+    .appendMonths
+    .appendSuffix(" month", " months")
+    .appendSeparator(" ")
+    .appendWeeks
+    .appendSuffix(" week", " weeks")
+    .printZeroAlways()
+    .toFormatter
+
+  def daysAndWeeksFormatter = new PeriodFormatterBuilder()
+    .appendYears
+    .appendSuffix(" year", " years")
+    .appendSeparator(" ")
+    .appendMonths
+    .appendSuffix(" month", " months")
+    .appendSeparator(" ")
+    .appendWeeks
+    .appendSuffix(" week", " weeks")
+    .appendSeparator(" ")
+    .appendDays
+    .appendSuffix(" day", " days")
+    .printZeroAlways()
+    .toFormatter
+
+  def hoursFormat = new PeriodFormatterBuilder()
+    .appendHours
+    .appendSuffix(" hour", " hours")
+    .printZeroAlways()
+    .toFormatter
+
+  def minutesAndSecondsFormat = new PeriodFormatterBuilder()
+    .appendMinutes()
+    .appendSuffix(" minute", " minutes")
+    .appendSeparator(" ")
+    .appendSeconds
+    .appendSuffix(" second", " seconds")
+    .minimumPrintedDigits(0)
+    .printZeroAlways()
+    .toFormatter
 
   def timeWarningLevel(millis: Long, warnThreshold: Duration, errorThreshold: Duration): AlertLevel = millis match {
     case millis if millis > errorThreshold.toMillis => ErrorStatus
