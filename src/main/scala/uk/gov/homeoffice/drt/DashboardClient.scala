@@ -1,11 +1,9 @@
 package uk.gov.homeoffice.drt
 
-//import akka.actor.typed.ActorSystem
 import akka.actor.ClassicActorSystemProvider
-import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpHeader.ParsingResult.Ok
-import akka.http.scaladsl.model.{ HttpHeader, HttpMethods, HttpRequest, HttpResponse }
+import akka.http.scaladsl.model.{HttpHeader, HttpMethods, HttpRequest, HttpResponse}
 
 import scala.concurrent.Future
 
@@ -20,10 +18,8 @@ object DashboardClient {
       case _ => None
     }
 
-    Http()
-      .singleRequest(
-        HttpRequest(
-          HttpMethods.GET, uri, roleHeader.toList))
+    Http().singleRequest(
+      HttpRequest(HttpMethods.GET, uri, roleHeader.toList)
+    )
   }
-
 }

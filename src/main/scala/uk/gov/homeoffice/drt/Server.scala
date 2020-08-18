@@ -1,15 +1,15 @@
 package uk.gov.homeoffice.drt
 
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ ActorSystem, Behavior, PostStop }
+import akka.actor.typed.{ActorSystem, Behavior, PostStop}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.Directives.concat
 import akka.http.scaladsl.server.Route
-import uk.gov.homeoffice.drt.routes.{ CiriumRoutes, DrtRoutes, StaticRoutes }
+import uk.gov.homeoffice.drt.routes.{CiriumRoutes, DrtRoutes, StaticRoutes}
 
-import scala.concurrent.{ ExecutionContextExecutor, Future }
-import scala.util.{ Failure, Success }
+import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.util.{Failure, Success}
 
 object Server {
 
