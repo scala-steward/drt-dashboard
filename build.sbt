@@ -1,7 +1,7 @@
 import sbt.Keys.resolvers
 
-lazy val akkaHttpVersion = "10.1.9"
-lazy val akkaVersion = "2.5.23"
+lazy val akkaHttpVersion = "10.2.0"
+lazy val akkaVersion = "2.6.8"
 lazy val specs2 = "4.6.0"
 lazy val jodaTime = "2.9.4"
 lazy val scalaLoggingVersion = "3.9.2"
@@ -18,9 +18,11 @@ lazy val root = (project in file(".")).
     )),
     version := sys.env.getOrElse("DRONE_BUILD_NUMBER", sys.env.getOrElse("BUILD_ID", "DEV")),
     name := "drt-dashboard",
+    credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+      "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
       "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
       "joda-time" % "joda-time" % jodaTime,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
