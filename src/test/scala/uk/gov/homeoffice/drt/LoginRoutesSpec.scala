@@ -8,44 +8,44 @@ import uk.gov.homeoffice.drt.authentication.Roles.{ BorderForceStaff, LHR }
 import uk.gov.homeoffice.drt.routes.LoginRoutes
 
 class LoginRoutesSpec extends Specification with Specs2RouteTest {
-  "Given a uri with no x-auth-roles header" >> {
+  "Given a uri with no X-Auth-Roles header" >> {
     Get("/here") ~> LoginRoutes("here", Array()) ~> check {
       responseAs[String] shouldEqual "Access denied"
     }
   }
 
-  "Given a uri with an x-auth-roles header with no staff access" >> {
-    Get("/here") ~> RawHeader("x-auth-roles", "") ~> LoginRoutes("here", Array()) ~> check {
+  "Given a uri with an X-Auth-Roles header with no staff access" >> {
+    Get("/here") ~> RawHeader("X-Auth-Roles", "") ~> LoginRoutes("here", Array()) ~> check {
       responseAs[String] shouldEqual "Please request access to DRT"
     }
   }
 
-  "Given a uri with an x-auth-roles header with staff access but no port access" >> {
-    Get("/here") ~> RawHeader("x-auth-roles", BorderForceStaff.name) ~> LoginRoutes("here", Array()) ~> check {
+  "Given a uri with an X-Auth-Roles header with staff access but no port access" >> {
+    Get("/here") ~> RawHeader("X-Auth-Roles", BorderForceStaff.name) ~> LoginRoutes("here", Array()) ~> check {
       responseAs[String] shouldEqual "Please request access to a DRT port"
     }
   }
 
-  "Given a uri with an x-auth-roles header with staff & port access and no port query parameter" >> {
-    Get("/here") ~> RawHeader("x-auth-roles", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~> LoginRoutes("here", Array()) ~> check {
+  "Given a uri with an X-Auth-Roles header with staff & port access and no port query parameter" >> {
+    Get("/here") ~> RawHeader("X-Auth-Roles", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~> LoginRoutes("here", Array()) ~> check {
       responseAs[String] shouldEqual "Choose a port"
     }
   }
 
-  "Given a uri with an x-auth-roles header with staff & port access and an invalid port query parameter" >> {
-    Get("/here?port=xxx") ~> RawHeader("x-auth-roles", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~> LoginRoutes("here", Array()) ~> check {
+  "Given a uri with an X-Auth-Roles header with staff & port access and an invalid port query parameter" >> {
+    Get("/here?port=xxx") ~> RawHeader("X-Auth-Roles", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~> LoginRoutes("here", Array()) ~> check {
       responseAs[String] shouldEqual "Invalid port"
     }
   }
 
-  "Given a uri with an x-auth-roles header with staff & port access but a port query parameter for an inaccessible port" >> {
-    Get("/here?port=bhx") ~> RawHeader("x-auth-roles", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~> LoginRoutes("here", Array()) ~> check {
+  "Given a uri with an X-Auth-Roles header with staff & port access but a port query parameter for an inaccessible port" >> {
+    Get("/here?port=bhx") ~> RawHeader("X-Auth-Roles", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~> LoginRoutes("here", Array()) ~> check {
       responseAs[String] shouldEqual "Please request access to bhx"
     }
   }
 
-  "Given a uri with an x-auth-roles header with staff & port access and a port query parameter for an accessible port" >> {
-    Get("/here?port=lhr") ~> RawHeader("x-auth-roles", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~> LoginRoutes("here", Array()) ~> check {
+  "Given a uri with an X-Auth-Roles header with staff & port access and a port query parameter for an accessible port" >> {
+    Get("/here?port=lhr") ~> RawHeader("X-Auth-Roles", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~> LoginRoutes("here", Array()) ~> check {
       response.status shouldEqual StatusCodes.TemporaryRedirect
     }
   }

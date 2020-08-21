@@ -12,7 +12,6 @@ object LoginRoutes {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
   def extractUser: HttpHeader => Option[User] = {
-    case RawHeader("x-auth-roles", rolesString) => Option(User(rolesString))
     case RawHeader("X-Auth-Roles", rolesString) => Option(User(rolesString))
     case _ => None
   }
