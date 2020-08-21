@@ -7,6 +7,8 @@ case class User(roles: Set[Role]) {
 
   lazy val hasPortAccess: Boolean = roles.exists(_.isInstanceOf[PortAccess])
 
+  lazy val accessiblePorts: Set[String] = roles.filter(_.isInstanceOf[PortAccess]).map(_.name)
+
   def hasRole(role: Role): Boolean = roles.contains(role)
 }
 
