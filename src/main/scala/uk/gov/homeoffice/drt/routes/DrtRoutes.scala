@@ -10,7 +10,7 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import org.slf4j.{ Logger, LoggerFactory }
 import uk.gov.homeoffice.drt.pages.{ Drt, Layout }
-import uk.gov.homeoffice.drt.services.drt.JsonSupport._
+import uk.gov.homeoffice.drt.services.drt.FeedJsonSupport._
 import uk.gov.homeoffice.drt.services.drt.{ DashboardPortStatus, FeedSourceStatus }
 import uk.gov.homeoffice.drt.{ Dashboard, DashboardClient }
 

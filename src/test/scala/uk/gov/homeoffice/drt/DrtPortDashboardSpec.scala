@@ -8,7 +8,7 @@ import akka.testkit.TestKit
 import com.typesafe.config.ConfigFactory
 import org.specs2.mutable.SpecificationLike
 import org.specs2.specification.AfterEach
-import uk.gov.homeoffice.drt.services.drt.JsonSupport._
+import uk.gov.homeoffice.drt.services.drt.FeedJsonSupport._
 import uk.gov.homeoffice.drt.services.drt._
 
 import scala.collection.immutable
@@ -23,8 +23,6 @@ class DrtPortDashboardSpec extends TestKit(ActorSystem("testActorSystem", Config
   override def after: Unit = TestKit.shutdownActorSystem(system)
 
   "When querying DRT feed status endpoint to find App Status" >> {
-
-    implicit val mat: ActorMaterializer = ActorMaterializer()
 
     "I should be able to deserialize a response with 1 FeedStatus in it" >> {
       val mockClient = MockClient(singleStatusResponse)

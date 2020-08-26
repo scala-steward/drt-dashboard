@@ -10,8 +10,7 @@ case class FeedStatuses(
   lastFailureAt: List[String],
   lastUpdatesAt: List[String])
 
-object JsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
+object FeedJsonSupport extends DefaultJsonProtocol with SprayJsonSupport {
   implicit val feedFeedStatusesFormat: RootJsonFormat[FeedStatuses] = jsonFormat3(FeedStatuses)
   implicit val feedSourceStatusFormat: RootJsonFormat[FeedSourceStatus] = jsonFormat2(FeedSourceStatus)
-
 }

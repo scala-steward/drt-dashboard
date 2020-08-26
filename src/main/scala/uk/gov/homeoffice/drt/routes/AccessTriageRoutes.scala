@@ -22,7 +22,7 @@ object AccessTriageRoutes {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
   def extractUser: HttpHeader => Option[User] = {
-    case RawHeader("X-Auth-Roles", rolesString) => Option(User(rolesString))
+    case RawHeader("X-Auth-Roles", rolesString) => Option(User.fromRoles(rolesString))
     case _ => None
   }
 

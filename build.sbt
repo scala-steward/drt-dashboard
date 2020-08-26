@@ -16,6 +16,9 @@ lazy val root = (project in file(".")).
       organization := "uk.gov.homeoffice.drt",
       scalaVersion := "2.12.8"
     )),
+
+    compile := ((compile in Compile) dependsOn buildReactApp).value,
+
     version := sys.env.getOrElse("DRONE_BUILD_NUMBER", sys.env.getOrElse("BUILD_ID", "DEV")),
     name := "drt-dashboard",
     credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
@@ -31,7 +34,7 @@ lazy val root = (project in file(".")).
       "uk.gov.homeoffice" %% "drt-cirium" % drtCirium,
       "ch.qos.logback.contrib" % "logback-json-classic" % logBackJsonVersion,
       "ch.qos.logback.contrib" % "logback-jackson" % logBackJsonVersion,
-      "com.fasterxml.jackson.core" % "jackson-databind" % "2.10.0",
+      "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.2",
 
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
@@ -42,13 +45,17 @@ lazy val root = (project in file(".")).
     resolvers += "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/",
     resolvers += "Artifactory Realm release local" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-release-local/",
 
-    dockerExposedPorts ++= Seq(8081)
+    dockerExposedPorts ++= Seq(8081),
 
   )
   .enablePlugins(DockerPlugin)
   .enablePlugins(JavaAppPackaging)
 
-
+lazy val buildReactApp = taskKey[Unit]("Build react app")
+buildReactApp := {
+  val cwd = System.getProperty("user.dir")
+  scala.sys.process.Process("yarn build", new File(cwd + "/react")).!
+}
 
 fork in run := true
 cancelable in Global := true
