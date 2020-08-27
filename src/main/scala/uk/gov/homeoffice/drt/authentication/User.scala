@@ -4,7 +4,7 @@ import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json.{ DefaultJsonProtocol, JsArray, JsBoolean, JsObject, JsString, JsValue, RootJsonFormat }
 import uk.gov.homeoffice.drt.authentication.Roles.{ BorderForceStaff, PortAccess, Role, Staff }
 
-case class User(roles: Set[Role]) {
+case class User(email: String, roles: Set[Role]) {
   def hasStaffCredential: Boolean = roles.exists(_.isInstanceOf[Staff])
 
   def hasPortAccess: Boolean = roles.exists(_.isInstanceOf[PortAccess])
@@ -15,8 +15,8 @@ case class User(roles: Set[Role]) {
 }
 
 object User {
-  def fromRoles(roles: String): User = {
-    User(roles.split(",").flatMap(Roles.parse).toSet)
+  def fromRoles(email: String, roles: String): User = {
+    User(email, roles.split(",").flatMap(Roles.parse).toSet)
   }
 }
 
@@ -34,9 +34,19 @@ object UserJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit object UserFormatParser extends RootJsonFormat[User] {
     override def write(user: User): JsValue = JsObject(Map(
       "ports" -> JsArray(user.accessiblePorts.map(JsString(_)).toVector),
-      "isPoise" -> JsBoolean(user.roles.contains(BorderForceStaff))))
+      "email" -> JsString(user.email)))
 
-    override def read(json: JsValue): User = ???
+    override def read(json: JsValue): User = json match {
+      case JsObject(fields) =>
+        (fields.get("email"), fields.get("ports")) match {
+          case (Some(JsString(email)), Some(JsArray(portsArr))) =>
+            val set = portsArr.collect {
+              case JsString(port) => Roles.parse(port)
+            }.flatten.toSet
+            User(email, set)
+          case _ => throw new Exception("Expected email and ports fields")
+        }
+    }
   }
 
 }

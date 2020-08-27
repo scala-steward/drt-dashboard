@@ -17,11 +17,12 @@ class User implements UserLike {
     }
 }
 
-interface IProps {}
+interface IProps {
+}
 
 interface IState {
     isReady: boolean;
-    user?: User;
+    existingPorts: User;
 }
 
 export default class Home extends React.Component<IProps, IState> {
