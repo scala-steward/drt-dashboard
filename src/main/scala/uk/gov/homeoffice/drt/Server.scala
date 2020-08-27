@@ -6,8 +6,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.Directives.concat
 import akka.http.scaladsl.server.Route
-import uk.gov.homeoffice.drt.routes.AccessTriageComponents._
-import uk.gov.homeoffice.drt.routes.{ AccessTriageRoutes, ApiRoutes, CiriumRoutes, DrtRoutes, IndexRoute }
+import uk.gov.homeoffice.drt.routes.{ ApiRoutes, CiriumRoutes, DrtRoutes, IndexRoute }
 
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 import scala.util.{ Failure, Success }
@@ -30,7 +29,6 @@ object Server {
       IndexRoute(),
       CiriumRoutes("cirium", ciriumDataUri),
       DrtRoutes("drt", portCodes),
-      AccessTriageRoutes(externalUser, internalUser, existingUser)("login", portCodes),
       ApiRoutes("api", portCodes))
 
     val serverBinding: Future[Http.ServerBinding] = Http().newServerAt(host, port).bind(routes)
