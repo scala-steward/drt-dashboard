@@ -1,5 +1,4 @@
 import React from 'react';
-
 import axios from 'axios';
 
 interface UserLike {
@@ -19,7 +18,7 @@ class User implements UserLike {
 
 interface Config {
   ports: string[];
-  drtDomain: string;
+  domain: string;
 }
 
 interface IProps {
@@ -28,6 +27,7 @@ interface IProps {
 interface IState {
   config?: Config;
   user?: User;
+  portsRequested: string[]
 }
 
 export default class Home extends React.Component<IProps, IState> {
@@ -35,37 +35,69 @@ export default class Home extends React.Component<IProps, IState> {
     super(props);
 
     this.state = {
-      user: undefined
-    };
+      portsRequested: []
+    }
+
+    this.handleInputChange = this.handleInputChange.bind(this)
   }
 
   componentDidMount() {
     axios
       .get("/api/user")
-      .then(res => this.setState({user: res.data as UserLike}))
+      .then(res => {
+        let user = res.data as UserLike;
+        this.setState({...this.state, user: user})
+      })
       .catch(t => console.log('caught: ' + t))
+
     axios
       .get("/api/config")
-      .then(res => this.setState({config: res.data as Config}))
+      .then(res => {
+        let config = res.data as Config;
+        console.log("config ports: " + config.ports)
+        this.setState({...this.state, config: config})
+      })
       .catch(t => console.log('caught: ' + t))
+  }
+
+  handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const target = event.target;
+    const checked = target.checked;
+    const port = target.name;
+
+    let newPortsRequested: string[] = this.state.portsRequested
+    if (checked) newPortsRequested.push(port)
+    else newPortsRequested = this.state.portsRequested.filter(p => p !== port)
+
+    this.setState({...this.state, portsRequested: newPortsRequested});
   }
 
   render() {
     let stuff;
-    const domain = this.state.config?.drtDomain;
 
     if (this.state.user === undefined)
       stuff = <p>Loading..</p>
     else if (this.state.user.ports.length === 0)
-      stuff = <p>
-        Please select the ports you require access to
-
-      </p>
+      stuff = <div>
+        <p>Please select the ports you require access to</p>
+        <ul>
+          {this.state.config?.ports.map((portCode) => {
+            return <li key={portCode}><input
+              id={portCode}
+              name={portCode}
+              type="checkbox"
+              checked={this.state.portsRequested.includes(portCode)}
+              onChange={this.handleInputChange}>
+            </input><label htmlFor={portCode}>{portCode.toUpperCase()}</label></li>
+          })}
+        </ul>
+      </div>
     else
       stuff = <div><p>Select your destination</p>
         <ul>
           {this.state.user.ports.map((portCode) => {
-            const url = 'https://' + {portCode} + '.' + {domain};
+            const domain = this.state.config?.domain;
+            const url = 'https://' + portCode + '.' + domain;
             return <li key={portCode}><a href={url}>{portCode}</a></li>
           })}
         </ul>

@@ -13,20 +13,21 @@ object ApiRoutes {
   def apply(prefix: String, portCodes: Array[String]): Route =
     pathPrefix(prefix) {
       import uk.gov.homeoffice.drt.authentication.UserJsonSupport._
-      headerValueByName("X-Auth-Roles") { rolesStr =>
-        headerValueByName("X-Auth-Email") { email =>
-          concat(
-            (get & path("user")) {
+      concat(
+        path("user") {
+          headerValueByName("X-Auth-Roles") { rolesStr =>
+            headerValueByName("X-Auth-Email") { email =>
+              println(s"user request")
               complete(User.fromRoles(email, rolesStr))
-            },
-            (get & path("config")) {
-              val json = JsObject(Map(
-                "ports" -> JsArray(portCodes.map(JsString(_)).toVector),
-                "domain" -> JsString("drt.homeoffice.gov.uk")))
-              complete(json)
-            })
-        }
-      }
-      complete(User("ringo@albumsnaps.com", Set(Roles.LHR, Roles.BorderForceStaff)))
+            }
+          }
+          complete(User("ringo@albumsnaps.com", Set(Roles.BorderForceStaff)))
+        },
+        path("config") {
+          val json = JsObject(Map(
+            "ports" -> JsArray(portCodes.map(JsString(_)).toVector),
+            "domain" -> JsString("drt.homeoffice.gov.uk")))
+          complete(json)
+        })
     }
 }
