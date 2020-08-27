@@ -48,5 +48,4 @@ object UserJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
         }
     }
   }
-
 }
