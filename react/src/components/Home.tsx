@@ -27,7 +27,7 @@ interface IProps {
 interface IState {
   config?: Config;
   user?: User;
-  portsRequested: string[]
+  portsRequested: string[];
 }
 
 export default class Home extends React.Component<IProps, IState> {
@@ -38,7 +38,8 @@ export default class Home extends React.Component<IProps, IState> {
       portsRequested: []
     }
 
-    this.handleInputChange = this.handleInputChange.bind(this)
+    this.handlePortSelectionChange = this.handlePortSelectionChange.bind(this)
+    this.handleAccessRequest = this.handleAccessRequest.bind(this)
   }
 
   componentDidMount() {
@@ -60,20 +61,31 @@ export default class Home extends React.Component<IProps, IState> {
       .catch(t => console.log('caught: ' + t))
   }
 
-  handleInputChange(event: React.ChangeEvent<HTMLInputElement>) {
+  handlePortSelectionChange(event: React.ChangeEvent<HTMLInputElement>) {
     const target = event.target;
     const checked = target.checked;
     const port = target.name;
 
     let newPortsRequested: string[] = this.state.portsRequested
+
     if (checked) newPortsRequested.push(port)
     else newPortsRequested = this.state.portsRequested.filter(p => p !== port)
 
     this.setState({...this.state, portsRequested: newPortsRequested});
   }
 
+  handleAccessRequest(event: React.MouseEvent<HTMLButtonElement>) {
+    axios
+      .post("/api/request-access", {ports: this.state.portsRequested})
+      .then(res => {
+
+      })
+      .catch(t => console.log('caught: ' + t))
+  }
+
   render() {
     let stuff;
+    let requestButtonDisabled = true;
 
     if (this.state.user === undefined)
       stuff = <p>Loading..</p>
@@ -82,14 +94,18 @@ export default class Home extends React.Component<IProps, IState> {
         <p>Please select the ports you require access to</p>
         <ul>
           {this.state.config?.ports.map((portCode) => {
-            return <li key={portCode}><input
-              id={portCode}
-              name={portCode}
-              type="checkbox"
-              checked={this.state.portsRequested.includes(portCode)}
-              onChange={this.handleInputChange}>
-            </input><label htmlFor={portCode}>{portCode.toUpperCase()}</label></li>
+            return <li key={portCode}>
+              <input
+                id={portCode}
+                name={portCode}
+                type="checkbox"
+                checked={this.state.portsRequested.includes(portCode)}
+                onChange={this.handlePortSelectionChange}>
+              </input><label htmlFor={portCode}>{portCode.toUpperCase()}</label></li>
           })}
+          <button disabled={this.state.portsRequested.length === 0}
+                  onClick={this.handleAccessRequest}>Request access
+          </button>
         </ul>
       </div>
     else
