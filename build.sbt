@@ -35,6 +35,7 @@ lazy val root = (project in file(".")).
       "ch.qos.logback.contrib" % "logback-json-classic" % logBackJsonVersion,
       "ch.qos.logback.contrib" % "logback-jackson" % logBackJsonVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.2",
+      "uk.gov.service.notify" % "notifications-java-client" % "3.17.0-RELEASE",
 
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
@@ -44,6 +45,7 @@ lazy val root = (project in file(".")).
 
     resolvers += "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/",
     resolvers += "Artifactory Realm release local" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-release-local/",
+    resolvers += "Spring Lib Release Repository" at "https://repo.spring.io/libs-release/",
 
     dockerExposedPorts ++= Seq(8081),
 

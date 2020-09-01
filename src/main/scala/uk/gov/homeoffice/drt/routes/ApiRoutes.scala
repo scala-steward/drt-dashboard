@@ -30,9 +30,11 @@ object ApiRoutes {
           complete(json)
         },
         (post & path("request-access")) {
-          import uk.gov.homeoffice.drt.authentication.AccessRequestJsonSupport._
-          entity(as[AccessRequest]) { accessRequest =>
-            complete(s"got an access request for ${accessRequest.ports}")
+          headerValueByName("X-Auth-Email") { email =>
+            import uk.gov.homeoffice.drt.authentication.AccessRequestJsonSupport._
+            entity(as[AccessRequest]) { accessRequest =>
+              complete(s"got an access request for ${accessRequest.ports}")
+            }
           }
         })
     }
