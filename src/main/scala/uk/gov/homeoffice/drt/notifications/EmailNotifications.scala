@@ -13,7 +13,7 @@ case class EmailNotifications(apiKey: String, accessRequestEmail: String) {
   def sendRequest(requester: String, ports: Iterable[String]): Try[SendEmailResponse] = {
     val personalisation: util.Map[String, String] = Map(
       "requester" -> requester,
-      "portList" -> ports.mkString(", ")).asJava
+      "portList" -> ports.mkString(", ").toUpperCase).asJava
 
     Try(client.sendEmail(
       "4c73ba75-87d5-42d7-b6d2-7ff557ae65ed",

@@ -28,6 +28,7 @@ interface IState {
   config?: Config;
   user?: User;
   portsRequested: string[];
+  requestFinished: boolean;
 }
 
 export default class Home extends React.Component<IProps, IState> {
@@ -35,7 +36,8 @@ export default class Home extends React.Component<IProps, IState> {
     super(props);
 
     this.state = {
-      portsRequested: []
+      portsRequested: [],
+      requestFinished: false
     }
 
     this.handlePortSelectionChange = this.handlePortSelectionChange.bind(this)
@@ -74,21 +76,22 @@ export default class Home extends React.Component<IProps, IState> {
     this.setState({...this.state, portsRequested: newPortsRequested});
   }
 
-  handleAccessRequest(event: React.MouseEvent<HTMLButtonElement>) {
+  handleAccessRequest(_: React.MouseEvent<HTMLButtonElement>) {
     axios
       .post("/api/request-access", {ports: this.state.portsRequested})
-      .then(res => {
-
+      .then(_ => {
+        this.setState({...this.state, requestFinished: true})
       })
       .catch(t => console.log('caught: ' + t))
   }
 
   render() {
     let stuff;
-    let requestButtonDisabled = true;
 
     if (this.state.user === undefined)
       stuff = <p>Loading..</p>
+    else if (this.state.requestFinished)
+      stuff = <div>Thanks for your request. We'll get back to you shortly</div>
     else if (this.state.user.ports.length === 0)
       stuff = <div>
         <p>Please select the ports you require access to</p>
@@ -104,7 +107,8 @@ export default class Home extends React.Component<IProps, IState> {
               </input><label htmlFor={portCode}>{portCode.toUpperCase()}</label></li>
           })}
           <button disabled={this.state.portsRequested.length === 0}
-                  onClick={this.handleAccessRequest}>Request access
+                  onClick={this.handleAccessRequest}>
+            Request access
           </button>
         </ul>
       </div>
