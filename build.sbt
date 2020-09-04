@@ -63,6 +63,8 @@ lazy val buildReactApp = taskKey[Unit]("Build react app")
 buildReactApp := {
   val cwd = System.getProperty("user.dir")
   scala.sys.process.Process("yarn build", new File(cwd + "/react")).!
+  scala.sys.process.Process(s"rm -rf $cwd/src/main/resources/frontend").!
+  scala.sys.process.Process(s"mv build $cwd/src/main/resources/frontend", new File(cwd + "/react")).!
 }
 
 fork in run := true
