@@ -11,10 +11,10 @@ object IndexRoute {
         getFromResource("frontend/index.html")
       },
       (get & pathPrefix("")) {
-        getFromResourceDirectory("./frontend")
+        getFromResourceDirectory("frontend")
       },
       (get & pathPrefix("static")) {
-        getFromResourceDirectory("./frontend/static")
+        getFromResourceDirectory("frontend/static")
       })
   }
 }
