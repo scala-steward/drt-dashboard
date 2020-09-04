@@ -9,7 +9,7 @@ pipeline:
       - ARTIFACTORY_USERNAME=drt_artifactory
     secrets:
       - ARTIFACTORY_PASSWORD
-      - NOTIFY_KEY
+      - GOV_NOTIFY_API_KEY
     when:
       event:
         - push
