@@ -4,7 +4,7 @@ pipeline:
     image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:latest
     commands:
       - /root/entrypoint.sh
-      - sbt test buildReactApp docker:stage
+      - sbt test npmInstall buildReactApp docker:stage
     environment:
       - ARTIFACTORY_USERNAME=drt_artifactory
     secrets:
