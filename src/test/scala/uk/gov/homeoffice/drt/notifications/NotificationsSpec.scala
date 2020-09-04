@@ -8,7 +8,7 @@ import scala.util.{ Failure, Success }
 
 class NotificationsSpec extends Specification with Specs2RouteTest {
   private val config: Config = ConfigFactory.load()
-  val apiKey: String = config.getString("dashboard.notifications.api-key")
+  val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
   val recipient: String = config.getString("dashboard.notifications.access-request-email")
 
   val notifications: EmailNotifications = EmailNotifications(apiKey, recipient)

@@ -10,7 +10,7 @@ import uk.gov.homeoffice.drt.notifications.EmailNotifications
 
 class ApiRoutesSpec extends Specification with Specs2RouteTest {
   private val config: Config = ConfigFactory.load()
-  val apiKey: String = config.getString("dashboard.notifications.api-key")
+  val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
 
   val routes: Route = ApiRoutes("api", Array("lhr", "stn"), "somedomain.com", EmailNotifications(apiKey, "access-requests@drt"))
 
