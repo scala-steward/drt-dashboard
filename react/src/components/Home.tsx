@@ -1,5 +1,6 @@
 import React from 'react';
 import axios from 'axios';
+import Button from '@material-ui/core/Button';
 
 interface UserLike {
   email: string;
@@ -106,11 +107,14 @@ export default class Home extends React.Component<IProps, IState> {
                 onChange={this.handlePortSelectionChange}>
               </input><label htmlFor={portCode}>{portCode.toUpperCase()}</label></li>
           })}
-          <button disabled={this.state.portsRequested.length === 0}
-                  onClick={this.handleAccessRequest}>
-            Request access
-          </button>
         </ul>
+
+        <Button disabled={this.state.portsRequested.length === 0}
+                onClick={this.handleAccessRequest}
+                variant="contained"
+                color="primary">
+          Request access
+        </Button>
       </div>
     else
       stuff = <div><p>Select your destination</p>
