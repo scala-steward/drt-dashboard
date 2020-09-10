@@ -1,6 +1,13 @@
 import React from 'react';
 import axios from 'axios';
 import Button from '@material-ui/core/Button';
+import Checkbox from '@material-ui/core/Checkbox';
+import Link from '@material-ui/core/Link';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import Icon from "@material-ui/icons/FlightLand";
 
 interface UserLike {
   email: string;
@@ -42,6 +49,7 @@ export default class Home extends React.Component<IProps, IState> {
     }
 
     this.handlePortSelectionChange = this.handlePortSelectionChange.bind(this)
+    this.handlePortSelectionChange2 = this.handlePortSelectionChange2.bind(this)
     this.handleAccessRequest = this.handleAccessRequest.bind(this)
   }
 
@@ -73,9 +81,21 @@ export default class Home extends React.Component<IProps, IState> {
 
     if (checked) newPortsRequested.push(port)
     else newPortsRequested = this.state.portsRequested.filter(p => p !== port)
+    console.log("portsRequested: " + this.state.portsRequested)
 
     this.setState({...this.state, portsRequested: newPortsRequested});
   }
+
+  handlePortSelectionChange2 = (portCode: string) => () => {
+    let newPortsRequested: string[] = this.state.portsRequested;
+
+    if (this.state.portsRequested.indexOf(portCode) === -1)
+      newPortsRequested.push(portCode);
+    else
+      newPortsRequested = this.state.portsRequested.filter(p => p !== portCode);
+
+    this.setState({...this.state, portsRequested: newPortsRequested});
+  };
 
   handleAccessRequest(_: React.MouseEvent<HTMLButtonElement>) {
     axios
@@ -96,18 +116,20 @@ export default class Home extends React.Component<IProps, IState> {
     else if (this.state.user.ports.length === 0)
       stuff = <div>
         <p>Please select the ports you require access to</p>
-        <ul>
+        <List>
           {this.state.config?.ports.map((portCode) => {
-            return <li key={portCode}>
-              <input
-                id={portCode}
-                name={portCode}
-                type="checkbox"
-                checked={this.state.portsRequested.includes(portCode)}
-                onChange={this.handlePortSelectionChange}>
-              </input><label htmlFor={portCode}>{portCode.toUpperCase()}</label></li>
+            return <ListItem button onClick={this.handlePortSelectionChange2(portCode)}>
+              <ListItemIcon>
+                <Checkbox
+                  inputProps={{ 'aria-labelledby': portCode }}
+                  name={portCode}
+                  checked={this.state.portsRequested.includes(portCode)}
+                />
+              </ListItemIcon>
+              <ListItemText id={portCode} primary={portCode.toUpperCase()}/>
+            </ListItem>
           })}
-        </ul>
+        </List>
 
         <Button disabled={this.state.portsRequested.length === 0}
                 onClick={this.handleAccessRequest}
@@ -118,13 +140,16 @@ export default class Home extends React.Component<IProps, IState> {
       </div>
     else
       stuff = <div><p>Select your destination</p>
-        <ul>
+        <List>
           {this.state.user.ports.map((portCode) => {
             const domain = this.state.config?.domain;
             const url = 'https://' + portCode + '.' + domain;
-            return <li key={portCode}><a href={url}>{portCode}</a></li>
+            return <ListItem button component="a" href={url}>
+              <ListItemIcon><Icon/></ListItemIcon>
+              <ListItemText primary={portCode}/>
+            </ListItem>
           })}
-        </ul>
+        </List>
       </div>
 
     return (
