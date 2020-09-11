@@ -16,17 +16,19 @@ object ApiRoutes {
 
   def apply(prefix: String, portCodes: Array[String], domain: String, notifications: EmailNotifications): Route =
     pathPrefix(prefix) {
-      import uk.gov.homeoffice.drt.authentication.UserJsonSupport._
       concat(
         (get & path("user")) {
           headerValueByName("X-Auth-Roles") { rolesStr =>
             headerValueByName("X-Auth-Email") { email =>
+              import uk.gov.homeoffice.drt.authentication.UserJsonSupport._
+
               complete(User.fromRoles(email, rolesStr))
             }
           }
         },
         (get & path("config")) {
           headerValueByName("X-Auth-Roles") { _ =>
+            import uk.gov.homeoffice.drt.authentication.UserJsonSupport._
             val json = JsObject(Map(
               "ports" -> JsArray(portCodes.map(JsString(_)).toVector),
               "domain" -> JsString(domain)))
@@ -37,7 +39,7 @@ object ApiRoutes {
           headerValueByName("X-Auth-Email") { userEmail =>
             import uk.gov.homeoffice.drt.authentication.AccessRequestJsonSupport._
             entity(as[AccessRequest]) { accessRequest =>
-              notifications.sendRequest(userEmail, accessRequest.ports) match {
+              notifications.sendRequest(userEmail, accessRequest) match {
                 case Success(_) =>
                   complete(StatusCodes.OK)
                 case Failure(exception) =>

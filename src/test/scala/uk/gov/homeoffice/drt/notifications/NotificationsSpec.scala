@@ -3,6 +3,7 @@ package uk.gov.homeoffice.drt.notifications
 import akka.http.scaladsl.testkit.Specs2RouteTest
 import com.typesafe.config.{ Config, ConfigFactory }
 import org.specs2.mutable.Specification
+import uk.gov.homeoffice.drt.authentication.AccessRequest
 
 import scala.util.{ Failure, Success }
 
@@ -16,7 +17,7 @@ class NotificationsSpec extends Specification with Specs2RouteTest {
   "Given a gov notify client" >> {
     "When I send an email with the correct personalisation tokens" >> {
       "Then I should receive a positive response" >> {
-        val success = notifications.sendRequest("drtwannabe@somewhere.com", Seq("BHX, EMA")) match {
+        val success = notifications.sendRequest("drtwannabe@somewhere.com", AccessRequest(Set("BHX, EMA"), true, "")) match {
           case Success(_) => true
           case Failure(t) =>
             println(s"Failed", t)

@@ -50,8 +50,8 @@ object UserJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   }
 }
 
-case class AccessRequest(ports: Set[String])
+case class AccessRequest(portsRequested: Set[String], staffing: Boolean, lineManager: String)
 
 object AccessRequestJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
-  implicit val AccessRequestFormatParser: RootJsonFormat[AccessRequest] = jsonFormat1(AccessRequest)
+  implicit val AccessRequestFormatParser: RootJsonFormat[AccessRequest] = jsonFormat3(AccessRequest)
 }
