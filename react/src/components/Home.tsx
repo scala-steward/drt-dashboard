@@ -63,9 +63,9 @@ export default class Home extends React.Component<IProps, IState> {
       requestFinished: false,
     }
 
-    this.handlePortSelectionChange = this.handlePortSelectionChange.bind(this)
-    this.handleLineManagerChange = this.handleLineManagerChange.bind(this)
-    this.handleAccessRequest = this.handleAccessRequest.bind(this)
+    this.handlePortSelectionChange = this.handlePortSelectionChange.bind(this);
+    this.handleLineManagerChange = this.handleLineManagerChange.bind(this);
+    this.handleAccessRequest = this.handleAccessRequest.bind(this);
   }
 
   componentDidMount() {
