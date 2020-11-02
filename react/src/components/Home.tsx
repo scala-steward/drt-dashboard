@@ -1,5 +1,6 @@
 import React from 'react';
 import axios from 'axios';
+import AxiosRequestConfig from 'axios';
 import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
 import Divider from '@material-ui/core/Divider';
@@ -69,11 +70,18 @@ export default class Home extends React.Component<IProps, IState> {
   }
 
   componentDidMount() {
+    const userEndpoint = "/api/user";
     axios
-      .get("/api/user")
+      .get(userEndpoint)
       .then(res => {
-        let user = res.data as UserLike;
-        this.setState({...this.state, user: user})
+        let responseURL = res.request.responseURL;
+        if (responseURL == userEndpoint) {
+          let user = res.data as UserLike;
+          this.setState({...this.state, user: user})
+        } else {
+          console.log("redirecting to " + responseURL)
+          window.document.location = responseURL;
+        }
       })
       .catch(t => console.log('caught: ' + t))
 

@@ -3,9 +3,9 @@ import './App.css';
 import Home from './components/Home';
 
 function App() {
-  const url = window.document.location;
-  const logoutLink = "/oauth/logout?redirect=" + url
-  
+  const currentLocation = window.document.location;
+  const logoutLink = "/oauth/logout?redirect=" + currentLocation
+
   return (
     <div className="App">
       <header role="banner" id="global-header" className=" with-proposition">
@@ -36,23 +36,7 @@ function App() {
         <div className="footer-wrapper">
           <div className="footer-meta">
             <div className="footer-meta-inner">
-
-              {/*<div className="open-government-licence">*/}
-              {/*  <p className="logo"><a href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"*/}
-              {/*                         rel="license">Open Government Licence</a></p>*/}
-
-              {/*  <p>All content is available under the <a*/}
-              {/*    href="https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/" rel="license">Open*/}
-              {/*    Government Licence v3.0</a>, except where otherwise stated</p>*/}
-
-              {/*</div>*/}
             </div>
-
-            {/*<div className="copyright">*/}
-            {/*  <a*/}
-            {/*    href="http://www.nationalarchives.gov.uk/information-management/re-using-public-sector-information/copyright-and-re-use/crown-copyright/">©*/}
-            {/*    Crown copyright</a>*/}
-            {/*</div>*/}
           </div>
         </div>
       </footer>
