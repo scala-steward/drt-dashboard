@@ -75,12 +75,12 @@ export default class Home extends React.Component<IProps, IState> {
       .get(userEndpoint)
       .then(res => {
         let responseURL = res.request.responseURL;
-        if (responseURL == userEndpoint) {
+        if (res.request.redirected) {
+          console.log("redirecting to " + responseURL);
+          window.document.location = responseURL;
+        } else {
           let user = res.data as UserLike;
           this.setState({...this.state, user: user})
-        } else {
-          console.log("redirecting to " + responseURL)
-          window.document.location = responseURL;
         }
       })
       .catch(t => console.log('caught: ' + t))
