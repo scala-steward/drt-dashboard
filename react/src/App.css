@@ -87,6 +87,10 @@ html {
   margin: 0 15px;
 }
 
+#global-header .logout {
+  float: right;
+}
+
 #global-header .header-proposition #proposition-name {
   font-size: 24px;
   line-height: 1.25;
@@ -94,7 +98,6 @@ html {
 
 #global-header .header-proposition #proposition-name {
   font-family: "nta", Arial, sans-serif;
-  font-weight: 400;
   text-transform: none;
   font-size: 18px;
   line-height: 1.2;
@@ -124,3 +127,6 @@ html {
   font-size: 0;
   color: #454a4c;
 }
+/*
+https://drt-preprod.homeoffice.gov.uk/oauth/logout?redirect=https://drt-preprod.homeoffice.gov.uk/
+ */

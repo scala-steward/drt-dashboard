@@ -3,13 +3,17 @@ import './App.css';
 import Home from './components/Home';
 
 function App() {
+  const url = window.document.location;
+  const logoutLink = "/oauth/logout?redirect=" + url
+  
   return (
     <div className="App">
       <header role="banner" id="global-header" className=" with-proposition">
         <div className="header-wrapper">
           <div className="header-global">
             <div className="header-logo">
-              <a href="https://www.gov.uk" title="Go to the GOV.UK homepage" id="global-header-logo" className="content">
+              <a href="https://www.gov.uk" title="Go to the GOV.UK homepage" id="global-header-logo"
+                 className="content">
                 <img
                   src="images/gov.uk_logotype_crown_invert_trans.png"
                   width="36" height="32" alt=""/> GOV.UK
@@ -17,6 +21,9 @@ function App() {
             </div>
           </div>
           <div className="header-proposition">
+            <div className="logout">
+              <a href={logoutLink} id="proposition-name">Log out</a>
+            </div>
             <div className="content">
               <a href="/" id="proposition-name">Dynamic Response Tool</a>
             </div>
