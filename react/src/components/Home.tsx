@@ -75,15 +75,18 @@ export default class Home extends React.Component<IProps, IState> {
       .get(userEndpoint)
       .then(res => {
         let responseURL = res.request.responseURL;
-        if (res.request.redirected) {
-          console.log("redirecting to " + responseURL);
-          window.document.location = responseURL;
-        } else {
+        // if (res.request.redirected) {
+        //   console.log("redirecting to " + responseURL);
+        //   window.document.location = responseURL;
+        // } else {
           let user = res.data as UserLike;
           this.setState({...this.state, user: user})
-        }
+        // }
       })
-      .catch(t => console.log('caught: ' + t))
+      .catch(t => {
+        console.log('caught: ' + t);
+        window.document.location.reload();
+      })
 
     axios
       .get("/api/config")
@@ -91,7 +94,10 @@ export default class Home extends React.Component<IProps, IState> {
         let config = res.data as Config;
         this.setState({...this.state, config: config})
       })
-      .catch(t => console.log('caught: ' + t))
+      .catch(t => {
+        console.log('caught: ' + t);
+        window.document.location.reload();
+      })
   }
 
   handlePortSelectionChange = (portCode: string) => () => {
