@@ -6,7 +6,7 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.MethodDirectives.get
 import org.slf4j.{ Logger, LoggerFactory }
 import spray.json.{ JsArray, JsObject, JsString }
-import uk.gov.homeoffice.drt.authentication.{ AccessRequest, Roles, User }
+import uk.gov.homeoffice.drt.authentication.{ AccessRequest, User }
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 
 import scala.util.{ Failure, Success }
@@ -39,13 +39,18 @@ object ApiRoutes {
           headerValueByName("X-Auth-Email") { userEmail =>
             import uk.gov.homeoffice.drt.authentication.AccessRequestJsonSupport._
             entity(as[AccessRequest]) { accessRequest =>
-              notifications.sendRequest(userEmail, accessRequest) match {
-                case Success(_) =>
-                  complete(StatusCodes.OK)
-                case Failure(exception) =>
-                  log.error("Failed to send access request email", exception)
-                  complete(StatusCodes.InternalServerError)
+              val failures = notifications.sendRequest(userEmail, accessRequest).foldLeft(List[(String, Throwable)]()) {
+                case (exceptions, (_, Success(_))) => exceptions
+                case (exceptions, (requestAddress, Failure(newException))) => (requestAddress, newException) :: exceptions
               }
+
+              if (failures.nonEmpty) {
+                failures.foreach {
+                  case (failedEmail, exception) =>
+                    log.error(s"Failed to send access request email to $failedEmail", exception)
+                }
+                complete(StatusCodes.InternalServerError)
+              } else complete(StatusCodes.OK)
             }
           }
         })

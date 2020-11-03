@@ -12,7 +12,7 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest {
   private val config: Config = ConfigFactory.load()
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
 
-  val routes: Route = ApiRoutes("api", Array("lhr", "stn"), "somedomain.com", EmailNotifications(apiKey, "access-requests@drt"))
+  val routes: Route = ApiRoutes("api", Array("lhr", "stn"), "somedomain.com", EmailNotifications(apiKey, List("access-requests@drt")))
 
   "Given a uri accessed by a user with an email but no port access, I should see an empty port list and their email address in JSON" >> {
     Get("/api/user") ~>

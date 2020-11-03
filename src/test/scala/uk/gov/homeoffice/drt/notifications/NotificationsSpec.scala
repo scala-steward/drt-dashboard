@@ -10,20 +10,20 @@ import scala.util.{ Failure, Success }
 class NotificationsSpec extends Specification with Specs2RouteTest {
   private val config: Config = ConfigFactory.load()
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
-  val recipient: String = config.getString("dashboard.notifications.access-request-email")
+  val recipient: List[String] = config.getString("dashboard.notifications.access-request-emails").split(",").toList
 
   val notifications: EmailNotifications = EmailNotifications(apiKey, recipient)
 
   "Given a gov notify client" >> {
     "When I send an email with the correct personalisation tokens" >> {
       "Then I should receive a positive response" >> {
-        val success = notifications.sendRequest("drtwannabe@somewhere.com", AccessRequest(Set("BHX, EMA"), true, "")) match {
-          case Success(_) => true
-          case Failure(t) =>
-            println(s"Failed", t)
-        }
+        val someFailures = notifications.sendRequest("drtwannabe@somewhere.com", AccessRequest(Set("BHX, EMA"), true, ""))
+          .exists {
+            case (_, Failure(_)) => true
+            case _ => false
+          }
 
-        success === true
+        someFailures === false
       }
     }
   }

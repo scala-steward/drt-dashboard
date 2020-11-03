@@ -8,10 +8,10 @@ import uk.gov.service.notify.{ NotificationClient, SendEmailResponse }
 import scala.collection.JavaConverters.mapAsJavaMapConverter
 import scala.util.Try
 
-case class EmailNotifications(apiKey: String, accessRequestEmail: String) {
+case class EmailNotifications(apiKey: String, accessRequestEmails: List[String]) {
   val client = new NotificationClient(apiKey)
 
-  def sendRequest(requester: String, accessRequest: AccessRequest): Try[SendEmailResponse] = {
+  def sendRequest(requester: String, accessRequest: AccessRequest): List[(String, Try[SendEmailResponse])] = {
     val staffing = if (accessRequest.staffing) "yes" else "no"
     val manager = if (accessRequest.lineManager.nonEmpty) accessRequest.lineManager else "n/a"
     val personalisation: util.Map[String, String] = Map(
@@ -20,10 +20,13 @@ case class EmailNotifications(apiKey: String, accessRequestEmail: String) {
       "staffing" -> staffing,
       "lineManager" -> manager).asJava
 
-    Try(client.sendEmail(
-      "4c73ba75-87d5-42d7-b6d2-7ff557ae65ed",
-      accessRequestEmail,
-      personalisation,
-      ""))
+    accessRequestEmails.map { accessRequestEmail =>
+      val maybeResponse = Try(client.sendEmail(
+        "4c73ba75-87d5-42d7-b6d2-7ff557ae65ed",
+        accessRequestEmail,
+        personalisation,
+        ""))
+      (accessRequestEmail, maybeResponse)
+    }
   }
 }
