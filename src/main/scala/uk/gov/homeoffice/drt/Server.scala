@@ -29,13 +29,13 @@ object Server {
     ciriumDataUri: String,
     drtDomain: String,
     notifyServiceApiKey: String,
-    accessRequestEmail: String)
+    accessRequestEmails: List[String])
 
   def apply(serverConfig: ServerConfig): Behavior[Message] = Behaviors.setup { ctx =>
     implicit val system: ActorSystem[Nothing] = ctx.system
     implicit val ec: ExecutionContextExecutor = system.executionContext
 
-    val notifications = EmailNotifications(serverConfig.notifyServiceApiKey, serverConfig.accessRequestEmail)
+    val notifications = EmailNotifications(serverConfig.notifyServiceApiKey, serverConfig.accessRequestEmails)
 
     val routes: Route = concat(
       IndexRoute(),

@@ -13,7 +13,7 @@ object DrtDashboardApp extends App {
     portCodes = config.getString("dashboard.port-codes").split(","),
     ciriumDataUri = config.getString("cirium.data-uri"),
     drtDomain = config.getString("drt.domain"),
-    accessRequestEmail = config.getString("dashboard.notifications.access-request-email"),
+    accessRequestEmails = config.getString("dashboard.notifications.access-request-emails").split(",").toList,
     notifyServiceApiKey = config.getString("dashboard.notifications.gov-notify-api-key"))
 
   val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig), "DrtDashboard")
