@@ -1,6 +1,5 @@
 import React from 'react';
-import axios from 'axios';
-import AxiosRequestConfig from 'axios';
+import axios, {AxiosResponse} from 'axios';
 import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
 import Divider from '@material-ui/core/Divider';
@@ -10,6 +9,8 @@ import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Icon from "@material-ui/icons/FlightLand";
 import {TextField, FormControl} from '@material-ui/core';
+
+import ApiClient from '../services/ApiClient';
 
 interface UserLike {
   email: string;
@@ -48,6 +49,8 @@ interface IState {
 }
 
 export default class Home extends React.Component<IProps, IState> {
+  apiClient: ApiClient;
+
   constructor(props: IProps) {
     super(props);
 
@@ -64,59 +67,44 @@ export default class Home extends React.Component<IProps, IState> {
       requestFinished: false,
     }
 
-    this.handlePortSelectionChange = this.handlePortSelectionChange.bind(this);
+    this.apiClient = new ApiClient()
+
     this.handleLineManagerChange = this.handleLineManagerChange.bind(this);
     this.handleAccessRequest = this.handleAccessRequest.bind(this);
   }
 
   componentDidMount() {
-    const userEndpoint = "/api/user";
-    axios
-      .get(userEndpoint)
-      .then(res => {
-        let responseURL = res.request.responseURL;
-        // if (res.request.redirected) {
-        //   console.log("redirecting to " + responseURL);
-        //   window.document.location = responseURL;
-        // } else {
-          let user = res.data as UserLike;
-          this.setState({...this.state, user: user})
-        // }
-      })
-      .catch(t => {
-        console.log('caught: ' + t);
-        window.document.location.reload();
-      })
-
-    axios
-      .get("/api/config")
-      .then(res => {
-        let config = res.data as Config;
-        this.setState({...this.state, config: config})
-      })
-      .catch(t => {
-        console.log('caught: ' + t);
-        window.document.location.reload();
-      })
+    this.apiClient.fetchData(this.apiClient.userEndPoint, this.updateUserState);
+    this.apiClient.fetchData(this.apiClient.configEndPoint, this.updateConfigState);
   }
 
-  handlePortSelectionChange = (portCode: string) => () => {
-    let newPortsRequested: string[] = this.state.accessForm.portsRequested;
+  updateUserState = (response: AxiosResponse) => {
+    let user = response.data as UserLike;
+    this.setState({...this.state, user: user});
+  }
 
-    if (this.state.accessForm.portsRequested.indexOf(portCode) === -1)
+  updateConfigState = (response: AxiosResponse) => {
+    let config = response.data as Config;
+    this.setState({...this.state, config: config});
+  }
+
+  handlePortSelectionChange = (portCode: string, state: IState) => () => {
+    let newPortsRequested: string[] = state.accessForm.portsRequested;
+
+    if (state.accessForm.portsRequested.indexOf(portCode) === -1)
       newPortsRequested.push(portCode);
     else
-      newPortsRequested = this.state.accessForm.portsRequested.filter(p => p !== portCode);
+      newPortsRequested = state.accessForm.portsRequested.filter(p => p !== portCode);
 
-    const updatedAccessForm = {...this.state.accessForm, portsRequested: newPortsRequested}
+    const updatedAccessForm = {...state.accessForm, portsRequested: newPortsRequested}
 
-    this.setState({...this.state, accessForm: updatedAccessForm});
+    return {...state, accessForm: updatedAccessForm}
   };
 
-  handleLineManagerChange(event: React.ChangeEvent<HTMLInputElement>) {
-    const updatedAccessForm = {...this.state.accessForm, lineManager: event.target.value}
+  handleLineManagerChange = (newValue: string) => {
+    const updatedAccessForm = {...this.state.accessForm, lineManager: newValue}
 
-    this.setState({...this.state, accessForm: updatedAccessForm});
+    return {...this.state, accessForm: updatedAccessForm};
   };
 
   toggleStaffing = () => {
@@ -130,13 +118,10 @@ export default class Home extends React.Component<IProps, IState> {
     this.setState({...this.state, accessForm: updatedAccessForm});
   };
 
-  handleAccessRequest(_: React.MouseEvent<HTMLButtonElement>) {
-    axios
-      .post("/api/request-access", this.state.accessForm)
-      .then(_ => {
-        this.setState({...this.state, requestFinished: true})
-      })
-      .catch(t => console.log('caught: ' + t))
+  setRequestFinished = (state: IState) => () => this.setState({...state, requestFinished: true})
+
+  handleAccessRequest = (state: IState, handleResponse: (state: IState) => (r: AxiosResponse) => void) => {
+    this.apiClient.sendData(this.apiClient.requestAccessEndPoint, state.accessForm, handleResponse(state));
   }
 
   render() {
@@ -164,7 +149,7 @@ export default class Home extends React.Component<IProps, IState> {
       <p>Please select the ports you require access to</p>
       <List>
         {portsAvailable.map((portCode) => {
-          return <ListItem button onClick={this.handlePortSelectionChange(portCode)}>
+          return <ListItem button onClick={() => this.setState(this.handlePortSelectionChange(portCode, this.state))}>
             <ListItemIcon>
               <Checkbox
                 inputProps={{'aria-labelledby': portCode}}
@@ -193,14 +178,14 @@ export default class Home extends React.Component<IProps, IState> {
               label="Line manager's email address"
               helperText="Optional. May be helpful if we need to query your request"
               variant="outlined"
-              onChange={this.handleLineManagerChange}
+              onChange={event => this.setState(this.handleLineManagerChange(event.target.value))}
             />
           </FormControl>
         </ListItem>
       </List>
 
       <Button disabled={accessForm.portsRequested.length === 0}
-              onClick={this.handleAccessRequest}
+              onClick={() => this.handleAccessRequest(this.state, this.setRequestFinished)}
               variant="contained"
               color="primary">
         Request access
