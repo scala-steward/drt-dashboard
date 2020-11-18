@@ -47,7 +47,7 @@ export default class Home extends React.Component<IProps, IState> {
       }
     }
 
-    this.apiClient = new ApiClient()
+    this.apiClient = new ApiClient();
   }
 
   componentDidMount() {

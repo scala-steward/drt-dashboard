@@ -23,7 +23,7 @@ export default class PortList extends React.Component<IProps> {
           return <div key={portCode}>
             <ListItem button component="a" href={url} id={"port-link-" + portCodeLC}>
               <ListItemIcon><Icon/></ListItemIcon>
-              <ListItemText primary={portCode}/>
+              <ListItemText primary={portCode.toUpperCase()}/>
             </ListItem>
             <Divider variant="inset" component="li" />
           </div>
