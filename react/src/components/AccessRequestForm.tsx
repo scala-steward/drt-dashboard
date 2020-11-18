@@ -81,7 +81,10 @@ export default class AccessRequestForm extends React.Component<IProps, IState> {
       <p>Please select the ports you require access to</p>
       <List>
         {portsAvailable.map((portCode) => {
-          return <ListItem button onClick={() => this.setState(this.handlePortSelectionChange(portCode, this.state))}>
+          return <ListItem
+            button
+            key={portCode}
+            onClick={() => this.setState(this.handlePortSelectionChange(portCode, this.state))}>
             <ListItemIcon>
               <Checkbox
                 inputProps={{'aria-labelledby': portCode}}
@@ -93,7 +96,10 @@ export default class AccessRequestForm extends React.Component<IProps, IState> {
           </ListItem>
         })}
         <Divider/>
-        <ListItem button onClick={() => this.setState(this.toggleStaffing(this.state))}>
+        <ListItem
+          button
+          key={'staffing'}
+          onClick={() => this.setState(this.toggleStaffing(this.state))}>
           <ListItemIcon>
             <Checkbox
               inputProps={{'aria-labelledby': "staffing"}}
@@ -103,7 +109,7 @@ export default class AccessRequestForm extends React.Component<IProps, IState> {
           </ListItemIcon>
           <ListItemText id="staffing" primary="I require staffing access as my role includes planning"/>
         </ListItem>
-        <ListItem>
+        <ListItem key={'line-manager'}>
           <FormControl fullWidth>
             <TextField
               id="outlined-helperText"

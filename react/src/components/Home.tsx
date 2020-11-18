@@ -3,7 +3,7 @@ import {AxiosResponse} from 'axios';
 
 import ApiClient from '../services/ApiClient';
 import AccessRequestForm from "./AccessRequestForm";
-import PortsList from "./PortsList";
+import PortList from "./PortList";
 
 
 interface UserLike {
@@ -73,7 +73,7 @@ export default class Home extends React.Component<IProps, IState> {
     else if (this.state.user.ports.length === 0)
       content = <AccessRequestForm ports={this.state.config.ports}/>
     else
-      content = <PortsList ports={this.state.user.ports} drtDomain={this.state.config.domain} />
+      content = <PortList ports={this.state.user.ports} drtDomain={this.state.config.domain} />
 
     return (
       <header className="App-header">

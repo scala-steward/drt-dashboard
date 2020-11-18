@@ -12,19 +12,20 @@ interface IProps {
   drtDomain: string;
 }
 
-export default class PortsList extends React.Component<IProps> {
+export default class PortList extends React.Component<IProps> {
   render() {
     return <div>
       <p>Select your destination</p>
       <List>
         {this.props.ports.map((portCode) => {
-          const url = 'https://' + portCode + '.' + this.props.drtDomain;
-          return <div>
-            <ListItem button component="a" href={url}>
+          let portCodeLC = portCode.toLowerCase();
+          const url = 'https://' + portCodeLC + '.' + this.props.drtDomain;
+          return <div key={portCode}>
+            <ListItem button component="a" href={url} id={"port-link-" + portCodeLC}>
               <ListItemIcon><Icon/></ListItemIcon>
               <ListItemText primary={portCode}/>
             </ListItem>
-            <Divider variant="inset" component="li"/>
+            <Divider variant="inset" component="li" />
           </div>
         })}
       </List>
