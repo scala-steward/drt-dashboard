@@ -11,7 +11,8 @@ class AccessRequestSpec extends Specification with Specs2RouteTest {
     import AccessRequestJsonSupport._
     val request = string.parseJson.convertTo[AccessRequest]
 
-    println(s"request: $request")
-    true
+    val expected = AccessRequest(Set("bhx", "lhr"), staffing = true, "someone@somewhere.com")
+
+    request === expected
   }
 }
