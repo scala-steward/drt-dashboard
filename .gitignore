@@ -2,3 +2,5 @@
 .idea
 target/
 *.sc
+react/build
+src/main/resources/frontend

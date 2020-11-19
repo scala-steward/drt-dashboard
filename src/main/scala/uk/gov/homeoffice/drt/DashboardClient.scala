@@ -3,7 +3,7 @@ package uk.gov.homeoffice.drt
 import akka.actor.ClassicActorSystemProvider
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.HttpHeader.ParsingResult.Ok
-import akka.http.scaladsl.model.{HttpHeader, HttpMethods, HttpRequest, HttpResponse}
+import akka.http.scaladsl.model.{ HttpHeader, HttpMethods, HttpRequest, HttpResponse }
 
 import scala.concurrent.Future
 
@@ -19,7 +19,6 @@ object DashboardClient {
     }
 
     Http().singleRequest(
-      HttpRequest(HttpMethods.GET, uri, roleHeader.toList)
-    )
+      HttpRequest(HttpMethods.GET, uri, roleHeader.toList))
   }
 }

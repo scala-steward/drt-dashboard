@@ -2,14 +2,19 @@ package uk.gov.homeoffice.drt
 
 import akka.actor.typed.ActorSystem
 import com.typesafe.config.ConfigFactory
+import uk.gov.homeoffice.drt.Server.ServerConfig
 
 object DrtDashboardApp extends App {
   val config = ConfigFactory.load()
 
-  val serverHost = config.getString("server.host")
-  val serverPort = config.getInt("server.port")
-  val portCodes = config.getString("dashboard.port-codes").split(",")
-  val ciriumDataUri = config.getString("cirium.data-uri")
+  val serverConfig = ServerConfig(
+    host = config.getString("server.host"),
+    port = config.getInt("server.port"),
+    portCodes = config.getString("dashboard.port-codes").split(","),
+    ciriumDataUri = config.getString("cirium.data-uri"),
+    drtDomain = config.getString("drt.domain"),
+    accessRequestEmails = config.getString("dashboard.notifications.access-request-emails").split(",").toList,
+    notifyServiceApiKey = config.getString("dashboard.notifications.gov-notify-api-key"))
 
-  val system: ActorSystem[Server.Message] = ActorSystem(Server(serverHost, serverPort, portCodes, ciriumDataUri), "DrtDashboard")
+  val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig), "DrtDashboard")
 }
