@@ -53,16 +53,18 @@ lazy val root = (project in file(".")).
   .enablePlugins(DockerPlugin)
   .enablePlugins(JavaAppPackaging)
 
-lazy val npmInstall = taskKey[Unit]("NPM install")
-npmInstall := {
-  val cwd = System.getProperty("user.dir")
-  scala.sys.process.Process("npm install", new File(cwd + "/react")).!
+lazy val yarnInstall = taskKey[Unit]("yarn install")
+
+val cwd = System.getProperty("user.dir")
+val reactAppDir: sbt.File = new File(cwd + "/react")
+
+yarnInstall := {
+  scala.sys.process.Process("yarn install", reactAppDir).!
 }
 
 lazy val buildReactApp = taskKey[Unit]("Build react app")
 buildReactApp := {
-  val cwd = System.getProperty("user.dir")
-  scala.sys.process.Process("yarn build", new File(cwd + "/react")).!
+  scala.sys.process.Process("yarn build", reactAppDir).!
   scala.sys.process.Process(s"rm -rf $cwd/src/main/resources/frontend").!
   scala.sys.process.Process(s"mv build $cwd/src/main/resources/frontend", new File(cwd + "/react")).!
 }
