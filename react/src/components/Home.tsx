@@ -11,16 +11,6 @@ interface UserLike {
   ports: string[];
 }
 
-class User implements UserLike {
-  email: string;
-  ports: string[];
-
-  constructor(email: string, ports: string[]) {
-    this.email = email;
-    this.ports = ports;
-  }
-}
-
 interface Config {
   ports: string[];
   domain: string;
@@ -30,8 +20,8 @@ interface IProps {
 }
 
 interface IState {
-  user?: User;
-  config: Config;
+  user?: UserLike;
+  config?: Config;
 }
 
 export default class Home extends React.Component<IProps, IState> {
@@ -40,14 +30,8 @@ export default class Home extends React.Component<IProps, IState> {
   constructor(props: IProps) {
     super(props);
 
-    this.state = {
-      config: {
-        ports: [],
-        domain: "",
-      }
-    }
-
     this.apiClient = new ApiClient();
+    this.state = {};
   }
 
   componentDidMount() {
@@ -68,18 +52,18 @@ export default class Home extends React.Component<IProps, IState> {
   render() {
     let content;
 
-    if (this.state.user === undefined)
-      content = <p>Loading..</p>
+    if (this.state.user === undefined || this.state.config === undefined)
+      content = <p>Loading..</p>;
     else if (this.state.user.ports.length === 0)
-      content = <AccessRequestForm ports={this.state.config.ports}/>
+      content = <AccessRequestForm ports={this.state.config.ports}/>;
     else
-      content = <PortList ports={this.state.user.ports} drtDomain={this.state.config.domain} />
+      content = <PortList ports={this.state.user.ports} drtDomain={this.state.config.domain} />;
 
     return (
       <header className="App-header">
         <h1>Welcome to DRT</h1>
         {content}
       </header>
-    )
+    );
   }
 }

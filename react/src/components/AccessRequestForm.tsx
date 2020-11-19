@@ -35,7 +35,7 @@ export default class AccessRequestForm extends React.Component<IProps, IState> {
       requestSubmitted: false,
     }
 
-    this.apiClient = new ApiClient()
+    this.apiClient = new ApiClient();
 
     this.handleAccessRequest = this.handleAccessRequest.bind(this);
   }
@@ -59,7 +59,7 @@ export default class AccessRequestForm extends React.Component<IProps, IState> {
     return {...state, staffing: !state.staffing};
   };
 
-  setRequestFinished = (state: IState) => () => this.setState({...state, requestSubmitted: true})
+  setRequestFinished = (state: IState) => () => this.setState({...state, requestSubmitted: true});
 
   handleAccessRequest = (state: IState, handleResponse: (state: IState) => (r: AxiosResponse) => void) => {
     this.apiClient.sendData(this.apiClient.requestAccessEndPoint, state, handleResponse(state));
@@ -69,11 +69,11 @@ export default class AccessRequestForm extends React.Component<IProps, IState> {
     let content;
 
     if (this.state.requestSubmitted)
-      content = <div>Thanks for your request. We'll get back to you shortly</div>
+      content = <div>Thanks for your request. We'll get back to you shortly</div>;
     else
       content = this.form(this.props.ports, this.state);
 
-    return content
+    return content;
   }
 
   private form(portsAvailable: string[], accessForm: IState) {
