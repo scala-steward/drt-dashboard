@@ -1,8 +1,9 @@
 package uk.gov.homeoffice.drt.authentication
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import spray.json.{ DefaultJsonProtocol, JsArray, JsBoolean, JsObject, JsString, JsValue, RootJsonFormat }
-import uk.gov.homeoffice.drt.authentication.Roles.{ BorderForceStaff, PortAccess, Role, Staff }
+import spray.json.{ DefaultJsonProtocol, JsArray, JsObject, JsString, JsValue, RootJsonFormat }
+import uk.gov.homeoffice.drt.auth.Roles
+import uk.gov.homeoffice.drt.auth.Roles.{ PortAccess, Role, Staff }
 
 case class User(email: String, roles: Set[Role]) {
   def hasStaffCredential: Boolean = roles.exists(_.isInstanceOf[Staff])

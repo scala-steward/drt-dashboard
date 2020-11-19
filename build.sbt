@@ -7,6 +7,7 @@ lazy val scalaLoggingVersion = "3.9.2"
 lazy val logBackClassicVersion = "1.1.3"
 lazy val scalaTagsVersion = "0.8.2"
 lazy val drtCirium = "56"
+lazy val drtLib = "36"
 lazy val logBackJsonVersion = "0.1.5"
 lazy val specs2Version = "4.6.0"
 
@@ -32,6 +33,7 @@ lazy val root = (project in file(".")).
       "ch.qos.logback" % "logback-classic" % logBackClassicVersion % Runtime,
       "com.lihaoyi" %% "scalatags" % scalaTagsVersion,
       "uk.gov.homeoffice" %% "drt-cirium" % drtCirium,
+      "uk.gov.homeoffice" %% "drt-lib" % drtLib,
       "ch.qos.logback.contrib" % "logback-json-classic" % logBackJsonVersion,
       "ch.qos.logback.contrib" % "logback-jackson" % logBackJsonVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.2",

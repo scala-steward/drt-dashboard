@@ -5,7 +5,7 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.Specs2RouteTest
 import com.typesafe.config.{ Config, ConfigFactory }
 import org.specs2.mutable.Specification
-import uk.gov.homeoffice.drt.authentication.Roles.{ BorderForceStaff, LHR }
+import uk.gov.homeoffice.drt.auth.Roles.{ BorderForceStaff, LHR }
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 
 class ApiRoutesSpec extends Specification with Specs2RouteTest {
