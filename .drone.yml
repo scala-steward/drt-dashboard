@@ -10,6 +10,9 @@ pipeline:
     secrets:
       - ARTIFACTORY_PASSWORD
       - GOV_NOTIFY_API_KEY
+      - ACCESS_REQUEST_EMAIL
+      - DRT_DOMAIN
+      - PORT_CODES
     when:
       event:
         - push
