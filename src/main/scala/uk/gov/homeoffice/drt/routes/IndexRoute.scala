@@ -16,13 +16,15 @@ object IndexRoute {
         //            log.info(s"Referer: $referer")
         //            getFromResource("frontend/index.html")
         //          case _ =>
-        r.request.headers.foreach(h => log.info(s"header: ${h.name()}: ${h.value()}"))
         //            getFromResource("frontend/index.html")
+        r.request.headers.foreach(h => log.info(s"header: ${h.name()}: ${h.value()}"))
         r.complete("yeah")
         //        }
       },
-      (get & pathPrefix("")) {
-        getFromResourceDirectory("frontend")
+      (get & pathPrefix("")) { r =>
+        r.request.headers.foreach(h => log.info(s"header: ${h.name()}: ${h.value()}"))
+        r.complete("yeah")
+        //        getFromResourceDirectory("frontend")
       },
       (get & pathPrefix("static")) {
         getFromResourceDirectory("frontend/static")
