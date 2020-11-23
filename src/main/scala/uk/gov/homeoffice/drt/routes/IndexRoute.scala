@@ -11,7 +11,7 @@ object IndexRoute {
   def apply(): Route = {
     concat(
       path("") {
-        optionalHeaderValueByName("") {
+        optionalHeaderValueByName("Referer") {
           case Some(referer) =>
             log.info(s"Referer: $referer")
             getFromResource("frontend/index.html")
