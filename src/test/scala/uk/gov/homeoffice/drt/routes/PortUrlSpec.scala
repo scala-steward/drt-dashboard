@@ -11,9 +11,9 @@ class PortUrlSpec extends Specification {
 
         val portCode = portCodeFromUrl(lhrUrl)
 
-        val expected = "lhr"
+        val expected = Option("LHR")
 
-        portCode === Option(expected)
+        portCode === expected
       }
     }
   }
