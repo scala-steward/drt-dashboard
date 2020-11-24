@@ -39,6 +39,7 @@ object IndexRoute {
               directoryResource
             }
           case _ =>
+            log.info(s"maybeReferer: $maybeReferer")
             log.info(s"Presenting application to user with roles ($maybeRoles)")
             directoryResource
         }
