@@ -68,9 +68,15 @@ export default class AccessRequestForm extends React.Component<IProps, IState> {
   render() {
     let content;
 
-    if (this.state.requestSubmitted)
-      content = <div>Thanks for your request. We'll get back to you shortly</div>;
-    else
+    if (this.state.requestSubmitted) {
+      setTimeout(function(){
+        window.location.href = "/oauth/logout?redirect=" + window.location;
+      }, 5000);
+      content = <div>
+        <p>Thanks for your request. We'll get back to you shortly></p>
+        <p>You will be logged out automatically in a moment</p>
+      </div>;
+    } else
       content = this.form(this.props.ports, this.state);
 
     return content;
