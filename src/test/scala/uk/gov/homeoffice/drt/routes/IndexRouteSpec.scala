@@ -42,9 +42,8 @@ class IndexRouteSpec extends Specification with Specs2RouteTest {
 
   "A user with referer uri for LHR, and role access to LHR should get redirected back to LHR' logout url" >> {
     val lhrUrl = urlForPort(LHR.name, domain)
-    Get("/") ~>
-      RawHeader("X-Auth-Roles", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~>
-      RawHeader("Referer", lhrUrl + "/") ~> routes ~> check {
+    Get("/?fromPort=lhr") ~>
+      RawHeader("X-Auth-Roles", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~> routes ~> check {
         val isTempRedirected = status shouldEqual StatusCodes.TemporaryRedirect
         val isLhrLogoutUrl = header("Location") shouldEqual Option(Location(s"$lhrUrl/oauth/logout?redirect=$lhrUrl"))
         isTempRedirected && isLhrLogoutUrl
