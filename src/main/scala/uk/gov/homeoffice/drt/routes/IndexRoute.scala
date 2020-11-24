@@ -13,8 +13,10 @@ object IndexRoute {
 
   def apply(indexResource: Route, directoryResource: Route, staticResourceDirectory: Route, domain: String): Route = {
     concat(
-      path("") {
-        indexRouteDirectives(indexResource, domain)
+      path("") { r =>
+        r.request.headers.foreach(h => log.info(s"Header: ${h.name()}: ${h.value()}"))
+        r.complete("yup")
+        //indexRouteDirectives(indexResource, domain)
       },
       (get & pathPrefix("")) {
         directoryResource
