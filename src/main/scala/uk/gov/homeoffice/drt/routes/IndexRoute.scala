@@ -30,14 +30,16 @@ object IndexRoute {
         (maybeReferer.flatMap(portCodeFromUrl), maybeRoles) match {
           case (Some(portCode), Some(rolesStr)) =>
             val user = User.fromRoles("", rolesStr)
-            if (user.accessiblePorts.contains(portCode))
-              redirect(logoutUrlForPort(portCode, domain), StatusCodes.TemporaryRedirect)
-            else {
-              println(s"$portCode port not accessible $rolesStr, ${user.accessiblePorts}")
+            if (user.accessiblePorts.contains(portCode)) {
+              val portLogoutUrl = logoutUrlForPort(portCode, domain)
+              log.info(s"Redirecting back to $portCode ($portLogoutUrl)")
+              redirect(portLogoutUrl, StatusCodes.TemporaryRedirect)
+            } else {
+              log.info(s"Presenting application to user with roles ($rolesStr). $portCode port not accessible. Accessible ports: ${user.accessiblePorts}")
               directoryResource
             }
           case _ =>
-            println(s"No redirect or no access to redirected port: $maybeReferer, $maybeRoles")
+            log.info(s"Presenting application to user with roles ($maybeRoles)")
             directoryResource
         }
       }
