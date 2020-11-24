@@ -40,6 +40,7 @@ object Server {
     val routes: Route = concat(
       IndexRoute(
         indexResource = getFromResource("frontend/index.html"),
+        directoryResource = getFromResourceDirectory("frontend"),
         staticResourceDirectory = getFromResourceDirectory("frontend/static"), serverConfig.drtDomain),
       CiriumRoutes("cirium", serverConfig.ciriumDataUri),
       DrtRoutes("drt", serverConfig.portCodes),
