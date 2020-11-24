@@ -4,7 +4,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ ActorSystem, Behavior, PostStop }
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
-import akka.http.scaladsl.server.Directives.concat
+import akka.http.scaladsl.server.Directives.{ concat, getFromResource, getFromResourceDirectory }
 import akka.http.scaladsl.server.Route
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.routes.{ ApiRoutes, CiriumRoutes, DrtRoutes, IndexRoute }
@@ -38,7 +38,9 @@ object Server {
     val notifications = EmailNotifications(serverConfig.notifyServiceApiKey, serverConfig.accessRequestEmails)
 
     val routes: Route = concat(
-      IndexRoute(),
+      IndexRoute(
+        indexResource = getFromResource("frontend/index.html"),
+        staticResourceDirectory = getFromResourceDirectory("frontend/static"), serverConfig.drtDomain),
       CiriumRoutes("cirium", serverConfig.ciriumDataUri),
       DrtRoutes("drt", serverConfig.portCodes),
       ApiRoutes("api", serverConfig.portCodes, serverConfig.drtDomain, notifications))
