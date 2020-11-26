@@ -8,14 +8,14 @@ import akka.http.scaladsl.testkit.Specs2RouteTest
 import com.typesafe.config.{ Config, ConfigFactory }
 import org.specs2.mutable.Specification
 import uk.gov.homeoffice.drt.auth.Roles.{ BHX, BorderForceStaff, LHR }
-import uk.gov.homeoffice.drt.routes.PortUrl.urlForPort
+import uk.gov.homeoffice.drt.routes.Urls.urlForPort
 
 class IndexRouteSpec extends Specification with Specs2RouteTest {
   private val config: Config = ConfigFactory.load()
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
 
   private val domain = "somedomain.com"
-  val routes: Route = IndexRoute.indexRouteDirectives(complete("the app"), domain)
+  val routes: Route = IndexRoute.indexRouteDirectives(complete("the app"))
 
   "A user with no port access and no referer should see the application" >> {
     Get("/") ~>
@@ -32,7 +32,7 @@ class IndexRouteSpec extends Specification with Specs2RouteTest {
   }
 
   "A user with referer uri for LHR, and no role access to LHR should see the application" >> {
-    val lhrUrl = urlForPort(LHR.name, domain)
+    val lhrUrl = urlForPort(LHR.name)
     Get("/") ~>
       RawHeader("X-Auth-Roles", Seq(BorderForceStaff.name, BHX.name).mkString(",")) ~>
       RawHeader("Referer", lhrUrl + "/") ~> routes ~> check {
@@ -41,7 +41,7 @@ class IndexRouteSpec extends Specification with Specs2RouteTest {
   }
 
   "A user with referer uri for LHR, and role access to LHR should get redirected back to LHR' logout url" >> {
-    val lhrUrl = urlForPort(LHR.name, domain)
+    val lhrUrl = urlForPort(LHR.name)
     Get("/?fromPort=lhr") ~>
       RawHeader("X-Auth-Roles", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~> routes ~> check {
         val isTempRedirected = status shouldEqual StatusCodes.TemporaryRedirect

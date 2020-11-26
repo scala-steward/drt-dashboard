@@ -6,15 +6,15 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.MethodDirectives.get
 import org.slf4j.{ Logger, LoggerFactory }
 import uk.gov.homeoffice.drt.authentication.User
-import uk.gov.homeoffice.drt.routes.PortUrl.{ logoutUrlForPort, portCodeFromUrl }
+import uk.gov.homeoffice.drt.routes.Urls.{ logoutUrlForPort, portCodeFromUrl, rootUrl }
 
 object IndexRoute {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def apply(indexResource: Route, directoryResource: Route, staticResourceDirectory: Route, domain: String): Route = {
+  def apply(indexResource: Route, directoryResource: Route, staticResourceDirectory: Route): Route = {
     concat(
       path("") {
-        indexRouteDirectives(indexResource, domain)
+        indexRouteDirectives(indexResource)
       },
       (get & pathPrefix("")) {
         directoryResource
@@ -24,19 +24,19 @@ object IndexRoute {
       })
   }
 
-  def indexRouteDirectives(directoryResource: Route, domain: String): Route = {
+  def indexRouteDirectives(directoryResource: Route): Route = {
     parameterMap { params =>
       optionalHeaderValueByName("X-Auth-Roles") { maybeRoles =>
         (params.get("fromPort").flatMap(portCodeFromUrl), maybeRoles) match {
           case (Some(portCode), Some(rolesStr)) =>
             val user = User.fromRoles("", rolesStr)
             if (user.accessiblePorts.contains(portCode)) {
-              val portLogoutUrl = logoutUrlForPort(portCode, domain)
+              val portLogoutUrl = logoutUrlForPort(portCode)
               log.info(s"Redirecting back to $portCode ($portLogoutUrl)")
               redirect(portLogoutUrl, StatusCodes.TemporaryRedirect)
             } else {
-              log.info(s"Presenting application to user with roles ($rolesStr). $portCode port not accessible. Accessible ports: ${user.accessiblePorts}")
-              directoryResource
+              log.info(s"Redirecting to root url as originating $portCode is not available to user")
+              redirect(rootUrl, StatusCodes.TemporaryRedirect)
             }
           case _ =>
             log.info(s"Presenting application to user with roles ($maybeRoles)")

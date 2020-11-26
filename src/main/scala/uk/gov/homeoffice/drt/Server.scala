@@ -41,7 +41,7 @@ object Server {
       IndexRoute(
         indexResource = getFromResource("frontend/index.html"),
         directoryResource = getFromResourceDirectory("frontend"),
-        staticResourceDirectory = getFromResourceDirectory("frontend/static"), serverConfig.drtDomain),
+        staticResourceDirectory = getFromResourceDirectory("frontend/static")),
       CiriumRoutes("cirium", serverConfig.ciriumDataUri),
       DrtRoutes("drt", serverConfig.portCodes),
       ApiRoutes("api", serverConfig.portCodes, serverConfig.drtDomain, notifications))
