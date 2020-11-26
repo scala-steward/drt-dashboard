@@ -65,7 +65,7 @@ export default class AccessRequestForm extends React.Component<IProps, IState> {
     this.apiClient.sendData(this.apiClient.requestAccessEndPoint, state, handleResponse(state));
   }
 
-  logout = () => this.apiClient.fetchData(this.apiClient.logoutEndPoint, () => {
+  logUserOut = () => this.apiClient.fetchData(this.apiClient.logoutEndPoint, () => {
     console.log('user has been logged out');
     return null;
   })
@@ -74,14 +74,10 @@ export default class AccessRequestForm extends React.Component<IProps, IState> {
     let content;
 
     if (this.state.requestSubmitted) {
-      // setTimeout(function () {
-      //   window.location.href = "/oauth/logout?redirect=" + window.location;
-      // }, 5000);
-      this.logout();
-      
+      this.logUserOut();
+
       content = <div>
-        <p>Thanks for your request. We'll get back to you shortly></p>
-        <p>You will be logged out automatically in a moment</p>
+        <p>Thanks for your request. We'll get back to you shortly</p>
       </div>;
     } else
       content = this.form(this.props.ports, this.state);
