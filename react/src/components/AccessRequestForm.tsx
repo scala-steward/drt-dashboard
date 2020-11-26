@@ -65,12 +65,21 @@ export default class AccessRequestForm extends React.Component<IProps, IState> {
     this.apiClient.sendData(this.apiClient.requestAccessEndPoint, state, handleResponse(state));
   }
 
+  logUserOut = () => this.apiClient.fetchData(this.apiClient.logoutEndPoint, () => {
+    console.log('user has been logged out');
+    return null;
+  })
+
   render() {
     let content;
 
-    if (this.state.requestSubmitted)
-      content = <div>Thanks for your request. We'll get back to you shortly</div>;
-    else
+    if (this.state.requestSubmitted) {
+      this.logUserOut();
+
+      content = <div>
+        <p>Thanks for your request. We'll get back to you shortly</p>
+      </div>;
+    } else
       content = this.form(this.props.ports, this.state);
 
     return content;
