@@ -9,6 +9,7 @@ export default class ApiClient implements IApiClient {
   public userEndPoint = "/api/user";
   public configEndPoint = "/api/config";
   public requestAccessEndPoint = "/api/request-access";
+  public logoutEndPoint = "/oauth/logout";
 
   public fetchData(userEndPoint: string, handleResponse: (r: AxiosResponse) => void) {
     axios
