@@ -27,7 +27,8 @@ object Server {
     port: Int,
     portCodes: Array[String],
     ciriumDataUri: String,
-    drtDomain: String,
+    rootDomain: String,
+    useHttps: Boolean,
     notifyServiceApiKey: String,
     accessRequestEmails: List[String])
 
@@ -37,14 +38,17 @@ object Server {
 
     val notifications = EmailNotifications(serverConfig.notifyServiceApiKey, serverConfig.accessRequestEmails)
 
+    val urls = Urls(serverConfig.rootDomain, serverConfig.useHttps)
+
     val routes: Route = concat(
       IndexRoute(
+        urls,
         indexResource = getFromResource("frontend/index.html"),
         directoryResource = getFromResourceDirectory("frontend"),
-        staticResourceDirectory = getFromResourceDirectory("frontend/static")),
+        staticResourceDirectory = getFromResourceDirectory("frontend/static")).route,
       CiriumRoutes("cirium", serverConfig.ciriumDataUri),
       DrtRoutes("drt", serverConfig.portCodes),
-      ApiRoutes("api", serverConfig.portCodes, serverConfig.drtDomain, notifications))
+      ApiRoutes("api", serverConfig.portCodes, serverConfig.rootDomain, notifications))
 
     val serverBinding: Future[Http.ServerBinding] = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
 
