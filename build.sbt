@@ -10,7 +10,7 @@ lazy val specs2Version = "4.6.0"
 lazy val logBackJsonVersion = "0.1.5"
 
 lazy val drtCiriumVersion = "56"
-lazy val drtLibVersion = "41"
+lazy val drtLibVersion = "52"
 
 lazy val root = (project in file(".")).
   settings(

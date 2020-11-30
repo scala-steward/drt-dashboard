@@ -12,7 +12,8 @@ object DrtDashboardApp extends App {
     port = config.getInt("server.port"),
     portCodes = config.getString("dashboard.port-codes").split(","),
     ciriumDataUri = config.getString("cirium.data-uri"),
-    drtDomain = config.getString("drt.domain"),
+    rootDomain = config.getString("drt.domain"),
+    useHttps = config.getBoolean("drt.use-https"),
     accessRequestEmails = config.getString("dashboard.notifications.access-request-emails").split(",").toList,
     notifyServiceApiKey = config.getString("dashboard.notifications.gov-notify-api-key"))
 
