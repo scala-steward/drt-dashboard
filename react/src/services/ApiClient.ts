@@ -10,6 +10,7 @@ export default class ApiClient implements IApiClient {
   public configEndPoint = "/api/config";
   public requestAccessEndPoint = "/api/request-access";
   public logoutEndPoint = "/oauth/logout";
+  public alertsEndPoint = "/api/alerts";
 
   public fetchData(userEndPoint: string, handleResponse: (r: AxiosResponse) => void) {
     axios
@@ -27,6 +28,6 @@ export default class ApiClient implements IApiClient {
 
   handleAjaxException(endPoint: string, throwable: any) {
     console.log('caught: ' + throwable);
-    window.document.location.reload();
+    // window.document.location.reload();
   }
 }

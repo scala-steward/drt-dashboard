@@ -16,9 +16,8 @@ case class User(email: String, roles: Set[Role]) {
 }
 
 object User {
-  def fromRoles(email: String, roles: String): User = {
+  def fromRoles(email: String, roles: String): User =
     User(email, roles.split(",").flatMap(Roles.parse).toSet)
-  }
 }
 
 object UserJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
@@ -35,6 +34,7 @@ object UserJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit object UserFormatParser extends RootJsonFormat[User] {
     override def write(user: User): JsValue = JsObject(Map(
       "ports" -> JsArray(user.accessiblePorts.map(JsString(_)).toVector),
+      "roles" -> JsArray(user.roles.map(r => JsString(r.name)).toVector),
       "email" -> JsString(user.email)))
 
     override def read(json: JsValue): User = json match {
@@ -49,6 +49,7 @@ object UserJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
         }
     }
   }
+
 }
 
 case class AccessRequest(portsRequested: Set[String], staffing: Boolean, lineManager: String)
