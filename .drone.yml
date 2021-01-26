@@ -6,7 +6,7 @@ pipeline:
       - /root/entrypoint.sh
       - sbt test yarnInstall buildReactApp docker:stage
     environment:
-      - ARTIFACTORY_USERNAME=ben.eppel@digital.homeoffice.gov.uk
+      - ARTIFACTORY_USERNAME=drt_artifactory_drone
     secrets:
       - ARTIFACTORY_PASSWORD
       - GOV_NOTIFY_API_KEY
