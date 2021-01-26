@@ -6,9 +6,9 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.Specs2RouteTest
 import akka.testkit.TestKit
-import com.typesafe.config.{Config, ConfigFactory}
-import org.specs2.mutable.{Specification, SpecificationLike}
-import uk.gov.homeoffice.drt.auth.Roles.{BorderForceStaff, LHR}
+import com.typesafe.config.{ Config, ConfigFactory }
+import org.specs2.mutable.{ Specification, SpecificationLike }
+import uk.gov.homeoffice.drt.auth.Roles.{ BorderForceStaff, LHR }
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 
 //class ApiRoutesSpec extends TestKit(ActorSystem[Nothing]("dashboard-test")) with SpecificationLike with Specs2RouteTest {

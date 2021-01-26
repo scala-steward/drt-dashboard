@@ -1,7 +1,7 @@
 import React from 'react';
 import './App.css';
 import Home from './components/Home';
-import Alerts from './components/Alerts';
+import Alerts from './components/Alerts/Alerts';
 import {BrowserRouter as Router, Route, Link} from "react-router-dom";
 import ApiClient from "./services/ApiClient";
 import {AxiosResponse} from "axios";

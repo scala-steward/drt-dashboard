@@ -9,6 +9,7 @@ import akka.http.scaladsl.server.directives.RouteDirectives.complete
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
 import org.slf4j.{ Logger, LoggerFactory }
+import uk.gov.homeoffice.drt.auth.Roles
 import uk.gov.homeoffice.drt.pages.{ Drt, Layout }
 import uk.gov.homeoffice.drt.services.drt.FeedJsonSupport._
 import uk.gov.homeoffice.drt.services.drt.{ DashboardPortStatus, FeedSourceStatus }
@@ -39,7 +40,7 @@ object DrtRoutes {
 
   private def eventualPortFeedStatuses(pc: String)(implicit system: ClassicActorSystemProvider, mat: Materializer, ec: ExecutionContext): Future[DashboardPortStatus] = {
     val portFeedStatusUri = Dashboard.drtUriForPortCode(pc) + "/feed-statuses"
-    DashboardClient.getWithRoles(portFeedStatusUri, List(pc.toUpperCase))
+    DashboardClient.getWithRoles(portFeedStatusUri, Roles.parse(pc.toUpperCase).toList)
       .flatMap(res => Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
         .to[List[FeedSourceStatus]]
         .recover {
