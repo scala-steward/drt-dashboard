@@ -7,8 +7,8 @@ import akka.http.scaladsl.server.directives.MethodDirectives.get
 import akka.http.scaladsl.server.{ Directive0, Route }
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import org.slf4j.{ Logger, LoggerFactory }
-import spray.json.{ JsArray, JsObject, JsString, enrichAny }
-import uk.gov.homeoffice.drt.alerts.{ Alert, MultiPortAlert }
+import spray.json.{ JsArray, JsObject, JsString }
+import uk.gov.homeoffice.drt.alerts.{ Alert, MultiPortAlert, MultiPortAlertClient }
 import uk.gov.homeoffice.drt.auth.Roles.{ CreateAlerts, Role }
 import uk.gov.homeoffice.drt.authentication.{ AccessRequest, User }
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
@@ -80,20 +80,8 @@ object ApiRoutes {
                 entity(as[MultiPortAlert]) {
                   multiPortAlert =>
                     {
-
-                      val futureResponses = multiPortAlert.alertForPorts(portCodes.toList).map {
-                        case (portCode, alert) =>
-                          import uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport._
-
-                          val user = User.fromRoles(email, rolesStr)
-                          val json = alert.toJson
-                          val endPoint = s"${Dashboard.drtUriForPortCode(portCode)}/alerts"
-                          log.info(s"Sending new alert to $endPoint")
-                          DashboardClient.postWithRoles(
-                            endPoint,
-                            json.toString(),
-                            user.roles)
-                      }
+                      val user = User.fromRoles(email, rolesStr)
+                      val futureResponses = MultiPortAlertClient.saveAlertsForPorts(portCodes, multiPortAlert, user)
                       complete(Future.sequence(futureResponses).map(_ => StatusCodes.Created))
                     }
                 }
@@ -103,35 +91,32 @@ object ApiRoutes {
         },
         (get & path("alerts")) {
           authByRole(CreateAlerts) {
-            import uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport._
             headerValueByName("X-Auth-Roles") { rolesStr =>
               headerValueByName("X-Auth-Email") { email =>
+                import uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport._
+
                 val user = User.fromRoles(email, rolesStr)
-                val portFutureAlerts: Map[String, Future[List[Alert]]] = user.accessiblePorts.map {
+
+                val futurePortAlerts: Seq[Future[(String, List[Alert])]] = user.accessiblePorts.map {
                   case (portCode) =>
 
-                    import uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport._
-
-                    val portAlertUri = s"${Dashboard.drtUriForPortCode(portCode)}/alerts/0"
                     portCode -> DashboardClient.getWithRoles(
-                      portAlertUri,
+                      s"${Dashboard.drtUriForPortCode(portCode)}/alerts/0",
                       user.roles).flatMap(res => Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
                         .to[List[Alert]]
                         .recover {
                           case e: Throwable =>
-                            log.error(s"Failed to retrieve alerts for $portCode at $portAlertUri")
+                            log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtUriForPortCode(portCode)}/alerts/0")
                             List()
                         })
-
-                }.toMap
-
-                val futurePortAlerts: Seq[Future[(String, List[Alert])]] = portFutureAlerts.toList.map {
-                  case (port, futureAlerts) =>
-                    futureAlerts.map(a => port -> a)
                 }
-                val fa: Future[Map[String, List[Alert]]] = Future.sequence(futurePortAlerts).map(_.toMap)
+                  .toList
+                  .map {
+                    case (port, futureAlerts) =>
+                      futureAlerts.map(a => port -> a)
+                  }
 
-                complete(fa)
+                complete(Future.sequence(futurePortAlerts).map(_.toMap))
               }
             }
           }
@@ -150,5 +135,6 @@ object ApiRoutes {
           }
         })
     }
+
 }
 

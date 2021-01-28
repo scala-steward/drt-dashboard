@@ -43,12 +43,12 @@ export default class App extends React.Component<IProps, IState> {
     }
 
     updateUserState = (response: AxiosResponse) => {
-        let user = response.data as UserLike;
+        const user = response.data as UserLike;
         this.setState({...this.state, user: user});
     }
 
     updateConfigState = (response: AxiosResponse) => {
-        let config = response.data as Config;
+        const config = response.data as Config;
         this.setState({...this.state, config: config});
     }
 

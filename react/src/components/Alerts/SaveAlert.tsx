@@ -62,7 +62,6 @@ export default function SaveAlert(props: IProps) {
         });
 
     const updatePortSelection = (event: React.ChangeEvent<HTMLInputElement>) =>
-
         setState({
             ...state,
             alertPorts: {
@@ -70,17 +69,18 @@ export default function SaveAlert(props: IProps) {
                 [event.target.name]: event.target.checked
             }
         });
-    const updateField = (event: React.ChangeEvent<HTMLInputElement>) => setState({
-        ...state,
-        [event.target.name]: event.target.value
-    })
 
-    const handleChange = (event: React.ChangeEvent<{ value: unknown }>) => {
+    const updateField = (event: React.ChangeEvent<HTMLInputElement>) =>
+        setState({
+            ...state,
+            [event.target.name]: event.target.value
+        })
+
+    const handleChange = (event: React.ChangeEvent<{ value: unknown }>) =>
         setState({
             ...state,
             alertClass: event.target.value as string
-        })
-    };
+        });
 
     const theAlert: AlertLike = {
         title: state.title,
