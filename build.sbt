@@ -42,13 +42,15 @@ lazy val root = (project in file(".")).
 
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
-      "com.typesafe.akka" %% "akka-testkit" % akkaVersion % Test,
+      "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
+
       "org.specs2" %% "specs2-core" % specs2Version % Test
     ),
 
     resolvers += "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/",
     resolvers += "Artifactory Realm release local" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-release-local/",
     resolvers += "Spring Lib Release Repository" at "https://repo.spring.io/libs-release/",
+    resolvers += "Bintray" at "https://dl.bintray.com/gov-uk-notify/maven/",
 
     dockerExposedPorts ++= Seq(8081),
 

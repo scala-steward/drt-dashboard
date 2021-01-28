@@ -16,6 +16,7 @@ class NotificationsSpec extends Specification {
   "Given a gov notify client" >> {
     "When I send an email with the correct personalisation tokens" >> {
       "Then I should receive a positive response" >> {
+        skipped("Integration test")
         val someFailures = notifications.sendRequest("drtwannabe@somewhere.com", AccessRequest(Set("BHX, EMA"), staffing = true, ""))
           .exists {
             case (_, Failure(_)) => true
