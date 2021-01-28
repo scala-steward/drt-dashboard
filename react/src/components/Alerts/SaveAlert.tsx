@@ -5,7 +5,7 @@ import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
 import axios from "axios";
 import {
     Box,
-    Button, Card,
+    Button,
     Checkbox,
     FormControl,
     FormControlLabel,
@@ -43,7 +43,7 @@ interface IPortSelection {
     [key: string]: boolean
 }
 
-export default function SaveAlert(props: IProps){
+export default function SaveAlert(props: IProps) {
     const classes = useStyles();
 
     const [state, setState] = React.useState(
@@ -167,6 +167,6 @@ export default function SaveAlert(props: IProps){
             </Button>
         </FormGroup>
 
-        <Box m={2}><Alert alert={theAlert} /></Box>
+        <Box m={2}><Alert alert={theAlert}/></Box>
     </FormControl>)
 }

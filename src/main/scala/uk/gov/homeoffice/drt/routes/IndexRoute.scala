@@ -16,6 +16,9 @@ case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route
       path("") {
         indexRouteDirectives
       },
+      path("alerts") {
+        indexRouteDirectives
+      },
       (get & pathPrefix("")) {
         directoryResource
       },

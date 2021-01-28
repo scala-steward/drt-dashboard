@@ -8,8 +8,6 @@ import {a11yProps, TabPanel} from "../TabPanel";
 import SaveAlert from "./SaveAlert";
 import {ListAlerts} from "./ViewAlerts";
 
-
-
 moment.locale("en-gb");
 
 interface IProps {
@@ -30,10 +28,7 @@ export default function Alerts(props: IProps) {
 
     const [selectedTab, setSelectedTab] = React.useState(0);
 
-    const changeTabs = (event: React.ChangeEvent<{}>, newValue: number) => {
-        setSelectedTab(newValue);
-    };
-
+    const changeTabs = (event: React.ChangeEvent<{}>, newValue: number) => setSelectedTab(newValue);
 
     return <Container className={classes.container}>
         <Tabs value={selectedTab} onChange={changeTabs} aria-label="simple tabs example">
@@ -41,10 +36,10 @@ export default function Alerts(props: IProps) {
             <Tab label="View Alerts" {...a11yProps(1)} />
         </Tabs>
         <TabPanel value={selectedTab} index={0}>
-            <SaveAlert user={props.user} callback={() => setSelectedTab(1)} />
+            <SaveAlert user={props.user} callback={() => setSelectedTab(1)}/>
         </TabPanel>
         <TabPanel index={1} value={selectedTab}>
-            <ListAlerts />
+            <ListAlerts/>
         </TabPanel>
     </Container>;
 }

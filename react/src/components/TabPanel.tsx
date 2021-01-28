@@ -9,7 +9,7 @@ interface TabPanelProps {
 }
 
 function TabPanel(props: TabPanelProps) {
-    const { children, value, index, ...other } = props;
+    const {children, value, index, ...other} = props;
 
     return (
         <div
@@ -21,13 +21,12 @@ function TabPanel(props: TabPanelProps) {
         >
             {value === index && (
                 <Box p={3}>
-                    <Typography>{children}</Typography>
+                    <Typography component={"span"}>{children}</Typography>
                 </Box>
             )}
         </div>
     );
 }
-
 
 function a11yProps(index: any) {
     return {

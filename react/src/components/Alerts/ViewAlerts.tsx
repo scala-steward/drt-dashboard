@@ -2,7 +2,7 @@ import React, {useEffect} from "react";
 import moment from "moment-timezone";
 import axios from "axios";
 import AlertLike from "../../model/Alert";
-import {Button, Card, Container, Typography} from "@material-ui/core";
+import {Box, Button, Container, Typography} from "@material-ui/core";
 import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
 
 interface IPortAlerts {
@@ -23,6 +23,9 @@ const useStyles = makeStyles((theme: Theme) =>
         },
         warning: {
             background: "#faa"
+        },
+        button: {
+            marginBottom: theme.spacing(1)
         }
     }),
 )
@@ -39,27 +42,23 @@ function Alert(props: iAlertProps) {
 
     return props.alert.title + props.alert.message === "" ? null :
         <span role="alert" className={classes.alert + " " + alertClass}>
-        <p>{props.alert.title !== "" ? props.alert.title + " - " : ""}{props.alert.message}</p>
+        {props.alert.title !== "" ? props.alert.title + " - " : ""}{props.alert.message}
         </span>
 }
 
 function ListAlerts() {
 
+    const classes = useStyles();
 
     const [state, setState] = React.useState({
         portAlerts: {} as IPortAlerts
     });
 
-    function refreshAlerts() {
-        axios.get("/api/alerts").then(response => {
-            const portAlerts = response.data as IPortAlerts
-
-            setState({
-                portAlerts: portAlerts
-            })
-
-        })
-    }
+    const refreshAlerts = () => axios
+        .get("/api/alerts")
+        .then(response => setState({
+            portAlerts: response.data as IPortAlerts
+        }));
 
     useEffect(() => {
         refreshAlerts();
@@ -68,32 +67,31 @@ function ListAlerts() {
     const clearAlertForPort = (portCode: String) =>
         () => axios.delete("/api/alerts/" + portCode).then(refreshAlerts)
 
-
     const portAlerts = []
     for (let portCode in state.portAlerts) {
         if (state.portAlerts.hasOwnProperty(portCode)) {
             portAlerts.push(
-                <div>
+                <Box key={portAlerts.length}>
                     <h1>{portCode}</h1>
-                    <Button onClick={clearAlertForPort(portCode)}>Clear alerts for {portCode}</Button>
+                    <Button className={classes.button} onClick={clearAlertForPort(portCode)} color={"secondary"}
+                            variant={"contained"}>Clear alerts for {portCode}</Button>
                     {state.portAlerts[portCode].map((alert: AlertLike) =>
                         (
                             <div>
                                 <Alert alert={alert}/>
-                                <Typography
-                                    align={"right"}>Expires: {moment(alert.expires).format("DD-MM-YYYY HH:mm")}</Typography>
+                                <Typography component={"span"} align={"right"}>
+                                    Expires: {moment(alert.expires).format("DD-MM-YYYY HH:mm")}
+                                </Typography>
                             </div>
                         )
                     )}
-                </div>
+                </Box>
             )
         }
     }
 
-
     return (
         <Container>
-
             {portAlerts}
         </Container>
     )

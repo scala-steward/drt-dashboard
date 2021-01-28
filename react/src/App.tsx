@@ -2,12 +2,10 @@ import React from 'react';
 import './App.css';
 import Home from './components/Home';
 import Alerts from './components/Alerts/Alerts';
-import {BrowserRouter as Router, Route, Link} from "react-router-dom";
+import {BrowserRouter as Router, Route} from "react-router-dom";
 import ApiClient from "./services/ApiClient";
 import {AxiosResponse} from "axios";
-import * as _ from 'lodash';
 import Loading from "./components/Loading";
-import {Button, Menu, MenuItem} from "@material-ui/core";
 import Navigation from "./components/Navigation";
 
 interface UserLike {
@@ -54,7 +52,6 @@ export default class App extends React.Component<IProps, IState> {
         this.setState({...this.state, config: config});
     }
 
-
     render() {
         const currentLocation = window.document.location;
         const logoutLink = "/oauth/logout?redirect=" + currentLocation
@@ -62,33 +59,34 @@ export default class App extends React.Component<IProps, IState> {
         return (
             <div className="App">
                 <Router>
-                <header role="banner" id="global-header" className=" with-proposition">
-                    <div className="header-wrapper">
-                        <div className="header-global">
-                            <div className="header-logo">
-                                <a href="https://www.gov.uk" title="Go to the GOV.UK homepage" id="global-header-logo"
-                                   className="content">
-                                    <img
-                                        src="images/gov.uk_logotype_crown_invert_trans.png"
-                                        width="36" height="32" alt=""/> GOV.UK
-                                </a>
+                    <header role="banner" id="global-header" className=" with-proposition">
+                        <div className="header-wrapper">
+                            <div className="header-global">
+                                <div className="header-logo">
+                                    <a href="https://www.gov.uk" title="Go to the GOV.UK homepage"
+                                       id="global-header-logo"
+                                       className="content">
+                                        <img
+                                            src="images/gov.uk_logotype_crown_invert_trans.png"
+                                            width="36" height="32" alt=""/> GOV.UK
+                                    </a>
+                                </div>
+                            </div>
+                            <div className="header-proposition">
+                                <div className="logout">
+                                    {this.state.user !== undefined ?
+                                        <Navigation logoutLink={logoutLink} user={this.state.user !!}/>
+                                        : ""
+                                    }
+                                </div>
+                                <div className="content">
+                                    <a href="/" id="proposition-name">Dynamic Response Tool</a>
+                                </div>
                             </div>
                         </div>
-                        <div className="header-proposition">
-                            <div className="logout">
-                                {this.state.user !== undefined ?
-                                    <Navigation logoutLink={logoutLink} user={this.state.user !!}/>
-                                    : ""
-                                }
-                            </div>
-                            <div className="content">
-                                <a href="/" id="proposition-name">Dynamic Response Tool</a>
-                            </div>
-                        </div>
-                    </div>
-                </header>
+                    </header>
 
-                    <div id="global-header-bar"></div>
+                    <div id="global-header-bar"/>
                     <Route exact path="/">
                         {this.state.config === undefined || this.state.user === undefined ?
                             <Loading/> :

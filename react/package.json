@@ -29,6 +29,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jest-environment-jsdom-sixteen",
+    "test-ci": "react-scripts test --watchAll=false --env=jest-environment-jsdom-sixteen",
     "test:coverage": "react-scripts test --coverage --runInBand --watchAll=false",
     "eject": "react-scripts eject",
     "check-types": "tsc",
@@ -55,10 +56,12 @@
   "devDependencies": {
     "@testing-library/jest-dom": "^5.11.6",
     "@types/jest": "^26.0.15",
+    "@types/react-test-renderer": "^17.0.0",
     "@types/testing-library__jest-dom": "^5.9.5",
     "@types/testing-library__react": "^10.2.0",
     "jest-environment-jsdom-sixteen": "^1.0.3",
     "msw": "^0.22.0",
+    "react-test-renderer": "^17.0.1",
     "ts-jest": "^26.4.4"
   },
   "jest": {
