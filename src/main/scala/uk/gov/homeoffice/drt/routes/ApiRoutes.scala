@@ -31,7 +31,12 @@ object ApiRoutes {
     }
   })
 
-  def apply(prefix: String, portCodes: Array[String], domain: String, notifications: EmailNotifications)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
+  def apply(
+    prefix: String,
+    portCodes: Array[String],
+    domain: String,
+    notifications: EmailNotifications,
+    teamEmail: String)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
     pathPrefix(prefix) {
       concat(
         (get & path("user")) {
@@ -48,7 +53,8 @@ object ApiRoutes {
             import uk.gov.homeoffice.drt.authentication.UserJsonSupport._
             val json = JsObject(Map(
               "ports" -> JsArray(portCodes.map(JsString(_)).toVector),
-              "domain" -> JsString(domain)))
+              "domain" -> JsString(domain),
+              "teamEmail" -> JsString(teamEmail)))
             complete(json)
           }
         },

@@ -6,11 +6,28 @@ import spray.json._
 
 class AccessRequestSpec extends Specification with Specs2RouteTest {
   "Given a json object string I should be able to parse it to an AccessRequest" >> {
-    val string = """{"lineManager":"someone@somewhere.com","portsRequested":["bhx","lhr"],"staffing":true}"""
+    val string =
+      """
+        |{
+        |    "lineManager": "someone@somewhere.com",
+        |    "portsRequested": [
+        |        "bhx",
+        |        "lhr"
+        |    ],
+        |    "staffing": true,
+        |    "allPorts": true,
+        |    "agreeDeclaration": true
+        |}
+        |""".stripMargin
     import AccessRequestJsonSupport._
     val request = string.parseJson.convertTo[AccessRequest]
 
-    val expected = AccessRequest(Set("bhx", "lhr"), staffing = true, "someone@somewhere.com")
+    val expected = AccessRequest(
+      portsRequested = Set("bhx", "lhr"),
+      allPorts = true,
+      staffing = true,
+      lineManager = "someone@somewhere.com",
+      agreeDeclaration = true)
 
     request === expected
   }

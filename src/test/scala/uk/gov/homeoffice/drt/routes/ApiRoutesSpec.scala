@@ -19,7 +19,12 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest {
   private val config: Config = ConfigFactory.load()
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
 
-  val routes: Route = ApiRoutes("api", Array("lhr", "stn"), "somedomain.com", EmailNotifications(apiKey, List("access-requests@drt")))
+  val routes: Route = ApiRoutes(
+    "api",
+    Array("lhr", "stn"),
+    "somedomain.com",
+    EmailNotifications(apiKey, List("access-requests@drt")),
+    "test@test.com")
 
   "Given a uri accessed by a user with an email but no port access, I should see an empty port list and their email address in JSON" >> {
     Get("/api/user") ~>
@@ -41,7 +46,7 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest {
     Get("/api/config") ~>
       RawHeader("X-Auth-Roles", "") ~>
       RawHeader("X-Auth-Email", "my@email.com") ~> routes ~> check {
-        responseAs[String] shouldEqual """{"ports":["lhr","stn"],"domain":"somedomain.com"}"""
+        responseAs[String] shouldEqual """{"ports":["lhr","stn"],"domain":"somedomain.com","teamEmail":"test@test.com"}"""
       }
   }
 

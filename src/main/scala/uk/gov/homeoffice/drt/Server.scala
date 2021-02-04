@@ -25,6 +25,7 @@ object Server {
   case class ServerConfig(
     host: String,
     port: Int,
+    teamEmail: String,
     portCodes: Array[String],
     ciriumDataUri: String,
     rootDomain: String,
@@ -48,7 +49,7 @@ object Server {
         staticResourceDirectory = getFromResourceDirectory("frontend/static")).route,
       CiriumRoutes("cirium", serverConfig.ciriumDataUri),
       DrtRoutes("drt", serverConfig.portCodes),
-      ApiRoutes("api", serverConfig.portCodes, serverConfig.rootDomain, notifications))
+      ApiRoutes("api", serverConfig.portCodes, serverConfig.rootDomain, notifications, serverConfig.teamEmail))
 
     val serverBinding: Future[Http.ServerBinding] = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
 
