@@ -70,7 +70,7 @@ describe('<AccessRequestForm />', () => {
     fireEvent.click(screen.getByText('LHR'));
     submitIsDisabled();
   });
-  
+
 
   it('displays a thank you message on submitting the form', async () => {
     render(<AccessRequestForm ports={['LHR']} teamEmail={"test@test.com"}/>);

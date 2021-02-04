@@ -157,12 +157,12 @@ export default function AccessRequestForm(props: IProps) {
                     <Typography className={classes.subHeading}>Declaration</Typography>
                     <Typography>I understand that:</Typography>
                     <ul className={classes.declaration}>
-                        <li>all data is provided by third parties, and is therefore OFFICIAL SENSITIVE</li>
-                        <li>I should not share any of the data in DRT under any circumstances</li>
+                        <li>all data contained in DRT is marked as Official-Sensitive</li>
                     </ul>
                     <Typography>I confirm that:</Typography>
                     <ul className={classes.declaration}>
-                        <li>if I'm asked to share any data I will contact the DRT service team at <a>{props.teamEmail}</a></li>
+                        <li>I will not share any DRT data with any third party</li>
+                        <li>I will contact the DRT team at <a>{props.teamEmail}</a> if I'm asked to share any data</li>
                     </ul>
                 </Paper>
             </ListItem>
