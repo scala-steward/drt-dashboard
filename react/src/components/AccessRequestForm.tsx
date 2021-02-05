@@ -157,7 +157,7 @@ export default function AccessRequestForm(props: IProps) {
                     <Typography className={classes.subHeading}>Declaration</Typography>
                     <Typography>I understand that:</Typography>
                     <ul className={classes.declaration}>
-                        <li>all data contained in DRT is marked as Official-Sensitive</li>
+                        <li>all data contained in DRT is marked as OFFICIAL-SENSITIVE</li>
                     </ul>
                     <Typography>I confirm that:</Typography>
                     <ul className={classes.declaration}>
