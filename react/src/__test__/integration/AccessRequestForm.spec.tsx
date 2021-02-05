@@ -24,19 +24,21 @@ function submitIsNotDisabled() {
 }
 
 describe('<AccessRequestForm />', () => {
-  it('has a disabled submit button by default, and becomes enabled when a port is selected', () => {
-    render(<AccessRequestForm ports={['LHR']}/>);
+  it('has a disabled submit button by default, and becomes enabled when a port is selected and the declaration is greed', () => {
+    render(<AccessRequestForm ports={['LHR']} teamEmail={"test@test.com"}/>);
 
     submitIsDisabled();
 
     fireEvent.click(screen.getByText('LHR'));
+    fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
 
     submitIsNotDisabled();
   });
 
-  it('has a disabled submit button when the last selected port becomes de-selected', () => {
-    render(<AccessRequestForm ports={['LHR']}/>);
+  it('has a disabled submit button when the last selected port becomes de-selected and declaration is agreed', () => {
+    render(<AccessRequestForm ports={['LHR']} teamEmail={"test@test.com"}/>);
 
+    fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
     fireEvent.click(screen.getByText('LHR'));
 
     submitIsNotDisabled();
@@ -45,16 +47,41 @@ describe('<AccessRequestForm />', () => {
 
     submitIsDisabled();
   });
+
+  it('enables the submit button when "all ports" is selected and disables it when it is deselected', () => {
+    render(<AccessRequestForm ports={['LHR']} teamEmail={"test@test.com"}/>);
+
+    fireEvent.click(screen.getByText('All ports'));
+    fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
+
+    submitIsNotDisabled();
+    fireEvent.click(screen.getByText('All ports'));
+
+    submitIsDisabled();
+  });
+
+  it('disables the submit button when the declaration is deselected', () => {
+    render(<AccessRequestForm ports={['LHR']} teamEmail={"test@test.com"}/>);
+
+    fireEvent.click(screen.getByText('All ports'));
+    submitIsDisabled();
+
+    fireEvent.click(screen.getByText('All ports'));
+    fireEvent.click(screen.getByText('LHR'));
+    submitIsDisabled();
+  });
+
 
   it('displays a thank you message on submitting the form', async () => {
-    render(<AccessRequestForm ports={['LHR']}/>);
+    render(<AccessRequestForm ports={['LHR']} teamEmail={"test@test.com"}/>);
 
     fireEvent.click(screen.getByText('LHR'));
+    fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
 
     submitIsNotDisabled();
 
     fireEvent.click(screen.getByText('Request access'));
 
-    await waitFor(() => expect(screen.getByText('Thanks for your request. We\'ll get back to you shortly')));
+    await waitFor(() => expect(screen.getByText('Thank you')));
   });
 });

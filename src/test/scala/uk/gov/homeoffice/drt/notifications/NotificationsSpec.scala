@@ -17,7 +17,9 @@ class NotificationsSpec extends Specification {
     "When I send an email with the correct personalisation tokens" >> {
       "Then I should receive a positive response" >> {
         skipped("Integration test")
-        val someFailures = notifications.sendRequest("drtwannabe@somewhere.com", AccessRequest(Set("BHX, EMA"), staffing = true, ""))
+        val someFailures = notifications.sendRequest(
+          "drtwannabe@somewhere.com",
+          AccessRequest(Set("BHX, EMA"), staffing = true, allPorts = false, lineManager = "", agreeDeclaration = true))
           .exists {
             case (_, Failure(_)) => true
             case _ => false

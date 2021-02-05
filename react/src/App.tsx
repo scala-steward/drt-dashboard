@@ -7,6 +7,7 @@ import ApiClient from "./services/ApiClient";
 import {AxiosResponse} from "axios";
 import Loading from "./components/Loading";
 import Navigation from "./components/Navigation";
+import ConfigLike from "./model/Config";
 
 interface UserLike {
     email: string;
@@ -14,17 +15,13 @@ interface UserLike {
     roles: string[];
 }
 
-interface Config {
-    ports: string[];
-    domain: string;
-}
 
 interface IProps {
 }
 
 interface IState {
     user?: UserLike;
-    config?: Config;
+    config?: ConfigLike;
 }
 
 export default class App extends React.Component<IProps, IState> {
@@ -48,7 +45,7 @@ export default class App extends React.Component<IProps, IState> {
     }
 
     updateConfigState = (response: AxiosResponse) => {
-        const config = response.data as Config;
+        const config = response.data as ConfigLike;
         this.setState({...this.state, config: config});
     }
 
@@ -90,7 +87,7 @@ export default class App extends React.Component<IProps, IState> {
                     <Route exact path="/">
                         {this.state.config === undefined || this.state.user === undefined ?
                             <Loading/> :
-                            <Home config={this.state.config !!} user={this.state.user !!}/>
+                            <Home config={this.state.config !!} user={this.state.user !! }/>
                         }
                     </Route>
                     <Route exact path="/alerts">

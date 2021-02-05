@@ -10,6 +10,7 @@ object DrtDashboardApp extends App {
   val serverConfig = ServerConfig(
     host = config.getString("server.host"),
     port = config.getInt("server.port"),
+    teamEmail = config.getString("dashboard.team-email"),
     portCodes = config.getString("dashboard.port-codes").split(","),
     ciriumDataUri = config.getString("cirium.data-uri"),
     rootDomain = config.getString("drt.domain"),
