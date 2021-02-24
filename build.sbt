@@ -23,7 +23,7 @@ lazy val root = (project in file(".")).
 
     version := sys.env.getOrElse("DRONE_BUILD_NUMBER", sys.env.getOrElse("BUILD_ID", "DEV")),
     name := "drt-dashboard",
-    credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
+//    credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"), you might need to uncomment this to login to artifactory locally, but it breaks drone.
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
