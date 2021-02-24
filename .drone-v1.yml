@@ -1,0 +1,53 @@
+---
+kind: pipeline
+name: default
+type: kubernetes
+
+platform:
+  os: linux
+  arch: amd64
+
+steps:
+- name: build
+  pull: if-not-exists
+  image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:latest
+  commands:
+  - /root/entrypoint.sh
+  - sbt test yarnInstall buildReactApp docker:stage
+  environment:
+    ACCESS_REQUEST_EMAIL:
+      from_secret: ACCESS_REQUEST_EMAIL
+    ARTIFACTORY_PASSWORD:
+      from_secret: ARTIFACTORY_TOKEN
+    ARTIFACTORY_USERNAME: drt_artifactory_drone
+    DRT_DOMAIN:
+      from_secret: DRT_DOMAIN
+    GOV_NOTIFY_API_KEY:
+      from_secret: GOV_NOTIFY_API_KEY
+    PORT_CODES:
+      from_secret: PORT_CODES
+  when:
+    event:
+    - push
+
+- name: publish
+  image: plugins/ecr
+  environment:
+    AWS_REGION: eu-west-2
+  settings:
+    access_key:
+      from_secret: AWS_ACCESS_KEY_ID
+    secret_key:
+      from_secret: AWS_SECRET_ACCESS_KEY
+    repo: drt/drt-dashboard
+    registry: 340268328991.dkr.ecr.eu-west-2.amazonaws.com
+    tags:
+      - B${DRONE_BUILD_NUMBER}
+      - latest
+  when:
+    event:
+      - push
+  depends_on:
+    - build
+
+...
