@@ -19,7 +19,7 @@ steps:
       from_secret: ACCESS_REQUEST_EMAIL
     ARTIFACTORY_PASSWORD:
       from_secret: ARTIFACTORY_PASSWORD
-    ARTIFACTORY_USERNAME: drt_artifactory_ci
+    ARTIFACTORY_USERNAME: scala-test-token
     DRT_DOMAIN:
       from_secret: DRT_DOMAIN
     GOV_NOTIFY_API_KEY:
