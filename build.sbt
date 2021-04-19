@@ -50,7 +50,7 @@ lazy val root = (project in file(".")).
     resolvers += "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/",
     resolvers += "Artifactory Realm release local" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-release-local/",
     resolvers += "Spring Lib Release Repository" at "https://repo.spring.io/libs-release/",
-    resolvers += "Bintray" at "https://dl.bintray.com/gov-uk-notify/maven/",
+    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
 
     dockerExposedPorts ++= Seq(8081),
 
