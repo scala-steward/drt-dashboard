@@ -26,7 +26,7 @@ class IndexRouteSpec extends Specification with Specs2RouteTest {
     directoryResource = dummyRoute,
     staticResourceDirectory = dummyRoute)
 
-  val routes: Route = indexRoute.indexRouteDirectives
+  val routes: Route = indexRoute.indexRouteDirectives(Root)
 
   "A user with no port access and no referer should see the application" >> {
     Get("/") ~>

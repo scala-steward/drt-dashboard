@@ -46,12 +46,14 @@ export default function Navigation(props: IProps) {
                 open={Boolean(anchorEl)}
                 onClose={handleClose}
             >
+
                 <MenuItem onClick={handleClose}><Link to="/">Home</Link></MenuItem>
                 {
+
                     props.user.roles.includes("create-alerts") ?
-                        <MenuItem onClick={handleClose}><Link to="/alerts">Alerts</Link></MenuItem>
-                        : ""
+                        <MenuItem onClick={handleClose}><Link to="/alerts">Alerts</Link></MenuItem> : ""
                 }
+                <MenuItem onClick={handleClose}><Link to="/upload">Upload</Link></MenuItem>
                 <MenuItem onClick={handleClose}><a href={props.logoutLink} id="proposition-name">Log out</a></MenuItem>
             </Menu>
         </div>

@@ -6,7 +6,13 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.MethodDirectives.get
 import org.slf4j.{ Logger, LoggerFactory }
 import uk.gov.homeoffice.drt.Urls
+import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
 import uk.gov.homeoffice.drt.authentication.User
+
+trait PathString
+case object Root extends PathString
+case object Alert extends PathString
+case object Upload extends PathString
 
 case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route, staticResourceDirectory: Route) {
   val log: Logger = LoggerFactory.getLogger(getClass)
@@ -14,10 +20,13 @@ case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route
   val route: Route =
     concat(
       path("") {
-        indexRouteDirectives
+        indexRouteDirectives(Root)
       },
       path("alerts") {
-        indexRouteDirectives
+        indexRouteDirectives(Alert)
+      },
+      path("upload") {
+        indexRouteDirectives(Upload)
       },
       (get & pathPrefix("")) {
         directoryResource
@@ -26,10 +35,13 @@ case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route
         staticResourceDirectory
       })
 
-  def indexRouteDirectives: Route = {
+  def indexRouteDirectives(pathString: PathString): Route = {
     parameterMap { params =>
       optionalHeaderValueByName("X-Auth-Roles") { maybeRoles =>
         (params.get("fromPort").flatMap(urls.portCodeFromUrl), maybeRoles) match {
+          case (_, Some(rolesStr)) if rolesStr == NeboUpload.name && pathString != Upload =>
+            log.info(s"Redirecting back to upload")
+            redirect("upload", StatusCodes.TemporaryRedirect)
           case (Some(portCode), Some(rolesStr)) =>
             val user = User.fromRoles("", rolesStr)
             if (user.accessiblePorts.contains(portCode)) {
@@ -47,4 +59,5 @@ case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route
       }
     }
   }
+
 }

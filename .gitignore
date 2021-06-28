@@ -4,3 +4,4 @@ target/
 *.sc
 react/build
 src/main/resources/frontend
+.DS_Store

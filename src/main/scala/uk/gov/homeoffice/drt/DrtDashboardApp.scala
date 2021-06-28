@@ -16,7 +16,8 @@ object DrtDashboardApp extends App {
     rootDomain = config.getString("drt.domain"),
     useHttps = config.getBoolean("drt.use-https"),
     accessRequestEmails = config.getString("dashboard.notifications.access-request-emails").split(",").toList,
-    notifyServiceApiKey = config.getString("dashboard.notifications.gov-notify-api-key"))
+    notifyServiceApiKey = config.getString("dashboard.notifications.gov-notify-api-key"),
+    neboPortCodes = config.getString("nebo.port-codes").split(","))
 
   val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig), "DrtDashboard")
 }
