@@ -31,7 +31,7 @@ object UploadRoutes extends JsonSupport {
 
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  val drtRoutePath = "/data/feeds/red-list-counts"
+  val drtRoutePath = "/data/feed/red-list-counts"
 
   implicit def rejectionHandler =
     RejectionHandler.newBuilder()
