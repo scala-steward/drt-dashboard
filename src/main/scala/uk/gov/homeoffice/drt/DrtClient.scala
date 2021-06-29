@@ -7,6 +7,7 @@ import org.slf4j.{ Logger, LoggerFactory }
 import spray.json._
 import uk.gov.homeoffice.drt.DashboardClient._
 import uk.gov.homeoffice.drt.auth.Roles
+import uk.gov.homeoffice.drt.auth.Roles.Role
 import uk.gov.homeoffice.drt.routes.FlightData
 
 import scala.concurrent.{ ExecutionContextExecutor, Future }
@@ -16,12 +17,12 @@ trait HttpClient extends JsonSupport {
 
   def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[HttpResponse]
 
-  def createDrtNeboRequest(data: List[FlightData], uri: String): HttpRequest = {
+  def createDrtNeboRequest(data: List[FlightData], uri: String, portAccessRole: Option[Role]): HttpRequest = {
     log.info(s"Sending json to drt for $uri with ${data.size} flight details")
     HttpRequest(
       method = HttpMethods.POST,
       uri = uri,
-      headers = rolesToRoleHeader(List(Roles.NeboUpload)),
+      headers = rolesToRoleHeader(List(Option(Roles.NeboUpload), portAccessRole).flatten),
       entity = HttpEntity(ContentTypes.`application/json`, data.toJson.toString()))
   }
 }

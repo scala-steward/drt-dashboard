@@ -12,7 +12,8 @@ import org.joda.time.{ DateTime, DateTimeZone }
 import org.slf4j.{ Logger, LoggerFactory }
 import spray.json._
 import uk.gov.homeoffice.drt.Dashboard._
-import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
+import uk.gov.homeoffice.drt.auth.Roles
+import uk.gov.homeoffice.drt.auth.Roles.{ NeboUpload, PortAccess, Role }
 import uk.gov.homeoffice.drt.routes.ApiRoutes.authByRole
 import uk.gov.homeoffice.drt.routes.UploadRoutes.MillisSinceEpoch
 import uk.gov.homeoffice.drt.{ HttpClient, JsonSupport }
@@ -80,7 +81,7 @@ object UploadRoutes extends JsonSupport {
     flightData.flatMap { fd =>
       val filterPortFlight = fd.filter(_.portCode.toLowerCase == portCode.toLowerCase)
       val httpRequest = httpClient.createDrtNeboRequest(
-        filterPortFlight, s"${drtUriForPortCode(portCode)}$drtRoutePath")
+        filterPortFlight, s"${drtUriForPortCode(portCode)}$drtRoutePath", Roles.parse(portCode))
       httpClient.send(httpRequest)
         .map(r => FeedStatus(portCode, filterPortFlight.size, r.status.toString()))
     }
