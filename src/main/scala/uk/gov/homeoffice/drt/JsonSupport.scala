@@ -6,7 +6,7 @@ import uk.gov.homeoffice.drt.routes.{ FeedStatus, FlightData }
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
-  implicit val flightDataFormat = jsonFormat4(FlightData)
+  implicit val flightDataFormat = jsonFormat7(FlightData)
 
   implicit val feedStatusFormat = jsonFormat3(FeedStatus)
 

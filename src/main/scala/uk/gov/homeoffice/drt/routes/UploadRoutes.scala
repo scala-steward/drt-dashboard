@@ -7,22 +7,22 @@ import akka.http.scaladsl.server.{ Route, _ }
 import akka.stream.Materializer
 import akka.stream.scaladsl.{ Framing, Source }
 import akka.util.ByteString
+import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
-import org.joda.time.{ DateTime, DateTimeZone }
 import org.slf4j.{ Logger, LoggerFactory }
 import spray.json._
 import uk.gov.homeoffice.drt.Dashboard._
 import uk.gov.homeoffice.drt.auth.Roles
-import uk.gov.homeoffice.drt.auth.Roles.{ NeboUpload, PortAccess, Role }
+import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
 import uk.gov.homeoffice.drt.routes.ApiRoutes.authByRole
 import uk.gov.homeoffice.drt.routes.UploadRoutes.MillisSinceEpoch
 import uk.gov.homeoffice.drt.{ HttpClient, JsonSupport }
 
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 
-case class Row(urnReference: String, associatedText: String, flightCode: String, arrivalPort: String, date: String)
+case class Row(urnReference: String, associatedText: String, flightCode: String, arrivalPort: String, arrivalDate: String, arrivalTime: String, departureDate: String, departureTime: String, embarkPort: String, departurePort: String)
 
-case class FlightData(portCode: String, flightCode: String, scheduled: MillisSinceEpoch, paxCount: Int)
+case class FlightData(portCode: String, flightCode: String, scheduled: MillisSinceEpoch, scheduledDeparture: MillisSinceEpoch, departurePort: String, embarkPort: String, paxCount: Int)
 
 case class FeedStatus(portCode: String, flightCount: Int, statusCode: String)
 
@@ -97,19 +97,24 @@ object UploadRoutes extends JsonSupport {
   private def convertByteStringToRow(byteString: ByteString): Row = {
     val indexMapRow: Map[Int, String] = byteString.utf8String.split(",")
       .zipWithIndex
-      .toMap
       .map { case (k, v) => v -> k }
+      .toMap
 
     Row(
-      indexMapRow.getOrElse(0, "").trim,
-      indexMapRow.getOrElse(1, "").trim,
-      indexMapRow.getOrElse(2, "").trim,
-      indexMapRow.getOrElse(3, "").trim,
-      indexMapRow.getOrElse(4, "").trim)
+      urnReference = indexMapRow.getOrElse(0, "").trim,
+      associatedText = indexMapRow.getOrElse(1, "").trim,
+      flightCode = indexMapRow.getOrElse(2, "").trim,
+      arrivalPort = indexMapRow.getOrElse(3, "").trim,
+      arrivalDate = indexMapRow.getOrElse(4, "").trim,
+      arrivalTime = indexMapRow.getOrElse(5, "").trim,
+      departureDate = indexMapRow.getOrElse(6, "").trim,
+      departureTime = indexMapRow.getOrElse(7, "").trim,
+      embarkPort = indexMapRow.getOrElse(8, "").trim,
+      departurePort = indexMapRow.getOrElse(9, "").trim)
   }
 
   private def rowToJson(rows: List[Row], metadata: FileInfo): List[FlightData] = {
-    val dataRows: Seq[Row] = rows.tail.filterNot(_.flightCode.isEmpty)
+    val dataRows: Seq[Row] = rows.filterNot(_.flightCode.isEmpty).filterNot(_.flightCode == "Flight Code")
     log.info(s"Processing ${dataRows.size} rows from the file name `${metadata.fileName}`")
     dataRows.groupBy(_.arrivalPort)
       .flatMap {
@@ -117,14 +122,19 @@ object UploadRoutes extends JsonSupport {
           portRows.groupBy(_.flightCode)
             .map {
               case (flightCode, flightRows) =>
-                FlightData(arrivalPort, flightCode, covertDateTime(flightRows.head.date), flightRows.size)
+                FlightData(
+                  portCode = arrivalPort,
+                  flightCode = flightCode,
+                  scheduled = covertDateTime(s"${flightRows.head.arrivalDate} ${flightRows.head.arrivalTime}"),
+                  scheduledDeparture = covertDateTime(s"${flightRows.head.departureDate} ${flightRows.head.departureTime}"),
+                  departurePort = flightRows.head.departurePort,
+                  embarkPort = flightRows.head.embarkPort,
+                  flightRows.size)
             }
       }.toList
   }
 
-  val covertDateTime: String => MillisSinceEpoch = date => if (date.isEmpty) 0 else DateTime
-    .parse(date, DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss"))
-    .withZone(DateTimeZone.UTC)
-    .getMillis
+  val covertDateTime: String => MillisSinceEpoch = date => if (date.isEmpty) 0 else
+    DateTimeFormat.forPattern("dd/MM/yyyy HH:mm").withZone(DateTimeZone.forID("Europe/London")).parseDateTime(date).getMillis
 
 }

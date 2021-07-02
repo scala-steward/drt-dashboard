@@ -58,6 +58,10 @@ lazy val root = (project in file(".")).
   .enablePlugins(DockerPlugin)
   .enablePlugins(JavaAppPackaging)
 
+javaOptions in Test += "-Duser.timezone=UTC"
+
+javaOptions in Runtime += "-Duser.timezone=UTC"
+
 lazy val yarnInstall = taskKey[Unit]("yarn install")
 
 val cwd = System.getProperty("user.dir")
