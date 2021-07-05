@@ -120,16 +120,19 @@ object UploadRoutes extends JsonSupport {
       .flatMap {
         case (arrivalPort, portRows) =>
           portRows.groupBy(_.flightCode)
-            .map {
+            .flatMap {
               case (flightCode, flightRows) =>
-                FlightData(
-                  portCode = arrivalPort,
-                  flightCode = flightCode,
-                  scheduled = covertDateTime(s"${flightRows.head.arrivalDate} ${flightRows.head.arrivalTime}"),
-                  scheduledDeparture = covertDateTime(s"${flightRows.head.departureDate} ${flightRows.head.departureTime}"),
-                  departurePort = flightRows.head.departurePort,
-                  embarkPort = flightRows.head.embarkPort,
-                  flightRows.size)
+                flightRows.groupBy(a => s"${a.arrivalDate} ${a.arrivalTime}").map {
+                  case (arrivalDateTime, flightRowsByArrival) =>
+                    FlightData(
+                      portCode = arrivalPort,
+                      flightCode = flightCode,
+                      scheduled = covertDateTime(arrivalDateTime),
+                      scheduledDeparture = covertDateTime(s"${flightRowsByArrival.head.departureDate} ${flightRowsByArrival.head.departureTime}"),
+                      departurePort = flightRowsByArrival.head.departurePort,
+                      embarkPort = flightRowsByArrival.head.embarkPort,
+                      flightRowsByArrival.size)
+                }
             }
       }.toList
   }

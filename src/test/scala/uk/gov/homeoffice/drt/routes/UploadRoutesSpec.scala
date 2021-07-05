@@ -42,7 +42,7 @@ class UploadRoutesSpec extends Specification with Specs2RouteTest {
       |PAN/IOI/0107E/12,Passenger in transit from Panama. Please refer to Operational Instructions (IOI 24-21 IOI 29 -21 IOI 48-21 IOI 60-21 IOI 66-21 IOI 73-21 IOI 92-21 IOI 99-21) for further instructions,IB3166,LHR,03/07/2021,17:05,03/07/2021,15:45,PTY,MAD
       |KEN/IOI/0107E/18,Passenger in transit from Kenya. Please refer to Operational Instructions (IOI 24-21 IOI 29 -21 IOI 48-21 IOI 60-21 IOI 66-21 IOI 73-21 IOI 92-21 IOI 99-21) for further instructions,KL1007,LHR,02/07/2021,09:00,02/07/2021,08:40,NBO,AMS
       |KEN/IOI/0107E/19,Passenger in transit from Kenya. Please refer to Operational Instructions (IOI 24-21 IOI 29 -21 IOI 48-21 IOI 60-21 IOI 66-21 IOI 73-21 IOI 92-21 IOI 99-21) for further instructions,KL1007,LHR,02/07/2021,09:00,02/07/2021,08:40,NBO,AMS
-      |KEN/IOI/0107E/20,Passenger in transit from Kenya. Please refer to Operational Instructions (IOI 24-21 IOI 29 -21 IOI 48-21 IOI 60-21 IOI 66-21 IOI 73-21 IOI 92-21 IOI 99-21) for further instructions,KL1007,LHR,02/07/2021,09:00,02/07/2021,08:40,NBO,AMS
+      |KEN/IOI/0107E/20,Passenger in transit from Kenya. Please refer to Operational Instructions (IOI 24-21 IOI 29 -21 IOI 48-21 IOI 60-21 IOI 66-21 IOI 73-21 IOI 92-21 IOI 99-21) for further instructions,KL1007,LHR,03/07/2021,09:00,02/07/2021,08:40,NBO,AMS
       |COL/IOI/0107E/23,Passenger in transit from Colombia. Please refer to Operational Instructions (IOI 24-21 IOI 29 -21 IOI 48-21 IOI 60-21 IOI 66-21 IOI 73-21 IOI 92-21 IOI 99-21) for further instructions,LH0922,LHR,02/07/2021,22:10,02/07/2021,21:30,BOG,FRA
       |ZAF/IOI/0107E/24,Passenger in transit from South Africa. Please refer to Operational Instructions (IOI 24-21 IOI 29 -21 IOI 48-21 IOI 60-21 IOI 66-21 IOI 73-21 IOI 92-21 IOI 99-21) for further instructions,AF1680,LHR,03/07/2021,07:55,03/07/2021,07:30,JNB,CDG
       |,,,,,,,,,
@@ -87,7 +87,8 @@ class UploadRoutesSpec extends Specification with Specs2RouteTest {
       FlightData("LHR", "SQ0306", covertDateTime("02/07/2021 07:45"), covertDateTime("02/07/2021 01:10"), "SIN", "CRK", 1),
       FlightData("LHR", "LH0914", covertDateTime("02/07/2021 16:40"), covertDateTime("02/07/2021 16:00"), "FRA", "SJO", 1),
       FlightData("LHR", "LH0922", covertDateTime("02/07/2021 22:10"), covertDateTime("02/07/2021 21:30"), "FRA", "BOG", 1),
-      FlightData("LHR", "KL1007", covertDateTime("02/07/2021 09:00"), covertDateTime("02/07/2021 08:40"), "AMS", "NBO", 3))
+      FlightData("LHR", "KL1007", covertDateTime("02/07/2021 09:00"), covertDateTime("02/07/2021 08:40"), "AMS", "NBO", 2),
+      FlightData("LHR", "KL1007", covertDateTime("03/07/2021 09:00"), covertDateTime("02/07/2021 08:40"), "AMS", "NBO", 1))
 
     val flightDataResult: Seq[FlightData] = Await.result(flightDataF, 1 seconds)
 
