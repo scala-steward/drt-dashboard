@@ -129,7 +129,7 @@ class FileUpload extends React.Component<IProps, IState> {
                 <h3>Upload your CSV file</h3>
                 <div>
                     <br/>
-                       <input className="file-input" type="file" onChange={this.onFileChange} id="fileInputId" ref={this.state.fileInput}/>
+                       <input className="file-input" type="file" onChange={this.onFileChange} id="fileInputId" ref={this.state.fileInput} accept=".csv"/>
                     <br/>
                     <br/>
                     <br/>
