@@ -97,8 +97,8 @@ export default class App extends React.Component<IProps, IState> {
                         }
                     </Route>
                     <Route exact path="/upload">
-                        {this.state.user ?
-                            <FileUpload user={this.state.user}/> :
+                        {this.state.user && this.state.config ?
+                            <FileUpload user={this.state.user} config={this.state.config}/> :
                             <Loading/>
                         }
                     </Route>
