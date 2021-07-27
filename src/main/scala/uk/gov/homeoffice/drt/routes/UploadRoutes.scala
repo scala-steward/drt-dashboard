@@ -20,9 +20,9 @@ import uk.gov.homeoffice.drt.{ HttpClient, JsonSupport }
 
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 
-case class Row(urnReference: String, associatedText: String, flightCode: String, arrivalPort: String, arrivalDate: String, arrivalTime: String, departureDate: String, departureTime: String, embarkPort: String, departurePort: String)
+case class Row(urnReference: String, associatedText: String, flightCode: String, arrivalPort: String, arrivalDate: String, arrivalTime: String, departureDate: Option[String], departureTime: Option[String], embarkPort: Option[String], departurePort: Option[String])
 
-case class FlightData(portCode: String, flightCode: String, scheduled: MillisSinceEpoch, scheduledDeparture: MillisSinceEpoch, departurePort: String, embarkPort: String, paxCount: Int)
+case class FlightData(portCode: String, flightCode: String, scheduled: MillisSinceEpoch, scheduledDeparture: Option[MillisSinceEpoch], departurePort: Option[String], embarkPort: Option[String], paxCount: Int)
 
 case class FeedStatus(portCode: String, flightCount: Int, statusCode: String)
 
@@ -107,11 +107,13 @@ object UploadRoutes extends JsonSupport {
       arrivalPort = indexMapRow.getOrElse(3, "").trim,
       arrivalDate = indexMapRow.getOrElse(4, "").trim,
       arrivalTime = indexMapRow.getOrElse(5, "").trim,
-      departureDate = indexMapRow.getOrElse(6, "").trim,
-      departureTime = indexMapRow.getOrElse(7, "").trim,
-      embarkPort = indexMapRow.getOrElse(8, "").trim,
-      departurePort = indexMapRow.getOrElse(9, "").trim)
+      departureDate = maybeColumnContent(indexMapRow.getOrElse(6, "")),
+      departureTime = maybeColumnContent(indexMapRow.getOrElse(7, "")),
+      embarkPort = maybeColumnContent(indexMapRow.getOrElse(8, "")),
+      departurePort = maybeColumnContent(indexMapRow.getOrElse(9, "")))
   }
+
+  val maybeColumnContent: String => Option[String] = column => if (column.isEmpty) None else Option(column)
 
   private def rowToJson(rows: List[Row], metadata: FileInfo): List[FlightData] = {
     val dataRows: Seq[Row] = rows.filterNot(_.flightCode.isEmpty).filterNot(_.flightCode == "Flight Code")
@@ -127,17 +129,17 @@ object UploadRoutes extends JsonSupport {
                     FlightData(
                       portCode = arrivalPort,
                       flightCode = flightCode,
-                      scheduled = covertDateTime(arrivalDateTime),
-                      scheduledDeparture = covertDateTime(s"${flightRowsByArrival.head.departureDate} ${flightRowsByArrival.head.departureTime}"),
-                      departurePort = flightRowsByArrival.head.departurePort,
-                      embarkPort = flightRowsByArrival.head.embarkPort,
+                      scheduled = parseDateToMillis(arrivalDateTime),
+                      scheduledDeparture = flightRowsByArrival.head.departureDate.flatMap(dd => flightRowsByArrival.head.departureTime.map(dt => parseDateToMillis(s"$dd $dt"))),
+                      departurePort = flightRowsByArrival.head.departurePort.map(_.trim),
+                      embarkPort = flightRowsByArrival.head.embarkPort.map(_.trim),
                       flightRowsByArrival.size)
                 }
             }
       }.toList
   }
 
-  val covertDateTime: String => MillisSinceEpoch = date => if (date.isEmpty) 0 else
+  val parseDateToMillis: String => MillisSinceEpoch = date =>
     DateTimeFormat.forPattern("dd/MM/yyyy HH:mm").withZone(DateTimeZone.forID("Europe/London")).parseDateTime(date).getMillis
 
 }
