@@ -17,7 +17,7 @@ import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
 import uk.gov.homeoffice.drt.routes.ApiRoutes.authByRole
 import uk.gov.homeoffice.drt.routes.UploadRoutes.MillisSinceEpoch
 import uk.gov.homeoffice.drt.{ HttpClient, JsonSupport }
-
+import com.github.tototoshi.csv._
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 
 case class Row(urnReference: String, associatedText: String, flightCode: String, arrivalPort: String, arrivalDate: String, arrivalTime: String, departureDate: Option[String], departureTime: Option[String], embarkPort: Option[String], departurePort: Option[String])
@@ -94,19 +94,19 @@ object UploadRoutes extends JsonSupport {
       .map(rowToJson(_, metadata))
   }
 
-  private def convertByteStringToRow(byteString: ByteString): Row = {
-    val indexMapRow: Map[Int, String] = byteString.utf8String.split(",")
-      .zipWithIndex
-      .map { case (k, v) => v -> k }
-      .toMap
-
+  private def convertByteStringToRow(content: ByteString) = {
+    val indexMapRow: Map[Int, String] = CSVParser.parse(content.utf8String, '\\', ',', '"')
+      .map(_.zipWithIndex.map {
+        case (k, v) => v -> k
+      }.toMap)
+      .getOrElse(Map.empty[Int, String])
     Row(
-      urnReference = indexMapRow.getOrElse(0, "").trim,
-      associatedText = indexMapRow.getOrElse(1, "").trim,
-      flightCode = indexMapRow.getOrElse(2, "").trim,
-      arrivalPort = indexMapRow.getOrElse(3, "").trim,
-      arrivalDate = indexMapRow.getOrElse(4, "").trim,
-      arrivalTime = indexMapRow.getOrElse(5, "").trim,
+      urnReference = indexMapRow.getOrElse(0, ""),
+      associatedText = indexMapRow.getOrElse(1, ""),
+      flightCode = indexMapRow.getOrElse(2, ""),
+      arrivalPort = indexMapRow.getOrElse(3, ""),
+      arrivalDate = indexMapRow.getOrElse(4, ""),
+      arrivalTime = indexMapRow.getOrElse(5, ""),
       departureDate = maybeColumnContent(indexMapRow.getOrElse(6, "")),
       departureTime = maybeColumnContent(indexMapRow.getOrElse(7, "")),
       embarkPort = maybeColumnContent(indexMapRow.getOrElse(8, "")),
@@ -116,7 +116,7 @@ object UploadRoutes extends JsonSupport {
   val maybeColumnContent: String => Option[String] = column => if (column.isEmpty) None else Option(column)
 
   private def rowToJson(rows: List[Row], metadata: FileInfo): List[FlightData] = {
-    val dataRows: Seq[Row] = rows.filterNot(_.flightCode.isEmpty).filterNot(_.flightCode == "Flight Code")
+    val dataRows: Seq[Row] = rows.filterNot(_.flightCode.isEmpty).filterNot(_.flightCode.contains("Flight Code"))
     log.info(s"Processing ${dataRows.size} rows from the file name `${metadata.fileName}`")
     dataRows.groupBy(_.arrivalPort)
       .flatMap {
