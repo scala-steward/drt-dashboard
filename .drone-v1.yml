@@ -22,6 +22,8 @@ steps:
   commands:
   - pwd && rm -rf ./src/main/resources/frontend
   - pwd && mv ./react/build ./src/main/resources/frontend
+  depends_on:
+    - Build front end
 
 - name: Build back end
   pull: if-not-exists
