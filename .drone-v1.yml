@@ -35,6 +35,8 @@ steps:
   when:
     event:
     - push
+  depends_on:
+    - Copy front end to resources
 
 - name: Build back end
   pull: if-not-exists
