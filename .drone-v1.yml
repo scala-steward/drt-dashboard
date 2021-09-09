@@ -32,6 +32,10 @@ steps:
   image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:latest
   commands:
   - sbt test
+  environment:
+    ARTIFACTORY_PASSWORD:
+      from_secret: ARTIFACTORY_PASSWORD
+    ARTIFACTORY_USERNAME: scala-test-token
   when:
     event:
     - push
