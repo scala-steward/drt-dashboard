@@ -43,7 +43,7 @@ steps:
     depends_on:
       - Copy front end to resources
 
-  - name: Build back end
+  - name: Build docker image
     pull: if-not-exists
     image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:latest
     commands:
@@ -77,7 +77,7 @@ steps:
       event:
         - push
     depends_on:
-      - Build back end
+      - Build docker image
       - Copy front end to resources
 
 ...
