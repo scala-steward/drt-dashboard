@@ -50,17 +50,9 @@ steps:
       - /root/entrypoint.sh
       - sbt docker:stage
     environment:
-      ACCESS_REQUEST_EMAIL:
-        from_secret: ACCESS_REQUEST_EMAIL
       ARTIFACTORY_PASSWORD:
         from_secret: ARTIFACTORY_PASSWORD
       ARTIFACTORY_USERNAME: scala-test-token
-      DRT_DOMAIN:
-        from_secret: DRT_DOMAIN
-      GOV_NOTIFY_API_KEY:
-        from_secret: GOV_NOTIFY_API_KEY
-      PORT_CODES:
-        from_secret: PORT_CODES
     when:
       event:
         - push
