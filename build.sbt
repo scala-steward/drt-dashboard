@@ -19,8 +19,6 @@ lazy val root = (project in file(".")).
       scalaVersion := "2.12.8"
     )),
 
-    compile := ((compile in Compile) dependsOn buildReactApp).value,
-
     version := sys.env.getOrElse("DRONE_BUILD_NUMBER", sys.env.getOrElse("BUILD_ID", "DEV")),
     name := "drt-dashboard",
     credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
@@ -61,22 +59,6 @@ lazy val root = (project in file(".")).
 javaOptions in Test += "-Duser.timezone=UTC"
 
 javaOptions in Runtime += "-Duser.timezone=UTC"
-
-lazy val yarnInstall = taskKey[Unit]("yarn install")
-
-val cwd = System.getProperty("user.dir")
-val reactAppDir: sbt.File = new File(cwd + "/react")
-
-yarnInstall := {
-  scala.sys.process.Process("yarn install", reactAppDir).!
-}
-
-lazy val buildReactApp = taskKey[Unit]("Build react app")
-buildReactApp := {
-  scala.sys.process.Process("yarn build", reactAppDir).!
-  scala.sys.process.Process(s"rm -rf $cwd/src/main/resources/frontend").!
-  scala.sys.process.Process(s"mv build $cwd/src/main/resources/frontend", new File(cwd + "/react")).!
-}
 
 fork in run := true
 cancelable in Global := true

@@ -8,12 +8,27 @@ platform:
   arch: amd64
 
 steps:
-- name: build
+- name: Build front end
+  pull: if-not-exists
+  image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:latest
+  commands:
+  - cd react
+  - pwd && yarn install
+  - pwd && yarn build
+
+- name: Copy front end to resources
+  pull: if-not-exists
+  image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:latest
+  commands:
+  - pwd && rm -rf ./src/main/resources/frontend
+  - pwd && mv ./react/build ./src/main/resources/frontend
+
+- name: Build back end
   pull: if-not-exists
   image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:latest
   commands:
   - /root/entrypoint.sh
-  - sbt test yarnInstall buildReactApp docker:stage
+  - sbt test docker:stage
   environment:
     ACCESS_REQUEST_EMAIL:
       from_secret: ACCESS_REQUEST_EMAIL
