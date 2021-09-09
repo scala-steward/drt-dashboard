@@ -11,6 +11,8 @@ steps:
 - name: Build front end
   pull: if-not-exists
   image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:latest
+  environment:
+    CI: false
   commands:
   - cd react
   - pwd && yarn install
