@@ -9,111 +9,122 @@ import Loading from "./components/Loading";
 import Navigation from "./components/Navigation";
 import ConfigLike from "./model/Config";
 import FileUpload from "./components/FileUpload";
+import {MuiPickersUtilsProvider} from "@material-ui/pickers";
+import MomentUtils from "@date-io/moment";
+import {RedListEditor} from "./components/RedListEditor";
 
 interface UserLike {
-    email: string;
-    ports: string[];
-    roles: string[];
+  email: string;
+  ports: string[];
+  roles: string[];
 }
 
 interface IProps {
 }
 
 interface IState {
-    user?: UserLike;
-    config?: ConfigLike;
+  user?: UserLike;
+  config?: ConfigLike;
 }
 
 export default class App extends React.Component<IProps, IState> {
-    apiClient: ApiClient;
+  apiClient: ApiClient;
 
-    constructor(props: IProps) {
-        super(props);
+  constructor(props: IProps) {
+    super(props);
 
-        this.apiClient = new ApiClient();
-        this.state = {};
-    }
+    this.apiClient = new ApiClient();
+    this.state = {};
+  }
 
-    componentDidMount() {
-        this.apiClient.fetchData(this.apiClient.userEndPoint, this.updateUserState);
-        this.apiClient.fetchData(this.apiClient.configEndPoint, this.updateConfigState);
-    }
+  componentDidMount() {
+    this.apiClient.fetchData(this.apiClient.userEndPoint, this.updateUserState);
+    this.apiClient.fetchData(this.apiClient.configEndPoint, this.updateConfigState);
+  }
 
-    updateUserState = (response: AxiosResponse) => {
-        const user = response.data as UserLike;
-        this.setState({...this.state, user: user});
-    }
+  updateUserState = (response: AxiosResponse) => {
+    const user = response.data as UserLike;
+    this.setState({...this.state, user: user});
+  }
 
-    updateConfigState = (response: AxiosResponse) => {
-        const config = response.data as ConfigLike;
-        this.setState({...this.state, config: config});
-    }
+  updateConfigState = (response: AxiosResponse) => {
+    const config = response.data as ConfigLike;
+    this.setState({...this.state, config: config});
+  }
 
-    render() {
-        const currentLocation = window.document.location;
-        const logoutLink = "/oauth/logout?redirect=" + currentLocation
+  render() {
+    const currentLocation = window.document.location;
+    const logoutLink = "/oauth/logout?redirect=" + currentLocation
 
-        return (
-            <div className="App">
-                <Router>
-                    <header role="banner" id="global-header" className=" with-proposition">
-                        <div className="header-wrapper">
-                            <div className="header-global">
-                                <div className="header-logo">
-                                    <a href="https://www.gov.uk" title="Go to the GOV.UK homepage"
-                                       id="global-header-logo"
-                                       className="content">
-                                        <img
-                                            src="images/gov.uk_logotype_crown_invert_trans.png"
-                                            width="36" height="32" alt=""/> GOV.UK
-                                    </a>
-                                </div>
-                            </div>
-                            <div className="header-proposition">
-                                <div className="logout">
-                                    {this.state.user !== undefined ?
-                                        <Navigation logoutLink={logoutLink} user={this.state.user !!}/>
-                                        : ""
-                                    }
-                                </div>
-                                <div className="content">
-                                    <a href="/" id="proposition-name">Dynamic Response Tool</a>
-                                </div>
-                            </div>
-                        </div>
-                    </header>
+    return (
+      <div className="App">
+        <MuiPickersUtilsProvider utils={MomentUtils}>
+          <Router>
+            <header role="banner" id="global-header" className=" with-proposition">
+              <div className="header-wrapper">
+                <div className="header-global">
+                  <div className="header-logo">
+                    <a href="https://www.gov.uk" title="Go to the GOV.UK homepage"
+                       id="global-header-logo"
+                       className="content">
+                      <img
+                        src="images/gov.uk_logotype_crown_invert_trans.png"
+                        width="36" height="32" alt=""/> GOV.UK
+                    </a>
+                  </div>
+                </div>
+                <div className="header-proposition">
+                  <div className="logout">
+                    {this.state.user !== undefined ?
+                      <Navigation logoutLink={logoutLink} user={this.state.user !!}/>
+                      : ""
+                    }
+                  </div>
+                  <div className="content">
+                    <a href="/" id="proposition-name">Dynamic Response Tool</a>
+                  </div>
+                </div>
+              </div>
+            </header>
 
-                    <div id="global-header-bar"/>
-                    <Route exact path="/">
-                        {this.state.config && this.state.user ?
-                          <Home config={this.state.config} user={this.state.user}/> :
-                          <Loading/>
-                        }
-                    </Route>
-                    <Route exact path="/alerts">
-                        {this.state.user ?
-                            <Alerts user={this.state.user}/> :
-                            <Loading/>
-                        }
-                    </Route>
-                    <Route exact path="/upload">
-                        {this.state.user && this.state.config ?
-                            <FileUpload user={this.state.user} config={this.state.config}/> :
-                            <Loading/>
-                        }
-                    </Route>
-                </Router>
-                <footer className="group js-footer" id="footer" role="contentinfo">
-                    <div className="footer-wrapper">
-                        <div className="footer-meta">
-                            <div className="footer-meta-inner">
-                            </div>
-                        </div>
-                    </div>
-                </footer>
+            <div id="global-header-bar"/>
+            <Route exact path="/">
+              {this.state.config && this.state.user ?
+                <Home config={this.state.config} user={this.state.user}/> :
+                <Loading/>
+              }
+            </Route>
+            <Route exact path="/alerts">
+              {this.state.user ?
+                <Alerts user={this.state.user}/> :
+                <Loading/>
+              }
+            </Route>
+            <Route exact path="/upload">
+              {this.state.user && this.state.config ?
+                <FileUpload user={this.state.user} config={this.state.config}/> :
+                <Loading/>
+              }
+            </Route>
+            <Route exact path="/red-list-editor">
+              {this.state.user && this.state.config ?
+                <RedListEditor/> :
+                <Loading/>
+              }
+            </Route>
+          </Router>
+        </MuiPickersUtilsProvider>
+        <footer className="group js-footer" id="footer" role="contentinfo">
+          <div className="footer-wrapper">
+            <div className="footer-meta">
+              <div className="footer-meta-inner">
+              </div>
             </div>
-        );
-    }
+          </div>
+        </footer>
+      </div>
+    );
+  }
 }
 
 
