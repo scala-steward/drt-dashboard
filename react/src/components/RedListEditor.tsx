@@ -118,7 +118,7 @@ export const RedListEditor = () => {
   }
 
   function saveAddition() {
-    state.editing && state.editing.addingAddition && console.log('adding ' + [state.editing.addingAddition.name, state.editing.addingAddition.code])
+    state.editing && state.editing.addingAddition && console.log('concat result: ' + state.editing.update.additions.concat([[state.editing.addingAddition.name, state.editing.addingAddition.code]]))
     state.editing && state.editing.addingAddition &&
     setState({
       ...state,
@@ -127,7 +127,7 @@ export const RedListEditor = () => {
         addingAddition: null,
         update: {
           ...state.editing.update,
-          additions: state.editing.update.additions.concat([state.editing.addingAddition.name, state.editing.addingAddition.code])
+          additions: state.editing.update.additions.concat([[state.editing.addingAddition.name, state.editing.addingAddition.code]])
         }
       }
     })
@@ -208,8 +208,8 @@ export const RedListEditor = () => {
             <DatePicker value={state.editing.update.effectiveFrom} onChange={setDate}/>
             <DialogContentText>
                 Additions
-                <Button color="default" variant="outlined" size="medium" onClick={addNewAddition}>
-                    <Add/>
+                <Button color="default" variant="outlined" size="small" onClick={addNewAddition}>
+                    <Add fontSize="small"/>
                 </Button>
             </DialogContentText>
             <Grid direction="row" container={true}>
@@ -226,6 +226,7 @@ export const RedListEditor = () => {
               </Grid>
               }
               {state.editing.update.additions.map(nameCode => {
+                console.log('nameCode: ' + nameCode)
                 return <Grid item={true} container={true}>
                   <Grid item={true} xs={10}>{nameCode[0]} ({nameCode[1]})</Grid>
                   <Grid item={true} xs={2}>
@@ -238,8 +239,8 @@ export const RedListEditor = () => {
             </Grid>
             <DialogContentText>
                 Removals
-                <Button color="default" variant="outlined" size="medium" onClick={addNewRemoval}>
-                    <Add/>
+                <Button color="default" variant="outlined" size="small" onClick={addNewRemoval}>
+                    <Add fontSize="small"/>
                 </Button>
             </DialogContentText>
             <Grid>
@@ -267,10 +268,10 @@ export const RedListEditor = () => {
         </DialogContent>
         <DialogActions>
             <Button color="default" variant="outlined" size="medium" onClick={() => cancelEdit()}>
-                <Cancel/>
+                <Cancel/> Cancel
             </Button>
             <Button color="default" variant="outlined" size="medium" onClick={() => saveEdit()}>
-                <Save/>
+                <Save/> Save
             </Button>
         </DialogActions>
     </Dialog>}
