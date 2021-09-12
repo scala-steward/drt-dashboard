@@ -2,7 +2,7 @@ import React from 'react';
 import './App.css';
 import Home from './components/Home';
 import Alerts from './components/Alerts/Alerts';
-import {BrowserRouter as Router, Route} from "react-router-dom";
+import {HashRouter as Router, Route, Switch} from "react-router-dom";
 import ApiClient from "./services/ApiClient";
 import {AxiosResponse} from "axios";
 import Loading from "./components/Loading";
@@ -88,30 +88,32 @@ export default class App extends React.Component<IProps, IState> {
             </header>
 
             <div id="global-header-bar"/>
-            <Route exact path="/">
-              {this.state.config && this.state.user ?
-                <Home config={this.state.config} user={this.state.user}/> :
-                <Loading/>
-              }
-            </Route>
-            <Route exact path="/alerts">
-              {this.state.user ?
-                <Alerts user={this.state.user}/> :
-                <Loading/>
-              }
-            </Route>
-            <Route exact path="/upload">
-              {this.state.user && this.state.config ?
-                <FileUpload user={this.state.user} config={this.state.config}/> :
-                <Loading/>
-              }
-            </Route>
-            <Route exact path="/red-list-editor">
-              {this.state.user && this.state.config ?
-                <RedListEditor/> :
-                <Loading/>
-              }
-            </Route>
+            <Switch>
+              <Route exact path="/">
+                {this.state.config && this.state.user ?
+                  <Home config={this.state.config} user={this.state.user}/> :
+                  <Loading/>
+                }
+              </Route>
+              <Route exact path="/alerts">
+                {this.state.user ?
+                  <Alerts user={this.state.user}/> :
+                  <Loading/>
+                }
+              </Route>
+              <Route exact path="/upload">
+                {this.state.user && this.state.config ?
+                  <FileUpload user={this.state.user} config={this.state.config}/> :
+                  <Loading/>
+                }
+              </Route>
+              <Route exact path="/red-list-editor">
+                {this.state.user && this.state.config ?
+                  <RedListEditor/> :
+                  <Loading/>
+                }
+              </Route>
+            </Switch>
           </Router>
         </MuiPickersUtilsProvider>
         <footer className="group js-footer" id="footer" role="contentinfo">
