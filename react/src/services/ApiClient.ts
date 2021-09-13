@@ -6,12 +6,12 @@ interface IApiClient {
 }
 
 export default class ApiClient implements IApiClient {
-    public userEndPoint = "/api/user";
-    public configEndPoint = "/api/config";
-    public requestAccessEndPoint = "/api/request-access";
-    public logoutEndPoint = "/oauth/logout";
-    public alertsEndPoint = "/api/alerts";
-    public fileUploadEndPoint = "/upload";
+    public static userEndPoint = "/api/user";
+    public static configEndPoint = "/api/config";
+    public static requestAccessEndPoint = "/api/request-access";
+    public static logoutEndPoint = "/oauth/logout";
+    public static alertsEndPoint = "/api/alerts";
+    public static fileUploadEndPoint = "/upload";
 
     public fetchData(userEndPoint: string, handleResponse: (r: AxiosResponse) => void) {
         axios

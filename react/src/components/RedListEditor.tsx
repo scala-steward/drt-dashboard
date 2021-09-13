@@ -12,86 +12,7 @@ import {
 import {DatePicker} from "@material-ui/pickers";
 import {MaterialUiPickersDate} from "@material-ui/pickers/typings/date";
 import {Add, Cancel, Check, Delete, Edit, Save} from "@material-ui/icons";
-
-
-export type RedListUpdate = {
-  effectiveFrom: number
-  additions: [string, string][]
-  removals: string[]
-}
-
-export type RedListUpdates = {
-  updates: Map<number, RedListUpdate>
-}
-
-type Addition = {
-  name: string
-  code: string
-}
-
-type Editing = {
-  update: RedListUpdate
-  addingAddition: Addition | null
-  addingRemoval: string | null
-  originalDate: number
-}
-
-class Editing_ {
-  public static setAdditionName(editing: Editing, name: string): Editing {
-    const updatedAddition = editing.addingAddition && {...editing.addingAddition, name: name}
-    return {...editing, addingAddition: updatedAddition}
-  }
-
-  public static setAdditionCode(editing: Editing, code: string): Editing {
-    const updatedAddition = editing.addingAddition && {...editing.addingAddition, code: code}
-    return {...editing, addingAddition: updatedAddition}
-  }
-
-  public static setRemovalCode(editing: Editing, code: string): Editing {
-    return {...editing, addingRemoval: code}
-  }
-
-  public static setEffectiveFrom(editing: Editing, newDate: number): Editing {
-    return {...editing, update: {...editing.update, effectiveFrom: newDate}}
-  }
-
-  public static removeAddition(editing: Editing, name: string): Editing {
-    const additions = editing.update.additions.filter(entry => entry[0] != name)
-    return {...editing, update: {...editing.update, additions: additions}}
-  }
-
-  public static removeRemoval(editing: Editing, code: string): Editing {
-    const removals = editing.update.removals.filter(c => c != code)
-    return {...editing, update: {...editing.update, removals: removals}}
-  }
-}
-
-type State = {
-  updates: RedListUpdate[],
-  editing: Editing | null
-}
-
-class State_ {
-  public static addingAddition(state: State): State {
-    return state.editing ? {...state, editing: {...state.editing, addingAddition: {name: "", code: ""}}} : state
-  }
-
-  public static updatingAdditionName(state: State, event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): State {
-    return state.editing ? {...state, editing: Editing_.setAdditionName(state.editing, event.target.value)} : state
-  }
-
-  public static updatingAdditionCode(state: State, event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): State {
-    return state.editing ? {...state, editing: Editing_.setAdditionCode(state.editing, event.target.value)} : state
-  }
-
-  public static addingRemoval(state: State): State {
-    return state.editing ? {...state, editing: {...state.editing, addingRemoval: ""}} : state
-  }
-
-  public static updatingRemoval(state: State, event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): State {
-    return state.editing ? {...state, editing: Editing_.setRemovalCode(state.editing, event.target.value)} : state
-  }
-}
+import {Editing_, RedListUpdate, State, State_} from "./redlisteditor/model";
 
 
 export const RedListEditor = () => {
@@ -113,9 +34,9 @@ export const RedListEditor = () => {
     withNew && setState({...state, editing: null, updates: withNew})
   }
 
-  function removeAddition(name: string) {
-    state.editing && setState({...state, editing: Editing_.removeAddition(state.editing, name)})
-  }
+  // function removeAddition(name: string) {
+  //   state.editing && setState({...state, editing: Editing_.removeAddition(state.editing, name)})
+  // }
 
   function saveAddition() {
     state.editing && state.editing.addingAddition && console.log('concat result: ' + state.editing.update.additions.concat([[state.editing.addingAddition.name, state.editing.addingAddition.code]]))
@@ -137,9 +58,9 @@ export const RedListEditor = () => {
     state.editing && setState({...state, editing: {...state.editing, addingAddition: null}})
   }
 
-  function removeRemoval(code: string) {
-    state.editing && setState({...state, editing: Editing_.removeRemoval(state.editing, code)})
-  }
+  // function removeRemoval(code: string) {
+  //   state.editing && setState({...state, editing: Editing_.removeRemoval(state.editing, code)})
+  // }
 
   function saveRemoval() {
     state.editing && state.editing.addingRemoval &&

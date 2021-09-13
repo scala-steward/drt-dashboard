@@ -2,131 +2,98 @@ import React from 'react';
 import './App.css';
 import Home from './components/Home';
 import Alerts from './components/Alerts/Alerts';
-import {HashRouter as Router, Route, Switch} from "react-router-dom";
-import ApiClient from "./services/ApiClient";
-import {AxiosResponse} from "axios";
+import {Route, Switch} from "react-router-dom";
 import Loading from "./components/Loading";
 import Navigation from "./components/Navigation";
-import ConfigLike from "./model/Config";
 import FileUpload from "./components/FileUpload";
-import {MuiPickersUtilsProvider} from "@material-ui/pickers";
-import MomentUtils from "@date-io/moment";
 import {RedListEditor} from "./components/RedListEditor";
+import {createStyles, makeStyles} from "@material-ui/core/styles";
+import {RootState, rootStore} from "./store/rootReducer";
+import {connect, ConnectedProps} from "react-redux";
+import {fetchUserProfile} from "./store/userSlice";
+import {fetchConfig} from "./store/configSlice";
 
-interface UserLike {
-  email: string;
-  ports: string[];
-  roles: string[];
-}
 
-interface IProps {
-}
+rootStore.dispatch(fetchUserProfile())
+rootStore.dispatch(fetchConfig())
 
-interface IState {
-  user?: UserLike;
-  config?: ConfigLike;
-}
+const useStyles = makeStyles(() =>
+  createStyles({
+    mainContent: {
+      margin: 20,
+      flexGrow: 1,
+    }
+  }),
+);
 
-export default class App extends React.Component<IProps, IState> {
-  apiClient: ApiClient;
+const mapState = (state: RootState) => ({
+  user: state.user,
+  config: state.config
+})
 
-  constructor(props: IProps) {
-    super(props);
+const connector = connect(mapState)
 
-    this.apiClient = new ApiClient();
-    this.state = {};
-  }
+type PropsFromReact = ConnectedProps<typeof connector>
 
-  componentDidMount() {
-    this.apiClient.fetchData(this.apiClient.userEndPoint, this.updateUserState);
-    this.apiClient.fetchData(this.apiClient.configEndPoint, this.updateConfigState);
-  }
+const App = (props: PropsFromReact) => {
+  const styles = useStyles()
 
-  updateUserState = (response: AxiosResponse) => {
-    const user = response.data as UserLike;
-    this.setState({...this.state, user: user});
-  }
+  const currentLocation = window.document.location;
+  const logoutLink = "/oauth/logout?redirect=" + currentLocation
 
-  updateConfigState = (response: AxiosResponse) => {
-    const config = response.data as ConfigLike;
-    this.setState({...this.state, config: config});
-  }
-
-  render() {
-    const currentLocation = window.document.location;
-    const logoutLink = "/oauth/logout?redirect=" + currentLocation
-
-    return (
-      <div className="App">
-        <MuiPickersUtilsProvider utils={MomentUtils}>
-          <Router>
-            <header role="banner" id="global-header" className=" with-proposition">
-              <div className="header-wrapper">
-                <div className="header-global">
-                  <div className="header-logo">
-                    <a href="https://www.gov.uk" title="Go to the GOV.UK homepage"
-                       id="global-header-logo"
-                       className="content">
-                      <img
-                        src="images/gov.uk_logotype_crown_invert_trans.png"
-                        width="36" height="32" alt=""/> GOV.UK
-                    </a>
-                  </div>
-                </div>
-                <div className="header-proposition">
-                  <div className="logout">
-                    {this.state.user !== undefined ?
-                      <Navigation logoutLink={logoutLink} user={this.state.user !!}/>
-                      : ""
-                    }
-                  </div>
-                  <div className="content">
-                    <a href="/" id="proposition-name">Dynamic Response Tool</a>
-                  </div>
-                </div>
-              </div>
-            </header>
-
-            <div id="global-header-bar"/>
-            <Switch>
-              <Route exact path="/">
-                {this.state.config && this.state.user ?
-                  <Home config={this.state.config} user={this.state.user}/> :
-                  <Loading/>
-                }
-              </Route>
-              <Route exact path="/alerts">
-                {this.state.user ?
-                  <Alerts user={this.state.user}/> :
-                  <Loading/>
-                }
-              </Route>
-              <Route exact path="/upload">
-                {this.state.user && this.state.config ?
-                  <FileUpload user={this.state.user} config={this.state.config}/> :
-                  <Loading/>
-                }
-              </Route>
-              <Route exact path="/red-list-editor">
-                {this.state.user && this.state.config ?
-                  <RedListEditor/> :
-                  <Loading/>
-                }
-              </Route>
-            </Switch>
-          </Router>
-        </MuiPickersUtilsProvider>
-        <footer className="group js-footer" id="footer" role="contentinfo">
-          <div className="footer-wrapper">
-            <div className="footer-meta">
-              <div className="footer-meta-inner">
-              </div>
+  return (props.user.kind === "SignedInUser" && props.config.kind === "LoadedConfig") ?
+    <div className="App">
+      <header role="banner" id="global-header" className=" with-proposition">
+        <div className="header-wrapper">
+          <div className="header-global">
+            <div className="header-logo">
+              <a href="https://www.gov.uk" title="Go to the GOV.UK homepage"
+                 id="global-header-logo"
+                 className="content">
+                <img
+                  src="images/gov.uk_logotype_crown_invert_trans.png"
+                  width="36" height="32" alt=""/> GOV.UK
+              </a>
             </div>
           </div>
-        </footer>
+          <div className="header-proposition">
+            <div className="logout">
+              {props.user.kind === "SignedInUser" &&
+              <Navigation logoutLink={logoutLink} user={props.user.profile}/>}
+            </div>
+            <div className="content">
+              <a href="/" id="proposition-name">Dynamic Response Tool</a>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div id="global-header-bar"/>
+      <div className="main-content">
+        <Switch>
+          <Route exact path="/">
+            <Home config={props.config.values} user={props.user.profile}/>
+          </Route>
+          <Route exact path="/alerts">
+            <Alerts user={props.user.profile}/>
+          </Route>
+          <Route exact path="/upload">
+            <FileUpload user={props.user.profile} config={props.config.values}/>
+          </Route>
+          <Route exact path="/red-list-editor">
+            <RedListEditor/>
+          </Route>
+        </Switch>
       </div>
-    );
-  }
+      <footer className="group js-footer" id="footer" role="contentinfo">
+        <div className="footer-wrapper">
+          <div className="footer-meta">
+            <div className="footer-meta-inner">
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div> : <Loading/>
 }
 
-
+export default connector(App)
