@@ -2,6 +2,7 @@ import React from 'react';
 import axios, {AxiosRequestConfig, AxiosResponse} from "axios";
 import {UserProfile} from "../model/User";
 import {ConfigValues} from "../model/Config";
+import {Button} from "@material-ui/core";
 
 interface IProps {
   user: UserProfile;
@@ -23,7 +24,7 @@ interface FeedStatus {
   statusCode: string;
 }
 
-class FileUpload extends React.Component<IProps, IState> {
+class NeboUpload extends React.Component<IProps, IState> {
 
   constructor(props: IProps) {
     super(props);
@@ -159,10 +160,10 @@ class FileUpload extends React.Component<IProps, IState> {
           <br/>
           <br/>
           <br/>
-          {this.state.showUploadButton &&
-          <button className="upload-button" onClick={this.onFileUpload}>Upload</button>}
         </div>
         {this.fileData()}
+        {this.state.showUploadButton &&
+        <Button variant="outlined" color="primary" onClick={this.onFileUpload}>Upload</Button>}
       </div>
     } else {
       page = <div>
@@ -181,4 +182,4 @@ class FileUpload extends React.Component<IProps, IState> {
   }
 }
 
-export default FileUpload;
+export default NeboUpload;

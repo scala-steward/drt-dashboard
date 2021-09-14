@@ -5,7 +5,7 @@ import Alerts from './components/Alerts/Alerts';
 import {Route, Switch} from "react-router-dom";
 import Loading from "./components/Loading";
 import Navigation from "./components/Navigation";
-import FileUpload from "./components/FileUpload";
+import NeboUpload from "./components/NeboUpload";
 import {RedListEditor} from "./components/RedListEditor";
 import {createStyles, makeStyles} from "@material-ui/core/styles";
 import {RootState, rootStore} from "./store/rootReducer";
@@ -20,8 +20,10 @@ rootStore.dispatch(fetchConfig())
 const useStyles = makeStyles(() =>
   createStyles({
     mainContent: {
-      margin: 20,
-      flexGrow: 1,
+      border: '1 solid red',
+      margin: 30,
+      padding: 15,
+      textAlign: 'left',
     }
   }),
 );
@@ -69,7 +71,7 @@ const App = (props: PropsFromReact) => {
       </header>
 
       <div id="global-header-bar"/>
-      <div className="main-content">
+      <div className={styles.mainContent}>
         <Switch>
           <Route exact path="/">
             <Home config={props.config.values} user={props.user.profile}/>
@@ -78,7 +80,7 @@ const App = (props: PropsFromReact) => {
             <Alerts user={props.user.profile}/>
           </Route>
           <Route exact path="/upload">
-            <FileUpload user={props.user.profile} config={props.config.values}/>
+            <NeboUpload user={props.user.profile} config={props.config.values}/>
           </Route>
           <Route exact path="/red-list-editor">
             <RedListEditor/>
