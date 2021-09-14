@@ -1,6 +1,8 @@
 package uk.gov.homeoffice.drt.routes
 
 import akka.actor.typed.ActorSystem
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.model.HttpHeader.ParsingResult.Ok
 import akka.http.scaladsl.model.{ ContentTypes, HttpEntity, StatusCodes }
 import akka.http.scaladsl.server.Directives.{ complete, pathPrefix, _ }
 import akka.http.scaladsl.server.directives.MethodDirectives.get
@@ -9,9 +11,10 @@ import akka.http.scaladsl.unmarshalling.Unmarshal
 import org.slf4j.{ Logger, LoggerFactory }
 import spray.json.{ JsArray, JsObject, JsString }
 import uk.gov.homeoffice.drt.alerts.{ Alert, MultiPortAlert, MultiPortAlertClient }
-import uk.gov.homeoffice.drt.auth.Roles.{ CreateAlerts, Role }
+import uk.gov.homeoffice.drt.auth.Roles.{ CreateAlerts, RedListsEdit, Role }
 import uk.gov.homeoffice.drt.authentication.{ AccessRequest, User }
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
+import uk.gov.homeoffice.drt.redlist.SetRedListUpdate
 import uk.gov.homeoffice.drt.{ Dashboard, DashboardClient }
 
 import scala.compat.java8.OptionConverters._
@@ -95,6 +98,21 @@ object ApiRoutes {
             }
           }
         },
+        (post & path("red-list-updates")) {
+          authByRole(RedListsEdit) {
+            import uk.gov.homeoffice.drt.redlist.RedListJsonFormats._
+            headerValueByName("X-Auth-Roles") { rolesStr =>
+              headerValueByName("X-Auth-Email") { email =>
+                entity(as[SetRedListUpdate]) {
+                  setRedListUpdate =>
+                    println(s"Received a SetRedListUpdate to post to ports")
+                    println(s"$setRedListUpdate")
+                    complete(Future(StatusCodes.OK))
+                }
+              }
+            }
+          }
+        },
         (get & path("alerts")) {
           authByRole(CreateAlerts) {
             headerValueByName("X-Auth-Roles") { rolesStr =>
@@ -141,6 +159,5 @@ object ApiRoutes {
           }
         })
     }
-
 }
 

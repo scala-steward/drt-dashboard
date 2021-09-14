@@ -24,6 +24,7 @@ const useStyles = makeStyles(() =>
       margin: 30,
       padding: 15,
       textAlign: 'left',
+      minHeight: 500,
     }
   }),
 );

@@ -13,12 +13,12 @@ import akka.util.ByteString
 import org.specs2.mutable.Specification
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
-import uk.gov.homeoffice.drt.routes.UploadRoutes._
+import uk.gov.homeoffice.drt.routes.NeboUploadRoutes._
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ Await, ExecutionContextExecutor, Future }
 
-class UploadRoutesSpec extends Specification with Specs2RouteTest {
+class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
 
   val testKit = ActorTestKit()
 
@@ -30,9 +30,7 @@ class UploadRoutesSpec extends Specification with Specs2RouteTest {
       Future(HttpResponse(StatusCodes.Accepted, entity = HttpEntity("File uploaded")))(ec)
   }
 
-  val routes: Route = UploadRoutes(
-    "uploadFile",
-    List("lhr"), httpClient)
+  val routes: Route = NeboUploadRoutes(List("lhr"), httpClient)
 
   val test2FileData =
     """
@@ -112,7 +110,7 @@ class UploadRoutesSpec extends Specification with Specs2RouteTest {
 
   "convertByteSourceToFlightData should convert file data byteString to FlightData case class with expected conversion" >> {
     val metaFile = FileInfo(fieldName = "csv", fileName = "test.csv", contentType = ContentTypes.`text/plain(UTF-8)`)
-    val flightDataF: Future[List[FlightData]] = UploadRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test2FileData)))
+    val flightDataF: Future[List[FlightData]] = NeboUploadRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test2FileData)))
     val exceptedResult = Seq(
       FlightData("LHR", "TEST316", parseDateToMillis("03/07/2021 17:05"), Option(parseDateToMillis("03/07/2021 15:45")), Option("MAD"), Option("PTY"), 1),
       FlightData("LHR", "TEST1681", parseDateToMillis("03/07/2021 07:55"), Option(parseDateToMillis("03/07/2021 07:30")), Option("CDG"), Option("JNB"), 1),
@@ -128,7 +126,7 @@ class UploadRoutesSpec extends Specification with Specs2RouteTest {
 
   "convertByteSourceToFlightData should convert file data byteString to FlightData case class with expected conversion without departure details" >> {
     val metaFile = FileInfo(fieldName = "csv", fileName = "test.csv", contentType = ContentTypes.`text/plain(UTF-8)`)
-    val flightDataF: Future[List[FlightData]] = UploadRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test3FileDataWithoutDepartureDetails)))
+    val flightDataF: Future[List[FlightData]] = NeboUploadRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test3FileDataWithoutDepartureDetails)))
     val exceptedResult = Seq(
       FlightData("LHR", "TEST316", parseDateToMillis("03/07/2021 17:05"), None, None, None, 1),
       FlightData("LHR", "TEST1681", parseDateToMillis("03/07/2021 07:55"), None, None, None, 1),
@@ -144,7 +142,7 @@ class UploadRoutesSpec extends Specification with Specs2RouteTest {
 
   "convertByteSourceToFlightData should convert file data to FlightData while field data contain newline character" >> {
     val metaFile = FileInfo(fieldName = "csv", fileName = "test.csv", contentType = ContentTypes.`text/plain(UTF-8)`)
-    val flightDataF: Future[List[FlightData]] = UploadRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test4FileDataWithNewlineCharInFields)))
+    val flightDataF: Future[List[FlightData]] = NeboUploadRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test4FileDataWithNewlineCharInFields)))
     val exceptedResult = Seq(
       FlightData("LHR", "TEST124", parseDateToMillis("24/08/2021 06:15"), Option(parseDateToMillis("24/08/2021 01:00")), Some("BAH"), Some("MLE"), 1),
       FlightData("LHR", "TEST007", parseDateToMillis("24/08/2021 06:55"), Option(parseDateToMillis("24/08/2021 02:00")), Some("BAH"), Some("SKT"), 4))

@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {
   Button,
+  createStyles,
   Dialog,
   DialogActions,
   DialogContent,
@@ -12,11 +13,51 @@ import {
 import {DatePicker} from "@material-ui/pickers";
 import {MaterialUiPickersDate} from "@material-ui/pickers/typings/date";
 import {Add, Cancel, Check, Delete, Edit, Save} from "@material-ui/icons";
-import {Editing_, RedListUpdate, State, State_} from "./redlisteditor/model";
+import {Editing, Editing_, RedListUpdate, State, State_} from "./redlisteditor/model";
+import {makeStyles, Theme} from "@material-ui/core/styles";
+import moment from "moment/moment";
+import {rootStore} from "../store/rootReducer";
+import {RequestSetRedListUpdates, saveRedListUpdates} from "../store/redListSlice";
 
+const useStyles = makeStyles((theme: Theme) =>
+  createStyles({
+    root: {
+      flexGrow: 1,
+      maxWidth: 800,
+    },
+    title: {
+      padding: theme.spacing(2),
+      color: theme.palette.text.secondary,
+    },
+    row: {
+      padding: theme.spacing(2),
+      color: theme.palette.text.secondary,
+    },
+  }),
+);
+
+type ConfirmOpen = {
+  kind: 'open'
+  message: string
+  onConfirm: () => void
+}
+type ConfirmClosed = {
+  kind: 'closed'
+}
+
+type Confirm = ConfirmOpen | ConfirmClosed
+
+export type SetRedListUpdates = {
+  originalDate: number
+  redListUpdate: RedListUpdate
+}
 
 export const RedListEditor = () => {
-  const [state, setState] = useState<State>({updates: [], editing: null})
+  const classes = useStyles();
+
+  const update: RedListUpdate = {effectiveFrom: 1631228400000, additions: [], removals: []};
+  const [state, setState] = useState<State>({updates: [update], editing: null})
+  const [confirm, setConfirm] = useState<Confirm>({kind: 'closed'})
 
   const setDate: (e: MaterialUiPickersDate) => void = e => {
     setState((state.editing && e) ? {
@@ -27,16 +68,25 @@ export const RedListEditor = () => {
 
   const cancelEdit = () => setState({...state, editing: null})
 
-  const saveEdit = () => {
+  const saveEdit = (editing: Editing) => {
     const withoutOriginal = state.editing && state.updates.filter(u => u.effectiveFrom != state.editing?.update.effectiveFrom && u.effectiveFrom != state.editing?.originalDate)
     const withNew = withoutOriginal && state.editing && withoutOriginal.concat(state.editing.update)
     console.log('Updated state with saved edit. TODO: call endpoints to persist to all ports')
+    const request: RequestSetRedListUpdates = {
+      updates: {
+        originalDate: editing.originalDate,
+        redListUpdate: editing.update
+      },
+      onSuccess: () => {},
+      onFailure: () => {},
+    }
+    state.editing && rootStore.dispatch(saveRedListUpdates(request))
     withNew && setState({...state, editing: null, updates: withNew})
   }
 
-  // function removeAddition(name: string) {
-  //   state.editing && setState({...state, editing: Editing_.removeAddition(state.editing, name)})
-  // }
+  function removeAddition(name: string) {
+    state.editing && setState({...state, editing: Editing_.removeAddition(state.editing, name)})
+  }
 
   function saveAddition() {
     state.editing && state.editing.addingAddition && console.log('concat result: ' + state.editing.update.additions.concat([[state.editing.addingAddition.name, state.editing.addingAddition.code]]))
@@ -58,9 +108,9 @@ export const RedListEditor = () => {
     state.editing && setState({...state, editing: {...state.editing, addingAddition: null}})
   }
 
-  // function removeRemoval(code: string) {
-  //   state.editing && setState({...state, editing: Editing_.removeRemoval(state.editing, code)})
-  // }
+  function removeRemoval(code: string) {
+    state.editing && setState({...state, editing: Editing_.removeRemoval(state.editing, code)})
+  }
 
   function saveRemoval() {
     state.editing && state.editing.addingRemoval &&
@@ -119,96 +169,136 @@ export const RedListEditor = () => {
     return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
   }
 
-  return <div>
-    <h2>Red List Change Sets</h2>
-    <Button color="primary" variant="outlined" size="medium" onClick={addNewChangeSet}>Add a new change set</Button>
-    {state.editing &&
-    <Dialog open={true} maxWidth="xs">
-        <DialogTitle>Edit changes for {new Date(state.editing.update.effectiveFrom).toISOString()}</DialogTitle>
-        <DialogContent>
-            <DatePicker value={state.editing.update.effectiveFrom} onChange={setDate}/>
-            <DialogContentText>
-                Additions
-                <Button color="default" variant="outlined" size="small" onClick={addNewAddition}>
-                    <Add fontSize="small"/>
-                </Button>
-            </DialogContentText>
-            <Grid direction="row" container={true}>
-              {state.editing && state.editing.addingAddition &&
-              <Grid item={true} container={true}>
-                  <Grid item={true} xs={4}><TextField label="Full name" value={state.editing.addingAddition.name}
-                                                      onChange={e => setState(State_.updatingAdditionName(state, e))}/></Grid>
-                  <Grid item={true} xs={4}><TextField label="3 letter code" value={state.editing.addingAddition.code}
-                                                      onChange={e => setState(State_.updatingAdditionCode(state, e))}/></Grid>
-                  <Grid item={true} xs={2}><Button color="default" variant="outlined" size="small"
-                                                   onClick={saveAddition}><Check fontSize="small"/></Button></Grid>
-                  <Grid item={true} xs={2}><Button color="default" variant="outlined" size="small"
-                                                   onClick={cancelAddition}><Delete fontSize="small"/></Button></Grid>
-              </Grid>
-              }
-              {state.editing.update.additions.map(nameCode => {
-                console.log('nameCode: ' + nameCode)
-                return <Grid item={true} container={true}>
-                  <Grid item={true} xs={10}>{nameCode[0]} ({nameCode[1]})</Grid>
-                  <Grid item={true} xs={2}>
-                    <Button color="default" variant="outlined" size="small">
-                      <Delete fontSize="small"/>
-                    </Button>
-                  </Grid>
-                </Grid>
-              })}
-            </Grid>
-            <DialogContentText>
-                Removals
-                <Button color="default" variant="outlined" size="small" onClick={addNewRemoval}>
-                    <Add fontSize="small"/>
-                </Button>
-            </DialogContentText>
-            <Grid>
-              {state.editing && state.editing.addingRemoval !== null &&
-              <Grid item={true} container={true}>
-                  <Grid item={true} xs={8}><TextField label="Full name" value={state.editing.addingRemoval}
-                                                      onChange={e => setState(State_.updatingRemoval(state, e))}/></Grid>
-                  <Grid item={true} xs={2}><Button color="default" variant="outlined" size="small"
-                                                   onClick={saveRemoval}><Check fontSize="small"/></Button></Grid>
-                  <Grid item={true} xs={2}><Button color="default" variant="outlined" size="small"
-                                                   onClick={cancelRemoval}><Delete fontSize="small"/></Button></Grid>
-              </Grid>
-              }
-              {state.editing.update.removals.map(removalCode => {
-                return <Grid item={true} container={true}>
-                  <Grid item={true} xs={10}>{removalCode}</Grid>
-                  <Grid item={true} xs={2}>
-                    <Button color="default" variant="outlined" size="small">
-                      <Delete fontSize="small"/>
-                    </Button>
-                  </Grid>
-                </Grid>
-              })}
-            </Grid>
-        </DialogContent>
-        <DialogActions>
-            <Button color="default" variant="outlined" size="medium" onClick={() => cancelEdit()}>
-                <Cancel/> Cancel
-            </Button>
-            <Button color="default" variant="outlined" size="medium" onClick={() => saveEdit()}>
-                <Save/> Save
-            </Button>
-        </DialogActions>
-    </Dialog>}
-    <Grid container={true}>
-      {state.updates.map(update => {
-        return <Grid container={true} item={true}>
-          <Grid item={true}>{update.effectiveFrom}</Grid>
-          <Grid item={true}>{update.additions.length} additions</Grid>
-          <Grid item={true}>{update.removals.length} removals</Grid>
-          <Grid item={true}><Button color="default" variant="outlined" size="medium"
-                                    onClick={() => editChangeSet(update)}><Edit/></Button></Grid>
-          <Grid item={true}><Button color="default" variant="outlined" size="medium"
-                                    onClick={() => deleteUpdates(update.effectiveFrom)}><Delete/></Button></Grid>
-        </Grid>
-      })
-      }
+  const confirmDeleteChangeSet = () => {
+    setConfirm({kind: 'closed'})
+    deleteUpdates(update.effectiveFrom)
+  }
+
+  return <Grid container={true} className={classes.root}>
+    <Grid item={true} xs={12}>
+      <h1>Red List Changes</h1>
     </Grid>
-  </div>
+    <Grid item={true} xs={12}>
+      <Button color="primary" variant="outlined" size="medium" onClick={addNewChangeSet}>Add a new change set</Button>
+    </Grid>
+    <Grid container={true} item={true} xs={12}>
+      {state.editing &&
+      <Dialog open={true} maxWidth="xs">
+          <DialogTitle>Edit changes for {moment(state.editing.update.effectiveFrom).format("Do MMM YYYY")}</DialogTitle>
+          <DialogContent>
+              <DatePicker value={state.editing.update.effectiveFrom} onChange={setDate}/>
+              <DialogContentText>
+                  Additions
+                  <Button color="default" variant="outlined" size="small" onClick={addNewAddition}>
+                      <Add fontSize="small"/>
+                  </Button>
+              </DialogContentText>
+              <Grid direction="row" container={true}>
+                {state.editing && state.editing.addingAddition &&
+                <Grid item={true} container={true}>
+                    <Grid item={true} xs={4}><TextField label="Full name" value={state.editing.addingAddition.name}
+                                                        onChange={e => setState(State_.updatingAdditionName(state, e))}/></Grid>
+                    <Grid item={true} xs={4}><TextField label="3 letter code" value={state.editing.addingAddition.code}
+                                                        onChange={e => setState(State_.updatingAdditionCode(state, e))}/></Grid>
+                    <Grid item={true} xs={2}><Button color="default" variant="outlined" size="small"
+                                                     onClick={saveAddition}><Check fontSize="small"/></Button></Grid>
+                    <Grid item={true} xs={2}><Button color="default" variant="outlined" size="small"
+                                                     onClick={cancelAddition}><Delete fontSize="small"/></Button></Grid>
+                </Grid>
+                }
+                {state.editing.update.additions.map(nameCode => {
+                  console.log('nameCode: ' + nameCode)
+                  return <Grid item={true} container={true}>
+                    <Grid item={true} xs={10}>{nameCode[0]} ({nameCode[1]})</Grid>
+                    <Grid item={true} xs={2}>
+                      <Button color="default" variant="outlined" size="small"
+                              onClick={() => removeAddition(nameCode[0])}>
+                        <Delete fontSize="small"/>
+                      </Button>
+                    </Grid>
+                  </Grid>
+                })}
+              </Grid>
+              <DialogContentText>
+                  Removals
+                  <Button color="default" variant="outlined" size="small" onClick={addNewRemoval}>
+                      <Add fontSize="small"/>
+                  </Button>
+              </DialogContentText>
+              <Grid>
+                {state.editing && state.editing.addingRemoval !== null &&
+                <Grid item={true} container={true}>
+                    <Grid item={true} xs={8}><TextField label="Full name" value={state.editing.addingRemoval}
+                                                        onChange={e => setState(State_.updatingRemoval(state, e))}/></Grid>
+                    <Grid item={true} xs={2}><Button color="default" variant="outlined" size="small"
+                                                     onClick={saveRemoval}><Check fontSize="small"/></Button></Grid>
+                    <Grid item={true} xs={2}><Button color="default" variant="outlined" size="small"
+                                                     onClick={cancelRemoval}><Delete fontSize="small"/></Button></Grid>
+                </Grid>
+                }
+                {state.editing.update.removals.map(removalCode => {
+                  return <Grid item={true} container={true}>
+                    <Grid item={true} xs={10}>{removalCode}</Grid>
+                    <Grid item={true} xs={2}>
+                      <Button color="default" variant="outlined" size="small"
+                              onClick={() => removeRemoval(removalCode)}>
+                        <Delete fontSize="small"/>
+                      </Button>
+                    </Grid>
+                  </Grid>
+                })}
+              </Grid>
+          </DialogContent>
+          <DialogActions>
+              <Button color="default" variant="outlined" size="medium" onClick={() => cancelEdit()}>
+                  <Cancel/> Cancel
+              </Button>
+              <Button color="default" variant="outlined" size="medium" onClick={() => state.editing && saveEdit(state.editing)}>
+                  <Save/> Save
+              </Button>
+          </DialogActions>
+      </Dialog>}
+      {confirm.kind === 'open' &&
+      <Dialog open={true} maxWidth="xs">
+          <DialogTitle>{confirm.message}</DialogTitle>
+          <DialogActions>
+              <Button color="default" variant="outlined" size="medium" onClick={() => setConfirm({kind: 'closed'})}>
+                  No
+              </Button>
+              <Button color="default" variant="outlined" size="medium" onClick={confirm.onConfirm}>
+                  Yes
+              </Button>
+          </DialogActions>
+      </Dialog>}
+      <Grid container={true}>
+        <React.Fragment>
+          <Grid container={true} item={true} xs={8}>
+            <Grid item={true} xs={4} className={classes.title}>Effective from</Grid>
+            <Grid item={true} xs={4} className={classes.title}>Additions</Grid>
+            <Grid item={true} xs={4} className={classes.title}>Removals</Grid>
+          </Grid>
+          <Grid item={true} xs={4} className={classes.title}/>
+        </React.Fragment>
+        {state.updates.map(update => {
+          return <React.Fragment>
+            <Grid container={true} item={true} xs={8}>
+              <Grid item={true} xs={4}
+                    className={classes.title}>{moment(update.effectiveFrom).format("Do MMM YYYY")}</Grid>
+              <Grid item={true} xs={4} className={classes.title}>{update.additions.length}</Grid>
+              <Grid item={true} xs={4} className={classes.title}>{update.removals.length}</Grid>
+            </Grid>
+            <Grid item={true} xs={2} className={classes.title}><Button color="default" variant="outlined" size="medium"
+                                                                       onClick={() => editChangeSet(update)}><Edit/></Button></Grid>
+            <Grid item={true} xs={2} className={classes.title}><Button color="default" variant="outlined" size="medium"
+                                                                       onClick={() => setConfirm({
+                                                                         kind: 'open',
+                                                                         message: 'Are you sure you want to remove this set of changes?',
+                                                                         onConfirm: confirmDeleteChangeSet
+                                                                       })}><Delete/></Button></Grid>
+          </React.Fragment>
+        })
+        }
+      </Grid>
+    </Grid>
+  </Grid>
 }

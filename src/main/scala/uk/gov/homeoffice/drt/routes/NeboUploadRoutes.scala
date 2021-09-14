@@ -3,10 +3,11 @@ package uk.gov.homeoffice.drt.routes
 import akka.http.scaladsl.model.StatusCodes.{ Forbidden, InternalServerError, MethodNotAllowed }
 import akka.http.scaladsl.server.Directives.{ complete, fileUpload, onSuccess, pathPrefix, post, _ }
 import akka.http.scaladsl.server.directives.FileInfo
-import akka.http.scaladsl.server.{ Route, _ }
+import akka.http.scaladsl.server._
 import akka.stream.Materializer
 import akka.stream.scaladsl.{ Framing, Source }
 import akka.util.ByteString
+import com.github.tototoshi.csv._
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.{ Logger, LoggerFactory }
@@ -15,9 +16,9 @@ import uk.gov.homeoffice.drt.Dashboard._
 import uk.gov.homeoffice.drt.auth.Roles
 import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
 import uk.gov.homeoffice.drt.routes.ApiRoutes.authByRole
-import uk.gov.homeoffice.drt.routes.UploadRoutes.MillisSinceEpoch
+import uk.gov.homeoffice.drt.routes.NeboUploadRoutes.MillisSinceEpoch
 import uk.gov.homeoffice.drt.{ HttpClient, JsonSupport }
-import com.github.tototoshi.csv._
+
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 
 case class Row(urnReference: String, associatedText: String, flightCode: String, arrivalPort: String, arrivalDate: String, arrivalTime: String, departureDate: Option[String], departureTime: Option[String], embarkPort: Option[String], departurePort: Option[String])
@@ -26,7 +27,9 @@ case class FlightData(portCode: String, flightCode: String, scheduled: MillisSin
 
 case class FeedStatus(portCode: String, flightCount: Int, statusCode: String)
 
-object UploadRoutes extends JsonSupport {
+object NeboUploadRoutes extends JsonSupport {
+
+  val routePrefix = "nebo/upload"
 
   type MillisSinceEpoch = Long
 
@@ -34,28 +37,27 @@ object UploadRoutes extends JsonSupport {
 
   val drtRoutePath = "/data/feed/red-list-counts"
 
-  implicit def rejectionHandler =
-    RejectionHandler.newBuilder()
-      .handle {
-        case AuthorizationFailedRejection =>
-          complete(Forbidden, "You are not authorized to upload!")
-      }
-      .handle {
-        case ValidationRejection(msg, _) =>
-          complete(InternalServerError, "Not valid data!" + msg)
-      }
-      .handleAll[MethodRejection] { methodRejections =>
-        val names = methodRejections.map(_.supported.name)
-        complete(MethodNotAllowed, s"Not supported: ${names mkString " or "}!")
-      }
-      .handleNotFound {
-        complete("Not found!")
-      }
-      .result()
+  implicit def rejectionHandler: RejectionHandler = RejectionHandler.newBuilder()
+    .handle {
+      case AuthorizationFailedRejection =>
+        complete(Forbidden, "You are not authorized to upload!")
+    }
+    .handle {
+      case ValidationRejection(msg, _) =>
+        complete(InternalServerError, "Not valid data!" + msg)
+    }
+    .handleAll[MethodRejection] { methodRejections =>
+      val names = methodRejections.map(_.supported.name)
+      complete(MethodNotAllowed, s"Not supported: ${names mkString " or "}!")
+    }
+    .handleNotFound {
+      complete("Not found!")
+    }
+    .result()
 
-  def apply(prefix: String, neboPortCodes: List[String], httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
+  def apply(neboPortCodes: List[String], httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
     val route: Route =
-      pathPrefix(prefix) {
+      pathPrefix(routePrefix) {
         authByRole(NeboUpload) {
           post {
             fileUploadCSV(neboPortCodes, httpClient)
