@@ -60,9 +60,8 @@ class NeboUpload extends React.Component<IProps, IState> {
   };
 
   afterPostUploadData = () => {
-    this.setState({selectedFile: null});
-    this.setState({showUploadButton: false});
-    this.state.fileInput.current.value = '';
+    const blankFileInput = {...this.state.fileInput, current: {...this.state.fileInput.current, value: ''}}
+    this.setState({...this.state, selectedFile: null, showUploadButton: false, fileInput: blankFileInput})
   };
 
   public reqConfig: AxiosRequestConfig = {
@@ -88,13 +87,13 @@ class NeboUpload extends React.Component<IProps, IState> {
   responseData = (response: AxiosResponse) => {
     const feedStatusArray = response.data as FeedStatus[];
     feedStatusArray.map(feedStatus => {
-      if (feedStatus.statusCode != '202 Accepted') {
+      if (feedStatus.statusCode !== '202 Accepted') {
         this.setState({hasError: true});
         this.setState({
           displayMessage: [...this.state.displayMessage, this.generateMessage(feedStatus.portCode, this.state.selectedFile.name, ' failed to upload. Please contact us at ' + this.props.config.teamEmail)]
         });
       } else {
-        if (feedStatus.flightCount == '0') {
+        if (feedStatus.flightCount === '0') {
           this.setState({hasError: true});
           this.setState({
             displayMessage: [...this.state.displayMessage, this.generateMessage(feedStatus.portCode, this.state.selectedFile.name, ' failed to upload. Check your file as no lines are parsed, try again later or contact us at ' + this.props.config.teamEmail)]
@@ -106,6 +105,7 @@ class NeboUpload extends React.Component<IProps, IState> {
         }
       }
       console.log('response feed ' + feedStatus.portCode + ' ' + feedStatus.flightCount + ' ' + feedStatus.statusCode);
+      return null
     });
     console.log('response from post ' + response);
   }

@@ -8,7 +8,7 @@ export type RedListUpdate = {
 }
 
 export type RedListUpdates = {
-  updates: Map<number, RedListUpdate>
+  updates: RedListUpdate[]
 }
 
 export type Addition = {
@@ -43,12 +43,12 @@ export class Editing_ {
   }
 
   public static removeAddition(editing: Editing, name: string): Editing {
-    const additions = editing.update.additions.filter(entry => entry[0] != name)
+    const additions = editing.update.additions.filter(entry => entry[0] !== name)
     return {...editing, update: {...editing.update, additions: additions}}
   }
 
   public static removeRemoval(editing: Editing, code: string): Editing {
-    const removals = editing.update.removals.filter(c => c != code)
+    const removals = editing.update.removals.filter(c => c !== code)
     return {...editing, update: {...editing.update, removals: removals}}
   }
 }

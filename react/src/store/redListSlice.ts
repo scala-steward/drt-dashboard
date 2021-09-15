@@ -2,13 +2,12 @@ import {createAsyncThunk, createSlice, PayloadAction} from "@reduxjs/toolkit";
 import axios from "axios";
 import {rootStore} from "./rootReducer";
 import ApiClient from "../services/ApiClient";
-import {User, UserProfile} from "../model/User";
 import {RedListUpdates} from "../components/redlisteditor/model";
 import {SetRedListUpdates} from "../components/RedListEditor";
 
 
 export const fetchRedListUpdates = createAsyncThunk(
-  'user/profile',
+  'redListUpdates/fetch',
   async () => {
     axios
       .get(ApiClient.redListUpdates)
@@ -27,12 +26,18 @@ export type RequestSetRedListUpdates = {
   onFailure: () => void
 }
 
+export type RequestDeleteRedListUpdates = {
+  dateToDelete: number
+  onSuccess: () => void
+  onFailure: () => void
+}
+
 export const saveRedListUpdates = createAsyncThunk(
-  'user/profile',
+  'redListUpdates/save',
   async (request: RequestSetRedListUpdates) => {
     axios
       .post(ApiClient.redListUpdates, request.updates)
-      .then(res => request.onSuccess())
+      .then(() => request.onSuccess())
       .catch(reason => {
         console.log('Failed to save red list updates: ' + reason)
         request.onFailure()
@@ -40,9 +45,22 @@ export const saveRedListUpdates = createAsyncThunk(
   }
 )
 
+export const deleteRedListUpdates = createAsyncThunk(
+  'redListUpdates/delete',
+  async (request: RequestDeleteRedListUpdates) => {
+    axios
+      .delete(ApiClient.redListUpdates + '/' + request.dateToDelete)
+      .then(() => request.onSuccess())
+      .catch(reason => {
+        console.log('Failed to delete red list updates: ' + reason)
+        request.onFailure()
+      })
+  }
+)
+
 export const redListUpdatesSlice = createSlice({
     name: 'redListData',
-    initialState: {updates: new Map()} as RedListUpdates,
+    initialState: {updates: []} as RedListUpdates,
     reducers: {
       setRedListUpdates(state: RedListUpdates, action: PayloadAction<RedListUpdates>) {
         return action.payload

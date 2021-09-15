@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   Button,
   createStyles,
@@ -16,8 +16,15 @@ import {Add, Cancel, Check, Delete, Edit, Save} from "@material-ui/icons";
 import {Editing, Editing_, RedListUpdate, State, State_} from "./redlisteditor/model";
 import {makeStyles, Theme} from "@material-ui/core/styles";
 import moment from "moment/moment";
-import {rootStore} from "../store/rootReducer";
-import {RequestSetRedListUpdates, saveRedListUpdates} from "../store/redListSlice";
+import {RootState, rootStore} from "../store/rootReducer";
+import {
+  deleteRedListUpdates,
+  fetchRedListUpdates,
+  RequestDeleteRedListUpdates,
+  RequestSetRedListUpdates,
+  saveRedListUpdates
+} from "../store/redListSlice";
+import {connect, ConnectedProps} from "react-redux";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -52,24 +59,43 @@ export type SetRedListUpdates = {
   redListUpdate: RedListUpdate
 }
 
-export const RedListEditor = () => {
+const mapState = (state: RootState) => {
+  return {
+    redListUpdates: state.redListUpdates.updates
+  }
+}
+
+const connector = connect(mapState)
+
+type PropsFromReact = ConnectedProps<typeof connector>
+
+const RedListEditor = (props: PropsFromReact) => {
   const classes = useStyles();
 
-  const update: RedListUpdate = {effectiveFrom: 1631228400000, additions: [], removals: []};
-  const [state, setState] = useState<State>({updates: [update], editing: null})
+  const [state, setState] = useState<State>({updates: props.redListUpdates, editing: null})
   const [confirm, setConfirm] = useState<Confirm>({kind: 'closed'})
+  const [updatesRequested, setUpdatesRequested] = useState<boolean>(false)
+
+  // setState({...state, updates: props.redListUpdates})
+
+  useEffect(() => {
+    console.log('component did mount')
+    if (!updatesRequested) {
+      console.log('requesting available subscriptions')
+      setUpdatesRequested(true)
+      const d = rootStore.dispatch(fetchRedListUpdates())
+      return () => d.abort()
+    }
+  }, [updatesRequested, setUpdatesRequested])
 
   const setDate: (e: MaterialUiPickersDate) => void = e => {
-    setState((state.editing && e) ? {
-      ...state,
-      editing: Editing_.setEffectiveFrom(state.editing, e.milliseconds())
-    } : state)
+    (state.editing && e) && setState({...state, editing: Editing_.setEffectiveFrom(state.editing, e.valueOf())})
   }
 
   const cancelEdit = () => setState({...state, editing: null})
 
   const saveEdit = (editing: Editing) => {
-    const withoutOriginal = state.editing && state.updates.filter(u => u.effectiveFrom != state.editing?.update.effectiveFrom && u.effectiveFrom != state.editing?.originalDate)
+    const withoutOriginal = state.editing && state.updates.filter(u => u.effectiveFrom !== state.editing?.update.effectiveFrom && u.effectiveFrom !== state.editing?.originalDate)
     const withNew = withoutOriginal && state.editing && withoutOriginal.concat(state.editing.update)
     console.log('Updated state with saved edit. TODO: call endpoints to persist to all ports')
     const request: RequestSetRedListUpdates = {
@@ -77,8 +103,10 @@ export const RedListEditor = () => {
         originalDate: editing.originalDate,
         redListUpdate: editing.update
       },
-      onSuccess: () => {},
-      onFailure: () => {},
+      onSuccess: () => {
+      },
+      onFailure: () => {
+      },
     }
     state.editing && rootStore.dispatch(saveRedListUpdates(request))
     withNew && setState({...state, editing: null, updates: withNew})
@@ -132,7 +160,15 @@ export const RedListEditor = () => {
   }
 
   function deleteUpdates(effectiveFrom: number) {
-    setState({...state, updates: state.updates.filter(u => u.effectiveFrom != effectiveFrom)})
+    setState({...state, updates: state.updates.filter(u => u.effectiveFrom !== effectiveFrom)})
+    const deletionRequest: RequestDeleteRedListUpdates = {
+      dateToDelete: effectiveFrom,
+      onSuccess: () => {
+      },
+      onFailure: () => {
+      }
+    }
+    rootStore.dispatch(deleteRedListUpdates(deletionRequest))
     console.log('Updated state with deleted update. TODO: call end point to persist to all ports')
   }
 
@@ -169,19 +205,19 @@ export const RedListEditor = () => {
     return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
   }
 
-  const confirmDeleteChangeSet = () => {
+  const confirmDeleteChangeSet = (effectiveFrom: number) => () => {
     setConfirm({kind: 'closed'})
-    deleteUpdates(update.effectiveFrom)
+    deleteUpdates(effectiveFrom)
   }
 
   return <Grid container={true} className={classes.root}>
-    <Grid item={true} xs={12}>
+    <Grid container={true}>
       <h1>Red List Changes</h1>
     </Grid>
-    <Grid item={true} xs={12}>
+    <Grid container={true}>
       <Button color="primary" variant="outlined" size="medium" onClick={addNewChangeSet}>Add a new change set</Button>
     </Grid>
-    <Grid container={true} item={true} xs={12}>
+    <Grid container={true}>
       {state.editing &&
       <Dialog open={true} maxWidth="xs">
           <DialogTitle>Edit changes for {moment(state.editing.update.effectiveFrom).format("Do MMM YYYY")}</DialogTitle>
@@ -253,7 +289,8 @@ export const RedListEditor = () => {
               <Button color="default" variant="outlined" size="medium" onClick={() => cancelEdit()}>
                   <Cancel/> Cancel
               </Button>
-              <Button color="default" variant="outlined" size="medium" onClick={() => state.editing && saveEdit(state.editing)}>
+              <Button color="default" variant="outlined" size="medium"
+                      onClick={() => state.editing && saveEdit(state.editing)}>
                   <Save/> Save
               </Button>
           </DialogActions>
@@ -262,10 +299,11 @@ export const RedListEditor = () => {
       <Dialog open={true} maxWidth="xs">
           <DialogTitle>{confirm.message}</DialogTitle>
           <DialogActions>
-              <Button color="default" variant="outlined" size="medium" onClick={() => setConfirm({kind: 'closed'})}>
+              <Button color="default" variant="outlined" size="medium" onClick={() => setConfirm({kind: 'closed'})}
+                      key="no">
                   No
               </Button>
-              <Button color="default" variant="outlined" size="medium" onClick={confirm.onConfirm}>
+              <Button color="default" variant="outlined" size="medium" onClick={confirm.onConfirm} key="yes">
                   Yes
               </Button>
           </DialogActions>
@@ -280,7 +318,7 @@ export const RedListEditor = () => {
           <Grid item={true} xs={4} className={classes.title}/>
         </React.Fragment>
         {state.updates.map(update => {
-          return <React.Fragment>
+          return <React.Fragment key={update.effectiveFrom}>
             <Grid container={true} item={true} xs={8}>
               <Grid item={true} xs={4}
                     className={classes.title}>{moment(update.effectiveFrom).format("Do MMM YYYY")}</Grid>
@@ -293,7 +331,7 @@ export const RedListEditor = () => {
                                                                        onClick={() => setConfirm({
                                                                          kind: 'open',
                                                                          message: 'Are you sure you want to remove this set of changes?',
-                                                                         onConfirm: confirmDeleteChangeSet
+                                                                         onConfirm: confirmDeleteChangeSet(update.effectiveFrom)
                                                                        })}><Delete/></Button></Grid>
           </React.Fragment>
         })
@@ -302,3 +340,5 @@ export const RedListEditor = () => {
     </Grid>
   </Grid>
 }
+
+export default connector(RedListEditor)

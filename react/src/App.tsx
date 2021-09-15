@@ -6,7 +6,7 @@ import {Route, Switch} from "react-router-dom";
 import Loading from "./components/Loading";
 import Navigation from "./components/Navigation";
 import NeboUpload from "./components/NeboUpload";
-import {RedListEditor} from "./components/RedListEditor";
+import RedListEditor from "./components/RedListEditor";
 import {createStyles, makeStyles} from "@material-ui/core/styles";
 import {RootState, rootStore} from "./store/rootReducer";
 import {connect, ConnectedProps} from "react-redux";

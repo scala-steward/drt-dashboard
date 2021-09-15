@@ -1,10 +1,12 @@
 import {combineReducers, configureStore, getDefaultMiddleware} from "@reduxjs/toolkit";
 import {userReducer} from "./userSlice";
 import {configReducer} from "./configSlice";
+import {redListUpdatesReducer} from "./redListSlice";
 
 export const rootReducer = combineReducers({
   user: userReducer,
   config: configReducer,
+  redListUpdates: redListUpdatesReducer
 });
 
 export const rootStore = configureStore({

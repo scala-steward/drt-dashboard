@@ -160,7 +160,7 @@ export default function AccessRequestForm(props: IProps) {
           <Typography>I confirm that:</Typography>
           <ul className={classes.declaration}>
             <li>I will not share any DRT data with any third party</li>
-            <li>I will contact the DRT team at <a>{props.teamEmail}</a> if I'm asked to share any data</li>
+            <li>I will contact the DRT team at <a href="mailto:props.teamEmail">{props.teamEmail}</a> if I'm asked to share any data</li>
           </ul>
         </Paper>
       </ListItem>

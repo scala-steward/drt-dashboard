@@ -17,6 +17,7 @@ export default () => {
   const classes = useStyles()
 
   return <Grid
+    container={true}
     className={classes.root}
     spacing={0}
     alignItems="center"

@@ -124,8 +124,8 @@ object Dashboard {
     case _ => OkStatus
   }
 
-  def timeSince(millis: Long) = System.currentTimeMillis() - millis
+  def timeSince(millis: Long): Long = System.currentTimeMillis() - millis
 
-  def drtUriForPortCode(portCode: String) = s"http://$portCode:9000"
+  def drtUriForPortCode(portCode: String): String = s"http://${portCode.toLowerCase}:9000"
 
 }
