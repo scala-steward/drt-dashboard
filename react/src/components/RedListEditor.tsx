@@ -40,6 +40,9 @@ const useStyles = makeStyles((theme: Theme) =>
       padding: theme.spacing(2),
       color: theme.palette.text.secondary,
     },
+    dialogue: {
+      minWidth: 380,
+    }
   }),
 );
 
@@ -216,7 +219,7 @@ export const RedListEditor = () => {
       {state.editing &&
       <Dialog open={true} maxWidth="xs">
           <DialogTitle>Edit changes for {moment(state.editing.update.effectiveFrom).format("Do MMM YYYY")}</DialogTitle>
-          <DialogContent>
+          <DialogContent className={classes.dialogue}>
               <DatePicker value={state.editing.update.effectiveFrom} onChange={setDate}/>
               <DialogContentText>
                   Additions
