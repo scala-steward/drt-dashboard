@@ -1,10 +1,8 @@
 package uk.gov.homeoffice.drt.redlist
 
-import spray.json.{ DefaultJsonProtocol, JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat }
+import spray.json.{ DefaultJsonProtocol, JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, enrichAny }
 
-object RedListJsonFormats {
-
-  import DefaultJsonProtocol._
+object RedListJsonFormats extends DefaultJsonProtocol {
 
   implicit object redListUpdateJsonFormat extends RootJsonFormat[RedListUpdate] {
     override def write(obj: RedListUpdate): JsValue = JsObject(Map(
@@ -37,5 +35,17 @@ object RedListJsonFormats {
 
   implicit val setRedListUpdatesJsonFormat: RootJsonFormat[SetRedListUpdate] = jsonFormat2(SetRedListUpdate.apply)
 
-  implicit val redListUpdatesJsonFormat: RootJsonFormat[RedListUpdates] = jsonFormat(RedListUpdates.apply, "updates")
+  implicit object redListUpdatesJsonFormat extends RootJsonFormat[RedListUpdates] {
+    override def write(obj: RedListUpdates): JsValue = JsArray(obj.updates.values.map(_.toJson).toVector)
+
+    override def read(json: JsValue): RedListUpdates = json match {
+      case JsObject(fields) => fields.get("updates") match {
+        case Some(JsObject(updates)) =>
+          val redListUpdates = updates.map {
+            case (effectiveFrom, redListUpdateJson) => (effectiveFrom.toLong, redListUpdateJson.convertTo[RedListUpdate])
+          }
+          RedListUpdates(redListUpdates)
+      }
+    }
+  }
 }

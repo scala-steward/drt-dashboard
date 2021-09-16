@@ -1,6 +1,6 @@
 import sbt.Keys.resolvers
 
-lazy val akkaHttpVersion = "10.2.0"
+lazy val akkaHttpVersion = "10.2.6"
 lazy val akkaVersion = "2.6.8"
 lazy val jodaTimeVersion = "2.9.4"
 lazy val scalaLoggingVersion = "3.9.2"
@@ -11,6 +11,7 @@ lazy val logBackJsonVersion = "0.1.5"
 
 lazy val drtCiriumVersion = "56"
 lazy val drtLibVersion = "v47"
+lazy val janinoVersion = "3.1.6"
 
 lazy val root = (project in file(".")).
   settings(
@@ -35,6 +36,7 @@ lazy val root = (project in file(".")).
       "uk.gov.homeoffice" %% "drt-lib" % drtLibVersion,
       "ch.qos.logback.contrib" % "logback-json-classic" % logBackJsonVersion,
       "ch.qos.logback.contrib" % "logback-jackson" % logBackJsonVersion,
+      "org.codehaus.janino" % "janino" % janinoVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.2",
       "uk.gov.service.notify" % "notifications-java-client" % "3.17.0-RELEASE",
       "com.github.tototoshi" %% "scala-csv" % "1.3.8",

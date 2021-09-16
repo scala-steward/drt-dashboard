@@ -11,6 +11,17 @@ export type RedListUpdates = {
   updates: RedListUpdate[]
 }
 
+export type RedListUpdatesLoaded = {
+  kind: "RedListUpdatesLoaded"
+  updates: RedListUpdates
+}
+
+export type RedListUpdatesPending = {
+  kind: "RedListUpdatesPending"
+}
+
+export type RedListUpdatesState = RedListUpdatesPending | RedListUpdatesLoaded
+
 export type Addition = {
   name: string
   code: string

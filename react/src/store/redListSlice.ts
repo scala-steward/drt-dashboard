@@ -1,22 +1,23 @@
-import {createAsyncThunk, createSlice, PayloadAction} from "@reduxjs/toolkit";
+import {createAsyncThunk} from "@reduxjs/toolkit";
 import axios from "axios";
 import {rootStore} from "./rootReducer";
 import ApiClient from "../services/ApiClient";
-import {RedListUpdates} from "../components/redlisteditor/model";
+import {RedListUpdate, RedListUpdates} from "../components/redlisteditor/model";
 import {SetRedListUpdates} from "../components/RedListEditor";
 
 
 export const fetchRedListUpdates = createAsyncThunk(
   'redListUpdates/fetch',
-  async () => {
+  async (onSuccess: (r: RedListUpdate[]) => void) => {
     axios
       .get(ApiClient.redListUpdates)
-      .then((res) =>
-        rootStore.dispatch(redListUpdatesSlice.actions.setRedListUpdates(res.data as RedListUpdates)))
-      .catch(reason =>
-        console.log('Failed to get user profile: ' + reason))
-      .finally(() =>
-        setTimeout(() => rootStore.dispatch(fetchRedListUpdates()), 5000))
+      .then((res) => {
+          onSuccess(res.data as RedListUpdate[]);
+        })
+      .catch(reason => {
+        console.log('Failed to get red list updates: ' + reason)
+        setTimeout(() => rootStore.dispatch(fetchRedListUpdates(onSuccess)), 5000)
+      })
   }
 )
 
@@ -57,16 +58,3 @@ export const deleteRedListUpdates = createAsyncThunk(
       })
   }
 )
-
-export const redListUpdatesSlice = createSlice({
-    name: 'redListData',
-    initialState: {updates: []} as RedListUpdates,
-    reducers: {
-      setRedListUpdates(state: RedListUpdates, action: PayloadAction<RedListUpdates>) {
-        return action.payload
-      }
-    }
-  }
-)
-
-export const redListUpdatesReducer = redListUpdatesSlice.reducer

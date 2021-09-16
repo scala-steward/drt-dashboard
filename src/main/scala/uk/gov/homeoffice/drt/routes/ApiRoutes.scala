@@ -9,18 +9,17 @@ import akka.http.scaladsl.server.{ Directive0, Route }
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import org.slf4j.{ Logger, LoggerFactory }
 import spray.json.DefaultJsonProtocol.{ StringJsonFormat, listFormat, mapFormat }
-import spray.json.{ JsArray, JsObject, JsString, enrichAny }
+import spray.json.{ JsArray, JsObject, JsString, RootJsonFormat, enrichAny }
 import uk.gov.homeoffice.drt.alerts.{ Alert, MultiPortAlert, MultiPortAlertClient }
 import uk.gov.homeoffice.drt.auth.Roles
 import uk.gov.homeoffice.drt.auth.Roles.{ CreateAlerts, LHR, RedListsEdit, Role }
 import uk.gov.homeoffice.drt.authentication.{ AccessRequest, User }
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
-import uk.gov.homeoffice.drt.redlist.{ RedListUpdate, RedListUpdates, SetRedListUpdate }
+import uk.gov.homeoffice.drt.redlist.{ RedListJsonFormats, RedListUpdate, RedListUpdates, SetRedListUpdate }
 import uk.gov.homeoffice.drt.{ Dashboard, DashboardClient }
 
 import scala.compat.java8.OptionConverters._
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.{ Await, ExecutionContextExecutor, Future }
+import scala.concurrent.{ ExecutionContextExecutor, Future }
 import scala.util.{ Failure, Success }
 
 object ApiRoutes {
@@ -104,84 +103,70 @@ object ApiRoutes {
           authByRole(RedListsEdit) {
             import spray.json._
             import uk.gov.homeoffice.drt.redlist.RedListJsonFormats._
-            headerValueByName("X-Auth-Roles") { rolesStr =>
-              headerValueByName("X-Auth-Email") { email =>
-                entity(as[SetRedListUpdate]) {
-                  setRedListUpdate =>
-                    val portRoles = Roles.portRoles
-                    Seq(LHR).map { portRole =>
-                      DashboardClient.postWithRoles(
-                        s"${Dashboard.drtUriForPortCode(portRole.name)}/red-list/updates",
-                        setRedListUpdate.toJson.compactPrint,
-                        Seq(RedListsEdit, portRole))
-                    }
-                    complete(Future(StatusCodes.OK))
+            entity(as[SetRedListUpdate]) {
+              setRedListUpdate =>
+                val portRoles = Roles.portRoles
+                Seq(LHR).map { portRole =>
+                  DashboardClient.postWithRoles(
+                    s"${Dashboard.drtUriForPortCode(portRole.name)}/red-list/updates",
+                    setRedListUpdate.toJson.compactPrint,
+                    Seq(RedListsEdit, portRole))
                 }
-              }
+                complete(Future(StatusCodes.OK))
             }
           }
         },
         (get & path("red-list-updates")) {
           authByRole(RedListsEdit) {
-            headerValueByName("X-Auth-Roles") { rolesStr =>
-              headerValueByName("X-Auth-Email") { email =>
-                import uk.gov.homeoffice.drt.redlist.RedListJsonFormats._
-                val requestPortRole = LHR
-                val uri = s"${Dashboard.drtUriForPortCode(requestPortRole.name)}/red-list/updates"
-                val futureRedListUpdates: Future[RedListUpdates] =
-                  DashboardClient
-                    .getWithRoles(uri, Seq(RedListsEdit))
-                    .flatMap { res =>
-                      println(s"Got json: ${Await.result(res.entity.dataBytes.runFold("")(_ ++ _.utf8String), 1.second)}")
-                      Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
-                        .to[List[RedListUpdate]]
-                        .map(r => RedListUpdates(r.map(ru => (ru.effectiveFrom, ru)).toMap))
-                        .recover {
-                          case e: Throwable =>
-                            log.error(s"Failed to retrieve red list updates for ${requestPortRole.name} at $uri", e)
-                            RedListUpdates.empty
-                        }
+            implicit val rlJson: RedListJsonFormats.redListUpdateJsonFormat.type = uk.gov.homeoffice.drt.redlist.RedListJsonFormats.redListUpdateJsonFormat
+            implicit val rlsJson: RedListJsonFormats.redListUpdatesJsonFormat.type = uk.gov.homeoffice.drt.redlist.RedListJsonFormats.redListUpdatesJsonFormat
+            val requestPortRole = LHR
+            val uri = s"${Dashboard.drtUriForPortCode(requestPortRole.name)}/red-list/updates"
+            val futureRedListUpdates: Future[RedListUpdates] =
+              DashboardClient
+                .getWithRoles(uri, Seq(RedListsEdit, requestPortRole))
+                .flatMap { res =>
+                  Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
+                    .to[List[RedListUpdate]]
+                    .map(r => RedListUpdates(r.map(ru => (ru.effectiveFrom, ru)).toMap))
+                    .recover {
+                      case e: Throwable =>
+                        log.error(s"Failed to retrieve red list updates for ${requestPortRole.name} at $uri", e)
+                        RedListUpdates.empty
                     }
-                complete(futureRedListUpdates)
-              }
-            }
+                }
+            complete(futureRedListUpdates)
           }
         },
         (delete & path("red-list-updates" / Segment)) { dateMillisToDelete =>
           authByRole(RedListsEdit) {
-            headerValueByName("X-Auth-Roles") { rolesStr =>
-              headerValueByName("X-Auth-Email") { email =>
-                val portRoles = Roles.portRoles
-                Seq(LHR).map { portRole =>
-                  val uri = s"${Dashboard.drtUriForPortCode(portRole.name)}/red-list/updates/$dateMillisToDelete"
-                  DashboardClient.deleteWithRoles(uri, Seq(RedListsEdit))
-                }
-                complete(Future(StatusCodes.OK))
-              }
+            val portRoles = Roles.portRoles
+            Seq(LHR).map { portRole =>
+              val uri = s"${Dashboard.drtUriForPortCode(portRole.name)}/red-list/updates/$dateMillisToDelete"
+              DashboardClient.deleteWithRoles(uri, Seq(RedListsEdit, portRole))
             }
+            complete(Future(StatusCodes.OK))
           }
         },
         (get & path("alerts")) {
           authByRole(CreateAlerts) {
             headerValueByName("X-Auth-Roles") { rolesStr =>
               headerValueByName("X-Auth-Email") { email =>
-                implicit val alertFormat = uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport.AlertFormatParser
+                implicit val alertFormat: RootJsonFormat[Alert] = uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport.AlertFormatParser
 
                 val user = User.fromRoles(email, rolesStr)
 
                 val futurePortAlerts: Seq[Future[(String, List[Alert])]] = user.accessiblePorts
-                  .map {
-                    case (portCode) =>
-
-                      portCode -> DashboardClient.getWithRoles(
-                        s"${Dashboard.drtUriForPortCode(portCode)}/alerts/0",
-                        user.roles).flatMap(res => Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
-                          .to[List[Alert]]
-                          .recover {
-                            case e: Throwable =>
-                              log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtUriForPortCode(portCode)}/alerts/0")
-                              List()
-                          })
+                  .map { portCode =>
+                    portCode -> DashboardClient.getWithRoles(
+                      s"${Dashboard.drtUriForPortCode(portCode)}/alerts/0",
+                      user.roles).flatMap(res => Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
+                        .to[List[Alert]]
+                        .recover {
+                          case e: Throwable =>
+                            log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtUriForPortCode(portCode)}/alerts/0", e)
+                            List()
+                        })
                   }
                   .toList
                   .map {

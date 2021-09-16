@@ -16,7 +16,7 @@ import {Add, Cancel, Check, Delete, Edit, Save} from "@material-ui/icons";
 import {Editing, Editing_, RedListUpdate, State, State_} from "./redlisteditor/model";
 import {makeStyles, Theme} from "@material-ui/core/styles";
 import moment from "moment/moment";
-import {RootState, rootStore} from "../store/rootReducer";
+import {rootStore} from "../store/rootReducer";
 import {
   deleteRedListUpdates,
   fetchRedListUpdates,
@@ -24,7 +24,7 @@ import {
   RequestSetRedListUpdates,
   saveRedListUpdates
 } from "../store/redListSlice";
-import {connect, ConnectedProps} from "react-redux";
+import Loading from "./Loading";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -59,34 +59,29 @@ export type SetRedListUpdates = {
   redListUpdate: RedListUpdate
 }
 
-const mapState = (state: RootState) => {
-  return {
-    redListUpdates: state.redListUpdates.updates
-  }
-}
-
-const connector = connect(mapState)
-
-type PropsFromReact = ConnectedProps<typeof connector>
-
-const RedListEditor = (props: PropsFromReact) => {
+export const RedListEditor = () => {
   const classes = useStyles();
 
-  const [state, setState] = useState<State>({updates: props.redListUpdates, editing: null})
+  const [state, setState] = useState<State>({updates: [], editing: null})
   const [confirm, setConfirm] = useState<Confirm>({kind: 'closed'})
   const [updatesRequested, setUpdatesRequested] = useState<boolean>(false)
+  const [updatesReceived, setUpdatesReceived] = useState<boolean>(false)
 
-  // setState({...state, updates: props.redListUpdates})
+  const setUpdatesState = (updates: RedListUpdate[]) => {
+    console.log('received ' + updates.length + ' red list updates. setting state & updatesReceived: true')
+    setState({...state, updates: updates})
+    setUpdatesReceived(true)
+  }
 
   useEffect(() => {
     console.log('component did mount')
     if (!updatesRequested) {
-      console.log('requesting available subscriptions')
+      console.log('requesting red list updates')
       setUpdatesRequested(true)
-      const d = rootStore.dispatch(fetchRedListUpdates())
+      const d = rootStore.dispatch(fetchRedListUpdates(setUpdatesState))
       return () => d.abort()
     }
-  }, [updatesRequested, setUpdatesRequested])
+  }, [updatesRequested, setUpdatesRequested, updatesReceived, setUpdatesReceived])
 
   const setDate: (e: MaterialUiPickersDate) => void = e => {
     (state.editing && e) && setState({...state, editing: Editing_.setEffectiveFrom(state.editing, e.valueOf())})
@@ -308,7 +303,7 @@ const RedListEditor = (props: PropsFromReact) => {
               </Button>
           </DialogActions>
       </Dialog>}
-      <Grid container={true}>
+      {updatesReceived ? <Grid container={true}>
         <React.Fragment>
           <Grid container={true} item={true} xs={8}>
             <Grid item={true} xs={4} className={classes.title}>Effective from</Grid>
@@ -317,7 +312,7 @@ const RedListEditor = (props: PropsFromReact) => {
           </Grid>
           <Grid item={true} xs={4} className={classes.title}/>
         </React.Fragment>
-        {state.updates.map(update => {
+        {state.updates.sort((a, b) => -1 * (a.effectiveFrom - b.effectiveFrom)).map(update => {
           return <React.Fragment key={update.effectiveFrom}>
             <Grid container={true} item={true} xs={8}>
               <Grid item={true} xs={4}
@@ -336,9 +331,7 @@ const RedListEditor = (props: PropsFromReact) => {
           </React.Fragment>
         })
         }
-      </Grid>
+      </Grid> : <Loading/>}
     </Grid>
   </Grid>
 }
-
-export default connector(RedListEditor)
