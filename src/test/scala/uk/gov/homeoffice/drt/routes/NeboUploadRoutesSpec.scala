@@ -97,7 +97,6 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
   "Given a correct permission to users, the user should able to upload file successfully " >> {
     Post("/", multipartForm) ~>
       RawHeader("X-Auth-Roles", NeboUpload.name) ~> RawHeader("X-Auth-Email", "my@email.com") ~> neboRoutes.route ~> check {
-      println("hello")
       responseAs[String] shouldEqual """[{"flightCount":1,"portCode":"lhr","statusCode":"202 Accepted"}]"""
     }
   }
@@ -106,8 +105,6 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
     Post("/", multipartForm) ~>
       RawHeader("X-Auth-Roles", "random") ~> RawHeader("X-Auth-Email", "my@email.com") ~> Route.seal(neboRoutes.route) ~>
       check {
-        println(s"status: $status")
-        println(s"responseAs[String]: ${responseAs[String]}")
         status shouldEqual StatusCodes.Forbidden
         responseAs[String] shouldEqual """You are not authorized to upload!"""
       }

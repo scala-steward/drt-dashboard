@@ -60,7 +60,6 @@ case class NeboUploadRoutes(neboPortCodes: List[String], httpClient: HttpClient)
   def fileUploadCSV(neboPortCodes: List[String], httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
     fileUpload("csv") {
       case (metadata, byteSource) =>
-        println(s"got here")
         onSuccess(
           Future.sequence(
             neboPortCodes
