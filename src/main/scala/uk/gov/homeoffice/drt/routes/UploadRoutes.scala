@@ -18,6 +18,7 @@ import uk.gov.homeoffice.drt.routes.ApiRoutes.authByRole
 import uk.gov.homeoffice.drt.routes.UploadRoutes.MillisSinceEpoch
 import uk.gov.homeoffice.drt.{ HttpClient, JsonSupport }
 import com.github.tototoshi.csv._
+
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 
 case class Row(urnReference: String, associatedText: String, flightCode: String, arrivalPort: String, arrivalDate: String, arrivalTime: String, departureDate: Option[String], departureTime: Option[String], embarkPort: Option[String], departurePort: Option[String])
@@ -62,7 +63,6 @@ object UploadRoutes extends JsonSupport {
           }
         }
       }
-
     handleRejections(rejectionHandler)(route)
   }
 
@@ -70,21 +70,26 @@ object UploadRoutes extends JsonSupport {
     fileUpload("csv") {
       case (metadata, byteSource) =>
         onSuccess(
-          Future.sequence(
-            neboPortCodes
-              .map(sendFlightDataToPort(
-                convertByteSourceToFlightData(metadata, byteSource), _, httpClient))))(feedStatus => complete(feedStatus.toJson))
+          feedStatusForPortCode(neboPortCodes, convertByteSourceToFlightData(metadata, byteSource), httpClient)) { fsl => complete(fsl.toJson) }
     }
   }
 
-  def sendFlightDataToPort(flightData: Future[List[FlightData]], portCode: String, httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Future[FeedStatus] = {
+  def feedStatusForPortCode(neboPortCodes: List[String], flightData: Future[List[FlightData]], httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Future[List[FeedStatus]] =
     flightData.flatMap { fd =>
-      val filterPortFlight = fd.filter(_.portCode.toLowerCase == portCode.toLowerCase)
-      val httpRequest = httpClient.createDrtNeboRequest(
-        filterPortFlight, s"${drtUriForPortCode(portCode)}$drtRoutePath", Roles.parse(portCode))
-      httpClient.send(httpRequest)
-        .map(r => FeedStatus(portCode, filterPortFlight.size, r.status.toString()))
+      Future.sequence(
+        neboPortCodes.flatMap { portCode =>
+          val filterPortFlight = fd.filter(f => f.portCode.toLowerCase == portCode.toLowerCase)
+          if (filterPortFlight.isEmpty) {
+            log.info(s"No nebo passenger details for flights from port $portCode")
+            None
+          } else Option(sendFlightDataToPort(filterPortFlight, portCode, httpClient))
+        })
     }
+
+  def sendFlightDataToPort(flightData: List[FlightData], portCode: String, httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Future[FeedStatus] = {
+    val httpRequest = httpClient.createDrtNeboRequest(flightData, s"${drtUriForPortCode(portCode)}$drtRoutePath", Roles.parse(portCode))
+    httpClient.send(httpRequest)
+      .map(r => FeedStatus(portCode, flightData.size, r.status.toString()))
   }
 
   def convertByteSourceToFlightData(metadata: FileInfo, byteSource: Source[ByteString, Any])(implicit ec: ExecutionContextExecutor, mat: Materializer): Future[List[FlightData]] = {
@@ -124,17 +129,18 @@ object UploadRoutes extends JsonSupport {
           portRows.groupBy(_.flightCode)
             .flatMap {
               case (flightCode, flightRows) =>
-                flightRows.groupBy(a => s"${a.arrivalDate} ${a.arrivalTime}").map {
-                  case (arrivalDateTime, flightRowsByArrival) =>
-                    FlightData(
-                      portCode = arrivalPort,
-                      flightCode = flightCode,
-                      scheduled = parseDateToMillis(arrivalDateTime),
-                      scheduledDeparture = flightRowsByArrival.head.departureDate.flatMap(dd => flightRowsByArrival.head.departureTime.map(dt => parseDateToMillis(s"$dd $dt"))),
-                      departurePort = flightRowsByArrival.head.departurePort.map(_.trim),
-                      embarkPort = flightRowsByArrival.head.embarkPort.map(_.trim),
-                      flightRowsByArrival.size)
-                }
+                flightRows.groupBy(a => s"${a.arrivalDate} ${a.arrivalTime}")
+                  .map {
+                    case (arrivalDateTime, flightRowsByArrival) =>
+                      FlightData(
+                        portCode = arrivalPort,
+                        flightCode = flightCode,
+                        scheduled = parseDateToMillis(arrivalDateTime),
+                        scheduledDeparture = flightRowsByArrival.head.departureDate.flatMap(dd => flightRowsByArrival.head.departureTime.map(dt => parseDateToMillis(s"$dd $dt"))),
+                        departurePort = flightRowsByArrival.head.departurePort.map(_.trim),
+                        embarkPort = flightRowsByArrival.head.embarkPort.map(_.trim),
+                        flightRowsByArrival.size)
+                  }
             }
       }.toList
   }
