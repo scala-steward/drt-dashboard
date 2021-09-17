@@ -42,6 +42,7 @@ object Server {
 
     val urls = Urls(serverConfig.rootDomain, serverConfig.useHttps)
 
+    val neboRoutes = NeboUploadRoutes(serverConfig.neboPortCodes.toList, new ProdHttpClient).route
     val routes: Route = concat(
       IndexRoute(
         urls,
@@ -50,8 +51,9 @@ object Server {
         staticResourceDirectory = getFromResourceDirectory("frontend/static")).route,
       CiriumRoutes("cirium", serverConfig.ciriumDataUri),
       DrtRoutes("drt", serverConfig.portCodes),
-      ApiRoutes("api", serverConfig.portCodes, serverConfig.rootDomain, notifications, serverConfig.teamEmail),
-      NeboUploadRoutes(serverConfig.neboPortCodes.toList, new ProdHttpClient))
+      ApiRoutes("api", serverConfig.portCodes, serverConfig.rootDomain, notifications, serverConfig.teamEmail, neboRoutes),
+//      NeboUploadRoutes(serverConfig.neboPortCodes.toList, new ProdHttpClient)
+    )
     val serverBinding: Future[Http.ServerBinding] = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
 
     ctx.pipeToSelf(serverBinding) {

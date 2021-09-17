@@ -30,7 +30,7 @@ export default function Alerts(props: IProps) {
 
   const changeTabs = (event: React.ChangeEvent<{}>, newValue: number) => setSelectedTab(newValue);
 
-  return <Container className={classes.container}>
+  return <div>
     <Tabs value={selectedTab} onChange={changeTabs} aria-label="simple tabs example">
       <Tab label="Add Alert" {...a11yProps(0)} />
       <Tab label="View Alerts" {...a11yProps(1)} />
@@ -41,5 +41,5 @@ export default function Alerts(props: IProps) {
     <TabPanel index={1} value={selectedTab}>
       <ListAlerts/>
     </TabPanel>
-  </Container>;
+  </div>;
 }

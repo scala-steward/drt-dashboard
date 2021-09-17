@@ -50,7 +50,7 @@ export default function Navigation(props: IProps) {
         {props.user.roles.includes("create-alerts") ?
           <MenuItem onClick={handleClose}><Link to="/alerts">Alerts</Link></MenuItem> : ""}
         {props.user.roles.includes("nebo:upload") ?
-          <MenuItem onClick={handleClose}><Link to="/upload">Upload</Link></MenuItem> : ""}
+          <MenuItem onClick={handleClose}><Link to="/upload">Nebo Upload</Link></MenuItem> : ""}
         {props.user.roles.includes("red-lists:edit") ?
           <MenuItem onClick={handleClose}><Link to="/red-list-editor">Edit red list</Link></MenuItem> : ""}
         <MenuItem onClick={handleClose}><a href={props.logoutLink} id="proposition-name">Log out</a></MenuItem>

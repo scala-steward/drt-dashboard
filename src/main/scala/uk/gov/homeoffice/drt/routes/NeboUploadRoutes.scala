@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.routes
 
 import akka.http.scaladsl.model.StatusCodes.{ Forbidden, InternalServerError, MethodNotAllowed }
-import akka.http.scaladsl.server.Directives.{ complete, fileUpload, onSuccess, pathPrefix, post, _ }
+import akka.http.scaladsl.server.Directives.{ complete, fileUpload, onSuccess }
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.stream.Materializer
@@ -16,18 +16,17 @@ import uk.gov.homeoffice.drt.Dashboard._
 import uk.gov.homeoffice.drt.auth.Roles
 import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
 import uk.gov.homeoffice.drt.routes.ApiRoutes.authByRole
-import uk.gov.homeoffice.drt.routes.NeboUploadRoutes.MillisSinceEpoch
 import uk.gov.homeoffice.drt.{ HttpClient, JsonSupport }
 
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 
 case class Row(urnReference: String, associatedText: String, flightCode: String, arrivalPort: String, arrivalDate: String, arrivalTime: String, departureDate: Option[String], departureTime: Option[String], embarkPort: Option[String], departurePort: Option[String])
 
-case class FlightData(portCode: String, flightCode: String, scheduled: MillisSinceEpoch, scheduledDeparture: Option[MillisSinceEpoch], departurePort: Option[String], embarkPort: Option[String], paxCount: Int)
+case class FlightData(portCode: String, flightCode: String, scheduled: Long, scheduledDeparture: Option[Long], departurePort: Option[String], embarkPort: Option[String], paxCount: Int)
 
 case class FeedStatus(portCode: String, flightCount: Int, statusCode: String)
 
-object NeboUploadRoutes extends JsonSupport {
+case class NeboUploadRoutes(neboPortCodes: List[String], httpClient: HttpClient) extends JsonSupport {
 
   val routePrefix = "uploadFile"
 
@@ -52,22 +51,16 @@ object NeboUploadRoutes extends JsonSupport {
     }
     .result()
 
-  def apply(neboPortCodes: List[String], httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
-    val route: Route =
-      pathPrefix(routePrefix) {
-        (post & path("")) {
-          authByRole(NeboUpload) {
-            fileUploadCSV(neboPortCodes, httpClient)
-          }
-        }
-      }
-    route
-    //    handleRejections(rejectionHandler)(route)
-  }
+  def route(implicit ec: ExecutionContextExecutor, mat: Materializer): Route =
+    Route.seal(
+      authByRole(NeboUpload) {
+        fileUploadCSV(neboPortCodes, httpClient)
+      })
 
   def fileUploadCSV(neboPortCodes: List[String], httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
     fileUpload("csv") {
       case (metadata, byteSource) =>
+        println(s"got here")
         onSuccess(
           Future.sequence(
             neboPortCodes

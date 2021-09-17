@@ -11,7 +11,7 @@ export default class ApiClient implements IApiClient {
   public static requestAccessEndPoint = "/api/request-access";
   public static logoutEndPoint = "/oauth/logout";
   public static alertsEndPoint = "/api/alerts";
-  public static neboFileUpload = "/uploadFile";
+  public static neboFileUpload = "/api/nebo-upload";
   public static redListUpdates = "/api/red-list-updates";
 
   public fetchData(userEndPoint: string, handleResponse: (r: AxiosResponse) => void) {

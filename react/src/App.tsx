@@ -5,13 +5,14 @@ import Alerts from './components/Alerts/Alerts';
 import {Route, Switch} from "react-router-dom";
 import Loading from "./components/Loading";
 import Navigation from "./components/Navigation";
-import FileUpload from "./components/FileUpload";
+import NeboUpload from "./components/NeboUpload";
 import {createStyles, makeStyles} from "@material-ui/core/styles";
 import {RootState, rootStore} from "./store/rootReducer";
 import {connect, ConnectedProps} from "react-redux";
 import {fetchUserProfile} from "./store/userSlice";
 import {fetchConfig} from "./store/configSlice";
 import {RedListEditor} from "./components/RedListEditor";
+import {Container} from "@material-ui/core";
 
 
 rootStore.dispatch(fetchUserProfile())
@@ -19,12 +20,15 @@ rootStore.dispatch(fetchConfig())
 
 const useStyles = makeStyles(() =>
   createStyles({
-    mainContent: {
-      border: '1 solid red',
+    app: {
+      textAlign: 'center',
+    },
+    container: {
       margin: 30,
       padding: 15,
       textAlign: 'left',
       minHeight: 500,
+      display: 'inline-block',
     }
   }),
 );
@@ -72,7 +76,7 @@ const App = (props: PropsFromReact) => {
       </header>
 
       <div id="global-header-bar"/>
-      <div className={styles.mainContent}>
+      <Container className={styles.container}>
         <Switch>
           <Route exact path="/">
             <Home config={props.config.values} user={props.user.profile}/>
@@ -81,13 +85,13 @@ const App = (props: PropsFromReact) => {
             <Alerts user={props.user.profile}/>
           </Route>
           <Route exact path="/upload">
-            <FileUpload user={props.user.profile} config={props.config.values}/>
+            <NeboUpload user={props.user.profile} config={props.config.values}/>
           </Route>
           <Route exact path="/red-list-editor">
             <RedListEditor/>
           </Route>
         </Switch>
-      </div>
+      </Container>
       <footer className="group js-footer" id="footer" role="contentinfo">
         <div className="footer-wrapper">
           <div className="footer-meta">

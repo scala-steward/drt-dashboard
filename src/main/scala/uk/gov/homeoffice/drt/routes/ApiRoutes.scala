@@ -12,7 +12,7 @@ import spray.json.DefaultJsonProtocol.{ StringJsonFormat, listFormat, mapFormat 
 import spray.json.{ JsArray, JsObject, JsString, RootJsonFormat, enrichAny }
 import uk.gov.homeoffice.drt.alerts.{ Alert, MultiPortAlert, MultiPortAlertClient }
 import uk.gov.homeoffice.drt.auth.Roles
-import uk.gov.homeoffice.drt.auth.Roles.{ CreateAlerts, LHR, RedListsEdit, Role }
+import uk.gov.homeoffice.drt.auth.Roles._
 import uk.gov.homeoffice.drt.authentication.{ AccessRequest, User }
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.redlist.{ RedListJsonFormats, RedListUpdate, RedListUpdates, SetRedListUpdate }
@@ -40,7 +40,8 @@ object ApiRoutes {
     portCodes: Array[String],
     domain: String,
     notifications: EmailNotifications,
-    teamEmail: String)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
+    teamEmail: String,
+    neboUploadRoute: Route)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
     pathPrefix(prefix) {
       concat(
         (get & path("user")) {
@@ -147,6 +148,9 @@ object ApiRoutes {
             }
             complete(Future(StatusCodes.OK))
           }
+        },
+        (post & path("nebo-upload")) {
+          neboUploadRoute
         },
         (get & path("alerts")) {
           authByRole(CreateAlerts) {

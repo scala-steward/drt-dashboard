@@ -25,7 +25,7 @@ interface FeedStatus {
   statusCode: string;
 }
 
-class FileUpload extends React.Component<IProps, IState> {
+class NeboUpload extends React.Component<IProps, IState> {
 
   constructor(props: IProps) {
     super(props);
@@ -183,4 +183,4 @@ class FileUpload extends React.Component<IProps, IState> {
   }
 }
 
-export default FileUpload;
+export default NeboUpload;
