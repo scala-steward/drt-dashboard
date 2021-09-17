@@ -10,8 +10,11 @@ import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
 import uk.gov.homeoffice.drt.authentication.User
 
 trait PathString
+
 case object Root extends PathString
+
 case object Alert extends PathString
+
 case object Upload extends PathString
 
 case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route, staticResourceDirectory: Route) {

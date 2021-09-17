@@ -5,7 +5,7 @@ import Alerts from './components/Alerts/Alerts';
 import {Route, Switch} from "react-router-dom";
 import Loading from "./components/Loading";
 import Navigation from "./components/Navigation";
-import NeboUpload from "./components/NeboUpload";
+import FileUpload from "./components/FileUpload";
 import {createStyles, makeStyles} from "@material-ui/core/styles";
 import {RootState, rootStore} from "./store/rootReducer";
 import {connect, ConnectedProps} from "react-redux";
@@ -81,7 +81,7 @@ const App = (props: PropsFromReact) => {
             <Alerts user={props.user.profile}/>
           </Route>
           <Route exact path="/upload">
-            <NeboUpload user={props.user.profile} config={props.config.values}/>
+            <FileUpload user={props.user.profile} config={props.config.values}/>
           </Route>
           <Route exact path="/red-list-editor">
             <RedListEditor/>

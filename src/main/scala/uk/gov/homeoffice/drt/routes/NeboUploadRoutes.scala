@@ -2,8 +2,8 @@ package uk.gov.homeoffice.drt.routes
 
 import akka.http.scaladsl.model.StatusCodes.{ Forbidden, InternalServerError, MethodNotAllowed }
 import akka.http.scaladsl.server.Directives.{ complete, fileUpload, onSuccess, pathPrefix, post, _ }
-import akka.http.scaladsl.server.directives.FileInfo
 import akka.http.scaladsl.server._
+import akka.http.scaladsl.server.directives.FileInfo
 import akka.stream.Materializer
 import akka.stream.scaladsl.{ Framing, Source }
 import akka.util.ByteString
@@ -29,7 +29,7 @@ case class FeedStatus(portCode: String, flightCount: Int, statusCode: String)
 
 object NeboUploadRoutes extends JsonSupport {
 
-  val routePrefix = "nebo/upload"
+  val routePrefix = "uploadFile"
 
   type MillisSinceEpoch = Long
 
@@ -50,22 +50,19 @@ object NeboUploadRoutes extends JsonSupport {
       val names = methodRejections.map(_.supported.name)
       complete(MethodNotAllowed, s"Not supported: ${names mkString " or "}!")
     }
-    .handleNotFound {
-      complete("Not found!")
-    }
     .result()
 
   def apply(neboPortCodes: List[String], httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
     val route: Route =
       pathPrefix(routePrefix) {
-        authByRole(NeboUpload) {
-          post {
+        (post & path("")) {
+          authByRole(NeboUpload) {
             fileUploadCSV(neboPortCodes, httpClient)
           }
         }
       }
-
-    handleRejections(rejectionHandler)(route)
+    route
+    //    handleRejections(rejectionHandler)(route)
   }
 
   def fileUploadCSV(neboPortCodes: List[String], httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {

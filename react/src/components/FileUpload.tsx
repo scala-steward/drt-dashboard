@@ -3,6 +3,7 @@ import axios, {AxiosRequestConfig, AxiosResponse} from "axios";
 import {UserProfile} from "../model/User";
 import {ConfigValues} from "../model/Config";
 import {Button} from "@material-ui/core";
+import ApiClient from "../services/ApiClient";
 
 interface IProps {
   user: UserProfile;
@@ -24,7 +25,7 @@ interface FeedStatus {
   statusCode: string;
 }
 
-class NeboUpload extends React.Component<IProps, IState> {
+class FileUpload extends React.Component<IProps, IState> {
 
   constructor(props: IProps) {
     super(props);
@@ -55,7 +56,7 @@ class NeboUpload extends React.Component<IProps, IState> {
         this.state.selectedFile,
         this.state.selectedFile.name
       );
-      this.postUploadData("/uploadFile", formData, this.responseData, this.afterPostUploadData);
+      this.postUploadData(ApiClient.neboFileUpload, formData, this.responseData, this.afterPostUploadData);
     }
   };
 
@@ -182,4 +183,4 @@ class NeboUpload extends React.Component<IProps, IState> {
   }
 }
 
-export default NeboUpload;
+export default FileUpload;
