@@ -16,7 +16,7 @@ import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
 
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.concurrent.{ Await, ExecutionContextExecutor, Future }
 
 object MockHttpClient extends HttpClient {
   def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[HttpResponse] = {
@@ -97,8 +97,8 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
   "Given a correct permission to users, the user should able to upload file successfully " >> {
     Post("/", multipartForm) ~>
       RawHeader("X-Auth-Roles", NeboUpload.name) ~> RawHeader("X-Auth-Email", "my@email.com") ~> neboRoutes.route ~> check {
-      responseAs[String] shouldEqual """[{"flightCount":1,"portCode":"lhr","statusCode":"202 Accepted"}]"""
-    }
+        responseAs[String] shouldEqual """[{"flightCount":1,"portCode":"lhr","statusCode":"202 Accepted"}]"""
+      }
   }
 
   "Given a incorrect permission to users, the user is forbidden to upload" >> {

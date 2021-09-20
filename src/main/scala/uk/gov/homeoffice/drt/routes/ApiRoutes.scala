@@ -106,8 +106,7 @@ object ApiRoutes {
             import uk.gov.homeoffice.drt.redlist.RedListJsonFormats._
             entity(as[SetRedListUpdate]) {
               setRedListUpdate =>
-                val portRoles = Roles.portRoles
-                Seq(LHR).map { portRole =>
+                Roles.portRoles.map { portRole =>
                   DashboardClient.postWithRoles(
                     s"${Dashboard.drtUriForPortCode(portRole.name)}/red-list/updates",
                     setRedListUpdate.toJson.compactPrint,
@@ -141,8 +140,7 @@ object ApiRoutes {
         },
         (delete & path("red-list-updates" / Segment)) { dateMillisToDelete =>
           authByRole(RedListsEdit) {
-            val portRoles = Roles.portRoles
-            Seq(LHR).map { portRole =>
+            Roles.portRoles.map { portRole =>
               val uri = s"${Dashboard.drtUriForPortCode(portRole.name)}/red-list/updates/$dateMillisToDelete"
               DashboardClient.deleteWithRoles(uri, Seq(RedListsEdit, portRole))
             }

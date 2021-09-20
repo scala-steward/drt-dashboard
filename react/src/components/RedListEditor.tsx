@@ -7,7 +7,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Grid,
+  Grid, Snackbar,
   TextField
 } from "@material-ui/core";
 import {DatePicker} from "@material-ui/pickers";
@@ -69,6 +69,7 @@ export const RedListEditor = () => {
   const [confirm, setConfirm] = useState<Confirm>({kind: 'closed'})
   const [updatesRequested, setUpdatesRequested] = useState<boolean>(false)
   const [updatesReceived, setUpdatesReceived] = useState<boolean>(false)
+  const [snackbarMessage, setSnackbarMessage] = useState<string|null>(null)
 
   const setUpdatesState = (updates: RedListUpdate[]) => {
     console.log('received ' + updates.length + ' red list updates. setting state & updatesReceived: true')
@@ -102,8 +103,10 @@ export const RedListEditor = () => {
         redListUpdate: editing.update
       },
       onSuccess: () => {
+        setSnackbarMessage('Changes saved')
       },
       onFailure: () => {
+        setSnackbarMessage('There was a problem saving your changes')
       },
     }
     state.editing && rootStore.dispatch(saveRedListUpdates(request))
@@ -162,8 +165,10 @@ export const RedListEditor = () => {
     const deletionRequest: RequestDeleteRedListUpdates = {
       dateToDelete: effectiveFrom,
       onSuccess: () => {
+        setSnackbarMessage('Red list updates removed')
       },
       onFailure: () => {
+        setSnackbarMessage('There was a problem removing the red list changes')
       }
     }
     rootStore.dispatch(deleteRedListUpdates(deletionRequest))
@@ -209,6 +214,13 @@ export const RedListEditor = () => {
   }
 
   return <Grid container={true} className={classes.root}>
+    <Snackbar
+      anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      open={!!snackbarMessage}
+      autoHideDuration={6000}
+      onClose={() => setSnackbarMessage('')}
+      message={snackbarMessage}
+    />
     <Grid container={true}>
       <h1>Red List Changes</h1>
     </Grid>

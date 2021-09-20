@@ -12,6 +12,7 @@ lazy val logBackJsonVersion = "0.1.5"
 lazy val drtCiriumVersion = "56"
 lazy val drtLibVersion = "v47"
 lazy val janinoVersion = "3.1.6"
+lazy val scalaTestVersion = "3.2.9"
 
 lazy val root = (project in file(".")).
   settings(
@@ -40,9 +41,12 @@ lazy val root = (project in file(".")).
       "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.2",
       "uk.gov.service.notify" % "notifications-java-client" % "3.17.0-RELEASE",
       "com.github.tototoshi" %% "scala-csv" % "1.3.8",
+      "org.scalactic" %% "scalactic" % scalaTestVersion,
+
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
+      "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
 
       "org.specs2" %% "specs2-core" % specs2Version % Test
     ),
