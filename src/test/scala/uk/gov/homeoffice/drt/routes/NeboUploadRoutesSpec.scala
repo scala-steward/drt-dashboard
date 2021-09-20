@@ -2,6 +2,7 @@ package uk.gov.homeoffice.drt.routes
 
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.ActorSystem
+import akka.http.scaladsl.model.Multipart.FormData
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Route
@@ -13,28 +14,26 @@ import akka.util.ByteString
 import org.specs2.mutable.Specification
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
-import uk.gov.homeoffice.drt.routes.UploadRoutes._
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ Await, ExecutionContextExecutor, Future }
 
-class UploadRoutesSpec extends Specification with Specs2RouteTest {
+object MockHttpClient extends HttpClient {
+  def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[HttpResponse] = {
+    Future(HttpResponse(StatusCodes.Accepted, entity = HttpEntity("File uploaded")))(executionContext)
+  }
+}
 
-  val testKit = ActorTestKit()
+class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
+
+  val testKit: ActorTestKit = ActorTestKit()
 
   implicit val sys: ActorSystem[Nothing] = testKit.system
-  implicit val ec = sys.executionContext
+  implicit val ec: ExecutionContextExecutor = sys.executionContext
 
-  val httpClient = new HttpClient {
-    override def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[HttpResponse] =
-      Future(HttpResponse(StatusCodes.Accepted, entity = HttpEntity("File uploaded")))(ec)
-  }
+  private val neboRoutes: NeboUploadRoutes = NeboUploadRoutes(List("lhr"), MockHttpClient)
 
-  val routes: Route = UploadRoutes(
-    "uploadFile",
-    List("lhr"), httpClient)
-
-  val test2FileData =
+  val test2FileData: String =
     """
       |Reference (URN),AssociatedText ,Flight Code ,Arrival Port ,DATE,Arrival Time,Departure Date,Departure Time,Embark Port,"Departure Port"
       |CRI/IOI/0107E/3,Passenger in transit from testCountry1.,TEST914,LHR,02/07/2021,16:40,02/07/2021,16:00,SJO,FRA
@@ -51,13 +50,13 @@ class UploadRoutesSpec extends Specification with Specs2RouteTest {
       |,,,,,,,,,
       |""".stripMargin
 
-  val test1FileData =
+  val test1FileData: String =
     """
       |
       |CRI/IOI/0107E/3,Passenger in transit from testCountry1.,TEST914,LHR,02/07/2021,16:40,02/07/2021,16:00,SJO,FRA
       |""".stripMargin
 
-  val test3FileDataWithoutDepartureDetails =
+  val test3FileDataWithoutDepartureDetails: String =
     """
       |Reference (URN),AssociatedText ,Flight Code ,Arrival Port ,DATE,Arrival Time,Departure Date,Departure Time,Embark Port,"Departure Port"
       |CRI/IOI/0107E/3,Passenger in transit from testCountry1.,TEST914,LHR,02/07/2021,16:40
@@ -74,7 +73,7 @@ class UploadRoutesSpec extends Specification with Specs2RouteTest {
       |,,,,,,,,,
       |""".stripMargin
 
-  val test4FileDataWithNewlineCharInFields =
+  val test4FileDataWithNewlineCharInFields: String =
     """
       |Reference (URN),AssociatedText ,"Flight
       |Code ","Arrival
@@ -89,22 +88,23 @@ class UploadRoutesSpec extends Specification with Specs2RouteTest {
       |PAK/IOI/2308L/11,Passenger in transit from testCountry8.,TEST007,LHR,24/08/2021,06:55,24/08/2021,02:00,SKT,BAH
       |""".stripMargin
 
-  val multipartForm =
+  val multipartForm: FormData.Strict =
     Multipart.FormData(Multipart.FormData.BodyPart.Strict(
       "csv",
       HttpEntity(ContentTypes.`text/plain(UTF-8)`, test1FileData),
       Map("filename" -> "test1.csv")))
 
   "Given a correct permission to users, the user should able to upload file successfully " >> {
-    Post("/uploadFile", multipartForm) ~>
-      RawHeader("X-Auth-Roles", NeboUpload.name) ~> RawHeader("X-Auth-Email", "my@email.com") ~> routes ~> check {
+    Post("/nebo-upload", multipartForm) ~>
+      RawHeader("X-Auth-Roles", NeboUpload.name) ~> RawHeader("X-Auth-Email", "my@email.com") ~> neboRoutes.route ~> check {
         responseAs[String] shouldEqual """[{"flightCount":1,"portCode":"lhr","statusCode":"202 Accepted"}]"""
       }
   }
 
   "Given a incorrect permission to users, the user is forbidden to upload" >> {
-    Post("/uploadFile", multipartForm) ~>
-      RawHeader("X-Auth-Roles", "random") ~> RawHeader("X-Auth-Email", "my@email.com") ~> routes ~> check {
+    Post("/nebo-upload", multipartForm) ~>
+      RawHeader("X-Auth-Roles", "random") ~> RawHeader("X-Auth-Email", "my@email.com") ~> Route.seal(neboRoutes.route) ~>
+      check {
         status shouldEqual StatusCodes.Forbidden
         responseAs[String] shouldEqual """You are not authorized to upload!"""
       }
@@ -112,42 +112,42 @@ class UploadRoutesSpec extends Specification with Specs2RouteTest {
 
   "convertByteSourceToFlightData should convert file data byteString to FlightData case class with expected conversion" >> {
     val metaFile = FileInfo(fieldName = "csv", fileName = "test.csv", contentType = ContentTypes.`text/plain(UTF-8)`)
-    val flightDataF: Future[List[FlightData]] = UploadRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test2FileData)))
+    val flightDataF: Future[List[FlightData]] = neboRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test2FileData)))
     val exceptedResult = Seq(
-      FlightData("LHR", "TEST316", parseDateToMillis("03/07/2021 17:05"), Option(parseDateToMillis("03/07/2021 15:45")), Option("MAD"), Option("PTY"), 1),
-      FlightData("LHR", "TEST1681", parseDateToMillis("03/07/2021 07:55"), Option(parseDateToMillis("03/07/2021 07:30")), Option("CDG"), Option("JNB"), 1),
-      FlightData("LHR", "TEST306", parseDateToMillis("02/07/2021 07:45"), Option(parseDateToMillis("02/07/2021 01:10")), Option("SIN"), Option("CRK"), 1),
-      FlightData("LHR", "TEST914", parseDateToMillis("02/07/2021 16:40"), Option(parseDateToMillis("02/07/2021 16:00")), Option("FRA"), Option("SJO"), 1),
-      FlightData("LHR", "TEST922", parseDateToMillis("02/07/2021 22:10"), Option(parseDateToMillis("02/07/2021 21:30")), Option("FRA"), Option("BOG"), 1),
-      FlightData("LHR", "TEST1007", parseDateToMillis("02/07/2021 09:00"), Option(parseDateToMillis("02/07/2021 08:40")), Option("AMS"), Option("NBO"), 2),
-      FlightData("LHR", "TEST1007", parseDateToMillis("03/07/2021 09:00"), Option(parseDateToMillis("02/07/2021 08:40")), Option("AMS"), Option("NBO"), 1))
-    val flightDataResult: Seq[FlightData] = Await.result(flightDataF, 1 seconds)
+      FlightData("LHR", "TEST316", neboRoutes.parseDateToMillis("03/07/2021 17:05"), Option(neboRoutes.parseDateToMillis("03/07/2021 15:45")), Option("MAD"), Option("PTY"), 1),
+      FlightData("LHR", "TEST1681", neboRoutes.parseDateToMillis("03/07/2021 07:55"), Option(neboRoutes.parseDateToMillis("03/07/2021 07:30")), Option("CDG"), Option("JNB"), 1),
+      FlightData("LHR", "TEST306", neboRoutes.parseDateToMillis("02/07/2021 07:45"), Option(neboRoutes.parseDateToMillis("02/07/2021 01:10")), Option("SIN"), Option("CRK"), 1),
+      FlightData("LHR", "TEST914", neboRoutes.parseDateToMillis("02/07/2021 16:40"), Option(neboRoutes.parseDateToMillis("02/07/2021 16:00")), Option("FRA"), Option("SJO"), 1),
+      FlightData("LHR", "TEST922", neboRoutes.parseDateToMillis("02/07/2021 22:10"), Option(neboRoutes.parseDateToMillis("02/07/2021 21:30")), Option("FRA"), Option("BOG"), 1),
+      FlightData("LHR", "TEST1007", neboRoutes.parseDateToMillis("02/07/2021 09:00"), Option(neboRoutes.parseDateToMillis("02/07/2021 08:40")), Option("AMS"), Option("NBO"), 2),
+      FlightData("LHR", "TEST1007", neboRoutes.parseDateToMillis("03/07/2021 09:00"), Option(neboRoutes.parseDateToMillis("02/07/2021 08:40")), Option("AMS"), Option("NBO"), 1))
+    val flightDataResult: Seq[FlightData] = Await.result(flightDataF, 1.seconds)
 
     flightDataResult must containAllOf(exceptedResult)
   }
 
   "convertByteSourceToFlightData should convert file data byteString to FlightData case class with expected conversion without departure details" >> {
     val metaFile = FileInfo(fieldName = "csv", fileName = "test.csv", contentType = ContentTypes.`text/plain(UTF-8)`)
-    val flightDataF: Future[List[FlightData]] = UploadRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test3FileDataWithoutDepartureDetails)))
+    val flightDataF: Future[List[FlightData]] = neboRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test3FileDataWithoutDepartureDetails)))
     val exceptedResult = Seq(
-      FlightData("LHR", "TEST316", parseDateToMillis("03/07/2021 17:05"), None, None, None, 1),
-      FlightData("LHR", "TEST1681", parseDateToMillis("03/07/2021 07:55"), None, None, None, 1),
-      FlightData("LHR", "TEST306", parseDateToMillis("02/07/2021 07:45"), None, None, None, 1),
-      FlightData("LHR", "TEST914", parseDateToMillis("02/07/2021 16:40"), None, None, None, 1),
-      FlightData("LHR", "TEST922", parseDateToMillis("02/07/2021 22:10"), None, None, None, 1),
-      FlightData("LHR", "TEST1007", parseDateToMillis("02/07/2021 09:00"), None, None, None, 2),
-      FlightData("LHR", "TEST1007", parseDateToMillis("03/07/2021 09:00"), None, None, None, 1))
-    val flightDataResult: Seq[FlightData] = Await.result(flightDataF, 1 seconds)
+      FlightData("LHR", "TEST316", neboRoutes.parseDateToMillis("03/07/2021 17:05"), None, None, None, 1),
+      FlightData("LHR", "TEST1681", neboRoutes.parseDateToMillis("03/07/2021 07:55"), None, None, None, 1),
+      FlightData("LHR", "TEST306", neboRoutes.parseDateToMillis("02/07/2021 07:45"), None, None, None, 1),
+      FlightData("LHR", "TEST914", neboRoutes.parseDateToMillis("02/07/2021 16:40"), None, None, None, 1),
+      FlightData("LHR", "TEST922", neboRoutes.parseDateToMillis("02/07/2021 22:10"), None, None, None, 1),
+      FlightData("LHR", "TEST1007", neboRoutes.parseDateToMillis("02/07/2021 09:00"), None, None, None, 2),
+      FlightData("LHR", "TEST1007", neboRoutes.parseDateToMillis("03/07/2021 09:00"), None, None, None, 1))
+    val flightDataResult: Seq[FlightData] = Await.result(flightDataF, 1.seconds)
 
     flightDataResult must containAllOf(exceptedResult)
   }
 
   "convertByteSourceToFlightData should convert file data to FlightData while field data contain newline character" >> {
     val metaFile = FileInfo(fieldName = "csv", fileName = "test.csv", contentType = ContentTypes.`text/plain(UTF-8)`)
-    val flightDataF: Future[List[FlightData]] = UploadRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test4FileDataWithNewlineCharInFields)))
+    val flightDataF: Future[List[FlightData]] = neboRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test4FileDataWithNewlineCharInFields)))
     val exceptedResult = Seq(
-      FlightData("LHR", "TEST124", parseDateToMillis("24/08/2021 06:15"), Option(parseDateToMillis("24/08/2021 01:00")), Some("BAH"), Some("MLE"), 1),
-      FlightData("LHR", "TEST007", parseDateToMillis("24/08/2021 06:55"), Option(parseDateToMillis("24/08/2021 02:00")), Some("BAH"), Some("SKT"), 4))
+      FlightData("LHR", "TEST124", neboRoutes.parseDateToMillis("24/08/2021 06:15"), Option(neboRoutes.parseDateToMillis("24/08/2021 01:00")), Some("BAH"), Some("MLE"), 1),
+      FlightData("LHR", "TEST007", neboRoutes.parseDateToMillis("24/08/2021 06:55"), Option(neboRoutes.parseDateToMillis("24/08/2021 02:00")), Some("BAH"), Some("SKT"), 4))
     val flightDataResult: Seq[FlightData] = Await.result(flightDataF, 1 seconds)
 
     flightDataResult must containAllOf(exceptedResult)
@@ -156,7 +156,7 @@ class UploadRoutesSpec extends Specification with Specs2RouteTest {
   "covertDateTime should convert String date format to millis as expected" >> {
     val date = "03/07/2021 17:05"
     val millisDate = 1625328300000L
-    millisDate mustEqual parseDateToMillis(date)
+    millisDate mustEqual neboRoutes.parseDateToMillis(date)
   }
 
 }

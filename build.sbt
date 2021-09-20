@@ -1,6 +1,6 @@
 import sbt.Keys.resolvers
 
-lazy val akkaHttpVersion = "10.2.0"
+lazy val akkaHttpVersion = "10.2.6"
 lazy val akkaVersion = "2.6.8"
 lazy val jodaTimeVersion = "2.9.4"
 lazy val scalaLoggingVersion = "3.9.2"
@@ -10,7 +10,9 @@ lazy val specs2Version = "4.6.0"
 lazy val logBackJsonVersion = "0.1.5"
 
 lazy val drtCiriumVersion = "56"
-lazy val drtLibVersion = "v39"
+lazy val drtLibVersion = "v47"
+lazy val janinoVersion = "3.1.6"
+lazy val scalaTestVersion = "3.2.9"
 
 lazy val root = (project in file(".")).
   settings(
@@ -18,8 +20,6 @@ lazy val root = (project in file(".")).
       organization := "uk.gov.homeoffice.drt",
       scalaVersion := "2.12.8"
     )),
-
-    compile := ((compile in Compile) dependsOn buildReactApp).value,
 
     version := sys.env.getOrElse("DRONE_BUILD_NUMBER", sys.env.getOrElse("BUILD_ID", "DEV")),
     name := "drt-dashboard",
@@ -37,12 +37,16 @@ lazy val root = (project in file(".")).
       "uk.gov.homeoffice" %% "drt-lib" % drtLibVersion,
       "ch.qos.logback.contrib" % "logback-json-classic" % logBackJsonVersion,
       "ch.qos.logback.contrib" % "logback-jackson" % logBackJsonVersion,
+      "org.codehaus.janino" % "janino" % janinoVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.2",
       "uk.gov.service.notify" % "notifications-java-client" % "3.17.0-RELEASE",
       "com.github.tototoshi" %% "scala-csv" % "1.3.8",
+      "org.scalactic" %% "scalactic" % scalaTestVersion,
+
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
+      "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
 
       "org.specs2" %% "specs2-core" % specs2Version % Test
     ),
@@ -61,22 +65,6 @@ lazy val root = (project in file(".")).
 javaOptions in Test += "-Duser.timezone=UTC"
 
 javaOptions in Runtime += "-Duser.timezone=UTC"
-
-lazy val yarnInstall = taskKey[Unit]("yarn install")
-
-val cwd = System.getProperty("user.dir")
-val reactAppDir: sbt.File = new File(cwd + "/react")
-
-yarnInstall := {
-  scala.sys.process.Process("yarn install", reactAppDir).!
-}
-
-lazy val buildReactApp = taskKey[Unit]("Build react app")
-buildReactApp := {
-  scala.sys.process.Process("yarn build", reactAppDir).!
-  scala.sys.process.Process(s"rm -rf $cwd/src/main/resources/frontend").!
-  scala.sys.process.Process(s"mv build $cwd/src/main/resources/frontend", new File(cwd + "/react")).!
-}
 
 fork in run := true
 cancelable in Global := true

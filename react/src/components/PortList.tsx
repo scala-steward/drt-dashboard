@@ -8,28 +8,28 @@ import Divider from "@material-ui/core/Divider";
 
 
 interface IProps {
-    ports: string[];
-    drtDomain: string;
+  ports: string[];
+  drtDomain: string;
 }
 
 export default class PortList extends React.Component<IProps> {
-    render() {
-        return <div>
-            <h1>Welcome to DRT</h1>
-            <p>Select your destination</p>
-            <List>
-                {this.props.ports.map((portCode) => {
-                    let portCodeLC = portCode.toLowerCase();
-                    const url = 'https://' + portCodeLC + '.' + this.props.drtDomain;
-                    return <div key={portCode}>
-                        <ListItem button component="a" href={url} id={"port-link-" + portCodeLC}>
-                            <ListItemIcon><Icon/></ListItemIcon>
-                            <ListItemText primary={portCode.toUpperCase()}/>
-                        </ListItem>
-                        <Divider variant="inset" component="li"/>
-                    </div>
-                })}
-            </List>
-        </div>
-    }
+  render() {
+    return <div>
+      <h1>Welcome to DRT</h1>
+      <p>Select your destination</p>
+      <List>
+        {this.props.ports.map((portCode) => {
+          let portCodeLC = portCode.toLowerCase();
+          const url = 'https://' + portCodeLC + '.' + this.props.drtDomain;
+          return <div key={portCode}>
+            <ListItem button component="a" href={url} id={"port-link-" + portCodeLC}>
+              <ListItemIcon><Icon/></ListItemIcon>
+              <ListItemText primary={portCode.toUpperCase()}/>
+            </ListItem>
+            <Divider variant="inset" component="li"/>
+          </div>
+        })}
+      </List>
+    </div>
+  }
 }

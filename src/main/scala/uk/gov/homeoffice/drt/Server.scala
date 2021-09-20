@@ -7,7 +7,7 @@ import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.Directives.{ concat, getFromResource, getFromResourceDirectory }
 import akka.http.scaladsl.server.Route
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
-import uk.gov.homeoffice.drt.routes.{ ApiRoutes, CiriumRoutes, DrtRoutes, IndexRoute, UploadRoutes }
+import uk.gov.homeoffice.drt.routes.{ ApiRoutes, CiriumRoutes, DrtRoutes, IndexRoute, NeboUploadRoutes }
 
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 import scala.util.{ Failure, Success }
@@ -42,6 +42,7 @@ object Server {
 
     val urls = Urls(serverConfig.rootDomain, serverConfig.useHttps)
 
+    val neboRoutes = NeboUploadRoutes(serverConfig.neboPortCodes.toList, new ProdHttpClient).route
     val routes: Route = concat(
       IndexRoute(
         urls,
@@ -50,8 +51,8 @@ object Server {
         staticResourceDirectory = getFromResourceDirectory("frontend/static")).route,
       CiriumRoutes("cirium", serverConfig.ciriumDataUri),
       DrtRoutes("drt", serverConfig.portCodes),
-      ApiRoutes("api", serverConfig.portCodes, serverConfig.rootDomain, notifications, serverConfig.teamEmail),
-      UploadRoutes("uploadFile", serverConfig.neboPortCodes.toList, new DrtClient))
+      ApiRoutes("api", serverConfig.portCodes, serverConfig.rootDomain, notifications, serverConfig.teamEmail, neboRoutes),
+    )
     val serverBinding: Future[Http.ServerBinding] = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
 
     ctx.pipeToSelf(serverBinding) {

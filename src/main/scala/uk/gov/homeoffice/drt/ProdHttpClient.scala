@@ -27,9 +27,8 @@ trait HttpClient extends JsonSupport {
   }
 }
 
-class DrtClient extends HttpClient {
+class ProdHttpClient extends HttpClient {
   def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[HttpResponse] = {
     Http()(mat.system).singleRequest(httpRequest)
   }
-
 }

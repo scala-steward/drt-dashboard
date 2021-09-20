@@ -1,17 +1,21 @@
 package uk.gov.homeoffice.drt.routes
 
 import akka.actor.typed.ActorSystem
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.{ ContentTypes, HttpEntity, StatusCodes }
 import akka.http.scaladsl.server.Directives.{ complete, pathPrefix, _ }
 import akka.http.scaladsl.server.directives.MethodDirectives.get
 import akka.http.scaladsl.server.{ Directive0, Route }
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import org.slf4j.{ Logger, LoggerFactory }
-import spray.json.{ JsArray, JsObject, JsString }
+import spray.json.DefaultJsonProtocol.{ StringJsonFormat, listFormat, mapFormat }
+import spray.json.{ JsArray, JsObject, JsString, RootJsonFormat, enrichAny }
 import uk.gov.homeoffice.drt.alerts.{ Alert, MultiPortAlert, MultiPortAlertClient }
-import uk.gov.homeoffice.drt.auth.Roles.{ CreateAlerts, Role }
+import uk.gov.homeoffice.drt.auth.Roles
+import uk.gov.homeoffice.drt.auth.Roles._
 import uk.gov.homeoffice.drt.authentication.{ AccessRequest, User }
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
+import uk.gov.homeoffice.drt.redlist.{ RedListJsonFormats, RedListUpdate, RedListUpdates, SetRedListUpdate }
 import uk.gov.homeoffice.drt.{ Dashboard, DashboardClient }
 
 import scala.compat.java8.OptionConverters._
@@ -36,7 +40,8 @@ object ApiRoutes {
     portCodes: Array[String],
     domain: String,
     notifications: EmailNotifications,
-    teamEmail: String)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
+    teamEmail: String,
+    neboUploadRoute: Route)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
     pathPrefix(prefix) {
       concat(
         (get & path("user")) {
@@ -95,34 +100,83 @@ object ApiRoutes {
             }
           }
         },
+        (post & path("red-list-updates")) {
+          authByRole(RedListsEdit) {
+            import spray.json._
+            import uk.gov.homeoffice.drt.redlist.RedListJsonFormats._
+            entity(as[SetRedListUpdate]) {
+              setRedListUpdate =>
+                Roles.portRoles.map { portRole =>
+                  DashboardClient.postWithRoles(
+                    s"${Dashboard.drtUriForPortCode(portRole.name)}/red-list/updates",
+                    setRedListUpdate.toJson.compactPrint,
+                    Seq(RedListsEdit, portRole))
+                }
+                complete(Future(StatusCodes.OK))
+            }
+          }
+        },
+        (get & path("red-list-updates")) {
+          authByRole(RedListsEdit) {
+            implicit val rlJson: RedListJsonFormats.redListUpdateJsonFormat.type = uk.gov.homeoffice.drt.redlist.RedListJsonFormats.redListUpdateJsonFormat
+            implicit val rlsJson: RedListJsonFormats.redListUpdatesJsonFormat.type = uk.gov.homeoffice.drt.redlist.RedListJsonFormats.redListUpdatesJsonFormat
+            val requestPortRole = LHR
+            val uri = s"${Dashboard.drtUriForPortCode(requestPortRole.name)}/red-list/updates"
+            val futureRedListUpdates: Future[RedListUpdates] =
+              DashboardClient
+                .getWithRoles(uri, Seq(RedListsEdit, requestPortRole))
+                .flatMap { res =>
+                  Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
+                    .to[List[RedListUpdate]]
+                    .map(r => RedListUpdates(r.map(ru => (ru.effectiveFrom, ru)).toMap))
+                    .recover {
+                      case e: Throwable =>
+                        log.error(s"Failed to retrieve red list updates for ${requestPortRole.name} at $uri", e)
+                        RedListUpdates.empty
+                    }
+                }
+            complete(futureRedListUpdates)
+          }
+        },
+        (delete & path("red-list-updates" / Segment)) { dateMillisToDelete =>
+          authByRole(RedListsEdit) {
+            Roles.portRoles.map { portRole =>
+              val uri = s"${Dashboard.drtUriForPortCode(portRole.name)}/red-list/updates/$dateMillisToDelete"
+              DashboardClient.deleteWithRoles(uri, Seq(RedListsEdit, portRole))
+            }
+            complete(Future(StatusCodes.OK))
+          }
+        },
+        post {
+          neboUploadRoute
+        },
         (get & path("alerts")) {
           authByRole(CreateAlerts) {
             headerValueByName("X-Auth-Roles") { rolesStr =>
               headerValueByName("X-Auth-Email") { email =>
-                import uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport._
+                implicit val alertFormat: RootJsonFormat[Alert] = uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport.AlertFormatParser
 
                 val user = User.fromRoles(email, rolesStr)
 
-                val futurePortAlerts: Seq[Future[(String, List[Alert])]] = user.accessiblePorts.map {
-                  case (portCode) =>
-
+                val futurePortAlerts: Seq[Future[(String, List[Alert])]] = user.accessiblePorts
+                  .map { portCode =>
                     portCode -> DashboardClient.getWithRoles(
                       s"${Dashboard.drtUriForPortCode(portCode)}/alerts/0",
                       user.roles).flatMap(res => Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
                         .to[List[Alert]]
                         .recover {
                           case e: Throwable =>
-                            log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtUriForPortCode(portCode)}/alerts/0")
+                            log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtUriForPortCode(portCode)}/alerts/0", e)
                             List()
                         })
-                }
+                  }
                   .toList
                   .map {
                     case (port, futureAlerts) =>
                       futureAlerts.map(a => port -> a)
                   }
 
-                complete(Future.sequence(futurePortAlerts).map(_.toMap))
+                complete(Future.sequence(futurePortAlerts).map(_.toMap.toJson))
               }
             }
           }
@@ -141,6 +195,5 @@ object ApiRoutes {
           }
         })
     }
-
 }
 
