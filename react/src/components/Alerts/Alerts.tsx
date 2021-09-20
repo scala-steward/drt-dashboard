@@ -1,7 +1,5 @@
 import React from "react";
-import {Container, Tab, Tabs} from "@material-ui/core";
-
-import {createStyles, makeStyles} from '@material-ui/core/styles';
+import {Tab, Tabs} from "@material-ui/core";
 import moment from "moment-timezone";
 import {a11yProps, TabPanel} from "../TabPanel";
 import SaveAlert from "./SaveAlert";
@@ -14,21 +12,11 @@ interface IProps {
   user: UserProfile;
 }
 
-const useStyles = makeStyles(() =>
-  createStyles({
-    container: {
-      textAlign: "left"
-    }
-  }),
-);
-
 export default function Alerts(props: IProps) {
-
-  const classes = useStyles();
 
   const [selectedTab, setSelectedTab] = React.useState(0);
 
-  const changeTabs = (event: React.ChangeEvent<{}>, newValue: number) => setSelectedTab(newValue);
+  const changeTabs = (event: React.ChangeEvent<any>, newValue: number) => setSelectedTab(newValue);
 
   return <div>
     <Tabs value={selectedTab} onChange={changeTabs} aria-label="simple tabs example">

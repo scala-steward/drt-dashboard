@@ -8,8 +8,7 @@ import akka.http.scaladsl.server.directives.MethodDirectives.get
 import akka.http.scaladsl.server.{ Directive0, Route }
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import org.slf4j.{ Logger, LoggerFactory }
-import spray.json.DefaultJsonProtocol.{ StringJsonFormat, listFormat, mapFormat }
-import spray.json.{ JsArray, JsObject, JsString, RootJsonFormat, enrichAny }
+import spray.json.{ JsArray, JsObject, JsString, enrichAny }
 import uk.gov.homeoffice.drt.alerts.{ Alert, MultiPortAlert, MultiPortAlertClient }
 import uk.gov.homeoffice.drt.auth.Roles
 import uk.gov.homeoffice.drt.auth.Roles._
@@ -21,6 +20,8 @@ import uk.gov.homeoffice.drt.{ Dashboard, DashboardClient }
 import scala.compat.java8.OptionConverters._
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 import scala.util.{ Failure, Success }
+
+case class PortAlerts(portCode: String, alerts: List[Alert])
 
 object ApiRoutes {
   val log: Logger = LoggerFactory.getLogger(getClass)
@@ -83,23 +84,6 @@ object ApiRoutes {
             }
           }
         },
-        (post & path("alerts")) {
-          authByRole(CreateAlerts) {
-            import uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport._
-            headerValueByName("X-Auth-Roles") { rolesStr =>
-              headerValueByName("X-Auth-Email") { email =>
-                entity(as[MultiPortAlert]) {
-                  multiPortAlert =>
-                    {
-                      val user = User.fromRoles(email, rolesStr)
-                      val futureResponses = MultiPortAlertClient.saveAlertsForPorts(portCodes, multiPortAlert, user)
-                      complete(Future.sequence(futureResponses).map(_ => StatusCodes.Created))
-                    }
-                }
-              }
-            }
-          }
-        },
         (post & path("red-list-updates")) {
           authByRole(RedListsEdit) {
             import spray.json._
@@ -118,6 +102,7 @@ object ApiRoutes {
         },
         (get & path("red-list-updates")) {
           authByRole(RedListsEdit) {
+            import spray.json.DefaultJsonProtocol.listFormat
             implicit val rlJson: RedListJsonFormats.redListUpdateJsonFormat.type = uk.gov.homeoffice.drt.redlist.RedListJsonFormats.redListUpdateJsonFormat
             implicit val rlsJson: RedListJsonFormats.redListUpdatesJsonFormat.type = uk.gov.homeoffice.drt.redlist.RedListJsonFormats.redListUpdatesJsonFormat
             val requestPortRole = LHR
@@ -147,36 +132,51 @@ object ApiRoutes {
             complete(Future(StatusCodes.OK))
           }
         },
-        post {
-          neboUploadRoute
+        (post & path("alerts")) {
+          authByRole(CreateAlerts) {
+            import uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport._
+            headerValueByName("X-Auth-Roles") { rolesStr =>
+              headerValueByName("X-Auth-Email") { email =>
+                entity(as[MultiPortAlert]) {
+                  multiPortAlert =>
+                    {
+                      val user = User.fromRoles(email, rolesStr)
+                      val futureResponses = MultiPortAlertClient.saveAlertsForPorts(portCodes, multiPortAlert, user)
+                      complete(Future.sequence(futureResponses).map(_ => StatusCodes.Created))
+                    }
+                }
+              }
+            }
+          }
         },
         (get & path("alerts")) {
           authByRole(CreateAlerts) {
             headerValueByName("X-Auth-Roles") { rolesStr =>
               headerValueByName("X-Auth-Email") { email =>
-                implicit val alertFormat: RootJsonFormat[Alert] = uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport.AlertFormatParser
+                import spray.json.DefaultJsonProtocol.listFormat
+                import uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport._
 
                 val user = User.fromRoles(email, rolesStr)
 
-                val futurePortAlerts: Seq[Future[(String, List[Alert])]] = user.accessiblePorts
+                val futurePortAlerts: Seq[Future[PortAlerts]] = user.accessiblePorts
                   .map { portCode =>
-                    portCode -> DashboardClient.getWithRoles(
-                      s"${Dashboard.drtUriForPortCode(portCode)}/alerts/0",
-                      user.roles).flatMap(res => Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
-                        .to[List[Alert]]
-                        .recover {
-                          case e: Throwable =>
-                            log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtUriForPortCode(portCode)}/alerts/0", e)
-                            List()
-                        })
+                    DashboardClient.getWithRoles(s"${Dashboard.drtUriForPortCode(portCode)}/alerts/0", user.roles)
+                      .flatMap { res =>
+                        Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
+                          .to[List[Alert]]
+                          .map(alerts => PortAlerts(portCode, alerts))
+                          .recover {
+                            case e: Throwable =>
+                              log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtUriForPortCode(portCode)}/alerts/0", e)
+                              PortAlerts(portCode, List())
+                          }
+                      }
                   }
                   .toList
-                  .map {
-                    case (port, futureAlerts) =>
-                      futureAlerts.map(a => port -> a)
-                  }
 
-                complete(Future.sequence(futurePortAlerts).map(_.toMap.toJson))
+                val eventualValue = Future.sequence(futurePortAlerts).map(_.toJson)
+
+                complete(eventualValue)
               }
             }
           }
@@ -193,6 +193,9 @@ object ApiRoutes {
               }
             }
           }
+        },
+        post {
+          neboUploadRoute
         })
     }
 }

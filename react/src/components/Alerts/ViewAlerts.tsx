@@ -1,13 +1,10 @@
 import React, {useEffect} from "react";
 import moment from "moment-timezone";
-import axios from "axios";
 import AlertLike from "../../model/Alert";
 import {Box, Button, Container, Typography} from "@material-ui/core";
 import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
-
-interface IPortAlerts {
-  [key: string]: AlertLike[]
-}
+import {rootStore} from "../../store/rootReducer";
+import {deleteAlertsForPort, fetchAlerts} from "../../store/alertsSlice";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -34,7 +31,27 @@ interface iAlertProps {
   alert: AlertLike
 }
 
-function Alert(props: iAlertProps) {
+export interface PortAlerts {
+  portCode: string
+  alerts: AlertLike[]
+}
+
+interface PortAlertsLoaded {
+  kind: "PortAlertsLoaded"
+  portAlerts: PortAlerts[]
+}
+
+interface PortAlertsPending {
+  kind: "PortAlertsPending"
+}
+
+interface PortAlertsNotLoaded {
+  kind: "PortAlertsNotLoaded"
+}
+
+type AllPortAlerts = PortAlertsNotLoaded | PortAlertsLoaded | PortAlertsPending
+
+const Alert = (props: iAlertProps) => {
 
   const classes = useStyles();
 
@@ -50,51 +67,44 @@ function ListAlerts() {
 
   const classes = useStyles();
 
-  const [state, setState] = React.useState({
-    portAlerts: {} as IPortAlerts
-  });
-
-  const refreshAlerts = () => axios
-    .get("/api/alerts")
-    .then(response => setState({
-      portAlerts: response.data as IPortAlerts
-    }));
+  const [allPortAlerts, setAllPortAlerts] = React.useState<AllPortAlerts>({kind: "PortAlertsNotLoaded"});
 
   useEffect(() => {
-    refreshAlerts();
-  }, [])
-
-  const clearAlertForPort = (portCode: String) =>
-    () => axios.delete("/api/alerts/" + portCode).then(refreshAlerts)
-
-  const portAlerts = []
-  for (let portCode in state.portAlerts) {
-    if (state.portAlerts.hasOwnProperty(portCode)) {
-      portAlerts.push(
-        <Box key={portAlerts.length}>
-          <h1>{portCode}</h1>
-          <Button className={classes.button} onClick={clearAlertForPort(portCode)} color={"secondary"}
-                  variant={"contained"}>Clear alerts for {portCode}</Button>
-          {state.portAlerts[portCode].map((alert: AlertLike) =>
-            (
-              <div>
-                <Alert alert={alert}/>
-                <Typography component={"span"} align={"right"}>
-                  Expires: {moment(alert.expires).format("DD-MM-YYYY HH:mm")}
-                </Typography>
-              </div>
-            )
-          )}
-        </Box>
-      )
+    if (allPortAlerts.kind === 'PortAlertsNotLoaded') {
+      const d = rootStore.dispatch(fetchAlerts((a: PortAlerts[]) => setAllPortAlerts({
+        kind: "PortAlertsLoaded",
+        portAlerts: a
+      })))
+      return () => d.abort()
     }
-  }
+  }, [allPortAlerts, setAllPortAlerts])
 
-  return (
-    <Container>
-      {portAlerts}
-    </Container>
-  )
+  const clearAlertForPort = (portCode: string) => () =>
+    rootStore.dispatch(deleteAlertsForPort({
+      portCode: portCode, onSuccess: () => {
+        allPortAlerts.kind === 'PortAlertsLoaded' && setAllPortAlerts({
+          ...allPortAlerts,
+          portAlerts: allPortAlerts.portAlerts.filter(pa => pa.portCode !== portCode)
+        })
+      }
+    }))
+
+  return <Container>{allPortAlerts.kind === 'PortAlertsLoaded' && allPortAlerts.portAlerts.map(portAlerts => {
+    return <Box key={portAlerts.portCode}>
+      <h1>{portAlerts.portCode}</h1>
+      <Button className={classes.button} onClick={clearAlertForPort(portAlerts.portCode)} color={"secondary"}
+              variant={"contained"}>Clear alerts for {portAlerts.portCode}</Button>
+      {portAlerts.alerts.map((alert: AlertLike) =>
+        <div>
+          <Alert alert={alert}/>
+          <Typography component={"span"} align={"right"}>
+            Expires: {moment(alert.expires).format("DD-MM-YYYY HH:mm")}
+          </Typography>
+        </div>
+      )}
+    </Box>
+  })
+  }</Container>
 }
 
 export {ListAlerts, Alert};

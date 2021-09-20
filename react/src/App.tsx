@@ -46,7 +46,7 @@ const App = (props: PropsFromReact) => {
   const styles = useStyles()
 
   const currentLocation = window.document.location;
-  const logoutLink = "/oauth/logout?redirect=" + currentLocation
+  const logoutLink = "/oauth/logout?redirect=" + currentLocation.toString()
 
   return (props.user.kind === "SignedInUser" && props.config.kind === "LoadedConfig") ?
     <div className="App">

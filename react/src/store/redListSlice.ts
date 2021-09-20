@@ -2,7 +2,7 @@ import {createAsyncThunk} from "@reduxjs/toolkit";
 import axios from "axios";
 import {rootStore} from "./rootReducer";
 import ApiClient from "../services/ApiClient";
-import {RedListUpdate, RedListUpdates} from "../components/redlisteditor/model";
+import {RedListUpdate} from "../components/redlisteditor/model";
 import {SetRedListUpdates} from "../components/RedListEditor";
 
 

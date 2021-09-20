@@ -11,11 +11,11 @@ import uk.gov.homeoffice.drt.authentication.User
 
 trait PathString
 
-case object Root extends PathString
+case object RootPathString extends PathString
 
-case object Alert extends PathString
+case object AlertPathString extends PathString
 
-case object Upload extends PathString
+case object UploadPathString extends PathString
 
 case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route, staticResourceDirectory: Route) {
   val log: Logger = LoggerFactory.getLogger(getClass)
@@ -23,13 +23,13 @@ case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route
   val route: Route =
     concat(
       path("") {
-        indexRouteDirectives(Root)
+        indexRouteDirectives(RootPathString)
       },
       path("alerts") {
-        indexRouteDirectives(Alert)
+        indexRouteDirectives(AlertPathString)
       },
       path("upload") {
-        indexRouteDirectives(Upload)
+        indexRouteDirectives(UploadPathString)
       },
       (get & pathPrefix("")) {
         directoryResource
@@ -42,7 +42,7 @@ case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route
     parameterMap { params =>
       optionalHeaderValueByName("X-Auth-Roles") { maybeRoles =>
         (params.get("fromPort").flatMap(urls.portCodeFromUrl), maybeRoles) match {
-          case (_, Some(rolesStr)) if rolesStr == NeboUpload.name && pathString != Upload =>
+          case (_, Some(rolesStr)) if rolesStr == NeboUpload.name && pathString != UploadPathString =>
             log.info(s"Redirecting back to upload")
             redirect("upload", StatusCodes.TemporaryRedirect)
           case (Some(portCode), Some(rolesStr)) =>

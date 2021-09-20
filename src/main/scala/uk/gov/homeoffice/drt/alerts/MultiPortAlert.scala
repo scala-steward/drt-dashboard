@@ -6,8 +6,9 @@ import akka.http.scaladsl.model.HttpResponse
 import org.joda.time.{ DateTime, DateTimeZone }
 import spray.json.{ DefaultJsonProtocol, RootJsonFormat, enrichAny }
 import uk.gov.homeoffice.drt.authentication.User
-import uk.gov.homeoffice.drt.{ Dashboard, DashboardClient }
 import uk.gov.homeoffice.drt.routes.ApiRoutes.log
+import uk.gov.homeoffice.drt.routes.PortAlerts
+import uk.gov.homeoffice.drt.{ Dashboard, DashboardClient }
 
 import scala.collection.immutable
 import scala.concurrent.Future
@@ -37,6 +38,7 @@ case class Alert(title: String, message: String, alertClass: String, expires: Lo
 object MultiPortAlertJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val MultiPortAlertFormatParser: RootJsonFormat[MultiPortAlert] = jsonFormat5(MultiPortAlert)
   implicit val AlertFormatParser: RootJsonFormat[Alert] = jsonFormat4(Alert)
+  implicit val portAlertsJsonFormat: RootJsonFormat[PortAlerts] = jsonFormat2(PortAlerts)
 }
 
 object MultiPortAlertClient {
