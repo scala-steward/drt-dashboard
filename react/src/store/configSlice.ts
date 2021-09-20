@@ -9,7 +9,7 @@ export const fetchConfig = createAsyncThunk(
   'config/values',
   async () => {
     axios
-      .get(ApiClient.userEndPoint)
+      .get(ApiClient.configEndPoint)
       .then((res) =>
         rootStore.dispatch(configSlice.actions.setConfig(res.data as ConfigValues)))
       .catch(reason => {
