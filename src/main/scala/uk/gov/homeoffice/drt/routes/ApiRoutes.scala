@@ -147,7 +147,7 @@ object ApiRoutes {
             complete(Future(StatusCodes.OK))
           }
         },
-        (post & path("nebo-upload")) {
+        post {
           neboUploadRoute
         },
         (get & path("alerts")) {

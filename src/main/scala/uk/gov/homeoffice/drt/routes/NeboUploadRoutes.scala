@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.routes
 
 import akka.http.scaladsl.model.StatusCodes.{ Forbidden, InternalServerError, MethodNotAllowed }
-import akka.http.scaladsl.server.Directives.{ complete, fileUpload, onSuccess }
+import akka.http.scaladsl.server.Directives.{ complete, fileUpload, onSuccess, path }
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.stream.Materializer
@@ -53,7 +53,7 @@ case class NeboUploadRoutes(neboPortCodes: List[String], httpClient: HttpClient)
 
   def route(implicit ec: ExecutionContextExecutor, mat: Materializer): Route =
     Route.seal(
-      authByRole(NeboUpload) {
+      (path("nebo-upload") & authByRole(NeboUpload)) {
         fileUploadCSV(neboPortCodes, httpClient)
       })
 

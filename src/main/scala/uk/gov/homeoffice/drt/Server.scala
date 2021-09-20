@@ -52,7 +52,6 @@ object Server {
       CiriumRoutes("cirium", serverConfig.ciriumDataUri),
       DrtRoutes("drt", serverConfig.portCodes),
       ApiRoutes("api", serverConfig.portCodes, serverConfig.rootDomain, notifications, serverConfig.teamEmail, neboRoutes),
-//      NeboUploadRoutes(serverConfig.neboPortCodes.toList, new ProdHttpClient)
     )
     val serverBinding: Future[Http.ServerBinding] = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
 
