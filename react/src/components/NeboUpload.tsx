@@ -13,7 +13,7 @@ interface IProps {
 interface IState {
   selectedFile: any;
   fileInput: any;
-  displayMessage: string[];
+  displayMessage: string;
   hasError: boolean;
   errorMessage: string;
   showUploadButton: boolean;
@@ -32,7 +32,7 @@ class NeboUpload extends React.Component<IProps, IState> {
     this.state = {
       selectedFile: null,
       fileInput: React.createRef(),
-      displayMessage: [],
+      displayMessage: '',
       hasError: false,
       errorMessage: '',
       showUploadButton: false
@@ -43,7 +43,7 @@ class NeboUpload extends React.Component<IProps, IState> {
     if (event.target.files && event.target.files.length > 0) {
       this.setState({selectedFile: event.target.files[0]});
       this.setState({showUploadButton: true});
-      this.setState({displayMessage: []});
+      this.setState({displayMessage: ''});
       this.setState({hasError: false});
     }
   };
@@ -76,7 +76,7 @@ class NeboUpload extends React.Component<IProps, IState> {
       .catch(t => this.setState(() => ({
         hasError: true,
         errorMessage: t,
-        displayMessage: [...this.state.displayMessage, this.state.selectedFile.name + ' failed to upload. There was a problem processing your file, try again or contact us at ' + this.props.config.teamEmail + ' if it persists']
+        displayMessage: 'There was a problem reading the file. Please check the column names & data formatting. If you can\'t see a problem then please send a copy to ' + this.props.config.teamEmail + '.'
       })))
       .then(afterPost)
   }
@@ -87,40 +87,33 @@ class NeboUpload extends React.Component<IProps, IState> {
 
   responseData = (response: AxiosResponse) => {
     const feedStatusArray = response.data as FeedStatus[];
-    feedStatusArray.map(feedStatus => {
-      if (feedStatus.statusCode !== '202 Accepted') {
-        this.setState({hasError: true});
-        this.setState({
-          displayMessage: [...this.state.displayMessage, this.generateMessage(feedStatus.portCode, this.state.selectedFile.name, ' failed to upload. Please contact us at ' + this.props.config.teamEmail)]
-        });
-      } else {
-        if (feedStatus.flightCount === '0') {
-          this.setState({hasError: true});
-          this.setState({
-            displayMessage: [...this.state.displayMessage, this.generateMessage(feedStatus.portCode, this.state.selectedFile.name, ' failed to upload. Check your file as no lines are parsed, try again later or contact us at ' + this.props.config.teamEmail)]
-          });
-        } else {
-          this.setState({
-            displayMessage: [...this.state.displayMessage, this.generateMessage(feedStatus.portCode, this.state.selectedFile.name, ' Arrivals have been updated. Thank you!')]
-          });
-        }
-      }
-      console.log('response feed ' + feedStatus.portCode + ' ' + feedStatus.flightCount + ' ' + feedStatus.statusCode);
-      return null
-    });
+    const failedStatuses = feedStatusArray.filter(s => s.statusCode != '202 Accepted' || s.flightCount == '0')
+    const failedPorts = failedStatuses.map(s => s.portCode).join(', ')
+    feedStatusArray.map(s => console.log('response feed ' + s.portCode + ' ' + s.flightCount + ' ' + s.statusCode))
+    if (failedStatuses.length > 0) this.setState({hasError: true})
+
+    if (this.state.hasError) {
+      const m = 'The file has been uploaded, but there was a problem with ' + failedPorts + ' ports. Please contact the DRT team for further information.';
+      this.setState({displayMessage: m})
+    } else {
+      const m = this.state.selectedFile.name + ' uploaded file successfully';
+      this.setState({displayMessage: m})
+    }
     console.log('response from post ' + response);
   }
 
   displayMessageWithCss(message: string) {
-    if (message.includes("failed")) {
+    if (message.includes("problem reading")) {
       return <div className="upload-error">{message}</div>
+    } else if (message.includes("problem")) {
+      return <div className="upload-warning">{message}</div>
     } else {
       return <div className="upload-success">{message}</div>
     }
   }
 
   fileData = () => {
-      if (this.state.selectedFile) {
+    if (this.state.selectedFile) {
       return (
         <div>
           <h2>File details:</h2>
@@ -134,20 +127,18 @@ class NeboUpload extends React.Component<IProps, IState> {
         </div>
       );
     } else {
-      const messageToDisplay = this.state.displayMessage.map(m => this.displayMessageWithCss(m));
-        return (
+      return (
         <div>
           <br/>
-          <h4>{messageToDisplay}</h4>
+          <h4>{this.displayMessageWithCss(this.state.displayMessage)}</h4>
         </div>
       );
     }
   };
 
   render() {
-    let page;
-    if (this.props.user.roles.includes("nebo:upload")) {
-      page = <div>
+    return this.props.user.roles.includes("nebo:upload") ?
+      <div>
         <h1>
           Nebo data upload area
         </h1>
@@ -165,9 +156,8 @@ class NeboUpload extends React.Component<IProps, IState> {
         {this.fileData()}
         {this.state.showUploadButton &&
         <Button variant="outlined" color="primary" onClick={this.onFileUpload}>Upload</Button>}
-      </div>
-    } else {
-      page = <div>
+      </div> :
+      <div>
         <h1>
           Nebo data upload area
         </h1>
@@ -178,8 +168,6 @@ class NeboUpload extends React.Component<IProps, IState> {
         <br/>
         <br/>
       </div>
-    }
-    return (page);
   }
 }
 
