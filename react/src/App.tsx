@@ -6,13 +6,13 @@ import {Route, Switch} from "react-router-dom";
 import Loading from "./components/Loading";
 import Navigation from "./components/Navigation";
 import NeboUpload from "./components/NeboUpload";
-import {createStyles, makeStyles} from "@material-ui/core/styles";
+import {createStyles, makeStyles} from "@mui/material/styles";
 import {RootState, rootStore} from "./store/rootReducer";
 import {connect, ConnectedProps} from "react-redux";
 import {fetchUserProfile} from "./store/userSlice";
 import {fetchConfig} from "./store/configSlice";
 import {RedListEditor} from "./components/RedListEditor";
-import {Container} from "@material-ui/core";
+import {Container} from "@mui/material";
 
 
 rootStore.dispatch(fetchUserProfile())

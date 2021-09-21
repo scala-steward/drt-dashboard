@@ -1,6 +1,6 @@
 import React from "react";
 import moment from "moment-timezone";
-import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
+import {createStyles, makeStyles, Theme} from "@mui/material/styles";
 import axios from "axios";
 import {
   Box,
@@ -13,7 +13,7 @@ import {
   MenuItem,
   Select,
   TextField
-} from "@material-ui/core";
+} from "@mui/material";
 import {Alert} from "./ViewAlerts"
 import AlertLike from "../../model/Alert";
 import {UserProfile} from "../../model/User";

@@ -1,15 +1,15 @@
 import React from "react";
 import ApiClient from "../services/ApiClient";
 import axios from "axios";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import Checkbox from "@material-ui/core/Checkbox";
-import ListItemText from "@material-ui/core/ListItemText";
-import Divider from "@material-ui/core/Divider";
-import {Box, FormControl, Paper, TextField, Typography} from "@material-ui/core";
-import Button from "@material-ui/core/Button";
-import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import Checkbox from "@mui/material/Checkbox";
+import ListItemText from "@mui/material/ListItemText";
+import Divider from "@mui/material/Divider";
+import {Box, FormControl, Paper, TextField, Typography} from "@mui/material";
+import Button from "@mui/material/Button";
+import {createStyles, makeStyles, Theme} from "@mui/material/styles";
 
 
 interface IProps {

@@ -1,8 +1,8 @@
 import React, {useEffect} from "react";
 import moment from "moment-timezone";
 import AlertLike from "../../model/Alert";
-import {Box, Button, Container, Typography} from "@material-ui/core";
-import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
+import {Box, Button, Container, Typography} from "@mui/material";
+import {createStyles, makeStyles, Theme} from "@mui/material/styles";
 import {rootStore} from "../../store/rootReducer";
 import {deleteAlertsForPort, fetchAlerts} from "../../store/alertsSlice";
 

@@ -1,7 +1,7 @@
-import {Button, Menu, MenuItem} from "@material-ui/core";
+import {Button, Menu, MenuItem} from "@mui/material";
 import React from "react";
 import {Link} from "react-router-dom";
-import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
+import {createStyles, makeStyles, Theme} from "@mui/material/styles";
 import {UserProfile} from "../model/User";
 
 interface IProps {

@@ -1,5 +1,5 @@
 import React from "react";
-import {Tab, Tabs} from "@material-ui/core";
+import {Tab, Tabs} from "@mui/material";
 import moment from "moment-timezone";
 import {a11yProps, TabPanel} from "../TabPanel";
 import SaveAlert from "./SaveAlert";

@@ -9,12 +9,10 @@ import {
   DialogTitle,
   Grid, Snackbar,
   TextField
-} from "@material-ui/core";
-import {DatePicker} from "@material-ui/pickers";
-import {MaterialUiPickersDate} from "@material-ui/pickers/typings/date";
-import {Add, Cancel, Check, Delete, Edit, Save} from "@material-ui/icons";
+} from "@mui/material";
+import {Add, Cancel, Check, Delete, Edit, Save} from "@mui/icons-material";
 import {Editing, Editing_, RedListUpdate, State, State_} from "./redlisteditor/model";
-import {makeStyles, Theme} from "@material-ui/core/styles";
+import {makeStyles, Theme} from "@mui/material/styles";
 import moment from "moment/moment";
 import {rootStore} from "../store/rootReducer";
 import {
@@ -25,6 +23,7 @@ import {
   saveRedListUpdates
 } from "../store/redListSlice";
 import Loading from "./Loading";
+import {DatePicker} from "@mui/lab";
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -87,7 +86,7 @@ export const RedListEditor = () => {
     }
   }, [updatesRequested, setUpdatesRequested, updatesReceived, setUpdatesReceived])
 
-  const setDate: (e: MaterialUiPickersDate) => void = e => {
+  const setDate: (e: Date | null) => void = e => {
     (state.editing && e) && setState({...state, editing: Editing_.setEffectiveFrom(state.editing, e.valueOf())})
   }
 
@@ -232,10 +231,10 @@ export const RedListEditor = () => {
       <Dialog open={true} maxWidth="xs">
           <DialogTitle>Edit changes for {moment(state.editing.update.effectiveFrom).format("Do MMM YYYY")}</DialogTitle>
           <DialogContent className={classes.dialogue}>
-              <DatePicker value={state.editing.update.effectiveFrom} onChange={setDate}/>
+              <DatePicker renderInput={props => <TextField label="Date" helperText="Something" />} value={state.editing.update.effectiveFrom} onChange={setDate}/>
               <DialogContentText>
                   Additions
-                  <Button color="default" variant="outlined" size="small" onClick={addNewAddition}>
+                  <Button variant="outlined" size="small" onClick={addNewAddition}>
                       <Add fontSize="small"/>
                   </Button>
               </DialogContentText>
@@ -246,9 +245,9 @@ export const RedListEditor = () => {
                                                         onChange={e => setState(State_.updatingAdditionName(state, e))}/></Grid>
                     <Grid item={true} xs={4}><TextField label="3 letter code" value={state.editing.addingAddition.code}
                                                         onChange={e => setState(State_.updatingAdditionCode(state, e))}/></Grid>
-                    <Grid item={true} xs={2}><Button color="default" variant="outlined" size="small"
+                    <Grid item={true} xs={2}><Button color="primary" variant="outlined" size="small"
                                                      onClick={saveAddition}><Check fontSize="small"/></Button></Grid>
-                    <Grid item={true} xs={2}><Button color="default" variant="outlined" size="small"
+                    <Grid item={true} xs={2}><Button color="primary" variant="outlined" size="small"
                                                      onClick={cancelAddition}><Delete fontSize="small"/></Button></Grid>
                 </Grid>
                 }
@@ -257,7 +256,7 @@ export const RedListEditor = () => {
                   return <Grid item={true} container={true}>
                     <Grid item={true} xs={10}>{nameCode[0]} ({nameCode[1]})</Grid>
                     <Grid item={true} xs={2}>
-                      <Button color="default" variant="outlined" size="small"
+                      <Button color="primary" variant="outlined" size="small"
                               onClick={() => removeAddition(nameCode[0])}>
                         <Delete fontSize="small"/>
                       </Button>
@@ -267,7 +266,7 @@ export const RedListEditor = () => {
               </Grid>
               <DialogContentText>
                   Removals
-                  <Button color="default" variant="outlined" size="small" onClick={addNewRemoval}>
+                  <Button color="primary" variant="outlined" size="small" onClick={addNewRemoval}>
                       <Add fontSize="small"/>
                   </Button>
               </DialogContentText>
@@ -276,9 +275,9 @@ export const RedListEditor = () => {
                 <Grid item={true} container={true}>
                     <Grid item={true} xs={8}><TextField label="Full name" value={state.editing.addingRemoval}
                                                         onChange={e => setState(State_.updatingRemoval(state, e))}/></Grid>
-                    <Grid item={true} xs={2}><Button color="default" variant="outlined" size="small"
+                    <Grid item={true} xs={2}><Button color="primary" variant="outlined" size="small"
                                                      onClick={saveRemoval}><Check fontSize="small"/></Button></Grid>
-                    <Grid item={true} xs={2}><Button color="default" variant="outlined" size="small"
+                    <Grid item={true} xs={2}><Button color="primary" variant="outlined" size="small"
                                                      onClick={cancelRemoval}><Delete fontSize="small"/></Button></Grid>
                 </Grid>
                 }
@@ -286,7 +285,7 @@ export const RedListEditor = () => {
                   return <Grid item={true} container={true}>
                     <Grid item={true} xs={10}>{removalCode}</Grid>
                     <Grid item={true} xs={2}>
-                      <Button color="default" variant="outlined" size="small"
+                      <Button color="primary" variant="outlined" size="small"
                               onClick={() => removeRemoval(removalCode)}>
                         <Delete fontSize="small"/>
                       </Button>
@@ -296,10 +295,10 @@ export const RedListEditor = () => {
               </Grid>
           </DialogContent>
           <DialogActions>
-              <Button color="default" variant="outlined" size="medium" onClick={() => cancelEdit()}>
+              <Button color="primary" variant="outlined" size="medium" onClick={() => cancelEdit()}>
                   <Cancel/> Cancel
               </Button>
-              <Button color="default" variant="outlined" size="medium"
+              <Button color="primary" variant="outlined" size="medium"
                       onClick={() => state.editing && saveEdit(state.editing)}>
                   <Save/> Save
               </Button>
@@ -309,11 +308,11 @@ export const RedListEditor = () => {
       <Dialog open={true} maxWidth="xs">
           <DialogTitle>{confirm.message}</DialogTitle>
           <DialogActions>
-              <Button color="default" variant="outlined" size="medium" onClick={() => setConfirm({kind: 'closed'})}
+              <Button color="primary" variant="outlined" size="medium" onClick={() => setConfirm({kind: 'closed'})}
                       key="no">
                   No
               </Button>
-              <Button color="default" variant="outlined" size="medium" onClick={confirm.onConfirm} key="yes">
+              <Button color="primary" variant="outlined" size="medium" onClick={confirm.onConfirm} key="yes">
                   Yes
               </Button>
           </DialogActions>
@@ -335,9 +334,9 @@ export const RedListEditor = () => {
               <Grid item={true} xs={4} className={classes.title}>{update.additions.length}</Grid>
               <Grid item={true} xs={4} className={classes.title}>{update.removals.length}</Grid>
             </Grid>
-            <Grid item={true} xs={2} className={classes.title}><Button color="default" variant="outlined" size="medium"
+            <Grid item={true} xs={2} className={classes.title}><Button color="primary" variant="outlined" size="medium"
                                                                        onClick={() => editChangeSet(update)}><Edit/></Button></Grid>
-            <Grid item={true} xs={2} className={classes.title}><Button color="default" variant="outlined" size="medium"
+            <Grid item={true} xs={2} className={classes.title}><Button color="primary" variant="outlined" size="medium"
                                                                        onClick={() => setConfirm({
                                                                          kind: 'open',
                                                                          message: 'Are you sure you want to remove this set of changes?',

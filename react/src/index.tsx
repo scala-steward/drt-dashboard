@@ -5,21 +5,28 @@ import App from './App';
 import {BrowserRouter as Router} from "react-router-dom";
 import {rootStore} from "./store/rootReducer";
 import {Provider} from "react-redux";
-import MomentUtils from "@date-io/moment";
-import {MuiPickersUtilsProvider} from "@material-ui/pickers";
+import AdapterDateFns from '@mui/lab/AdapterDateFns';
+import LocalizationProvider from '@mui/lab/LocalizationProvider';
 import * as serviceWorker from './serviceWorker';
+import {createMuiTheme, StyledEngineProvider, ThemeProvider} from '@mui/material/styles';
+
+const theme = createMuiTheme();
 
 ReactDOM.render(
   <React.StrictMode>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
-    <Router>
-      <MuiPickersUtilsProvider utils={MomentUtils}>
-        <Provider store={rootStore}>
-          <App/>
-        </Provider>
-      </MuiPickersUtilsProvider>
-    </Router>
+    <StyledEngineProvider injectFirst>
+      <Router>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <Provider store={rootStore}>
+            <ThemeProvider theme={theme}>
+              <App/>
+            </ThemeProvider>
+          </Provider>
+        </LocalizationProvider>
+      </Router>
+    </StyledEngineProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );
