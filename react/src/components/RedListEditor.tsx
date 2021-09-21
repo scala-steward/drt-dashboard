@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {
+  Autocomplete,
   Button,
   Dialog,
   DialogActions,
@@ -21,9 +22,10 @@ import {
   RequestSetRedListUpdates,
   saveRedListUpdates
 } from "../store/redListSlice";
+import {styled} from "@mui/material/styles";
+import {Countries} from "../services/Countries";
 import Loading from "./Loading";
 import {DatePicker} from "@mui/lab";
-import {styled} from "@mui/material/styles";
 
 const PREFIX = 'RedListEditor';
 
@@ -31,7 +33,8 @@ const classes = {
   root: `${PREFIX}-root`,
   title: `${PREFIX}-title`,
   row: `${PREFIX}-row`,
-  dialogue: `${PREFIX}-dialogue`
+  dialogue: `${PREFIX}-dialogue`,
+  contentText: `${PREFIX}-contentText`
 };
 
 const StyledGrid = styled(Grid)(({theme}) => ({
@@ -52,7 +55,16 @@ const StyledGrid = styled(Grid)(({theme}) => ({
 
   [`& .${classes.dialogue}`]: {
     minWidth: 380,
-  }
+  },
+}));
+
+const StyledContentText = styled(DialogContentText)(() => ({
+  marginBottom: 10,
+  fontSize: 20
+}));
+
+const StyledEditableList = styled('div')(() => ({
+  marginBottom: 15,
 }));
 
 type ConfirmOpen = {
@@ -81,13 +93,11 @@ export const RedListEditor = () => {
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null)
 
   const setUpdatesState = (updates: RedListUpdate[]) => {
-    console.log('received ' + updates.length + ' red list updates. setting state & updatesReceived: true')
     setState({...state, updates: updates})
     setUpdatesReceived(true)
   }
 
   useEffect(() => {
-    console.log('component did mount')
     if (!updatesRequested) {
       console.log('requesting red list updates')
       setUpdatesRequested(true)
@@ -105,7 +115,6 @@ export const RedListEditor = () => {
   const saveEdit = (editing: Editing) => {
     const withoutOriginal = state.editing && state.updates.filter(u => u.effectiveFrom !== state.editing?.update.effectiveFrom && u.effectiveFrom !== state.editing?.originalDate)
     const withNew = withoutOriginal && state.editing && withoutOriginal.concat(state.editing.update)
-    console.log('Updated state with saved edit. TODO: call endpoints to persist to all ports')
     const request: RequestSetRedListUpdates = {
       updates: {
         originalDate: editing.originalDate,
@@ -127,7 +136,6 @@ export const RedListEditor = () => {
   }
 
   function saveAddition() {
-    state.editing && state.editing.addingAddition && console.log('concat result: ' + state.editing.update.additions.concat([[state.editing.addingAddition.name, state.editing.addingAddition.code]]))
     state.editing && state.editing.addingAddition &&
     setState({
       ...state,
@@ -240,75 +248,110 @@ export const RedListEditor = () => {
       <Grid container={true}>
         {state.editing &&
         <Dialog open={true} maxWidth="xs">
-            <DialogTitle>Edit changes
-                for {moment(state.editing.update.effectiveFrom).format("Do MMM YYYY")}</DialogTitle>
+            <DialogTitle>
+                <Grid container={true} alignItems="center">
+                    <Grid item={true} xs={4}>Edit changes</Grid>
+                    <Grid item={true} xs={8}>
+                        <DatePicker renderInput={(params) => <TextField {...params}/>}
+                                    value={new Date(state.editing.update.effectiveFrom)}
+                                    onChange={setDate}/>
+                    </Grid>
+                </Grid>
+            </DialogTitle>
+
             <DialogContent className={classes.dialogue}>
-                <DatePicker renderInput={() => <TextField label="Date" helperText="Something"/>}
-                            value={state.editing.update.effectiveFrom} onChange={setDate}/>
-                <DialogContentText>
-                    Additions
-                    <Button variant="outlined" size="small" onClick={addNewAddition}>
-                        <Add fontSize="small"/>
-                    </Button>
-                </DialogContentText>
-                <Grid direction="row" container={true}>
-                  {state.editing && state.editing.addingAddition &&
-                  <Grid item={true} container={true}>
-                      <Grid item={true} xs={4}><TextField label="Full name" value={state.editing.addingAddition.name}
-                                                          onChange={e => setState(State_.updatingAdditionName(state, e))}/></Grid>
-                      <Grid item={true} xs={4}><TextField label="3 letter code"
-                                                          value={state.editing.addingAddition.code}
-                                                          onChange={e => setState(State_.updatingAdditionCode(state, e))}/></Grid>
-                      <Grid item={true} xs={2}><Button color="primary" variant="outlined" size="small"
-                                                       onClick={saveAddition}><Check fontSize="small"/></Button></Grid>
-                      <Grid item={true} xs={2}><Button color="primary" variant="outlined" size="small"
-                                                       onClick={cancelAddition}><Delete
-                          fontSize="small"/></Button></Grid>
-                  </Grid>
-                  }
-                  {state.editing.update.additions.map(nameCode => {
-                    console.log('nameCode: ' + nameCode)
-                    return <Grid item={true} container={true}>
-                      <Grid item={true} xs={10}>{nameCode[0]} ({nameCode[1]})</Grid>
-                      <Grid item={true} xs={2}>
-                        <Button color="primary" variant="outlined" size="small"
-                                onClick={() => removeAddition(nameCode[0])}>
-                          <Delete fontSize="small"/>
-                        </Button>
+                <StyledEditableList>
+                    <StyledContentText>
+                        <Grid container={true}>
+                            <Grid item={true} xs={10}>Additions</Grid>
+                            <Grid item={true} xs={2}>
+                                <Button variant="outlined" size="small" onClick={addNewAddition}>
+                                    <Add fontSize="small"/>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </StyledContentText>
+                    <Grid direction="row" container={true}>
+                      {state.editing && state.editing.addingAddition &&
+                      <Grid item={true} container={true} alignItems="flex-end">
+                          <Grid item={true} xs={8}><Autocomplete
+                              disablePortal
+                              id="combo-box-demo"
+                              options={Countries}
+                              onChange={(e: React.SyntheticEvent, v: { label: string; code: string } | null) =>
+                                v && setState(State_.updatingAddition(state, v.label, v.code))
+                              }
+                              sx={{width: 225}}
+                              renderInput={(params) => <TextField {...params} label="Country" variant='standard'/>}
+                          /></Grid>
+                          <Grid item={true} xs={2}>
+                              <Button color="primary" variant="outlined" size="small" onClick={saveAddition}><Check
+                                  fontSize="small"/></Button>
+                          </Grid>
+                          <Grid item={true} xs={2}>
+                              <Button color="primary" variant="outlined" size="small" onClick={cancelAddition}><Delete
+                                  fontSize="small"/></Button>
+                          </Grid>
                       </Grid>
+                      }
+                      {state.editing.update.additions.map(nameCode => {
+                        return <Grid item={true} container={true} alignItems="center">
+                          <Grid item={true} xs={10}>{nameCode[0]}</Grid>
+                          <Grid item={true} xs={2}>
+                            <Button color="primary" variant="outlined" size="small"
+                                    onClick={() => removeAddition(nameCode[0])}>
+                              <Delete fontSize="small"/>
+                            </Button>
+                          </Grid>
+                        </Grid>
+                      })}
                     </Grid>
-                  })}
-                </Grid>
-                <DialogContentText>
-                    Removals
-                    <Button color="primary" variant="outlined" size="small" onClick={addNewRemoval}>
-                        <Add fontSize="small"/>
-                    </Button>
-                </DialogContentText>
-                <Grid>
-                  {state.editing && state.editing.addingRemoval !== null &&
-                  <Grid item={true} container={true}>
-                      <Grid item={true} xs={8}><TextField label="Full name" value={state.editing.addingRemoval}
-                                                          onChange={e => setState(State_.updatingRemoval(state, e))}/></Grid>
-                      <Grid item={true} xs={2}><Button color="primary" variant="outlined" size="small"
-                                                       onClick={saveRemoval}><Check fontSize="small"/></Button></Grid>
-                      <Grid item={true} xs={2}><Button color="primary" variant="outlined" size="small"
-                                                       onClick={cancelRemoval}><Delete
-                          fontSize="small"/></Button></Grid>
-                  </Grid>
-                  }
-                  {state.editing.update.removals.map(removalCode => {
-                    return <Grid item={true} container={true}>
-                      <Grid item={true} xs={10}>{removalCode}</Grid>
-                      <Grid item={true} xs={2}>
-                        <Button color="primary" variant="outlined" size="small"
-                                onClick={() => removeRemoval(removalCode)}>
-                          <Delete fontSize="small"/>
-                        </Button>
+                </StyledEditableList>
+                <StyledEditableList>
+                    <StyledContentText>
+                        <Grid direction="row" container={true}>
+                            <Grid item={true} xs={10}>Removals</Grid>
+                            <Grid item={true} xs={2}>
+                                <Button color="primary" variant="outlined" size="small" onClick={addNewRemoval}>
+                                    <Add fontSize="small"/>
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </StyledContentText>
+                    <Grid>
+                      {state.editing && state.editing.addingRemoval !== null &&
+                      <Grid item={true} container={true} alignItems="flex-end">
+                          <Grid item={true} xs={8}><Autocomplete
+                              disablePortal
+                              id="combo-box-demo"
+                              options={Countries}
+                              onChange={(e: React.SyntheticEvent, v: { label: string; code: string } | null) =>
+                                v && setState(State_.updatingRemoval(state, v.label))
+                              }
+                              sx={{width: 225}}
+                              renderInput={(params) => <TextField {...params} label="Country" variant='standard'/>}
+                          /></Grid>
+                          <Grid item={true} xs={2}><Button color="primary" variant="outlined" size="small"
+                                                           onClick={saveRemoval}><Check
+                              fontSize="small"/></Button></Grid>
+                          <Grid item={true} xs={2}><Button color="primary" variant="outlined" size="small"
+                                                           onClick={cancelRemoval}><Delete
+                              fontSize="small"/></Button></Grid>
                       </Grid>
+                      }
+                      {state.editing.update.removals.map(removalCode => {
+                        return <Grid item={true} container={true}>
+                          <Grid item={true} xs={10}>{removalCode}</Grid>
+                          <Grid item={true} xs={2}>
+                            <Button color="primary" variant="outlined" size="small"
+                                    onClick={() => removeRemoval(removalCode)}>
+                              <Delete fontSize="small"/>
+                            </Button>
+                          </Grid>
+                        </Grid>
+                      })}
                     </Grid>
-                  })}
-                </Grid>
+                </StyledEditableList>
             </DialogContent>
             <DialogActions>
                 <Button color="primary" variant="outlined" size="medium" onClick={() => cancelEdit()}>
