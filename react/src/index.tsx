@@ -5,12 +5,11 @@ import App from './App';
 import {BrowserRouter as Router} from "react-router-dom";
 import {rootStore} from "./store/rootReducer";
 import {Provider} from "react-redux";
-import AdapterDateFns from '@mui/lab/AdapterDateFns';
+import DateAdapter from '@mui/lab/AdapterMoment';
 import LocalizationProvider from '@mui/lab/LocalizationProvider';
 import * as serviceWorker from './serviceWorker';
-import {createMuiTheme, StyledEngineProvider, ThemeProvider} from '@mui/material/styles';
+import {StyledEngineProvider} from '@mui/material/styles';
 
-const theme = createMuiTheme();
 
 ReactDOM.render(
   <React.StrictMode>
@@ -18,11 +17,11 @@ ReactDOM.render(
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
     <StyledEngineProvider injectFirst>
       <Router>
-        <LocalizationProvider dateAdapter={AdapterDateFns}>
+        <LocalizationProvider dateAdapter={DateAdapter}>
           <Provider store={rootStore}>
-            <ThemeProvider theme={theme}>
-              <App/>
-            </ThemeProvider>
+            <StyledEngineProvider injectFirst>
+                <App/>
+            </StyledEngineProvider>
           </Provider>
         </LocalizationProvider>
       </Router>

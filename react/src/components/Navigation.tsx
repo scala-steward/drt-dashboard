@@ -1,27 +1,31 @@
 import {Button, Menu, MenuItem} from "@mui/material";
+import { styled } from '@mui/material/styles';
 import React from "react";
 import {Link} from "react-router-dom";
-import {createStyles, makeStyles, Theme} from "@mui/material/styles";
 import {UserProfile} from "../model/User";
+
+const PREFIX = 'Navigation';
+
+const classes = {
+  trigger: `${PREFIX}-trigger`
+};
+
+const Root = styled('div')(({theme}) => ({
+  [`& .${classes.trigger}`]: {
+    marginTop: theme.spacing(-1),
+    padding: theme.spacing(0),
+  }
+}));
 
 interface IProps {
   logoutLink: string,
   user: UserProfile
 }
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    trigger: {
-      marginTop: theme.spacing(-1),
-      padding: theme.spacing(0),
-    }
-  }),
-);
-
 export default function Navigation(props: IProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
-  const classes = useStyles();
+
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -31,7 +35,7 @@ export default function Navigation(props: IProps) {
   };
 
   return (
-    <div>
+    <Root>
       <Button
         className={classes.trigger}
         aria-controls="navigation"
@@ -55,7 +59,7 @@ export default function Navigation(props: IProps) {
           <MenuItem onClick={handleClose}><Link to="/red-list-editor">Edit red list</Link></MenuItem> : ""}
         <MenuItem onClick={handleClose}><a href={props.logoutLink} id="proposition-name">Log out</a></MenuItem>
       </Menu>
-    </div>
+    </Root>
   );
 }
 

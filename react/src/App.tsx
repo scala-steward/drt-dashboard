@@ -6,32 +6,40 @@ import {Route, Switch} from "react-router-dom";
 import Loading from "./components/Loading";
 import Navigation from "./components/Navigation";
 import NeboUpload from "./components/NeboUpload";
-import {createStyles, makeStyles} from "@mui/material/styles";
 import {RootState, rootStore} from "./store/rootReducer";
 import {connect, ConnectedProps} from "react-redux";
 import {fetchUserProfile} from "./store/userSlice";
 import {fetchConfig} from "./store/configSlice";
 import {RedListEditor} from "./components/RedListEditor";
 import {Container} from "@mui/material";
+import {styled} from "@mui/material/styles";
 
+
+const PREFIX = 'App';
+
+const classes = {
+  app: `${PREFIX}-app`,
+  container: `${PREFIX}-container`
+};
+
+const StyledDiv = styled('div')(() => ({
+  [`& .${classes.app}`]: {
+    textAlign: 'center',
+  },
+}));
+
+const StyledContainer = styled(Container)(() => ({
+  [`& .${classes.container}`]: {
+    margin: 30,
+    padding: 15,
+    textAlign: 'left',
+    minHeight: 500,
+    display: 'inline-block',
+  }
+}));
 
 rootStore.dispatch(fetchUserProfile())
 rootStore.dispatch(fetchConfig())
-
-const useStyles = makeStyles(() =>
-  createStyles({
-    app: {
-      textAlign: 'center',
-    },
-    container: {
-      margin: 30,
-      padding: 15,
-      textAlign: 'left',
-      minHeight: 500,
-      display: 'inline-block',
-    }
-  }),
-);
 
 const mapState = (state: RootState) => ({
   user: state.user,
@@ -43,13 +51,11 @@ const connector = connect(mapState)
 type PropsFromReact = ConnectedProps<typeof connector>
 
 const App = (props: PropsFromReact) => {
-  const styles = useStyles()
-
   const currentLocation = window.document.location;
   const logoutLink = "/oauth/logout?redirect=" + currentLocation.toString()
 
   return (props.user.kind === "SignedInUser" && props.config.kind === "LoadedConfig") ?
-    <div className="App">
+    <StyledDiv className={classes.app}>
       <header role="banner" id="global-header" className=" with-proposition">
         <div className="header-wrapper">
           <div className="header-global">
@@ -76,7 +82,7 @@ const App = (props: PropsFromReact) => {
       </header>
 
       <div id="global-header-bar"/>
-      <Container className={styles.container}>
+      <StyledContainer className={classes.container}>
         <Switch>
           <Route exact path="/">
             <Home config={props.config.values} user={props.user.profile}/>
@@ -91,7 +97,7 @@ const App = (props: PropsFromReact) => {
             <RedListEditor/>
           </Route>
         </Switch>
-      </Container>
+      </StyledContainer>
       <footer className="group js-footer" id="footer" role="contentinfo">
         <div className="footer-wrapper">
           <div className="footer-meta">
@@ -100,7 +106,7 @@ const App = (props: PropsFromReact) => {
           </div>
         </div>
       </footer>
-    </div> : <Loading/>
+    </StyledDiv> : <Loading/>
 }
 
 export default connector(App)

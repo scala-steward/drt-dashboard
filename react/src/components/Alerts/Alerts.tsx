@@ -2,7 +2,7 @@ import React from "react";
 import {Tab, Tabs} from "@mui/material";
 import moment from "moment-timezone";
 import {a11yProps, TabPanel} from "../TabPanel";
-import SaveAlert from "./SaveAlert";
+import AlertForm from "./AlertForm";
 import {ListAlerts} from "./ViewAlerts";
 import {UserProfile} from "../../model/User";
 
@@ -24,7 +24,7 @@ export default function Alerts(props: IProps) {
       <Tab label="View Alerts" {...a11yProps(1)} />
     </Tabs>
     <TabPanel value={selectedTab} index={0}>
-      <SaveAlert user={props.user} callback={() => setSelectedTab(1)}/>
+      <AlertForm user={props.user} callback={() => setSelectedTab(1)}/>
     </TabPanel>
     <TabPanel index={1} value={selectedTab}>
       <ListAlerts/>
