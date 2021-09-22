@@ -4,9 +4,9 @@ import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.HttpResponse
 import org.joda.time.{ DateTime, DateTimeZone }
+import org.slf4j.{ Logger, LoggerFactory }
 import spray.json.{ DefaultJsonProtocol, RootJsonFormat, enrichAny }
 import uk.gov.homeoffice.drt.authentication.User
-import uk.gov.homeoffice.drt.routes.ApiRoutes.log
 import uk.gov.homeoffice.drt.routes.PortAlerts
 import uk.gov.homeoffice.drt.{ Dashboard, DashboardClient }
 
@@ -18,13 +18,16 @@ case class MultiPortAlert(
   message: String,
   alertClass: String,
   expires: String,
-  alertPorts: Map[String, Boolean]) {
+  alertPorts: List[String]) {
 
-  def alertForPorts(allPorts: List[String]): Map[String, Alert] = allPorts
-    .collect {
-      case pc if alertPorts.getOrElse(pc.toUpperCase, false) =>
-        pc -> Alert(title, message, alertClass, Dates.localDateStringToMillis(expires))
-    }.toMap
+  def alertForPorts(allPorts: List[String]): Map[String, Alert] = {
+    println(s"allPorts: $allPorts. alertPorts: $alertPorts")
+    allPorts
+      .collect {
+        case pc if alertPorts.map(_.toLowerCase).contains(pc.toLowerCase) =>
+          pc -> Alert(title, message, alertClass, Dates.localDateStringToMillis(expires))
+      }.toMap
+  }
 }
 
 object Dates {
@@ -42,6 +45,7 @@ object MultiPortAlertJsonSupport extends SprayJsonSupport with DefaultJsonProtoc
 }
 
 object MultiPortAlertClient {
+  val log: Logger = LoggerFactory.getLogger(getClass)
 
   def saveAlertsForPorts(portCodes: Array[String], multiPortAlert: MultiPortAlert, user: User)(implicit system: ActorSystem[Nothing]): immutable.Iterable[Future[HttpResponse]] = {
     multiPortAlert.alertForPorts(portCodes.toList).map {
@@ -54,5 +58,4 @@ object MultiPortAlertClient {
           user.roles)
     }
   }
-
 }

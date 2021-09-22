@@ -137,13 +137,10 @@ object ApiRoutes {
             import uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport._
             headerValueByName("X-Auth-Roles") { rolesStr =>
               headerValueByName("X-Auth-Email") { email =>
-                entity(as[MultiPortAlert]) {
-                  multiPortAlert =>
-                    {
-                      val user = User.fromRoles(email, rolesStr)
-                      val futureResponses = MultiPortAlertClient.saveAlertsForPorts(portCodes, multiPortAlert, user)
-                      complete(Future.sequence(futureResponses).map(_ => StatusCodes.Created))
-                    }
+                entity(as[MultiPortAlert]) { multiPortAlert =>
+                  val user = User.fromRoles(email, rolesStr)
+                  val futureResponses = MultiPortAlertClient.saveAlertsForPorts(portCodes, multiPortAlert, user)
+                  complete(Future.sequence(futureResponses).map(_ => StatusCodes.Created))
                 }
               }
             }

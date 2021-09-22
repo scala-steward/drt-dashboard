@@ -1,9 +1,15 @@
 import React from "react";
-import {CircularProgress, Grid} from "@material-ui/core";
-import {makeStyles} from "@material-ui/core/styles";
+import { styled } from '@mui/material/styles';
+import {CircularProgress, Grid} from "@mui/material";
 
-const useStyles = makeStyles({
-  root: {
+const PREFIX = 'Loading';
+
+const classes = {
+  root: `${PREFIX}-root`
+};
+
+const StyledGrid = styled(Grid)({
+  [`&.${classes.root}`]: {
     background: "#fff",
     minWidth: "100%",
     minHeight: "100vh",
@@ -11,20 +17,20 @@ const useStyles = makeStyles({
     flexDirection: "column",
     justifyContent: "center"
   }
-})
+});
 
 export default () => {
-  const classes = useStyles()
-
-  return <Grid
-    container={true}
-    className={classes.root}
-    spacing={0}
-    alignItems="center"
-    justify="center"
-  >
-    <CircularProgress/>
-  </Grid>
+  return (
+    <StyledGrid
+      container={true}
+      className={classes.root}
+      spacing={0}
+      alignItems="center"
+      justifyContent="center"
+    >
+      <CircularProgress/>
+    </StyledGrid>
+  );
 }
 
 

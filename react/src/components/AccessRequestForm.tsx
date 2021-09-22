@@ -1,16 +1,35 @@
 import React from "react";
+import {styled} from '@mui/material/styles';
 import ApiClient from "../services/ApiClient";
 import axios from "axios";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
-import Checkbox from "@material-ui/core/Checkbox";
-import ListItemText from "@material-ui/core/ListItemText";
-import Divider from "@material-ui/core/Divider";
-import {Box, FormControl, Paper, TextField, Typography} from "@material-ui/core";
-import Button from "@material-ui/core/Button";
-import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import Checkbox from "@mui/material/Checkbox";
+import ListItemText from "@mui/material/ListItemText";
+import Divider from "@mui/material/Divider";
+import {Box, FormControl, Paper, TextField, Typography} from "@mui/material";
+import Button from "@mui/material/Button";
 
+
+const StyledPaper = styled(Paper)(({theme}) => ({
+  textAlign: "left",
+  padding: theme.spacing(2),
+  width: '100%',
+}))
+
+const StyledTypography = styled(Typography)(() => ({
+  fontWeight: "bold"
+}))
+
+const DeclarationUl = styled('ul')(({theme}) => ({
+  ...theme.typography.body1,
+  listStyleType: "circle"
+}));
+
+const ThankYouBox = styled(Box)(() => ({
+  width: "75%"
+}));
 
 interface IProps {
   ports: string[];
@@ -26,30 +45,8 @@ interface IState {
   requestSubmitted: boolean;
 }
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    container: {
-      textAlign: "left",
-      marginLeft: theme.spacing(2),
-      marginRight: theme.spacing(2),
-      padding: theme.spacing(2)
-    },
-    subHeading: {
-      fontWeight: "bold"
-    },
-    declaration: {
-      ...theme.typography.body1,
-      listStyleType: "circle"
-    },
-    thanks: {
-      width: "75%"
-    }
-
-  }),
-);
-
 export default function AccessRequestForm(props: IProps) {
-  const classes = useStyles();
+
 
   const [state, setState] = React.useState(
     {
@@ -151,18 +148,20 @@ export default function AccessRequestForm(props: IProps) {
 
       </List>
       <ListItem>
-        <Paper className={classes.container}>
-          <Typography className={classes.subHeading}>Declaration</Typography>
+        <StyledPaper>
+          <StyledTypography>Declaration</StyledTypography>
           <Typography>I understand that:</Typography>
-          <ul className={classes.declaration}>
+          <DeclarationUl>
             <li>data contained in DRT is marked as OFFICIAL-SENSITIVE</li>
-          </ul>
+          </DeclarationUl>
           <Typography>I confirm that:</Typography>
-          <ul className={classes.declaration}>
+          <DeclarationUl>
             <li>I will not share any DRT data with any third party</li>
-            <li>I will contact the DRT team at <a href="mailto:props.teamEmail">{props.teamEmail}</a> if I'm asked to share any data</li>
-          </ul>
-        </Paper>
+            <li>I will contact the DRT team at <a href="mailto:props.teamEmail">{props.teamEmail}</a> if I'm asked to
+              share any data
+            </li>
+          </DeclarationUl>
+        </StyledPaper>
       </ListItem>
       <ListItem
         button
@@ -188,15 +187,12 @@ export default function AccessRequestForm(props: IProps) {
   }
 
   return state.requestSubmitted ?
-    <Box className={classes.thanks}>
-      <Paper className={classes.container}>
+    <ThankYouBox>
+      <StyledPaper>
         <h1>Thank you</h1>
         <p>You'll be notified by email when your request has been processed. This usually happens within a couple of
           hours, but may take longer outside core working hours (Monday to Friday, 9am to 5pm).</p>
-      </Paper>
-    </Box>
-    :
+      </StyledPaper>
+    </ThankYouBox> :
     form(props.ports);
-
-
 }

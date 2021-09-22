@@ -2,7 +2,7 @@ import React from 'react';
 import axios, {AxiosRequestConfig, AxiosResponse} from "axios";
 import {UserProfile} from "../model/User";
 import {ConfigValues} from "../model/Config";
-import {Button} from "@material-ui/core";
+import {Button} from "@mui/material";
 import ApiClient from "../services/ApiClient";
 
 interface IProps {

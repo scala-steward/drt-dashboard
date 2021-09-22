@@ -1,27 +1,22 @@
-import {Button, Menu, MenuItem} from "@material-ui/core";
+import {Box, Button, Menu, MenuItem} from "@mui/material";
+import {styled} from '@mui/material/styles';
 import React from "react";
 import {Link} from "react-router-dom";
-import {createStyles, makeStyles, Theme} from "@material-ui/core/styles";
 import {UserProfile} from "../model/User";
+
+const TriggerButton = styled(Button)(({theme}) => ({
+  marginTop: theme.spacing(-1),
+  padding: theme.spacing(0),
+}));
 
 interface IProps {
   logoutLink: string,
   user: UserProfile
 }
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    trigger: {
-      marginTop: theme.spacing(-1),
-      padding: theme.spacing(0),
-    }
-  }),
-);
-
 export default function Navigation(props: IProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
-  const classes = useStyles();
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -31,14 +26,15 @@ export default function Navigation(props: IProps) {
   };
 
   return (
-    <div>
-      <Button
-        className={classes.trigger}
+    <Box>
+      <TriggerButton
         aria-controls="navigation"
         aria-haspopup="true"
         variant={"contained"}
         onClick={handleClick}
-      >Menu</Button>
+      >
+        Menu
+      </TriggerButton>
       <Menu
         id="navigation"
         anchorEl={anchorEl}
@@ -55,7 +51,7 @@ export default function Navigation(props: IProps) {
           <MenuItem onClick={handleClose}><Link to="/red-list-editor">Edit red list</Link></MenuItem> : ""}
         <MenuItem onClick={handleClose}><a href={props.logoutLink} id="proposition-name">Log out</a></MenuItem>
       </Menu>
-    </div>
+    </Box>
   );
 }
 

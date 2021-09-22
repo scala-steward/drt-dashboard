@@ -1,6 +1,3 @@
-import React from "react";
-
-
 export type RedListUpdate = {
   effectiveFrom: number
   additions: [string, string][]
@@ -35,13 +32,9 @@ export type Editing = {
 }
 
 export class Editing_ {
-  public static setAdditionName(editing: Editing, name: string): Editing {
-    const updatedAddition = editing.addingAddition && {...editing.addingAddition, name: name}
-    return {...editing, addingAddition: updatedAddition}
-  }
 
-  public static setAdditionCode(editing: Editing, code: string): Editing {
-    const updatedAddition = editing.addingAddition && {...editing.addingAddition, code: code}
+  public static setAddition(editing: Editing, country: string, code: string): Editing {
+    const updatedAddition = editing.addingAddition && {...editing.addingAddition, name: country, code: code}
     return {...editing, addingAddition: updatedAddition}
   }
 
@@ -74,19 +67,15 @@ export class State_ {
     return state.editing ? {...state, editing: {...state.editing, addingAddition: {name: "", code: ""}}} : state
   }
 
-  public static updatingAdditionName(state: State, event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): State {
-    return state.editing ? {...state, editing: Editing_.setAdditionName(state.editing, event.target.value)} : state
-  }
-
-  public static updatingAdditionCode(state: State, event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): State {
-    return state.editing ? {...state, editing: Editing_.setAdditionCode(state.editing, event.target.value)} : state
+  public static updatingAddition(state: State, country: string, code: string): State {
+    return state.editing ? {...state, editing: Editing_.setAddition(state.editing, country, code)} : state
   }
 
   public static addingRemoval(state: State): State {
     return state.editing ? {...state, editing: {...state.editing, addingRemoval: ""}} : state
   }
 
-  public static updatingRemoval(state: State, event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): State {
-    return state.editing ? {...state, editing: Editing_.setRemovalCode(state.editing, event.target.value)} : state
+  public static updatingRemoval(state: State, country: string): State {
+    return state.editing ? {...state, editing: Editing_.setRemovalCode(state.editing, country)} : state
   }
 }
