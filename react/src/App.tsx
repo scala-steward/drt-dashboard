@@ -15,13 +15,6 @@ import {Container} from "@mui/material";
 import {styled} from "@mui/material/styles";
 
 
-const PREFIX = 'App';
-
-const classes = {
-  app: `${PREFIX}-app`,
-  container: `${PREFIX}-container`
-};
-
 const StyledDiv = styled('div')(() => ({
   textAlign: 'center',
 }));
@@ -51,7 +44,7 @@ const App = (props: PropsFromReact) => {
   const logoutLink = "/oauth/logout?redirect=" + currentLocation.toString()
 
   return (props.user.kind === "SignedInUser" && props.config.kind === "LoadedConfig") ?
-    <StyledDiv className={classes.app}>
+    <StyledDiv>
       <header role="banner" id="global-header" className=" with-proposition">
         <div className="header-wrapper">
           <div className="header-global">
@@ -78,7 +71,7 @@ const App = (props: PropsFromReact) => {
       </header>
 
       <div id="global-header-bar"/>
-      <StyledContainer className={classes.container}>
+      <StyledContainer>
         <Switch>
           <Route exact path="/">
             <Home config={props.config.values} user={props.user.profile}/>
