@@ -19,27 +19,14 @@ import {UserProfile} from "../../model/User";
 import ApiClient from "../../services/ApiClient";
 import {Moment} from "moment/moment";
 
-const PREFIX = 'SaveAlert';
 
-const classes = {
-  form: `${PREFIX}-form`,
-  select: `${PREFIX}-select`
-};
+const StyledFormControl = styled(FormControl)(({theme}) => ({
+  margin: theme.spacing(1),
+  width: '60ch',
+}));
 
-const StyledFormControl = styled(FormControl)(({theme}
-) => ({
-  [`&.${classes.form}`]: {
-    '& .MuiFormControl-root': {
-      margin: theme.spacing(1),
-      width: '60ch',
-    },
-  },
-
-  [`& .${classes.select}`]: {
-    '& .MuiInputBase-input': {
-      textAlign: "left"
-    },
-  }
+const SaveButton = styled(Button)(() => ({
+  marginTop: 10
 }));
 
 interface IProps {
@@ -68,7 +55,7 @@ export default function AlertForm(props: IProps) {
   }).then(props.callback)
 
   return (
-    <StyledFormControl className={classes.form}>
+    <StyledFormControl>
       <FormControl variant="standard">
         {
           props.user.ports.map((portCode) => {
@@ -88,7 +75,6 @@ export default function AlertForm(props: IProps) {
       <FormControl variant="standard">
         <InputLabel id="demo-simple-select-label">Alert type</InputLabel>
         <Select
-          className={classes.select}
           labelId="demo-simple-select-label"
           id="demo-simple-select"
           value={alertClass}
@@ -142,9 +128,7 @@ export default function AlertForm(props: IProps) {
         />
       </FormGroup>
       <FormGroup>
-        <Button variant="contained" color="primary" onClick={save}>
-          Save
-        </Button>
+        <SaveButton variant="contained" color="primary" onClick={save}>Save</SaveButton>
       </FormGroup>
 
       <Box m={2}><Alert alertClass={alertClass} title={title} message={message} expires={expires.valueOf()}/></Box>

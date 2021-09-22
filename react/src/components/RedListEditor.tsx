@@ -27,35 +27,29 @@ import {Countries} from "../services/Countries";
 import Loading from "./Loading";
 import {DatePicker} from "@mui/lab";
 
-const PREFIX = 'RedListEditor';
 
-const classes = {
-  root: `${PREFIX}-root`,
-  title: `${PREFIX}-title`,
-  row: `${PREFIX}-row`,
-  dialogue: `${PREFIX}-dialogue`,
-  contentText: `${PREFIX}-contentText`
-};
+const RootGrid = styled(Grid)(() => ({
+  flexGrow: 1,
+  maxWidth: 800,
+}));
 
-const StyledGrid = styled(Grid)(({theme}) => ({
-  [`&.${classes.root}`]: {
-    flexGrow: 1,
-    maxWidth: 800,
-  },
+const TableGrid = styled(Grid)(() => ({
+  marginTop: 25
+}));
 
-  [`& .${classes.title}`]: {
-    padding: theme.spacing(2),
-    color: theme.palette.text.secondary,
-  },
+const TitleGridItem = styled(Grid)(({theme}) => ({
+  padding: theme.spacing(1),
+  color: theme.palette.text.secondary,
+  fontSize: 20,
+}));
 
-  [`& .${classes.row}`]: {
-    padding: theme.spacing(2),
-    color: theme.palette.text.secondary,
-  },
+const RowGridItem = styled(Grid)(({theme}) => ({
+  padding: theme.spacing(1),
+  color: theme.palette.text.primary,
+}));
 
-  [`& .${classes.dialogue}`]: {
-    minWidth: 380,
-  },
+const StyledDialogContent = styled(DialogContent)(() => ({
+  minWidth: 380,
 }));
 
 const StyledContentText = styled(DialogContentText)(() => ({
@@ -231,7 +225,7 @@ export const RedListEditor = () => {
   }
 
   return (
-    <StyledGrid container={true} className={classes.root}>
+    <RootGrid container={true}>
       <Snackbar
         anchorOrigin={{vertical: 'top', horizontal: 'center'}}
         open={!!snackbarMessage}
@@ -239,13 +233,13 @@ export const RedListEditor = () => {
         onClose={() => setSnackbarMessage('')}
         message={snackbarMessage}
       />
-      <Grid container={true}>
+      <Grid container={true} item={true}>
         <h1>Red List Changes</h1>
       </Grid>
-      <Grid container={true}>
+      <Grid container={true} item={true}>
         <Button color="primary" variant="outlined" size="medium" onClick={addNewChangeSet}>Add a new change set</Button>
       </Grid>
-      <Grid container={true}>
+      <TableGrid container={true} item={true}>
         {state.editing &&
         <Dialog open={true} maxWidth="xs">
             <DialogTitle>
@@ -259,7 +253,7 @@ export const RedListEditor = () => {
                 </Grid>
             </DialogTitle>
 
-            <DialogContent className={classes.dialogue}>
+            <StyledDialogContent>
                 <StyledEditableList>
                     <StyledContentText>
                         <Grid container={true}>
@@ -352,7 +346,7 @@ export const RedListEditor = () => {
                       })}
                     </Grid>
                 </StyledEditableList>
-            </DialogContent>
+            </StyledDialogContent>
             <DialogActions>
                 <Button color="primary" variant="outlined" size="medium" onClick={() => cancelEdit()}>
                     <Cancel/> Cancel
@@ -379,35 +373,34 @@ export const RedListEditor = () => {
         {updatesReceived ? <Grid container={true}>
           <React.Fragment>
             <Grid container={true} item={true} xs={8}>
-              <Grid item={true} xs={4} className={classes.title}>Effective from</Grid>
-              <Grid item={true} xs={4} className={classes.title}>Additions</Grid>
-              <Grid item={true} xs={4} className={classes.title}>Removals</Grid>
+              <TitleGridItem item={true} xs={4}>Effective from</TitleGridItem>
+              <TitleGridItem item={true} xs={4}>Additions</TitleGridItem>
+              <TitleGridItem item={true} xs={4}>Removals</TitleGridItem>
             </Grid>
-            <Grid item={true} xs={4} className={classes.title}/>
+            <TitleGridItem item={true} xs={4}/>
           </React.Fragment>
           {state.updates.sort((a, b) => -1 * (a.effectiveFrom - b.effectiveFrom)).map(update => {
             return <React.Fragment key={update.effectiveFrom}>
               <Grid container={true} item={true} xs={8}>
-                <Grid item={true} xs={4}
-                      className={classes.title}>{moment(update.effectiveFrom).format("Do MMM YYYY")}</Grid>
-                <Grid item={true} xs={4} className={classes.title}>{update.additions.length}</Grid>
-                <Grid item={true} xs={4} className={classes.title}>{update.removals.length}</Grid>
+                <RowGridItem item={true} xs={4}>{moment(update.effectiveFrom).format("Do MMM YYYY")}</RowGridItem>
+                <RowGridItem item={true} xs={4}>{update.additions.length}</RowGridItem>
+                <RowGridItem item={true} xs={4}>{update.removals.length}</RowGridItem>
               </Grid>
-              <Grid item={true} xs={2} className={classes.title}><Button color="primary" variant="outlined"
-                                                                         size="medium"
-                                                                         onClick={() => editChangeSet(update)}><Edit/></Button></Grid>
-              <Grid item={true} xs={2} className={classes.title}><Button color="primary" variant="outlined"
-                                                                         size="medium"
-                                                                         onClick={() => setConfirm({
-                                                                           kind: 'open',
-                                                                           message: 'Are you sure you want to remove this set of changes?',
-                                                                           onConfirm: confirmDeleteChangeSet(update.effectiveFrom)
-                                                                         })}><Delete/></Button></Grid>
+              <RowGridItem item={true} xs={2}><Button color="primary" variant="outlined"
+                                                        size="medium"
+                                                        onClick={() => editChangeSet(update)}><Edit/></Button></RowGridItem>
+              <RowGridItem item={true} xs={2}><Button color="primary" variant="outlined"
+                                                        size="medium"
+                                                        onClick={() => setConfirm({
+                                                          kind: 'open',
+                                                          message: 'Are you sure you want to remove this set of changes?',
+                                                          onConfirm: confirmDeleteChangeSet(update.effectiveFrom)
+                                                        })}><Delete/></Button></RowGridItem>
             </React.Fragment>
           })
           }
         </Grid> : <Loading/>}
-      </Grid>
-    </StyledGrid>
+      </TableGrid>
+    </RootGrid>
   );
 }

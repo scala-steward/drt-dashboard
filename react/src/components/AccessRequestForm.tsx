@@ -1,5 +1,5 @@
 import React from "react";
-import { styled } from '@mui/material/styles';
+import {styled} from '@mui/material/styles';
 import ApiClient from "../services/ApiClient";
 import axios from "axios";
 import List from "@mui/material/List";
@@ -12,37 +12,24 @@ import {Box, FormControl, Paper, TextField, Typography} from "@mui/material";
 import Button from "@mui/material/Button";
 
 
-const PREFIX = 'AccessRequestForm';
+const StyledPaper = styled(Paper)(({theme}) => ({
+  textAlign: "left",
+  padding: theme.spacing(2),
+  width: '100%',
+}))
 
-const classes = {
-  container: `${PREFIX}-container`,
-  subHeading: `${PREFIX}-subHeading`,
-  declaration: `${PREFIX}-declaration`,
-  thanks: `${PREFIX}-thanks`
-};
+const StyledTypography = styled(Typography)(() => ({
+  fontWeight: "bold"
+}))
 
-const StyledBox = styled(Box)(({theme}) => ({
-  [`& .${classes.container}`]: {
-    textAlign: "left",
-    marginLeft: theme.spacing(2),
-    marginRight: theme.spacing(2),
-    padding: theme.spacing(2)
-  },
-
-  [`& .${classes.subHeading}`]: {
-    fontWeight: "bold"
-  },
-
-  [`& .${classes.declaration}`]: {
-    ...theme.typography.body1,
-    listStyleType: "circle"
-  },
-
-  [`&.${classes.thanks}`]: {
-    width: "75%"
-  }
+const DeclarationUl = styled('ul')(({theme}) => ({
+  ...theme.typography.body1,
+  listStyleType: "circle"
 }));
 
+const ThankYouBox = styled(Box)(() => ({
+  width: "75%"
+}));
 
 interface IProps {
   ports: string[];
@@ -161,18 +148,20 @@ export default function AccessRequestForm(props: IProps) {
 
       </List>
       <ListItem>
-        <Paper className={classes.container}>
-          <Typography className={classes.subHeading}>Declaration</Typography>
+        <StyledPaper>
+          <StyledTypography>Declaration</StyledTypography>
           <Typography>I understand that:</Typography>
-          <ul className={classes.declaration}>
+          <DeclarationUl>
             <li>data contained in DRT is marked as OFFICIAL-SENSITIVE</li>
-          </ul>
+          </DeclarationUl>
           <Typography>I confirm that:</Typography>
-          <ul className={classes.declaration}>
+          <DeclarationUl>
             <li>I will not share any DRT data with any third party</li>
-            <li>I will contact the DRT team at <a href="mailto:props.teamEmail">{props.teamEmail}</a> if I'm asked to share any data</li>
-          </ul>
-        </Paper>
+            <li>I will contact the DRT team at <a href="mailto:props.teamEmail">{props.teamEmail}</a> if I'm asked to
+              share any data
+            </li>
+          </DeclarationUl>
+        </StyledPaper>
       </ListItem>
       <ListItem
         button
@@ -198,15 +187,12 @@ export default function AccessRequestForm(props: IProps) {
   }
 
   return state.requestSubmitted ?
-    <StyledBox className={classes.thanks}>
-      <Paper className={classes.container}>
+    <ThankYouBox>
+      <StyledPaper>
         <h1>Thank you</h1>
         <p>You'll be notified by email when your request has been processed. This usually happens within a couple of
           hours, but may take longer outside core working hours (Monday to Friday, 9am to 5pm).</p>
-      </Paper>
-    </StyledBox>
-    :
+      </StyledPaper>
+    </ThankYouBox> :
     form(props.ports);
-
-
 }

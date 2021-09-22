@@ -1,20 +1,12 @@
-import {Button, Menu, MenuItem} from "@mui/material";
-import { styled } from '@mui/material/styles';
+import {Box, Button, Menu, MenuItem} from "@mui/material";
+import {styled} from '@mui/material/styles';
 import React from "react";
 import {Link} from "react-router-dom";
 import {UserProfile} from "../model/User";
 
-const PREFIX = 'Navigation';
-
-const classes = {
-  trigger: `${PREFIX}-trigger`
-};
-
-const Root = styled('div')(({theme}) => ({
-  [`& .${classes.trigger}`]: {
-    marginTop: theme.spacing(-1),
-    padding: theme.spacing(0),
-  }
+const TriggerButton = styled(Button)(({theme}) => ({
+  marginTop: theme.spacing(-1),
+  padding: theme.spacing(0),
 }));
 
 interface IProps {
@@ -25,7 +17,6 @@ interface IProps {
 export default function Navigation(props: IProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
-
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -35,14 +26,15 @@ export default function Navigation(props: IProps) {
   };
 
   return (
-    <Root>
-      <Button
-        className={classes.trigger}
+    <Box>
+      <TriggerButton
         aria-controls="navigation"
         aria-haspopup="true"
         variant={"contained"}
         onClick={handleClick}
-      >Menu</Button>
+      >
+        Menu
+      </TriggerButton>
       <Menu
         id="navigation"
         anchorEl={anchorEl}
@@ -59,7 +51,7 @@ export default function Navigation(props: IProps) {
           <MenuItem onClick={handleClose}><Link to="/red-list-editor">Edit red list</Link></MenuItem> : ""}
         <MenuItem onClick={handleClose}><a href={props.logoutLink} id="proposition-name">Log out</a></MenuItem>
       </Menu>
-    </Root>
+    </Box>
   );
 }
 

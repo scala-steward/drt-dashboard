@@ -23,19 +23,15 @@ const classes = {
 };
 
 const StyledDiv = styled('div')(() => ({
-  [`& .${classes.app}`]: {
-    textAlign: 'center',
-  },
+  textAlign: 'center',
 }));
 
 const StyledContainer = styled(Container)(() => ({
-  [`& .${classes.container}`]: {
-    margin: 30,
-    padding: 15,
-    textAlign: 'left',
-    minHeight: 500,
-    display: 'inline-block',
-  }
+  margin: 30,
+  padding: 15,
+  textAlign: 'left',
+  minHeight: 500,
+  display: 'inline-block',
 }));
 
 rootStore.dispatch(fetchUserProfile())
