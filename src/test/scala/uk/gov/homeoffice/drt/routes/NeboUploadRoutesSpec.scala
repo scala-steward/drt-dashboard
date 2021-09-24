@@ -72,8 +72,7 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
   val test4FileDataWithNewlineCharInFields: String =
     """Reference (URN),AssociatedText ,"Flight
       |Code ","Arrival
-      |Port ","Arrival
-      |Date","Arrival
+      |Port ","Date","Arrival
       |time",Departure Date,Departure Time,Embark Port,"Departure
       |Port"
       |MDV/IOI/2308L/7,Passenger in transit from testCountry7.,TEST124,LHR,24/08/2021,06:15,24/08/2021,01:00,MLE,BAH
@@ -126,6 +125,39 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
     val flightDataResult: Seq[FlightData] = Await.result(flightDataF, 1.seconds)
 
     flightDataResult must containAllOf(exceptedResult)
+  }
+
+  "convertByteSourceToFlightData should convert file data byteString to FlightData case class with expected conversion without departure details" >> {
+    val metaFile = FileInfo(fieldName = "csv", fileName = "test.csv", contentType = ContentTypes.`text/plain(UTF-8)`)
+    val flightDataF: Future[List[FlightData]] = neboRoutes.convertByteSourceToFlightData(metaFile, Future.successful(test3FileDataWithoutDepartureDetails))
+    val exceptedResult = Seq(
+      FlightData("LHR", "TEST316", neboRoutes.parseDateToMillis("03/07/2021 17:05"), None, None, None, 1),
+      FlightData("LHR", "TEST1681", neboRoutes.parseDateToMillis("03/07/2021 07:55"), None, None, None, 1),
+      FlightData("LHR", "TEST306", neboRoutes.parseDateToMillis("02/07/2021 07:45"), None, None, None, 1),
+      FlightData("LHR", "TEST914", neboRoutes.parseDateToMillis("02/07/2021 16:40"), None, None, None, 1),
+      FlightData("LHR", "TEST922", neboRoutes.parseDateToMillis("02/07/2021 22:10"), None, None, None, 1),
+      FlightData("LHR", "TEST1007", neboRoutes.parseDateToMillis("02/07/2021 09:00"), None, None, None, 2),
+      FlightData("LHR", "TEST1007", neboRoutes.parseDateToMillis("03/07/2021 09:00"), None, None, None, 1))
+    val flightDataResult: Seq[FlightData] = Await.result(flightDataF, 1.seconds)
+
+    flightDataResult must containAllOf(exceptedResult)
+  }
+
+  "convertByteSourceToFlightData should convert file data to FlightData while field data contain newline character" >> {
+    val metaFile = FileInfo(fieldName = "csv", fileName = "test.csv", contentType = ContentTypes.`text/plain(UTF-8)`)
+    val flightDataF: Future[List[FlightData]] = neboRoutes.convertByteSourceToFlightData(metaFile, Future.successful(test4FileDataWithNewlineCharInFields))
+    val exceptedResult = Seq(
+      FlightData("LHR", "TEST124", neboRoutes.parseDateToMillis("24/08/2021 06:15"), Option(neboRoutes.parseDateToMillis("24/08/2021 01:00")), Some("BAH"), Some("MLE"), 1),
+      FlightData("LHR", "TEST007", neboRoutes.parseDateToMillis("24/08/2021 06:55"), Option(neboRoutes.parseDateToMillis("24/08/2021 02:00")), Some("BAH"), Some("SKT"), 4))
+    val flightDataResult: Seq[FlightData] = Await.result(flightDataF, 1 seconds)
+
+    flightDataResult must containAllOf(exceptedResult)
+  }
+
+  "covertDateTime should convert String date format to millis as expected" >> {
+    val date = "03/07/2021 17:05"
+    val millisDate = 1625328300000L
+    millisDate mustEqual neboRoutes.parseDateToMillis(date)
   }
 
   "convertByteSourceToFlightData should convert data containing additional columns" >> {
