@@ -5,7 +5,6 @@ import akka.http.scaladsl.server.Directives.{ complete, fileUpload, onSuccess, p
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.stream.Materializer
-import akka.stream.scaladsl.{ Framing, Source }
 import akka.util.ByteString
 import com.github.tototoshi.csv._
 import org.joda.time.DateTimeZone
@@ -20,7 +19,18 @@ import uk.gov.homeoffice.drt.{ HttpClient, JsonSupport }
 
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 
-case class Row(urnReference: String, associatedText: String, flightCode: String, arrivalPort: String, arrivalDate: String, arrivalTime: String, departureDate: Option[String], departureTime: Option[String], embarkPort: Option[String], departurePort: Option[String])
+case class Row(flightCode: String, arrivalPort: String, arrivalDate: String, arrivalTime: String, departureDate: Option[String], departureTime: Option[String], embarkPort: Option[String], departurePort: Option[String])
+
+object Row {
+  val flightCode = "flight code"
+  val arrivalPort = "arrival port"
+  val arrivalDate = "date"
+  val arrivalTime = "arrival time"
+  val embarkingPort = "embark port"
+  val departurePort = "departure port"
+  val departureDate = "departure date"
+  val departureTime = "departure time"
+}
 
 case class FlightData(portCode: String, flightCode: String, scheduled: Long, scheduledDeparture: Option[Long], departurePort: Option[String], embarkPort: Option[String], paxCount: Int)
 
@@ -61,7 +71,7 @@ case class NeboUploadRoutes(neboPortCodes: List[String], httpClient: HttpClient)
     fileUpload("csv") {
       case (metadata, byteSource) =>
         onSuccess(
-          feedStatusForPortCode(neboPortCodes, convertByteSourceToFlightData(metadata, byteSource), httpClient)) { fsl => complete(fsl.toJson) }
+          feedStatusForPortCode(neboPortCodes, convertByteSourceToFlightData(metadata, byteSource.runFold("")(_ ++ _.utf8String)), httpClient)) { fsl => complete(fsl.toJson) }
     }
   }
 
@@ -83,11 +93,51 @@ case class NeboUploadRoutes(neboPortCodes: List[String], httpClient: HttpClient)
       .map(r => FeedStatus(portCode, flightData.size, r.status.toString()))
   }
 
-  def convertByteSourceToFlightData(metadata: FileInfo, byteSource: Source[ByteString, Any])(implicit ec: ExecutionContextExecutor, mat: Materializer): Future[List[FlightData]] = {
-    byteSource.via(Framing.delimiter(ByteString("\n"), maximumFrameLength = 2048, allowTruncation = true))
-      .map(convertByteStringToRow)
-      .runFold(List.empty[Row]) { (r, n) => r :+ n }
-      .map(rowToJson(_, metadata))
+  object CsvFormat extends CSVFormat {
+    override val delimiter: Char = ','
+    override val quoteChar: Char = '"'
+    override val escapeChar: Char = '\\'
+    override val lineTerminator: String = "\n"
+    override val quoting: Quoting = QUOTE_MINIMAL
+    override val treatEmptyLineAsNil: Boolean = false
+  }
+
+  val tidyHeader: String => String = c => c.trim.replaceAll("[^a-zA-Z0-9 ]+", " ").toLowerCase
+
+  def convertByteSourceToFlightData(metadata: FileInfo, csvContent: Future[String])(implicit ec: ExecutionContextExecutor, mat: Materializer): Future[List[FlightData]] = {
+    csvContent
+      .map { content =>
+        val reader = CSVReader.open(scala.io.Source.fromString(content))(CsvFormat)
+        reader
+          .allWithHeaders()
+          .map(maybeFieldsToRow)
+          .collect { case Some(row) => row }
+      }
+      .map { rows =>
+        log.info(s"Processing ${rows.length} rows from the file name `${metadata.fileName}`")
+        rowsToJson(rows)
+      }
+  }
+
+  def maybeFieldsToRow(row: Map[String, String]): Option[Row] = {
+    val tidied = row.map {
+      case (header, cell) => (tidyHeader(header), cell)
+    }
+    (tidied.get(Row.flightCode), tidied.get(Row.arrivalPort), tidied.get(Row.arrivalDate), tidied.get(Row.arrivalTime)) match {
+      case (Some(flightCode), Some(arrivalPort), Some(arrivalDate), Some(arrivalTime)) =>
+        Option(Row(
+          flightCode = flightCode,
+          arrivalPort = arrivalPort,
+          arrivalDate = arrivalDate,
+          arrivalTime = arrivalTime,
+          departureDate = tidied.get(Row.departureDate),
+          departureTime = tidied.get(Row.departureTime),
+          embarkPort = tidied.get(Row.embarkingPort),
+          departurePort = tidied.get(Row.departurePort)))
+      case (fc, ap, ad, at) =>
+        log.warn(s"Missing some fields: flight code: $fc, arrival port: $ap, arrival date: $ad, arrival time: $at.")
+        None
+    }
   }
 
   private def convertByteStringToRow(content: ByteString) = {
@@ -97,8 +147,6 @@ case class NeboUploadRoutes(neboPortCodes: List[String], httpClient: HttpClient)
       }.toMap)
       .getOrElse(Map.empty[Int, String])
     Row(
-      urnReference = indexMapRow.getOrElse(0, ""),
-      associatedText = indexMapRow.getOrElse(1, ""),
       flightCode = indexMapRow.getOrElse(2, ""),
       arrivalPort = indexMapRow.getOrElse(3, ""),
       arrivalDate = indexMapRow.getOrElse(4, ""),
@@ -111,9 +159,8 @@ case class NeboUploadRoutes(neboPortCodes: List[String], httpClient: HttpClient)
 
   val maybeColumnContent: String => Option[String] = column => if (column.isEmpty) None else Option(column)
 
-  private def rowToJson(rows: List[Row], metadata: FileInfo): List[FlightData] = {
+  private def rowsToJson(rows: List[Row]): List[FlightData] = {
     val dataRows: Seq[Row] = rows.filterNot(_.flightCode.isEmpty).filterNot(_.flightCode.contains("Flight Code"))
-    log.info(s"Processing ${dataRows.size} rows from the file name `${metadata.fileName}`")
     dataRows.groupBy(_.arrivalPort)
       .flatMap {
         case (arrivalPort, portRows) =>

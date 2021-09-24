@@ -9,8 +9,7 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.http.scaladsl.testkit.Specs2RouteTest
 import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
+import com.github.tototoshi.csv.{ CSVFormat, QUOTE_MINIMAL, Quoting }
 import org.specs2.mutable.Specification
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
@@ -34,8 +33,7 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
   private val neboRoutes: NeboUploadRoutes = NeboUploadRoutes(List("lhr"), MockHttpClient)
 
   val test2FileData: String =
-    """
-      |Reference (URN),AssociatedText ,Flight Code ,Arrival Port ,DATE,Arrival Time,Departure Date,Departure Time,Embark Port,"Departure Port"
+    """Reference (URN),AssociatedText ,Flight Code ,Arrival Port ,DATE,Arrival Time,Departure Date,Departure Time,Embark Port,"Departure Port"
       |CRI/IOI/0107E/3,Passenger in transit from testCountry1.,TEST914,LHR,02/07/2021,16:40,02/07/2021,16:00,SJO,FRA
       |PHL/IOI/0107E/4,Passenger in transit from testCountry2.,TEST306,LHR,02/07/2021,07:45,02/07/2021,01:10,CRK,SIN
       |PAN/IOI/0107E/12,Passenger in transit from testCountry3.,TEST316,LHR,03/07/2021,17:05,03/07/2021,15:45,PTY,MAD
@@ -51,14 +49,12 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
       |""".stripMargin
 
   val test1FileData: String =
-    """
-      |
+    """Reference (URN),AssociatedText ,Flight Code ,Arrival Port ,DATE,Arrival Time
       |CRI/IOI/0107E/3,Passenger in transit from testCountry1.,TEST914,LHR,02/07/2021,16:40,02/07/2021,16:00,SJO,FRA
       |""".stripMargin
 
   val test3FileDataWithoutDepartureDetails: String =
-    """
-      |Reference (URN),AssociatedText ,Flight Code ,Arrival Port ,DATE,Arrival Time,Departure Date,Departure Time,Embark Port,"Departure Port"
+    """Reference (URN),AssociatedText ,Flight Code ,Arrival Port ,DATE,Arrival Time,Departure Date,Departure Time,Embark Port,"Departure Port"
       |CRI/IOI/0107E/3,Passenger in transit from testCountry1.,TEST914,LHR,02/07/2021,16:40
       |PHL/IOI/0107E/4,Passenger in transit from testCountry2.,TEST306,LHR,02/07/2021,07:45
       |PAN/IOI/0107E/12,Passenger in transit from testCountry3.,TEST316,LHR,03/07/2021,17:05
@@ -74,11 +70,9 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
       |""".stripMargin
 
   val test4FileDataWithNewlineCharInFields: String =
-    """
-      |Reference (URN),AssociatedText ,"Flight
+    """Reference (URN),AssociatedText ,"Flight
       |Code ","Arrival
-      |Port ","Arrival
-      |Date","Arrival
+      |Port ","Date","Arrival
       |time",Departure Date,Departure Time,Embark Port,"Departure
       |Port"
       |MDV/IOI/2308L/7,Passenger in transit from testCountry7.,TEST124,LHR,24/08/2021,06:15,24/08/2021,01:00,MLE,BAH
@@ -86,6 +80,13 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
       |PAK/IOI/2308L/9,Passenger in transit from testCountry8.,TEST007,LHR,24/08/2021,06:55,24/08/2021,02:00,SKT,BAH
       |PAK/IOI/2308L/10,Passenger in transit from testCountry8.,TEST007,LHR,24/08/2021,06:55,24/08/2021,02:00,SKT,BAH
       |PAK/IOI/2308L/11,Passenger in transit from testCountry8.,TEST007,LHR,24/08/2021,06:55,24/08/2021,02:00,SKT,BAH
+      |""".stripMargin
+
+  val testFile: String =
+    """Reference (URN),AssociatedText ,Flight Code ,Arrival Port ,DATE,Document Number,Arrival Time,Departure Date,Departure Time,Embark Port,"Departure
+      |Port"
+      |PHL/IOI/2309L/125,Passenger in transit from Philippines. Please refer to Operational Instructions (IOI 134-21) for further instructions,AA1234,LHR,01/08/2021,ABCDEF123,16:50,01/08/2021,16:10,AAA,BBB
+      |PHL/IOI/2309L/126,Passenger in transit from Philippines. Please refer to Operational Instructions (IOI 134-21) for further instructions,AA1234,LHR,22/08/2021,ABCDEF123,16:40,22/08/2021,16:10,AAA,BBB
       |""".stripMargin
 
   val multipartForm: FormData.Strict =
@@ -112,7 +113,7 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
 
   "convertByteSourceToFlightData should convert file data byteString to FlightData case class with expected conversion" >> {
     val metaFile = FileInfo(fieldName = "csv", fileName = "test.csv", contentType = ContentTypes.`text/plain(UTF-8)`)
-    val flightDataF: Future[List[FlightData]] = neboRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test2FileData)))
+    val flightDataF: Future[List[FlightData]] = neboRoutes.convertByteSourceToFlightData(metaFile, Future.successful(test2FileData))
     val exceptedResult = Seq(
       FlightData("LHR", "TEST316", neboRoutes.parseDateToMillis("03/07/2021 17:05"), Option(neboRoutes.parseDateToMillis("03/07/2021 15:45")), Option("MAD"), Option("PTY"), 1),
       FlightData("LHR", "TEST1681", neboRoutes.parseDateToMillis("03/07/2021 07:55"), Option(neboRoutes.parseDateToMillis("03/07/2021 07:30")), Option("CDG"), Option("JNB"), 1),
@@ -128,7 +129,7 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
 
   "convertByteSourceToFlightData should convert file data byteString to FlightData case class with expected conversion without departure details" >> {
     val metaFile = FileInfo(fieldName = "csv", fileName = "test.csv", contentType = ContentTypes.`text/plain(UTF-8)`)
-    val flightDataF: Future[List[FlightData]] = neboRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test3FileDataWithoutDepartureDetails)))
+    val flightDataF: Future[List[FlightData]] = neboRoutes.convertByteSourceToFlightData(metaFile, Future.successful(test3FileDataWithoutDepartureDetails))
     val exceptedResult = Seq(
       FlightData("LHR", "TEST316", neboRoutes.parseDateToMillis("03/07/2021 17:05"), None, None, None, 1),
       FlightData("LHR", "TEST1681", neboRoutes.parseDateToMillis("03/07/2021 07:55"), None, None, None, 1),
@@ -144,7 +145,7 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
 
   "convertByteSourceToFlightData should convert file data to FlightData while field data contain newline character" >> {
     val metaFile = FileInfo(fieldName = "csv", fileName = "test.csv", contentType = ContentTypes.`text/plain(UTF-8)`)
-    val flightDataF: Future[List[FlightData]] = neboRoutes.convertByteSourceToFlightData(metaFile, Source.single(ByteString(test4FileDataWithNewlineCharInFields)))
+    val flightDataF: Future[List[FlightData]] = neboRoutes.convertByteSourceToFlightData(metaFile, Future.successful(test4FileDataWithNewlineCharInFields))
     val exceptedResult = Seq(
       FlightData("LHR", "TEST124", neboRoutes.parseDateToMillis("24/08/2021 06:15"), Option(neboRoutes.parseDateToMillis("24/08/2021 01:00")), Some("BAH"), Some("MLE"), 1),
       FlightData("LHR", "TEST007", neboRoutes.parseDateToMillis("24/08/2021 06:55"), Option(neboRoutes.parseDateToMillis("24/08/2021 02:00")), Some("BAH"), Some("SKT"), 4))
@@ -159,5 +160,24 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
     millisDate mustEqual neboRoutes.parseDateToMillis(date)
   }
 
+  "convertByteSourceToFlightData should convert data containing additional columns" >> {
+    val metaFile = FileInfo(fieldName = "csv", fileName = "test.csv", contentType = ContentTypes.`text/plain(UTF-8)`)
+    val flightDataF: Future[List[FlightData]] = neboRoutes.convertByteSourceToFlightData(metaFile, Future.successful(testFile))
+    val exceptedResult = Seq(
+      FlightData("LHR", "AA1234", 1627833000000L, Some(1627830600000L), Some("BBB"), Some("AAA"), 1),
+      FlightData("LHR", "AA1234", 1629646800000L, Some(1629645000000L), Some("BBB"), Some("AAA"), 1))
+    val flightDataResult: Seq[FlightData] = Await.result(flightDataF, 1.seconds)
+
+    flightDataResult === exceptedResult
+  }
+
+  object CsvFormat extends CSVFormat {
+    override val delimiter: Char = ','
+    override val quoteChar: Char = '"'
+    override val escapeChar: Char = '\\'
+    override val lineTerminator: String = "\n"
+    override val quoting: Quoting = QUOTE_MINIMAL
+    override val treatEmptyLineAsNil: Boolean = true
+  }
 }
 
