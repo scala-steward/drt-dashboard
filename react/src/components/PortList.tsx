@@ -18,7 +18,7 @@ export default class PortList extends React.Component<IProps> {
       <h1>Welcome to DRT</h1>
       <p>Select your destination</p>
       <List>
-        {this.props.ports.map((portCode) => {
+        {this.props.ports.sort().map((portCode) => {
           let portCodeLC = portCode.toLowerCase();
           const url = 'https://' + portCodeLC + '.' + this.props.drtDomain;
           return <div key={portCode}>

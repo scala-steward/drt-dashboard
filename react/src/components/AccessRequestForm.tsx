@@ -46,8 +46,6 @@ interface IState {
 }
 
 export default function AccessRequestForm(props: IProps) {
-
-
   const [state, setState] = React.useState(
     {
       allPorts: false,
@@ -104,7 +102,7 @@ export default function AccessRequestForm(props: IProps) {
           </ListItemIcon>
           <ListItemText id="allPorts" primary="All ports"/>
         </ListItem>
-        {state.allPorts ? null : portsAvailable.map((portCode) => {
+        {state.allPorts ? null : portsAvailable.sort().map((portCode) => {
           return <ListItem
             button
             key={portCode}
