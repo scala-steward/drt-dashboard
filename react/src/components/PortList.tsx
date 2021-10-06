@@ -14,11 +14,12 @@ interface IProps {
 
 export default class PortList extends React.Component<IProps> {
   render() {
+    const sortedPorts = [...this.props.ports].sort()
     return <div>
       <h1>Welcome to DRT</h1>
       <p>Select your destination</p>
       <List>
-        {this.props.ports.sort().map((portCode) => {
+        {sortedPorts.map((portCode) => {
           let portCodeLC = portCode.toLowerCase();
           const url = 'https://' + portCodeLC + '.' + this.props.drtDomain;
           return <div key={portCode}>
