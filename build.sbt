@@ -10,9 +10,12 @@ lazy val specs2Version = "4.6.0"
 lazy val logBackJsonVersion = "0.1.5"
 
 lazy val drtCiriumVersion = "56"
-lazy val drtLibVersion = "v47"
+lazy val drtLibVersion = "v51"
 lazy val janinoVersion = "3.1.6"
 lazy val scalaTestVersion = "3.2.9"
+lazy val jacksonDatabindVersion = "2.11.2"
+lazy val notificationsJavaClientVersion = "3.17.0-RELEASE"
+lazy val scalaCsv = "1.3.8"
 
 lazy val root = (project in file(".")).
   settings(
@@ -38,9 +41,9 @@ lazy val root = (project in file(".")).
       "ch.qos.logback.contrib" % "logback-json-classic" % logBackJsonVersion,
       "ch.qos.logback.contrib" % "logback-jackson" % logBackJsonVersion,
       "org.codehaus.janino" % "janino" % janinoVersion,
-      "com.fasterxml.jackson.core" % "jackson-databind" % "2.11.2",
-      "uk.gov.service.notify" % "notifications-java-client" % "3.17.0-RELEASE",
-      "com.github.tototoshi" %% "scala-csv" % "1.3.8",
+      "com.fasterxml.jackson.core" % "jackson-databind" % jacksonDatabindVersion,
+      "uk.gov.service.notify" % "notifications-java-client" % notificationsJavaClientVersion,
+      "com.github.tototoshi" %% "scala-csv" % scalaCsv,
       "org.scalactic" %% "scalactic" % scalaTestVersion,
 
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,

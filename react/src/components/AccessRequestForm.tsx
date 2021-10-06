@@ -46,8 +46,6 @@ interface IState {
 }
 
 export default function AccessRequestForm(props: IProps) {
-
-
   const [state, setState] = React.useState(
     {
       allPorts: false,
@@ -87,6 +85,7 @@ export default function AccessRequestForm(props: IProps) {
 
 
   function form(portsAvailable: string[]) {
+    const sortedPorts = [...portsAvailable].sort()
     return <div>
       <h1>Welcome to DRT</h1>
       <p>Please select the ports you require access to</p>
@@ -104,7 +103,7 @@ export default function AccessRequestForm(props: IProps) {
           </ListItemIcon>
           <ListItemText id="allPorts" primary="All ports"/>
         </ListItem>
-        {state.allPorts ? null : portsAvailable.map((portCode) => {
+        {state.allPorts ? null : sortedPorts.map((portCode) => {
           return <ListItem
             button
             key={portCode}
