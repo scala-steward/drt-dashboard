@@ -66,7 +66,7 @@ class NeboUpload extends React.Component<IProps, IState> {
   };
 
   public reqConfig: AxiosRequestConfig = {
-    headers: {'Access-Control-Allow-Origin': '*'}
+    headers: {'Access-Control-Allow-Origin': '*','Access-Control-Allow-Methods': 'POST, GET, OPTIONS, HEAD'}
   };
 
   public postUploadData(endPoint: string, data: any, handleResponse: (response: AxiosResponse) => void, afterPost: () => void) {

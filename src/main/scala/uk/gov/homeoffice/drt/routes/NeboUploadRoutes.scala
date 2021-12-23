@@ -18,7 +18,7 @@ import uk.gov.homeoffice.drt.{ HttpClient, JsonSupport }
 
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 
-case class Row(flightCode: String, arrivalPort: String, arrivalDate: String, arrivalTime: String, departureDate: Option[String], departureTime: Option[String], embarkPort: Option[String], departurePort: Option[String])
+case class Row(flightCode: String, arrivalPort: String, arrivalDate: String, arrivalTime: String, departureDate: Option[String], departureTime: Option[String], embarkPort: Option[String], departurePort: Option[String], urn: String)
 
 object Row {
   val flightCode = "flight code"
@@ -29,9 +29,10 @@ object Row {
   val departurePort = "departure port"
   val departureDate = "departure date"
   val departureTime = "departure time"
+  val urn = "reference  urn "
 }
 
-case class FlightData(portCode: String, flightCode: String, scheduled: Long, scheduledDeparture: Option[Long], departurePort: Option[String], embarkPort: Option[String], paxCount: Int)
+case class FlightData(portCode: String, flightCode: String, scheduled: Long, scheduledDeparture: Option[Long], departurePort: Option[String], embarkPort: Option[String], urns: Seq[String])
 
 case class FeedStatus(portCode: String, flightCount: Int, statusCode: String)
 
@@ -132,7 +133,9 @@ case class NeboUploadRoutes(neboPortCodes: List[String], httpClient: HttpClient)
           departureDate = tidied.get(Row.departureDate),
           departureTime = tidied.get(Row.departureTime),
           embarkPort = tidied.get(Row.embarkingPort),
-          departurePort = tidied.get(Row.departurePort)))
+          departurePort = tidied.get(Row.departurePort),
+          urn = tidied.getOrElse(Row.urn, "")))
+
       case (fc, ap, ad, at) =>
         log.warn(s"Missing some fields: flight code: $fc, arrival port: $ap, arrival date: $ad, arrival time: $at.")
         None
@@ -157,7 +160,7 @@ case class NeboUploadRoutes(neboPortCodes: List[String], httpClient: HttpClient)
                         scheduledDeparture = flightRowsByArrival.head.departureDate.flatMap(dd => flightRowsByArrival.head.departureTime.map(dt => parseDateToMillis(s"$dd $dt"))),
                         departurePort = flightRowsByArrival.head.departurePort.map(_.trim),
                         embarkPort = flightRowsByArrival.head.embarkPort.map(_.trim),
-                        flightRowsByArrival.size)
+                        urns = flightRowsByArrival.map(_.urn))
                   }
             }
       }.toList
