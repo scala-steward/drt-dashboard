@@ -8,11 +8,11 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import Checkbox from "@mui/material/Checkbox";
 import ListItemText from "@mui/material/ListItemText";
 import Divider from "@mui/material/Divider";
-import {Box, FormControl, Paper, TextField, Typography} from "@mui/material";
+import {Box, FormControl, Grid, TextField, Typography} from "@mui/material";
 import Button from "@mui/material/Button";
 
 
-const StyledPaper = styled(Paper)(({theme}) => ({
+const Declaration = styled('div')(({theme}) => ({
   textAlign: "left",
   padding: theme.spacing(2),
   width: '100%',
@@ -45,6 +45,31 @@ interface IState {
   requestSubmitted: boolean;
 }
 
+const regions =
+  [
+    {
+      name: 'North',
+      ports: ["BFS", "BHD", "DSA", "EDI", "GLA", "HUY", "LBA", "LPL", "MAN", "MME", "NCL", "PIK"]
+    },
+    {
+      name: 'Central',
+      ports: ["BHX", "EMA", "LCY", "LTN", "NYI", "STN"]
+    },
+    {
+      name: 'South',
+      ports: ["BOH", "BRS", "CWL", "EXT", "LGW", "NQY", "SOU"]
+    },
+    {
+      name: 'Heathrow',
+      ports: ["LHR"]
+    }
+  ]
+
+const Region = styled('p')(() => ({
+  fontSize: '21px',
+  fontWeight: 'bold',
+}));
+
 export default function AccessRequestForm(props: IProps) {
   const [state, setState] = React.useState(
     {
@@ -56,9 +81,9 @@ export default function AccessRequestForm(props: IProps) {
       requestSubmitted: false,
     } as IState);
 
+  regions
 
   const updatePortSelection = (port: string) => {
-
     const requested: string[] = state.portsRequested.includes(port) ?
       state.portsRequested.filter(value => value !== port) :
       [
@@ -85,8 +110,9 @@ export default function AccessRequestForm(props: IProps) {
 
 
   function form(portsAvailable: string[]) {
-    const sortedPorts = [...portsAvailable].sort()
-    return <div>
+    portsAvailable
+    // const sortedPorts = [...portsAvailable].sort()
+    return <Box sx={{width: '100%'}}>
       <h1>Welcome to DRT</h1>
       <p>Please select the ports you require access to</p>
       <List>
@@ -103,22 +129,33 @@ export default function AccessRequestForm(props: IProps) {
           </ListItemIcon>
           <ListItemText id="allPorts" primary="All ports"/>
         </ListItem>
-        {state.allPorts ? null : sortedPorts.map((portCode) => {
-          return <ListItem
-            button
-            key={portCode}
-            onClick={() => updatePortSelection(portCode)}
-          >
-            <ListItemIcon>
-              <Checkbox
-                inputProps={{'aria-labelledby': portCode}}
-                name={portCode}
-                checked={state.portsRequested.includes(portCode)}
-              />
-            </ListItemIcon>
-            <ListItemText id={portCode} primary={portCode.toUpperCase()}/>
-          </ListItem>
-        })}
+        <ListItem alignItems='flex-start'>
+          {regions.map((region) => {
+            const sortedPorts = region.ports.sort()
+            return <Grid item xs={3} sx={{verticalAlign: 'top'}}>
+              <Region>{region.name}</Region>
+              <List sx={{verticalAlign: 'top'}}>
+                {sortedPorts.map((portCode) => {
+                  return <ListItem
+                    button
+                    key={portCode}
+                    onClick={() => updatePortSelection(portCode)}
+                    disablePadding={true}
+                  >
+                    <ListItemIcon>
+                      <Checkbox
+                        inputProps={{'aria-labelledby': portCode}}
+                        name={portCode}
+                        checked={state.portsRequested.includes(portCode)}
+                      />
+                    </ListItemIcon>
+                    <ListItemText id={portCode} primary={portCode.toUpperCase()}/>
+                  </ListItem>
+                })}
+              </List>
+            </Grid>
+          })}
+        </ListItem>
         <Divider/>
         <ListItem
           button
@@ -147,7 +184,7 @@ export default function AccessRequestForm(props: IProps) {
 
       </List>
       <ListItem>
-        <StyledPaper>
+        <Declaration>
           <StyledTypography>Declaration</StyledTypography>
           <Typography>I understand that:</Typography>
           <DeclarationUl>
@@ -160,7 +197,7 @@ export default function AccessRequestForm(props: IProps) {
               share any data
             </li>
           </DeclarationUl>
-        </StyledPaper>
+        </Declaration>
       </ListItem>
       <ListItem
         button
@@ -182,16 +219,16 @@ export default function AccessRequestForm(props: IProps) {
               color="primary">
         Request access
       </Button>
-    </div>;
+    </Box>;
   }
 
   return state.requestSubmitted ?
     <ThankYouBox>
-      <StyledPaper>
+      <Declaration>
         <h1>Thank you</h1>
         <p>You'll be notified by email when your request has been processed. This usually happens within a couple of
           hours, but may take longer outside core working hours (Monday to Friday, 9am to 5pm).</p>
-      </StyledPaper>
+      </Declaration>
     </ThankYouBox> :
     form(props.ports);
 }

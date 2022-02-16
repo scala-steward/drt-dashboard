@@ -80,7 +80,7 @@ html {
 }
 
 #global-header .header-proposition {
-    padding-top: 10px;
+    padding: 10px;
 }
 
 #global-header.with-proposition .header-wrapper .header-proposition .content {
@@ -109,7 +109,8 @@ html {
 #global-header-bar {
     height: 10px;
     background-color: #005ea5;
-    margin: 0 30px;
+    margin: auto;
+    max-width: 1300px;
 }
 
 #footer {

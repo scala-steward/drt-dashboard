@@ -32,6 +32,7 @@ export default function Navigation(props: IProps) {
         aria-haspopup="true"
         variant={"contained"}
         onClick={handleClick}
+        sx={{marginTop: '0px'}}
       >
         Menu
       </TriggerButton>

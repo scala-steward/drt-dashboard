@@ -1,7 +1,7 @@
 import React from 'react';
 
 import AccessRequestForm from "./AccessRequestForm";
-import PortList from "./PortList";
+import {PortList} from "./PortList";
 import {Box} from "@mui/material";
 import {UserProfile} from "../model/User";
 import {ConfigValues} from "../model/Config";
