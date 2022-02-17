@@ -103,10 +103,9 @@ export default function AccessRequestForm(props: IProps) {
               indeterminate={state.portsRequested.length > 0 && state.portsRequested.length < allPortsCount}
             />
           </ListItemIcon>
-          <ListItemText id="allPorts" primary="All Regions" sx={{
-            fontSize: '21px',
-            fontWeight: 'bold',
-          }}/>
+          <ListItemText id="allPorts">
+            <Box sx={{fontWeight: 'bold'}}>All regions</Box>
+          </ListItemText>
         </ListItem>
         <ListItem alignItems='flex-start'>
           <Box sx={{
@@ -130,7 +129,9 @@ export default function AccessRequestForm(props: IProps) {
               }}>
                 <List sx={{verticalAlign: 'top'}}>
                   <ListItem
+                    button
                     onClick={() => toggleRegionPorts()}
+                    key={region.name}
                     disablePadding={true}
                   >
                     <ListItemIcon>
@@ -141,7 +142,9 @@ export default function AccessRequestForm(props: IProps) {
                         indeterminate={regionPartiallySelected}
                       />
                     </ListItemIcon>
-                    <ListItemText sx={{fontWeight: 'bold'}} primary={region.name}>{region.name}</ListItemText>
+                    <ListItemText>
+                      <Box sx={{fontWeight: 'bold'}}>{region.name}</Box>
+                    </ListItemText>
                   </ListItem>
                   {sortedPorts.map((portCode) => {
                     return <ListItem
