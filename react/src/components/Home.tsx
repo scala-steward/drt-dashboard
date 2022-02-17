@@ -12,11 +12,11 @@ interface IProps {
   config: ConfigValues;
 }
 
-export default function Home(props: IProps) {
+export const Home = (props: IProps) => {
   return <Box className="App-header">
     {props.user.ports.length === 0 ?
-      <AccessRequestForm ports={props.config.ports} teamEmail={props.config.teamEmail}/> :
-      <PortList ports={props.user.ports} drtDomain={props.config.domain}/>
+      <AccessRequestForm regions={props.config.regions} ports={props.config.ports} teamEmail={props.config.teamEmail}/> :
+      <PortList allRegions={props.config.regions} userPorts={props.user.ports} drtDomain={props.config.domain}/>
     }
   </Box>
 }

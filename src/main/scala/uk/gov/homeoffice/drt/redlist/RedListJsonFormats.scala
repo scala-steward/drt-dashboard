@@ -3,7 +3,6 @@ package uk.gov.homeoffice.drt.redlist
 import spray.json.{ DefaultJsonProtocol, JsArray, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, enrichAny }
 
 object RedListJsonFormats extends DefaultJsonProtocol {
-
   implicit object redListUpdateJsonFormat extends RootJsonFormat[RedListUpdate] {
     override def write(obj: RedListUpdate): JsValue = JsObject(Map(
       "effectiveFrom" -> JsNumber(obj.effectiveFrom),

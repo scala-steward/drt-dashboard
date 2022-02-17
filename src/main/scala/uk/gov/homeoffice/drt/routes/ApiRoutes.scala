@@ -8,12 +8,13 @@ import akka.http.scaladsl.server.directives.MethodDirectives.get
 import akka.http.scaladsl.server.{ Directive0, Route }
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import org.slf4j.{ Logger, LoggerFactory }
-import spray.json.{ JsArray, JsObject, JsString, enrichAny }
+import spray.json._
 import uk.gov.homeoffice.drt.alerts.{ Alert, MultiPortAlert, MultiPortAlertClient }
 import uk.gov.homeoffice.drt.auth.Roles
 import uk.gov.homeoffice.drt.auth.Roles._
 import uk.gov.homeoffice.drt.authentication.{ AccessRequest, User }
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
+import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.redlist.{ RedListJsonFormats, RedListUpdate, RedListUpdates, SetRedListUpdate }
 import uk.gov.homeoffice.drt.{ Dashboard, DashboardClient }
 
@@ -57,7 +58,9 @@ object ApiRoutes {
         (get & path("config")) {
           headerValueByName("X-Auth-Roles") { _ =>
             import uk.gov.homeoffice.drt.authentication.UserJsonSupport._
+            import uk.gov.homeoffice.drt.json.PortRegionJsonFormats._
             val json = JsObject(Map(
+              "regions" -> JsArray(PortRegion.regions.map(_.toJson).toVector),
               "ports" -> JsArray(portCodes.map(JsString(_)).toVector),
               "domain" -> JsString(domain),
               "teamEmail" -> JsString(teamEmail)))

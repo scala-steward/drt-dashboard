@@ -7,7 +7,13 @@ export type LoadedConfig = {
   values: ConfigValues
 }
 
+export type PortRegion = {
+  name: string
+  ports: string[]
+}
+
 export type ConfigValues = {
+  regions: PortRegion[];
   ports: string[];
   domain: string;
   teamEmail: string;
