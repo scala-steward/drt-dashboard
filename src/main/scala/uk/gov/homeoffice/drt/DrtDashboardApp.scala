@@ -3,6 +3,7 @@ package uk.gov.homeoffice.drt
 import akka.actor.typed.ActorSystem
 import com.typesafe.config.ConfigFactory
 import uk.gov.homeoffice.drt.Server.ServerConfig
+import uk.gov.homeoffice.drt.ports.PortRegion
 
 object DrtDashboardApp extends App {
   val config = ConfigFactory.load()
@@ -11,7 +12,7 @@ object DrtDashboardApp extends App {
     host = config.getString("server.host"),
     port = config.getInt("server.port"),
     teamEmail = config.getString("dashboard.team-email"),
-    portCodes = config.getString("dashboard.port-codes").split(","),
+    portRegions = PortRegion.regions,
     ciriumDataUri = config.getString("cirium.data-uri"),
     rootDomain = config.getString("drt.domain"),
     useHttps = config.getBoolean("drt.use-https"),

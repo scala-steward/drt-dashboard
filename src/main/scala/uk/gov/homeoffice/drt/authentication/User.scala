@@ -20,7 +20,7 @@ object User {
     User(email, roles.split(",").flatMap(Roles.parse).toSet)
 }
 
-object UserJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
+trait UserJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit object RoleFormatParser extends RootJsonFormat[Role] {
     override def write(obj: Role): JsValue = JsObject(Map("name" -> JsString(obj.name)))
@@ -49,11 +49,10 @@ object UserJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
         }
     }
   }
-
 }
 
 case class AccessRequest(portsRequested: Set[String], allPorts: Boolean, staffing: Boolean, lineManager: String, agreeDeclaration: Boolean)
 
-object AccessRequestJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
+trait AccessRequestJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val AccessRequestFormatParser: RootJsonFormat[AccessRequest] = jsonFormat5(AccessRequest)
 }

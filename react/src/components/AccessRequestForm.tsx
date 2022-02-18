@@ -32,7 +32,6 @@ const ThankYouBox = styled(Box)(() => ({
 
 interface IProps {
   regions: PortRegion[];
-  ports: string[];
   teamEmail: string;
 }
 

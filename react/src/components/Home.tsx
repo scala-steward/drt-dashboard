@@ -15,7 +15,7 @@ interface IProps {
 export const Home = (props: IProps) => {
   return <Box className="App-header">
     {props.user.ports.length === 0 ?
-      <AccessRequestForm regions={props.config.regions} ports={props.config.ports} teamEmail={props.config.teamEmail}/> :
+      <AccessRequestForm regions={props.config.regions} teamEmail={props.config.teamEmail}/> :
       <PortList allRegions={props.config.regions} userPorts={props.user.ports} drtDomain={props.config.domain}/>
     }
   </Box>

@@ -1,18 +1,14 @@
 package uk.gov.homeoffice.drt.redlist
 
 import org.specs2.mutable.Specification
-import spray.json.DefaultJsonProtocol.{ LongJsonFormat, listFormat, mapFormat, seqFormat }
 
-class RedListUpdatesSpec extends Specification {
+class RedListUpdatesSpec extends Specification with RedListJsonFormats {
 
-  implicit val rdu = RedListJsonFormats.redListUpdateJsonFormat
-  implicit val rdus = RedListJsonFormats.redListUpdatesJsonFormat
-  implicit val srdu = RedListJsonFormats.setRedListUpdatesJsonFormat
   import spray.json._
 
   val dateMillis = 1631228400000L
 
-  val setRedListUpdatesJsonStr =
+  val setRedListUpdatesJsonStr: String =
     s"""{
        |  "originalDate":$dateMillis,
        |  "redListUpdate":{

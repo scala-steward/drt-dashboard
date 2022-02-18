@@ -11,6 +11,7 @@ import akka.stream.Materializer
 import org.slf4j.{ Logger, LoggerFactory }
 import uk.gov.homeoffice.drt.auth.Roles
 import uk.gov.homeoffice.drt.pages.{ Drt, Layout }
+import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.services.drt.FeedJsonSupport._
 import uk.gov.homeoffice.drt.services.drt.{ DashboardPortStatus, FeedSourceStatus }
 import uk.gov.homeoffice.drt.{ Dashboard, DashboardClient }
@@ -20,7 +21,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 object DrtRoutes {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def apply(prefix: String, portCodes: Array[String])(implicit system: ClassicActorSystemProvider, mat: Materializer, ec: ExecutionContext): Route = pathPrefix(prefix) {
+  def apply(prefix: String, portCodes: Iterable[String])(implicit system: ClassicActorSystemProvider, mat: Materializer, ec: ExecutionContext): Route = pathPrefix(prefix) {
     get {
       complete {
         eventualPortsWithStatuses(portCodes)
@@ -29,7 +30,7 @@ object DrtRoutes {
     }
   }
 
-  private def eventualPortsWithStatuses(portCodes: Array[String])(implicit system: ClassicActorSystemProvider, mat: Materializer, ec: ExecutionContext): Future[List[DashboardPortStatus]] =
+  private def eventualPortsWithStatuses(portCodes: Iterable[String])(implicit system: ClassicActorSystemProvider, mat: Materializer, ec: ExecutionContext): Future[List[DashboardPortStatus]] =
     Future
       .sequence(portCodes.map(eventualPortFeedStatuses).toList)
       .recover {
