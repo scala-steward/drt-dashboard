@@ -12,7 +12,6 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
     font-size: calc(10px + 2vmin);
 }
 
@@ -33,7 +32,7 @@
 
 #global-header .header-wrapper {
     background-color: #0b0c0c;
-    max-width: 1280px;
+    max-width: 1180px;
     margin: 0 auto;
     padding-top: 8px;
     padding-bottom: 8px;
@@ -80,7 +79,7 @@ html {
 }
 
 #global-header .header-proposition {
-    padding-top: 10px;
+    padding: 10px;
 }
 
 #global-header.with-proposition .header-wrapper .header-proposition .content {
@@ -109,7 +108,8 @@ html {
 #global-header-bar {
     height: 10px;
     background-color: #005ea5;
-    margin: 0 30px;
+    margin: auto;
+    max-width: 1200px;
 }
 
 #footer {

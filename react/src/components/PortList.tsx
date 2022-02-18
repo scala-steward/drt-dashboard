@@ -1,36 +1,29 @@
 import React from "react";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import Icon from "@mui/icons-material/FlightLand";
-import ListItemText from "@mui/material/ListItemText";
-import Divider from "@mui/material/Divider";
+import {Box} from "@mui/material";
+import {PortRegion} from "../model/Config";
+import {PortListStraight} from "./PortListStraight";
+import {PortListByRegion} from "./PortListByRegion";
 
 
 interface IProps {
-  ports: string[];
+  allRegions: PortRegion[]
+  userPorts: string[];
   drtDomain: string;
 }
 
-export default class PortList extends React.Component<IProps> {
-  render() {
-    const sortedPorts = [...this.props.ports].sort()
-    return <div>
-      <h1>Welcome to DRT</h1>
-      <p>Select your destination</p>
-      <List>
-        {sortedPorts.map((portCode) => {
-          let portCodeLC = portCode.toLowerCase();
-          const url = 'https://' + portCodeLC + '.' + this.props.drtDomain;
-          return <div key={portCode}>
-            <ListItem button component="a" href={url} id={"port-link-" + portCodeLC}>
-              <ListItemIcon><Icon/></ListItemIcon>
-              <ListItemText primary={portCode.toUpperCase()}/>
-            </ListItem>
-            <Divider variant="inset" component="li"/>
-          </div>
-        })}
-      </List>
-    </div>
-  }
+export const PortList = (props: IProps) => {
+  const userRegions: PortRegion[] = props.allRegions.map(region => {
+    const userPorts: string[] = props.userPorts.filter(p => region.ports.includes(p));
+    return {...region, ports: userPorts} as PortRegion
+  }).filter(r => r.ports.length > 0)
+
+  return <Box sx={{width: '100%'}}>
+    <h1>Welcome to DRT</h1>
+    <p>Select your destination</p>
+    {userRegions.length > 1 ?
+      <PortListByRegion regions={userRegions} drtDomain={props.drtDomain}/> :
+      <PortListStraight ports={props.userPorts} drtDomain={props.drtDomain}/>
+    }
+  </Box>
 }
+

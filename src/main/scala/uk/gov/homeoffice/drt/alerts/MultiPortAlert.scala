@@ -20,14 +20,11 @@ case class MultiPortAlert(
   expires: String,
   alertPorts: List[String]) {
 
-  def alertForPorts(allPorts: List[String]): Map[String, Alert] = {
-    println(s"allPorts: $allPorts. alertPorts: $alertPorts")
-    allPorts
-      .collect {
-        case pc if alertPorts.map(_.toLowerCase).contains(pc.toLowerCase) =>
-          pc -> Alert(title, message, alertClass, Dates.localDateStringToMillis(expires))
-      }.toMap
-  }
+  def alertForPorts(allPorts: Iterable[String]): Map[String, Alert] = allPorts
+    .collect {
+      case pc if alertPorts.map(_.toLowerCase).contains(pc.toLowerCase) =>
+        pc -> Alert(title, message, alertClass, Dates.localDateStringToMillis(expires))
+    }.toMap
 }
 
 object Dates {
@@ -38,24 +35,22 @@ object Dates {
 
 case class Alert(title: String, message: String, alertClass: String, expires: Long)
 
-object MultiPortAlertJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
+trait MultiPortAlertJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val MultiPortAlertFormatParser: RootJsonFormat[MultiPortAlert] = jsonFormat5(MultiPortAlert)
   implicit val AlertFormatParser: RootJsonFormat[Alert] = jsonFormat4(Alert)
   implicit val portAlertsJsonFormat: RootJsonFormat[PortAlerts] = jsonFormat2(PortAlerts)
 }
 
-object MultiPortAlertClient {
+object MultiPortAlertClient extends MultiPortAlertJsonSupport {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def saveAlertsForPorts(portCodes: Array[String], multiPortAlert: MultiPortAlert, user: User)(implicit system: ActorSystem[Nothing]): immutable.Iterable[Future[HttpResponse]] = {
-    multiPortAlert.alertForPorts(portCodes.toList).map {
+  def saveAlertsForPorts(portCodes: Iterable[String], multiPortAlert: MultiPortAlert, user: User)(implicit system: ActorSystem[Nothing]): immutable.Iterable[Future[HttpResponse]] =
+    multiPortAlert.alertForPorts(portCodes).map {
       case (portCode, alert) =>
-        import uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport._
         log.info("Sending new alert to ${Dashboard.drtUriForPortCode(portCode)}/alerts")
         DashboardClient.postWithRoles(
           s"${Dashboard.drtUriForPortCode(portCode)}/alerts",
           alert.toJson.toString(),
           user.roles)
     }
-  }
 }

@@ -4,7 +4,7 @@ import akka.http.scaladsl.testkit.Specs2RouteTest
 import org.specs2.mutable.Specification
 import spray.json._
 
-class AccessRequestSpec extends Specification with Specs2RouteTest {
+class AccessRequestSpec extends Specification with Specs2RouteTest with AccessRequestJsonSupport {
   "Given a json object string I should be able to parse it to an AccessRequest" >> {
     val string =
       """
@@ -19,7 +19,7 @@ class AccessRequestSpec extends Specification with Specs2RouteTest {
         |    "agreeDeclaration": true
         |}
         |""".stripMargin
-    import AccessRequestJsonSupport._
+
     val request = string.parseJson.convertTo[AccessRequest]
 
     val expected = AccessRequest(

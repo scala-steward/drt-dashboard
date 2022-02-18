@@ -6,27 +6,27 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.Specs2RouteTest
 import com.typesafe.config.{ Config, ConfigFactory }
-import org.specs2.mutable.{ Specification, SpecificationLike }
+import org.specs2.mutable.Specification
+import spray.json._
+import uk.gov.homeoffice.drt.{ ClientConfig, ClientConfigJsonFormats, JsonSupport }
 import uk.gov.homeoffice.drt.auth.Roles.{ BorderForceStaff, LHR }
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
+import uk.gov.homeoffice.drt.ports.PortRegion
 
-class ApiRoutesSpec extends Specification with Specs2RouteTest {
-
-  val testKit = ActorTestKit()
+class ApiRoutesSpec extends Specification with Specs2RouteTest with JsonSupport with ClientConfigJsonFormats {
+  val testKit: ActorTestKit = ActorTestKit()
 
   implicit val sys: ActorSystem[Nothing] = testKit.system
 
   private val config: Config = ConfigFactory.load()
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
 
-  val neboRoutes = NeboUploadRoutes(List(), MockHttpClient)
-
+  val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), "somedomain.com", "test@test.com")
+  val neboRoutes: NeboUploadRoutes = NeboUploadRoutes(List(), MockHttpClient)
   val routes: Route = ApiRoutes(
     "api",
-    Array("lhr", "stn"),
-    "somedomain.com",
+    clientConfig,
     EmailNotifications(apiKey, List("access-requests@drt")),
-    "test@test.com",
     neboRoutes.route)
 
   "Given a uri accessed by a user with an email but no port access, I should see an empty port list and their email address in JSON" >> {
@@ -49,8 +49,7 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest {
     Get("/api/config") ~>
       RawHeader("X-Auth-Roles", "") ~>
       RawHeader("X-Auth-Email", "my@email.com") ~> routes ~> check {
-        responseAs[String] shouldEqual """{"ports":["lhr","stn"],"domain":"somedomain.com","teamEmail":"test@test.com"}"""
+        responseAs[JsValue] shouldEqual clientConfig.toJson
       }
   }
-
 }

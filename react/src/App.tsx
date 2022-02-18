@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import Home from './components/Home';
+import {Home} from './components/Home';
 import Alerts from './components/Alerts/Alerts';
 import {Route, Switch} from "react-router-dom";
 import Loading from "./components/Loading";
@@ -20,7 +20,7 @@ const StyledDiv = styled('div')(() => ({
 }));
 
 const StyledContainer = styled(Container)(() => ({
-  margin: 30,
+  margin: 5,
   padding: 15,
   textAlign: 'left',
   minHeight: 500,

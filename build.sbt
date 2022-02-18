@@ -10,7 +10,7 @@ lazy val specs2Version = "4.6.0"
 lazy val logBackJsonVersion = "0.1.5"
 
 lazy val drtCiriumVersion = "56"
-lazy val drtLibVersion = "v154"
+lazy val drtLibVersion = "v158"
 lazy val janinoVersion = "3.1.6"
 lazy val scalaTestVersion = "3.2.9"
 lazy val jacksonDatabindVersion = "2.11.2"
