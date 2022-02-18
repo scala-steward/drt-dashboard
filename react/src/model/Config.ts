@@ -13,7 +13,7 @@ export type PortRegion = {
 }
 
 export type ConfigValues = {
-  regions: PortRegion[];
+  portsByRegion: PortRegion[];
   domain: string;
   teamEmail: string;
 }
