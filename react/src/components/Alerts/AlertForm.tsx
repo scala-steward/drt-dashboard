@@ -5,9 +5,7 @@ import axios from "axios";
 import {
   Box,
   Button,
-  Checkbox,
   FormControl,
-  FormControlLabel,
   FormGroup,
   InputLabel,
   MenuItem,
@@ -18,11 +16,12 @@ import {Alert} from "./ViewAlerts"
 import {UserProfile} from "../../model/User";
 import ApiClient from "../../services/ApiClient";
 import {Moment} from "moment/moment";
+import {PortsByRegionCheckboxes} from "../PortsByRegionCheckboxes";
+import {PortRegion} from "../../model/Config";
 
 
 const StyledFormControl = styled(FormControl)(({theme}) => ({
   margin: theme.spacing(1),
-  width: '60ch',
 }));
 
 const SaveButton = styled(Button)(() => ({
@@ -30,6 +29,7 @@ const SaveButton = styled(Button)(() => ({
 }));
 
 interface IProps {
+  regions: PortRegion[]
   user: UserProfile
   callback: () => void
 }
@@ -40,11 +40,6 @@ export default function AlertForm(props: IProps) {
   const [title, setTitle] = React.useState<string>('')
   const [message, setMessage] = React.useState<string>('')
   const [expires, setExpires] = React.useState<Moment>(moment().add(3, "hours"))
-
-  const updatePortSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.checked) setAlertPorts([...alertPorts, event.target.name])
-    else setAlertPorts(alertPorts.filter(p => p !== event.target.name))
-  }
 
   const save = () => axios.post(ApiClient.alertsEndPoint, {
     alertPorts: alertPorts,
@@ -57,20 +52,7 @@ export default function AlertForm(props: IProps) {
   return (
     <StyledFormControl>
       <FormControl variant="standard">
-        {
-          props.user.ports.map((portCode) => {
-            return <FormControlLabel
-              key={portCode}
-              control={
-                <Checkbox
-                  defaultChecked={alertPorts.includes(portCode)}
-                  onChange={updatePortSelection} name={portCode}
-                />
-              }
-              label={portCode}
-            />
-          })
-        }
+        <PortsByRegionCheckboxes setPorts={setAlertPorts} regions={props.regions} selectedPorts={alertPorts} />
       </FormControl>
       <FormControl variant="standard">
         <InputLabel id="demo-simple-select-label">Alert type</InputLabel>

@@ -9,6 +9,7 @@ import Checkbox from "@mui/material/Checkbox";
 import ListItemText from "@mui/material/ListItemText";
 import {Box, Button, Divider, FormControl, TextField, Typography} from "@mui/material";
 import {PortRegion} from "../model/Config";
+import {PortsByRegionCheckboxes} from "./PortsByRegionCheckboxes";
 
 
 const Declaration = styled('div')(({theme}) => ({
@@ -44,7 +45,9 @@ interface IState {
 }
 
 export default function AccessRequestForm(props: IProps) {
-  const [state, setState] = React.useState(
+  const [selectedPorts, setSelectedPorts]: [string[], ((value: (((prevState: string[]) => string[]) | string[])) => void)] = React.useState<string[]>([])
+
+  const [state, setState]: [IState, ((value: (((prevState: IState) => IState) | IState)) => void)] = React.useState(
     {
       portsRequested: [],
       staffing: false,
@@ -53,119 +56,24 @@ export default function AccessRequestForm(props: IProps) {
       requestSubmitted: false,
     } as IState);
 
-  const updatePortSelection = (port: string) => {
-    const requested: string[] = state.portsRequested.includes(port) ?
-      state.portsRequested.filter(value => value !== port) :
-      [
-        ...state.portsRequested,
-        port
-      ]
-
-    setState({
-      ...state,
-      portsRequested: requested
-    });
-  };
-
   const handleLineManagerChange = (state: IState, newValue: string) => {
     return {...state, lineManager: newValue};
   };
 
   const setRequestFinished = () => setState({...state, requestSubmitted: true});
 
-  const save = () => axios.post(ApiClient.requestAccessEndPoint, state)
+  const save = () => axios.post(ApiClient.requestAccessEndPoint, {...state, portsRequested: selectedPorts})
     .then(setRequestFinished)
     .then(() => axios.get(ApiClient.logoutEndPoint))
     .then(() => console.log("User has been logged out."))
 
-  const allPorts = props.regions.map(r => r.ports).reduce((a, b) => a.concat(b))
-  const allPortsCount = props.regions.reduce((a, b) => a + b.ports.length, 0)
-
   function form() {
-    const allPortsSelected = state.portsRequested.length === allPortsCount
     return <Box sx={{width: '100%'}}>
       <h1>Welcome to DRT</h1>
       <p>Please select the ports you require access to</p>
       <List>
-        <ListItem
-          button
-          key={'allPorts'}
-          onClick={() => {
-            if (!allPortsSelected) setState({...state, portsRequested: allPorts})
-            else setState({...state, portsRequested: []})
-          }}>
-          <ListItemIcon>
-            <Checkbox
-              inputProps={{'aria-labelledby': "allPorts"}}
-              name="allPorts"
-              checked={state.portsRequested.length === allPortsCount}
-              indeterminate={state.portsRequested.length > 0 && state.portsRequested.length < allPortsCount}
-            />
-          </ListItemIcon>
-          <ListItemText id="allPorts">
-            <Box sx={{fontWeight: 'bold'}}>All regions</Box>
-          </ListItemText>
-        </ListItem>
-        <ListItem alignItems='flex-start'>
-          <Box sx={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            justifyContent: 'space-start',
-          }}>
-            {props.regions.map((region) => {
-              const sortedPorts = [...region.ports].sort()
-              const regionSelected = sortedPorts.every(p => state.portsRequested.includes(p))
-              const regionPartiallySelected = sortedPorts.some(p => state.portsRequested.includes(p)) && !regionSelected
-
-              function toggleRegionPorts() {
-                if (!regionSelected) setState({...state, portsRequested: state.portsRequested.concat(sortedPorts)})
-                else setState({...state, portsRequested: state.portsRequested.filter(p => !sortedPorts.includes(p))})
-              }
-
-              return <Box sx={{
-                minWidth: '200px',
-                marginRight: '50px'
-              }}>
-                <List sx={{verticalAlign: 'top'}}>
-                  <ListItem
-                    button
-                    onClick={() => toggleRegionPorts()}
-                    key={region.name}
-                    disablePadding={true}
-                  >
-                    <ListItemIcon>
-                      <Checkbox
-                        inputProps={{'aria-labelledby': region.name}}
-                        name={region.name}
-                        checked={regionSelected}
-                        indeterminate={regionPartiallySelected}
-                      />
-                    </ListItemIcon>
-                    <ListItemText>
-                      <Box sx={{fontWeight: 'bold'}}>{region.name}</Box>
-                    </ListItemText>
-                  </ListItem>
-                  {sortedPorts.map((portCode) => {
-                    return <ListItem
-                      button
-                      key={portCode}
-                      onClick={() => updatePortSelection(portCode)}
-                      disablePadding={true}
-                    >
-                      <ListItemIcon>
-                        <Checkbox
-                          inputProps={{'aria-labelledby': portCode}}
-                          name={portCode}
-                          checked={state.portsRequested.includes(portCode)}
-                        />
-                      </ListItemIcon>
-                      <ListItemText id={portCode} primary={portCode.toUpperCase()}/>
-                    </ListItem>
-                  })}
-                </List>
-              </Box>
-            })}
-          </Box>
+        <ListItem>
+          <PortsByRegionCheckboxes regions={props.regions} setPorts={setSelectedPorts} selectedPorts={selectedPorts}/>
         </ListItem>
         <Divider/>
         <ListItem
@@ -225,7 +133,7 @@ export default function AccessRequestForm(props: IProps) {
       </ListItem>
 
       <Button
-        disabled={(state.portsRequested.length === 0) || !state.agreeDeclaration}
+        disabled={(selectedPorts.length === 0) || !state.agreeDeclaration}
         onClick={save}
         variant="contained"
         color="primary"
