@@ -77,7 +77,7 @@ const App = (props: PropsFromReact) => {
             <Home config={props.config.values} user={props.user.profile}/>
           </Route>
           <Route exact path="/alerts">
-            <Alerts user={props.user.profile}/>
+            <Alerts regions={props.config.values.portsByRegion} user={props.user.profile}/>
           </Route>
           <Route exact path="/upload">
             <NeboUpload user={props.user.profile} config={props.config.values}/>
