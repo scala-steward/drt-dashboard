@@ -8,8 +8,9 @@ import ListItemIcon from "@mui/material/ListItemIcon";
 import Checkbox from "@mui/material/Checkbox";
 import ListItemText from "@mui/material/ListItemText";
 import {Box, Button, Divider, FormControl, TextField, Typography} from "@mui/material";
-import {PortRegion} from "../model/Config";
+import {PortRegion, PortRegionHelper} from "../model/Config";
 import {PortsByRegionCheckboxes} from "./PortsByRegionCheckboxes";
+import _ from "lodash/fp";
 
 
 const Declaration = styled('div')(({theme}) => ({
@@ -62,10 +63,13 @@ export default function AccessRequestForm(props: IProps) {
 
   const setRequestFinished = () => setState({...state, requestSubmitted: true});
 
-  const save = () => axios.post(ApiClient.requestAccessEndPoint, {...state, portsRequested: selectedPorts})
-    .then(setRequestFinished)
-    .then(() => axios.get(ApiClient.logoutEndPoint))
-    .then(() => console.log("User has been logged out."))
+  const save = () => {
+    const allPortsRequested = _.isEmpty(_.xor(selectedPorts, PortRegionHelper.portsInRegions(props.regions)))
+    axios.post(ApiClient.requestAccessEndPoint, {...state, portsRequested: selectedPorts, allPorts: allPortsRequested})
+      .then(setRequestFinished)
+      .then(() => axios.get(ApiClient.logoutEndPoint))
+      .then(() => console.log("User has been logged out."))
+  }
 
   function form() {
     return <Box sx={{width: '100%'}}>
