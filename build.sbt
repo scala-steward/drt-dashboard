@@ -1,7 +1,7 @@
 import sbt.Keys.resolvers
 
 lazy val akkaHttpVersion = "10.2.6"
-lazy val akkaVersion = "2.6.8"
+lazy val akkaVersion = "2.6.19"
 lazy val jodaTimeVersion = "2.9.4"
 lazy val scalaLoggingVersion = "3.9.2"
 lazy val logBackClassicVersion = "1.1.3"
