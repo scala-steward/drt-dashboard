@@ -1,7 +1,7 @@
 import sbt.Keys.resolvers
 
 lazy val akkaHttpVersion = "10.2.6"
-lazy val akkaVersion = "2.6.8"
+lazy val akkaVersion = "2.6.19"
 lazy val jodaTimeVersion = "2.9.4"
 lazy val scalaLoggingVersion = "3.9.2"
 lazy val logBackClassicVersion = "1.1.3"
@@ -10,7 +10,7 @@ lazy val specs2Version = "4.6.0"
 lazy val logBackJsonVersion = "0.1.5"
 
 lazy val drtCiriumVersion = "56"
-lazy val drtLibVersion = "v158"
+lazy val drtLibVersion = "v208"
 lazy val janinoVersion = "3.1.6"
 lazy val scalaTestVersion = "3.2.9"
 lazy val jacksonDatabindVersion = "2.11.2"
