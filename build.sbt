@@ -14,7 +14,7 @@ lazy val drtLibVersion = "v208"
 lazy val janinoVersion = "3.1.6"
 lazy val scalaTestVersion = "3.2.9"
 lazy val jacksonDatabindVersion = "2.11.2"
-lazy val notificationsJavaClientVersion = "3.17.0-RELEASE"
+lazy val notificationsJavaClientVersion = "3.17.3-RELEASE"
 lazy val scalaCsv = "1.3.8"
 
 lazy val root = (project in file(".")).
