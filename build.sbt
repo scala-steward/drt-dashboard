@@ -16,6 +16,7 @@ lazy val scalaTestVersion = "3.2.9"
 lazy val jacksonDatabindVersion = "2.11.2"
 lazy val notificationsJavaClientVersion = "3.17.3-RELEASE"
 lazy val scalaCsv = "1.3.8"
+lazy val akkaStreamAlpakkaCsv = "3.0.4"
 
 lazy val root = (project in file(".")).
   settings(
@@ -45,6 +46,7 @@ lazy val root = (project in file(".")).
       "uk.gov.service.notify" % "notifications-java-client" % notificationsJavaClientVersion,
       "com.github.tototoshi" %% "scala-csv" % scalaCsv,
       "org.scalactic" %% "scalactic" % scalaTestVersion,
+      "com.lightbend.akka" %% "akka-stream-alpakka-csv" % akkaStreamAlpakkaCsv,
 
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,

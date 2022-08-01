@@ -1,22 +1,22 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.http.scaladsl.model.StatusCodes.{ Forbidden, InternalServerError, MethodNotAllowed }
-import akka.http.scaladsl.server.Directives.{ complete, fileUpload, onSuccess, path }
+import akka.http.scaladsl.model.StatusCodes.{Forbidden, InternalServerError, MethodNotAllowed}
+import akka.http.scaladsl.server.Directives.{complete, fileUpload, onSuccess, path}
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.stream.Materializer
 import com.github.tototoshi.csv._
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
-import org.slf4j.{ Logger, LoggerFactory }
+import org.slf4j.{Logger, LoggerFactory}
 import spray.json._
 import uk.gov.homeoffice.drt.Dashboard._
 import uk.gov.homeoffice.drt.auth.Roles
 import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
 import uk.gov.homeoffice.drt.routes.ApiRoutes.authByRole
-import uk.gov.homeoffice.drt.{ HttpClient, JsonSupport }
+import uk.gov.homeoffice.drt.{HttpClient, JsonSupport}
 
-import scala.concurrent.{ ExecutionContextExecutor, Future }
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 case class Row(flightCode: String, arrivalPort: String, arrivalDate: String, arrivalTime: String, departureDate: Option[String], departureTime: Option[String], embarkPort: Option[String], departurePort: Option[String], urn: String)
 

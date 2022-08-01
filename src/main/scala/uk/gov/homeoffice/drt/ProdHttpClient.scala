@@ -17,6 +17,10 @@ trait HttpClient extends JsonSupport {
 
   def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[HttpResponse]
 
+  def createPortArrivalImportRequest(uri: String, portCode: String): HttpRequest = {
+    HttpRequest(method = HttpMethods.GET, uri = uri, headers = rolesToRoleHeader(List(Option(Roles.ArrivalsAndSplitsView), Roles.parse(portCode)).flatten))
+  }
+
   def createDrtNeboRequest(data: List[FlightData], uri: String, portAccessRole: Option[Role]): HttpRequest = {
     log.info(s"Sending json to drt for $uri with ${data.size} flight details")
     HttpRequest(
