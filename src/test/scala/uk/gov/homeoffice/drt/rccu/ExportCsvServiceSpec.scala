@@ -26,7 +26,10 @@ class ExportCsvServiceSpec extends Specification with AfterEach {
 
   val testFolder = "./temp/test/"
 
-  override def after: Unit = { new File(testFolder).listFiles.map(_.delete()) }
+  override def after: Unit = {
+    val file = new File(testFolder)
+    if (file.exists()) file.listFiles.map(_.delete())
+  }
 
   "Give date I get string in expected format" >> {
     val currentDateString = ExportRoutes.stringToDate("2022-07-22")
