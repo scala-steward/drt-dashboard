@@ -74,6 +74,7 @@ class ExportCsvService(httpClient: HttpClient) {
               PortResponse(port, portRegion.name, terminal, Option(r))
             else {
               log.warn(s"Not OK response $r")
+              r.discardEntityBytes()
               PortResponse(port, portRegion.name, terminal, None)
             }).recoverWith {
               case e: Throwable =>
