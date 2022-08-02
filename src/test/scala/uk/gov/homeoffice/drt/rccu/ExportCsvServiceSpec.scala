@@ -6,7 +6,7 @@ import akka.http.scaladsl.model._
 import akka.stream.{ IOResult, Materializer }
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.specs2.mutable.Specification
-import org.specs2.specification.AfterEach
+import org.specs2.specification.{ AfterEach, BeforeEach }
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.ports.PortRegion.Heathrow
@@ -16,7 +16,7 @@ import java.io.File
 import scala.concurrent.duration._
 import scala.concurrent.{ Await, ExecutionContextExecutor, Future }
 
-class ExportCsvServiceSpec extends Specification with AfterEach {
+class ExportCsvServiceSpec extends Specification with AfterEach with BeforeEach {
 
   val testKit: ActorTestKit = ActorTestKit()
 
@@ -24,11 +24,18 @@ class ExportCsvServiceSpec extends Specification with AfterEach {
   implicit val ec: ExecutionContextExecutor = sys.executionContext
   val exportCsvService = new ExportCsvService(MockHttpClient)
 
-  val testFolder = "./temp/test/"
+  val testFolder = "./temp/test"
+
+  override def before: Unit = {
+    val file = new File(testFolder)
+    if (file.exists()) file.listFiles.map(_.delete())
+    else file.mkdirs()
+  }
 
   override def after: Unit = {
     val file = new File(testFolder)
     if (file.exists()) file.listFiles.map(_.delete())
+    file.deleteOnExit()
   }
 
   "Give date I get string in expected format" >> {
@@ -37,12 +44,7 @@ class ExportCsvServiceSpec extends Specification with AfterEach {
     currentDateString mustEqual dateTime
   }
 
-  "Given port code LHR I get uri for csv export for all terminal" >> {
-    val expectedResult = List(
-      "http://lhr:9000/export/arrivals/2022-07-22/2022-07-22/T1",
-      "http://lhr:9000/export/arrivals/2022-07-22/2022-07-22/T2",
-      "http://lhr:9000/export/arrivals/2022-07-22/2022-07-22/T3",
-      "http://lhr:9000/export/arrivals/2022-07-22/2022-07-22/T4")
+  "Given port code LHR I get uri for csv export for the terminal" >> {
     val expectedUri = "http://lhr:9000/export/arrivals/2022-07-22/2022-07-24/T1"
     val uri = exportCsvService.getUri("LHR", "2022-07-22", "2022-07-24", "T1")
     uri mustEqual expectedUri
