@@ -1,6 +1,7 @@
 package uk.gov.homeoffice.drt.rccu
 
 import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.StatusCodes.OK
 import akka.stream.{ IOResult, Materializer }
 import akka.stream.alpakka.csv.scaladsl.CsvParsing
 import akka.stream.scaladsl.FileIO
@@ -38,6 +39,7 @@ class ExportCsvService(httpClient: HttpClient) {
 
   def createFileWithHeader(fileName: String, startDate: String, endDate: String, region: String)(implicit ec: ExecutionContextExecutor, mat: Materializer): Future[Set[IOResult]] = {
     val prF: Future[Set[PortResponse]] = Future.sequence(exportCsvService.getPortResponseForRegionPorts(startDate, endDate, getPortRegion(region)))
+      .map(_.filter(_.httpResponse.isDefined))
     prF.map(_.zipWithIndex.map {
       case (pr: PortResponse, i: Int) =>
         if (i == 0) exportCsvService.getCsvDataRegionPort(pr, fileName, true)
@@ -68,8 +70,12 @@ class ExportCsvService(httpClient: HttpClient) {
           val uri = getUri(port.iata, start, end, terminal)
           val httpRequest = httpClient.createPortArrivalImportRequest(uri, port.iata)
           httpClient.send(httpRequest)
-            .map(r => PortResponse(port, portRegion.name, terminal, Option(r)))
-            .recoverWith {
+            .map(r => if (r.status == OK)
+              PortResponse(port, portRegion.name, terminal, Option(r))
+            else {
+              log.warn(s"Not OK response $r")
+              PortResponse(port, portRegion.name, terminal, None)
+            }).recoverWith {
               case e: Throwable =>
                 log.error(s"Error while requesting drt for $uri", e)
                 Future.successful(PortResponse(port, portRegion.name, terminal, None))
