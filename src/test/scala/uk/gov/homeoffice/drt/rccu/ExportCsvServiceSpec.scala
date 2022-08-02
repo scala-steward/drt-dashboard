@@ -4,6 +4,7 @@ import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model._
 import akka.stream.{ IOResult, Materializer }
+import com.typesafe.config.{ Config, ConfigFactory }
 import org.joda.time.{ DateTime, DateTimeZone }
 import org.specs2.mutable.Specification
 import org.specs2.specification.{ AfterEach, BeforeEach }
@@ -17,6 +18,7 @@ import scala.concurrent.duration._
 import scala.concurrent.{ Await, ExecutionContextExecutor, Future }
 
 class ExportCsvServiceSpec extends Specification with AfterEach with BeforeEach {
+  private val config: Config = ConfigFactory.load()
 
   val testKit: ActorTestKit = ActorTestKit()
 
@@ -24,7 +26,7 @@ class ExportCsvServiceSpec extends Specification with AfterEach with BeforeEach 
   implicit val ec: ExecutionContextExecutor = sys.executionContext
   val exportCsvService = new ExportCsvService(MockHttpClient)
 
-  val testFolder = "./temp/test"
+  val testFolder = config.getString("dashboard.file-store")
 
   override def before: Unit = {
     val file = new File(testFolder)

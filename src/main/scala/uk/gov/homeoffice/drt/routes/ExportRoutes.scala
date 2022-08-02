@@ -19,12 +19,12 @@ object ExportRoutes {
 
   lazy val exportCsvService = new ExportCsvService(new ProdHttpClient())
 
-  val folder = "./temp/"
-  def route(implicit ec: ExecutionContextExecutor, mat: Materializer): Route =
+  def apply(fileStorePath: String)(implicit ec: ExecutionContextExecutor, mat: Materializer): Route =
     path("export" / Segment / Segment / Segment) { (region, startDate, endDate) =>
       val fileName = makeFileName(getCurrentTimeString, startDate, endDate, region)
-      onComplete(exportCsvService.createFileWithHeader(s"$folder$fileName", startDate, endDate, region)) {
-        case Success(_) => getFromFile(s"$folder$fileName")
+      val fileAbsolutePath = s"$fileStorePath$fileName"
+      onComplete(exportCsvService.createFileWithHeader(fileAbsolutePath, startDate, endDate, region)) {
+        case Success(_) => getFromFile(fileAbsolutePath)
         case Failure(ex) => complete(InternalServerError, s"An error occurred: ${ex.getMessage}")
       }
     }
@@ -42,7 +42,7 @@ object ExportRoutes {
   def makeFileName(subject: String, start: String, end: String, portRegion: String): String = {
     val startDateTime: DateTime = stringToDate(start)
     val endDateTime: DateTime = stringToDate(end)
-    val endDate = if (endDateTime.minusDays(1).isBefore(startDateTime))
+    val endDate = if (endDateTime.minusDays(1).isAfter(startDateTime))
       f"-to-${end}"
     else ""
 

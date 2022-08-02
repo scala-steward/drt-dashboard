@@ -33,7 +33,8 @@ object Server {
     useHttps: Boolean,
     notifyServiceApiKey: String,
     accessRequestEmails: List[String],
-    neboPortCodes: Array[String]) {
+    neboPortCodes: Array[String],
+    fileStorePath: String) {
     val portCodes: Iterable[PortCode] = portRegions.flatMap(_.ports)
     val portIataCodes: Iterable[String] = portCodes.map(_.iata)
     val clientConfig: ClientConfig = ClientConfig(portRegions, rootDomain, teamEmail)
@@ -57,7 +58,7 @@ object Server {
       CiriumRoutes("cirium", serverConfig.ciriumDataUri),
       DrtRoutes("drt", serverConfig.portIataCodes),
       ApiRoutes("api", serverConfig.clientConfig, notifications, neboRoutes),
-      ExportRoutes.route)
+      ExportRoutes(serverConfig.fileStorePath))
     val serverBinding: Future[Http.ServerBinding] = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
 
     ctx.pipeToSelf(serverBinding) {
