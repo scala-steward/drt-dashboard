@@ -67,6 +67,14 @@ class ExportCsvServiceSpec extends Specification with AfterEach with BeforeEach 
       .flatten
     val resultCsvs: Set[IOResult] = Await.result(ioResultF, 1.seconds)
     resultCsvs.size mustEqual 1
+
+  }
+
+  "Collate response as csv from" >> {
+    val fileName = ExportRoutes.makeFileName("test-csv", "2022-07-22", "2022-07-23", "Heathrow")
+    val responseF: Future[Set[IOResult]] = exportCsvService.createFileWithHeader(s"$testFolder/$fileName", "2022-07-22", "2022-07-23", "Heathrow")
+    val resultIOs: Set[IOResult] = Await.result(responseF, 1.seconds)
+    resultIOs.size mustEqual 2
   }
 
   "Given a string I get PortRegion" >> {
