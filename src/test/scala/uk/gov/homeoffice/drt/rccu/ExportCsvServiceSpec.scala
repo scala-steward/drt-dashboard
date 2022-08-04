@@ -9,7 +9,7 @@ import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.ports.PortRegion
 
 import scala.concurrent.duration._
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.concurrent.{ Await, ExecutionContextExecutor, Future }
 
 class ExportCsvServiceSpec extends Specification {
   val testKit: ActorTestKit = ActorTestKit()
@@ -39,7 +39,11 @@ class ExportCsvServiceSpec extends Specification {
 
   object MockHttpClient extends HttpClient {
     def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[HttpResponse] = {
-      Future(HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/csv(UTF-8)`, csv)))(executionContext)
+      if (httpRequest.getUri().path().contains("PIK")) {
+        Future.failed(new Exception("Server not found"))
+      } else {
+        Future.successful(HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/csv(UTF-8)`, csv)))
+      }
     }
   }
 
