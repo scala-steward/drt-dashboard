@@ -58,7 +58,7 @@ object Server {
       CiriumRoutes("cirium", serverConfig.ciriumDataUri),
       DrtRoutes("drt", serverConfig.portIataCodes),
       ApiRoutes("api", serverConfig.clientConfig, notifications, neboRoutes),
-      ExportRoutes(serverConfig.fileStorePath))
+      ExportRoutes(new ProdHttpClient))
     val serverBinding: Future[Http.ServerBinding] = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
 
     ctx.pipeToSelf(serverBinding) {
