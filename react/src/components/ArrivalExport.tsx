@@ -35,10 +35,10 @@ export default function ArrivalExport(props: IProps) {
                 aria-labelledby="modal-modal-title"
                 aria-describedby="modal-modal-description">
                 <Box sx={style}>
-                    <Typography style={{float: 'centre'}} id="modal-modal-title" variant="h6" component="h2">
-                        Arrival Export
+                    <Typography align="center" id="modal-modal-title" variant="h6" component="h2">
+                        {props.region} Arrival Export
                     </Typography>
-                    <Typography id="modal-modal-description" sx={{mt: 2}}>
+                    <Typography align="center" id="modal-modal-description" sx={{mt: 2}}>
                         Choose dates and click on download to get arrival exports.
                     </Typography>
                     <br/>
