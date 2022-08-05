@@ -1,15 +1,17 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.http.scaladsl.common.{ CsvEntityStreamingSupport, EntityStreamingSupport }
+import akka.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
 import akka.http.scaladsl.model.ContentTypes
-import akka.http.scaladsl.server.Directives.{ complete, _ }
+import akka.http.scaladsl.server.Directives.{complete, _}
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.rccu.ExportCsvService
+
 import scala.concurrent.ExecutionContextExecutor
 
 object ExportRoutes {
@@ -27,21 +29,26 @@ object ExportRoutes {
           }
           .mapConcat {
             case Some((portStr, terminals)) => terminals.map(t => (portStr, t))
-          }.flatMapConcat {
+          }
+          .mapAsync(1) {
             case (port, terminal) =>
-              Source.future(exportCsvService.getPortResponseForTerminal(startDate, endDate, portRegion.name, port, terminal.toString))
-                .flatMapConcat { portResponse =>
-                  portResponse.map(pr => pr.httpResponse.entity.dataBytes
-                    .map {
-                      _
-                        .utf8String
-                        .split("\n")
-                        .filterNot(_.contains("ICAO"))
-                        .map(line => s"${region.name},${pr.port},${pr.terminal},$line")
-                        .mkString("\n")
-                    }).getOrElse(Source.empty)
+              exportCsvService.getPortResponseForTerminal(startDate, endDate, portRegion.name, port, terminal.toString)
+          }
+          .flatMapConcat {
+            case Some(response) =>
+              response.httpResponse.entity.dataBytes
+                .map {
+                  _
+                    .utf8String
+                    .split("\n")
+                    .filterNot(_.contains("ICAO"))
+                    .map(line => s"${region.name},${response.port},${response.terminal},$line")
+                    .mkString("\n")
                 }
-          }.prepend(Source.single(headings)))
+            case None =>
+              Source.empty[String]
+          }
+          .prepend(Source.single(headings)))
     }
   }
 
