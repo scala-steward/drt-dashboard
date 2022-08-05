@@ -27,21 +27,20 @@ object ExportRoutes {
           }
           .mapConcat {
             case Some((portStr, terminals)) => terminals.map(t => (portStr, t))
-          }
-          .mapAsync(5) {
-            case (port, terminal) =>
-              exportCsvService.getPortResponseForTerminal(startDate, endDate, portRegion.name, port, terminal.toString)
           }.flatMapConcat {
-            case portResponse =>
-              portResponse.map(pr => pr.httpResponse.entity.dataBytes
-                .map {
-                  _
-                    .utf8String
-                    .split("\n")
-                    .filterNot(_.contains("ICAO"))
-                    .map(line => s"${region.name},${pr.port},${pr.terminal},$line")
-                    .mkString("\n")
-                }).getOrElse(Source.empty)
+            case (port, terminal) =>
+              Source.future(exportCsvService.getPortResponseForTerminal(startDate, endDate, portRegion.name, port, terminal.toString))
+                .flatMapConcat { portResponse =>
+                  portResponse.map(pr => pr.httpResponse.entity.dataBytes
+                    .map {
+                      _
+                        .utf8String
+                        .split("\n")
+                        .filterNot(_.contains("ICAO"))
+                        .map(line => s"${region.name},${pr.port},${pr.terminal},$line")
+                        .mkString("\n")
+                    }).getOrElse(Source.empty)
+                }
           }.prepend(Source.single(headings)))
     }
   }
