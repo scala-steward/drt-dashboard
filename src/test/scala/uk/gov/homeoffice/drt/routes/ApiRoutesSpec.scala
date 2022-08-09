@@ -2,6 +2,7 @@ package uk.gov.homeoffice.drt.routes
 
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.ActorSystem
+import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.Specs2RouteTest
@@ -22,7 +23,7 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest with JsonSupport 
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
 
   val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), "somedomain.com", "test@test.com")
-  val neboRoutes: NeboUploadRoutes = NeboUploadRoutes(List(), MockHttpClient)
+  val neboRoutes: NeboUploadRoutes = NeboUploadRoutes(List(), new MockHttpClient(HttpResponse()))
   val routes: Route = ApiRoutes(
     "api",
     clientConfig,

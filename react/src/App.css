@@ -141,12 +141,22 @@ html {
 }
 
 .file-input {
-    width:400px;
+    width: 400px;
     font-size: 15px;
 }
 
 .upload-button {
-    width:100px;
-    height:25px;
+    width: 100px;
+    height: 25px;
+    font-size: 15px;
+}
+
+.flex-container {
+    display: flex;
+}
+
+.flex-container > div {
+    margin: 5px;
+    padding: 10px;
     font-size: 15px;
 }

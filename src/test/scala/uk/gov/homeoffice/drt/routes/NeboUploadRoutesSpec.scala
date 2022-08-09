@@ -8,20 +8,12 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.http.scaladsl.testkit.Specs2RouteTest
-import akka.stream.Materializer
 import com.github.tototoshi.csv.{ CSVFormat, QUOTE_MINIMAL, Quoting }
 import org.specs2.mutable.Specification
-import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ Await, ExecutionContextExecutor, Future }
-
-object MockHttpClient extends HttpClient {
-  def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[HttpResponse] = {
-    Future(HttpResponse(StatusCodes.Accepted, entity = HttpEntity("File uploaded")))(executionContext)
-  }
-}
 
 class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
 
@@ -30,7 +22,11 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
   implicit val sys: ActorSystem[Nothing] = testKit.system
   implicit val ec: ExecutionContextExecutor = sys.executionContext
 
-  private val neboRoutes: NeboUploadRoutes = NeboUploadRoutes(List("lhr"), MockHttpClient)
+  val httpResponse = HttpResponse(StatusCodes.Accepted, entity = HttpEntity("File uploaded"))
+
+  val mockHttpClient = new MockHttpClient(httpResponse)
+
+  private val neboRoutes: NeboUploadRoutes = NeboUploadRoutes(List("lhr"), mockHttpClient)
 
   val test2FileData: String =
     """Reference (URN),AssociatedText ,Flight Code ,Arrival Port ,DATE,Arrival Time,Departure Date,Departure Time,Embark Port,"Departure Port"

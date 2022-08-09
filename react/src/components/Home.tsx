@@ -8,16 +8,17 @@ import {ConfigValues} from "../model/Config";
 
 
 interface IProps {
-  user: UserProfile;
-  config: ConfigValues;
+    user: UserProfile;
+    config: ConfigValues;
 }
 
 export const Home = (props: IProps) => {
-  return <Box className="App-header">
-    {props.user.ports.length === 0 ?
-      <AccessRequestForm regions={props.config.portsByRegion} teamEmail={props.config.teamEmail}/> :
-      <PortList allRegions={props.config.portsByRegion} userPorts={props.user.ports} drtDomain={props.config.domain}/>
-    }
-  </Box>
+    return <Box className="App-header">
+        {props.user.ports.length === 0 ?
+            <AccessRequestForm regions={props.config.portsByRegion} teamEmail={props.config.teamEmail}/> :
+            <PortList user={props.user} allRegions={props.config.portsByRegion} userPorts={props.user.ports}
+                      drtDomain={props.config.domain}/>
+        }
+    </Box>
 }
 
