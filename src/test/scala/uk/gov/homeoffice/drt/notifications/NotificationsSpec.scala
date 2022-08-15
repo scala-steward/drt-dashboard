@@ -19,7 +19,7 @@ class NotificationsSpec extends Specification {
         skipped("Integration test")
         val someFailures = notifications.sendRequest(
           "drtwannabe@somewhere.com",
-          AccessRequest(Set("BHX, EMA"), staffing = true, allPorts = false, lineManager = "", agreeDeclaration = true))
+          AccessRequest(Set("BHX, EMA"), staffing = true, allPorts = false, rccuRegionsRequested = Set("North", "South"), lineManager = "", agreeDeclaration = true))
           .exists {
             case (_, Failure(_)) => true
             case _ => false

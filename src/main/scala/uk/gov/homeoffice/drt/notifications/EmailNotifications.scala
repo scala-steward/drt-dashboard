@@ -19,9 +19,13 @@ case class EmailNotifications(apiKey: String, accessRequestEmails: List[String])
     val manager = if (accessRequest.lineManager.nonEmpty) accessRequest.lineManager else "n/a"
 
     val portsRequested = if (accessRequest.allPorts) "all ports" else accessRequest.portsRequested.mkString(", ").toUpperCase
+
+    val rccuRegionsRequested = accessRequest.rccuRegionsRequested.mkString(", ").toUpperCase
+
     val personalisation: util.Map[String, String] = Map(
       "requester" -> requester,
       "portList" -> portsRequested,
+      "rccuRegion" -> rccuRegionsRequested,
       "staffing" -> staffing,
       "lineManager" -> manager,
       "agreeDeclaration" -> agreeDeclaration).asJava
