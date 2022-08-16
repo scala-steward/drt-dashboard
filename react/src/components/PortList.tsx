@@ -10,25 +10,27 @@ interface IProps {
     allRegions: PortRegion[]
     userPorts: string[];
     drtDomain: string;
+    isRccUser: Boolean;
 }
 
 export const PortList = (props: IProps) => {
+    const isRccRegion = (regionName) => {
+        return props.user.roles.includes("rcc:" + regionName.toLowerCase())
+    }
+
     const userRegions: PortRegion[] = props.allRegions.map(region => {
         const userPorts: string[] = props.userPorts.filter(p => region.ports.includes(p));
         return {...region, ports: userPorts} as PortRegion
-    }).filter(r => r.ports.length > 0)
+    }).filter(r => r.ports.length > 0 || isRccRegion(r.name))
 
-    const isRccUser = () => {
-        return props.user.roles.includes("rcc:central") || props.user.roles.includes("rcc:heathrow") || props.user.roles.includes("rcc:north") || props.user.roles.includes("rcc:south")
-    }
 
     return <Box sx={{width: '100%'}}>
         <h1>Welcome to DRT</h1>
-        {isRccUser() ?
+        {props.isRccUser ?
             <p>Click on your region or ports</p> :
             <p>Select your destination</p>
         }
-        {userRegions.length > 1 ?
+        {userRegions.length > 1 || props.isRccUser ?
             <PortListByRegion user={props.user} regions={userRegions} drtDomain={props.drtDomain}/> :
             <PortListStraight ports={props.userPorts} drtDomain={props.drtDomain}/>
         }

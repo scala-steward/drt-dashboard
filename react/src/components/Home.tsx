@@ -12,12 +12,18 @@ interface IProps {
     config: ConfigValues;
 }
 
+
 export const Home = (props: IProps) => {
+
+    const isRccUser = () => {
+        return props.user.roles.includes("rcc:central") || props.user.roles.includes("rcc:heathrow") || props.user.roles.includes("rcc:north") || props.user.roles.includes("rcc:south")
+    }
+
     return <Box className="App-header">
-        {props.user.ports.length === 0 ?
+        {props.user.ports.length === 0 && !isRccUser() ?
             <AccessRequestForm regions={props.config.portsByRegion} teamEmail={props.config.teamEmail}/> :
             <PortList user={props.user} allRegions={props.config.portsByRegion} userPorts={props.user.ports}
-                      drtDomain={props.config.domain}/>
+                      drtDomain={props.config.domain} isRccUser={isRccUser()}/>
         }
     </Box>
 }
