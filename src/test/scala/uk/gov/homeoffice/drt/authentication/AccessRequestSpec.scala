@@ -14,13 +14,16 @@ class AccessRequestSpec extends Specification with Specs2RouteTest with AccessRe
         |        "bhx",
         |        "lhr"
         |    ],
-        |    "rccuRegionsRequested": [
+        |    "regionsRequested": [
         |       "North",
         |       "South"
         |    ],
         |    "staffing": true,
         |    "allPorts": true,
-        |    "agreeDeclaration": true
+        |    "agreeDeclaration": true,
+        |    "rccOption" : "rccu",
+        |    "portOrRegionText" : "",
+        |    "staffText" : ""
         |}
         |""".stripMargin
 
@@ -30,9 +33,12 @@ class AccessRequestSpec extends Specification with Specs2RouteTest with AccessRe
       portsRequested = Set("bhx", "lhr"),
       allPorts = true,
       staffing = true,
-      rccuRegionsRequested = Set("North", "South"),
+      regionsRequested = Set("North", "South"),
       lineManager = "someone@somewhere.com",
-      agreeDeclaration = true)
+      agreeDeclaration = true,
+      rccOption = "rccu",
+      portOrRegionText = "",
+      staffText = "")
 
     request === expected
   }

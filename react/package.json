@@ -33,7 +33,8 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "4.0.3",
     "typed-react-markdown": "^0.1.0",
-    "typescript": "3.8.3"
+    "typescript": "3.8.3",
+    "validator": "^13.7.0"
   },
   "scripts": {
     "start": "react-scripts start",

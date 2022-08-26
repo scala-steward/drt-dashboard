@@ -19,13 +19,29 @@ class NotificationsSpec extends Specification {
         skipped("Integration test")
         val someFailures = notifications.sendRequest(
           "drtwannabe@somewhere.com",
-          AccessRequest(Set("BHX, EMA"), staffing = true, allPorts = false, rccuRegionsRequested = Set("North", "South"), lineManager = "", agreeDeclaration = true))
+          AccessRequest(
+            portsRequested = Set("BHX, EMA"),
+            staffing = true,
+            allPorts = false,
+            regionsRequested = Set("North", "South"),
+            lineManager = "",
+            agreeDeclaration = true,
+            rccOption = "rccu",
+            portOrRegionText = "",
+            staffText = ""))
           .exists {
             case (_, Failure(_)) => true
             case _ => false
           }
 
         someFailures === false
+      }
+    }
+
+    "Given email with '.' in address" >> {
+      "Then First name with capitalise from email pattern" >> {
+        val firstName = notifications.getFirstName("firstName.lastName@test.com")
+        firstName === "Firstname"
       }
     }
   }
