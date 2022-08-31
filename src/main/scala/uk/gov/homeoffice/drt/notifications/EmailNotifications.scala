@@ -3,7 +3,7 @@ package uk.gov.homeoffice.drt.notifications
 import java.util
 
 import uk.gov.homeoffice.drt.authentication.AccessRequest
-import uk.gov.service.notify.{ NotificationClient, SendEmailResponse }
+import uk.gov.service.notify.{NotificationClient, SendEmailResponse}
 
 import scala.collection.JavaConverters.mapAsJavaMapConverter
 import scala.util.Try
@@ -55,7 +55,7 @@ case class EmailNotifications(apiKey: String, accessRequestEmails: List[String])
         ""))
       (accessRequestEmail, maybeResponse)
     }.flatMap { accessEmailResponse =>
-      if (accessRequest.lineManager.nonEmpty) {
+      if (accessRequest.lineManager.nonEmpty && (accessRequest.staffing || accessRequest.allPorts || accessRequest.portsRequested.size > 1 || accessRequest.regionsRequested.size > 1)) {
         val managerAccessEmailResponse: Try[SendEmailResponse] = Try(client.sendEmail(
           accessRequestLineManagerNotificationEmailTemplateId,
           manager,
