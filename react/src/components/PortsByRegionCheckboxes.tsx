@@ -90,7 +90,7 @@ export const PortsByRegionCheckboxes = (props: IProps) => {
                                     <Checkbox
                                         inputProps={{'aria-labelledby': region.name}}
                                         name={region.name}
-                                        checked={props.selectedRegions.includes(region.name)}
+                                        checked={props.selectedRegions && props.selectedRegions.includes(region.name)}
                                         indeterminate={regionPartiallySelected}
                                     />
                                 </ListItemIcon>

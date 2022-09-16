@@ -3,7 +3,7 @@ package uk.gov.homeoffice.drt.notifications
 import java.util
 
 import uk.gov.homeoffice.drt.authentication.AccessRequest
-import uk.gov.service.notify.{NotificationClient, SendEmailResponse}
+import uk.gov.service.notify.{ NotificationClient, SendEmailResponse }
 
 import scala.collection.JavaConverters.mapAsJavaMapConverter
 import scala.util.Try
