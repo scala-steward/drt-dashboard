@@ -2,6 +2,7 @@ import React from 'react';
 import './App.css';
 import {Home} from './components/Home';
 import Alerts from './components/Alerts/Alerts';
+import UserAccess from './components/UserManagement/UserAccess';
 import {Route, Switch} from "react-router-dom";
 import Loading from "./components/Loading";
 import Navigation from "./components/Navigation";
@@ -78,6 +79,9 @@ const App = (props: PropsFromReact) => {
                 <Switch>
                     <Route exact path="/">
                         <Home config={props.config.values} user={props.user.profile}/>
+                    </Route>
+                    <Route exact path="/userManagement">
+                        <UserAccess/>
                     </Route>
                     <Route exact path="/alerts">
                         <Alerts regions={props.config.values.portsByRegion} user={props.user.profile}/>

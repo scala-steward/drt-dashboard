@@ -45,6 +45,10 @@ lazy val root = (project in file(".")).
       "com.github.tototoshi" %% "scala-csv" % scalaCsv,
       "org.scalactic" %% "scalactic" % scalaTestVersion,
 
+      "com.typesafe.slick" %% "slick" % "3.4.1",
+      "com.typesafe.slick" %% "slick-hikaricp" % "3.4.1",
+      "org.postgresql" % "postgresql" % "42.2.5",
+
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,

@@ -8,15 +8,12 @@ import {BrowserRouter} from "react-router-dom";
 
 
 describe('Dashboard routing', () => {
-
-    const apiClient = new ApiClient();
-
     function newServer(userPorts: string[], roles: string[], allPorts: string[]) {
         return setupServer(
-            rest.get(apiClient.userEndPoint, (req, res, ctx) => {
+            rest.get(ApiClient.userEndPoint, (req, res, ctx) => {
                 return res(ctx.json({ports: userPorts, roles: roles.concat(userPorts), email: 'someone@drt'}))
             }),
-            rest.get(apiClient.configEndPoint, (req, res, ctx) => {
+            rest.get(ApiClient.configEndPoint, (req, res, ctx) => {
                 return res(ctx.json({ports: allPorts, domain: 'drt.localhost'}))
             })
         );

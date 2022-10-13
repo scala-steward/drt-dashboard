@@ -8,11 +8,11 @@ import {Box} from "@mui/material";
 
 interface IProps {
     rccAccess: string;
-    handleRccOptionCallback: (string) => void;
+    handleRccOptionCallback: (option:string) => void;
 }
 
 export default function InitialRequestForm(props: IProps) {
-    const handleEvent = (event) => {
+    const handleEvent = (event:any) => {
         props.handleRccOptionCallback(event.target.value)
     }
 

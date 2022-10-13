@@ -5,9 +5,9 @@ import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import AccessRequestForm from "../../components/AccessRequestForm";
 
 const server = setupServer(
-  rest.post('/api/request-access', (req, res, ctx) => {
-    return res(ctx.text('OK'))
-  })
+    rest.post('/api/access-request', (req, res, ctx) => {
+        return res(ctx.text('OK'))
+    })
 )
 
 beforeAll(() => server.listen())
@@ -16,72 +16,72 @@ afterAll(() => server.close())
 
 
 function submitIsDisabled() {
-  expect(screen.getByText('Request access').closest('button')).toHaveAttribute('disabled');
+    expect(screen.getByText('Request access').closest('button')).toHaveAttribute('disabled');
 }
 
 function submitIsNotDisabled() {
-  expect(screen.getByText('Request access').closest('button')).not.toHaveAttribute('disabled');
+    expect(screen.getByText('Request access').closest('button')).not.toHaveAttribute('disabled');
 }
 
 describe('<AccessRequestForm />', () => {
-  it('has a disabled submit button by default, and becomes enabled when a port is selected and the declaration is greed', () => {
-    render(<AccessRequestForm ports={['LHR']} teamEmail={"test@test.com"}/>);
+    it('has a disabled submit button by default, and becomes enabled when a port is selected and the declaration is greed', () => {
+        render(<AccessRequestForm regions={[{name: 'Heathrow', ports: ['LHR']}]} teamEmail={"test@test.com"}/>);
 
-    submitIsDisabled();
+        submitIsDisabled();
 
-    fireEvent.click(screen.getByText('LHR'));
-    fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
+        fireEvent.click(screen.getByText('LHR'));
+        fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
 
-    submitIsNotDisabled();
-  });
+        submitIsNotDisabled();
+    });
 
-  it('has a disabled submit button when the last selected port becomes de-selected and declaration is agreed', () => {
-    render(<AccessRequestForm ports={['LHR']} teamEmail={"test@test.com"}/>);
+    it('has a disabled submit button when the last selected port becomes de-selected and declaration is agreed', () => {
+        render(<AccessRequestForm regions={[{name: 'Heathrow', ports: ['LHR']}]} teamEmail={"test@test.com"}/>);
 
-    fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
-    fireEvent.click(screen.getByText('LHR'));
+        fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
+        fireEvent.click(screen.getByText('LHR'));
 
-    submitIsNotDisabled();
+        submitIsNotDisabled();
 
-    fireEvent.click(screen.getByText('LHR'));
+        fireEvent.click(screen.getByText('LHR'));
 
-    submitIsDisabled();
-  });
+        submitIsDisabled();
+    });
 
-  it('enables the submit button when "all ports" is selected and disables it when it is deselected', () => {
-    render(<AccessRequestForm ports={['LHR']} teamEmail={"test@test.com"}/>);
+    it('enables the submit button when "all ports" is selected and disables it when it is deselected', () => {
+        render(<AccessRequestForm regions={[{name: 'Heathrow', ports: ['LHR']}]} teamEmail={"test@test.com"}/>);
 
-    fireEvent.click(screen.getByText('All ports'));
-    fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
+        fireEvent.click(screen.getByText('All ports'));
+        fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
 
-    submitIsNotDisabled();
-    fireEvent.click(screen.getByText('All ports'));
+        submitIsNotDisabled();
+        fireEvent.click(screen.getByText('All ports'));
 
-    submitIsDisabled();
-  });
+        submitIsDisabled();
+    });
 
-  it('disables the submit button when the declaration is deselected', () => {
-    render(<AccessRequestForm ports={['LHR']} teamEmail={"test@test.com"}/>);
+    it('disables the submit button when the declaration is deselected', () => {
+        render(<AccessRequestForm regions={[{name: 'Heathrow', ports: ['LHR']}]} teamEmail={"test@test.com"}/>);
 
-    fireEvent.click(screen.getByText('All ports'));
-    submitIsDisabled();
+        fireEvent.click(screen.getByText('All ports'));
+        submitIsDisabled();
 
-    fireEvent.click(screen.getByText('All ports'));
-    fireEvent.click(screen.getByText('LHR'));
-    submitIsDisabled();
-  });
+        fireEvent.click(screen.getByText('All ports'));
+        fireEvent.click(screen.getByText('LHR'));
+        submitIsDisabled();
+    });
 
 
-  it('displays a thank you message on submitting the form', async () => {
-    render(<AccessRequestForm ports={['LHR']} teamEmail={"test@test.com"}/>);
+    it('displays a thank you message on submitting the form', async () => {
+        render(<AccessRequestForm regions={[{name: 'Heathrow', ports: ['LHR']}]} teamEmail={"test@test.com"}/>);
 
-    fireEvent.click(screen.getByText('LHR'));
-    fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
+        fireEvent.click(screen.getByText('LHR'));
+        fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
 
-    submitIsNotDisabled();
+        submitIsNotDisabled();
 
-    fireEvent.click(screen.getByText('Request access'));
+        fireEvent.click(screen.getByText('Request access'));
 
-    await waitFor(() => expect(screen.getByText('Thank you')));
-  });
+        await waitFor(() => expect(screen.getByText('Thank you')));
+    });
 });

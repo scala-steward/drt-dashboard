@@ -3,18 +3,15 @@ import {rest} from 'msw'
 import {setupServer} from 'msw/node'
 import {render, screen, waitFor} from '@testing-library/react';
 import ApiClient from "../../services/ApiClient";
-import Home from "../../components/Home";
 import App from "../../App";
-import {renderers} from "react-markdown";
 
-const apiClient = new ApiClient();
 
 function newServer(userPorts: string[], allPorts: string[]) {
   return setupServer(
-    rest.get(apiClient.userEndPoint, (req, res, ctx) => {
+    rest.get(ApiClient.userEndPoint, (req, res, ctx) => {
       return res(ctx.json({ports: userPorts, roles: userPorts, email: 'someone@drt'}))
     }),
-    rest.get(apiClient.configEndPoint, (req, res, ctx) => {
+    rest.get(ApiClient.configEndPoint, (req, res, ctx) => {
       return res(ctx.json({ports: allPorts, domain: 'drt.localhost'}))
     })
   );

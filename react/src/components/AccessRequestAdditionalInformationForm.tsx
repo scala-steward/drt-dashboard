@@ -44,11 +44,11 @@ export default function AccessRequestAdditionalInformationForm(props: IProps) {
         props.saveCallback();
     };
 
-    const handlePortOrRegionTextChange = (event) => {
+    const handlePortOrRegionTextChange = (event:any) => {
         props.setPortOrRegionText(event.target.value);
     };
 
-    const handleStaffTextChange = (event) => {
+    const handleStaffTextChange = (event:any) => {
         props.setStaffText(event.target.value);
     };
 
@@ -133,7 +133,7 @@ export default function AccessRequestAdditionalInformationForm(props: IProps) {
     }
 
     return (
-        <div class="flex-container">
+        <div className="flex-container">
             <div>
                 <Modal
                     open={open}
@@ -145,7 +145,7 @@ export default function AccessRequestAdditionalInformationForm(props: IProps) {
                             More information required
                         </Typography>
                         {props.rccOption ? rccOptionQuestions() : portOptionQuestions()}
-                        <div align="left">
+                        <div style={{float: 'left'}}>
                             <Button variant="contained"
                                     disabled={!enableSubmitRequest()}
                                     onClick={handleEvent}>Submit request</Button>

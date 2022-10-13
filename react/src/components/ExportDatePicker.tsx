@@ -27,7 +27,7 @@ export default function ExportDatePicker(props: IProps) {
 
     return (
         <LocalizationProvider dateAdapter={AdapterDateFns}>
-            <div class="flex-container">
+            <div className="flex-container">
                 <div>
                     <DatePicker
                         label="From Date"

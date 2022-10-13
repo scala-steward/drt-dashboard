@@ -13,7 +13,8 @@ import {PortsByRegionCheckboxes} from "./PortsByRegionCheckboxes";
 import InitialRequestForm from "./InitialRequestForm";
 import AccessRequestAdditionalInformationForm from "./AccessRequestAdditionalInformationForm";
 import _ from "lodash/fp";
-import isEmail from 'validator/lib/isEmail';
+// @ts-ignore
+import isEmail from "validator/lib/isEmail";
 import InputLabel from '@mui/material/InputLabel';
 import OutlinedInput from "@mui/material/OutlinedInput";
 
@@ -75,7 +76,7 @@ export default function AccessRequestForm(props: IProps) {
             staffText: ""
         } as IState);
 
-    const handleRccOption = (childData) => {
+    const handleRccOption = (childData:any) => {
         setState({
             ...state,
             portsRequested: [],
@@ -194,9 +195,6 @@ export default function AccessRequestForm(props: IProps) {
                             label="Line manager's email address"
                             size={'medium'}
                             value={state.lineManager}
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
                         />
                     </FormControl>
                 </ListItem>

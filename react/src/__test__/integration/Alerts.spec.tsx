@@ -1,13 +1,13 @@
 import React from 'react';
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import Alerts from "../../components/Alerts/Alerts";
-import UserLike from "../../model/User";
 import {setupServer} from "msw/node";
 import {rest} from "msw";
+import {UserProfile} from "../../model/User";
 
 
 describe('<Alerts />', () => {
-    const user: UserLike = {
+    const user: UserProfile = {
         ports: ["LHR", "BHX"],
         roles: ["LHR", "BHX", "create-alerts"],
         email: 'someone@drt'
@@ -16,14 +16,14 @@ describe('<Alerts />', () => {
     describe("Alert Tabs", () => {
 
         it("contains tabs for add and view alerts", () => {
-            render(<Alerts user={user}/>)
+            render(<Alerts user={user} regions={[]}/>)
             expect(screen.getByText("Add Alert"))
             expect(screen.getByText("View Alerts"))
         });
 
         it("defaults to the add alert view", () => {
 
-            render(<Alerts user={user}/>)
+            render(<Alerts user={user} regions={[]}/>)
             expect(screen.getByText("Save"))
         })
 
@@ -43,7 +43,7 @@ describe('<Alerts />', () => {
             )
             server.listen()
 
-            render(<Alerts user={user}/>)
+            render(<Alerts user={user} regions={[]}/>)
 
             fireEvent.click(screen.getByText('View Alerts'))
 

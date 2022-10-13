@@ -14,7 +14,7 @@ interface IProps {
 }
 
 export const PortList = (props: IProps) => {
-    const isRccRegion = (regionName) => {
+    const isRccRegion = (regionName : string) => {
         return props.user.roles.includes("rcc:" + regionName.toLowerCase())
     }
 

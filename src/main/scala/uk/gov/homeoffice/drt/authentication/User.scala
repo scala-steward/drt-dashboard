@@ -51,17 +51,3 @@ trait UserJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   }
 }
 
-case class AccessRequest(
-  portsRequested: Set[String],
-  allPorts: Boolean,
-  regionsRequested: Set[String],
-  staffing: Boolean,
-  lineManager: String,
-  agreeDeclaration: Boolean,
-  rccOption: String,
-  portOrRegionText: String,
-  staffText: String)
-
-trait AccessRequestJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
-  implicit val AccessRequestFormatParser: RootJsonFormat[AccessRequest] = jsonFormat9(AccessRequest)
-}
