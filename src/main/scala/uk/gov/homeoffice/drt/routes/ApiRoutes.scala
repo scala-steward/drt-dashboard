@@ -219,6 +219,8 @@ object ApiRoutes extends JsonSupport
                         DashboardClient
                           .userDetailDrtApi(s"${Dashboard.drtUriForPortCode("LHR")}/data/addUserToGroup/$id/$port", user.roles, xAuthToken, "POST")
                       })
+                      DashboardClient
+                        .userDetailDrtApi(s"${Dashboard.drtUriForPortCode("LHR")}/data/addUserToGroup/$id/Border%20Force", user.roles, xAuthToken, "POST")
                       UserRequestService.updateUserRequest(userRequestedAccessData, "Approved")
                       notifications.sendAccessGranted(userRequestedAccessData, clientConfig.domain, clientConfig.teamEmail)
                       complete(s"User ${userRequestedAccessData.email} update port ${userRequestedAccessData.portOrRegionText}")
