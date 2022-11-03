@@ -1,11 +1,11 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
-import {DataGrid, GridRowModel} from '@mui/x-data-grid';
+import {DataGrid, GridRowId, GridRowModel, GridSelectionModel} from '@mui/x-data-grid';
 import ApiClient from "../../services/ApiClient";
 import axios, {AxiosResponse} from "axios";
 import UserRequestDetails, {UserRequestedAccessData} from "./UserRequestDetails";
-import UserAccessApproved from "./UserAccessApproved";
-import UserAccessApprovedList from "./UserAccessApprovedList";
+import ConfirmUserAccess from "./ConfirmUserAccess";
+import UserRequestStatusList from "./UserRequestStatusList";
 import {Button} from "@mui/material";
 import Grid from '@mui/material/Grid';
 import Tabs from '@mui/material/Tabs';
@@ -13,41 +13,48 @@ import Tab from '@mui/material/Tab';
 import {columns, KeyCloakUser} from "./UserAccessCommon";
 
 export default function UserAccess() {
+    const [accessRequestListRequested, setAccessRequestListRequested] = React.useState(false);
     const [userRequestList, setUserRequestList] = React.useState([] as UserRequestedAccessData[]);
     const [rowsData, setRowsData] = React.useState([] as GridRowModel[]);
-    const [apiRequestCount, setApiRequestCount] = React.useState(0);
+    const [receivedUserDetails, setReceivedUserDetails] = React.useState(false);
     const [openModal, setOpenModal] = React.useState(false)
     const [rowDetails, setRowDetails] = React.useState({} as UserRequestedAccessData | undefined)
-    const [selectedRows, setSelectedRows] = React.useState([]);
-    const [userDetails, setUserDetails] = React.useState({} as KeyCloakUser);
+    const [selectedRowDetails, setSelectedRowDetails] = React.useState([] as UserRequestedAccessData[]);
+    const [selectedRowIds, setSelectedRowIds] = React.useState<GridRowId[]>([]);
+    const [users, setUsers] = React.useState([] as KeyCloakUser[]);
+    const [receivedUsersResponse, setReceivedUsersResponse] = React.useState(false)
     const [requestPosted, setRequestPosted] = React.useState(false)
-    const [showApprovedRequests, setShowApprovedUserRequest] = React.useState("Requested")
+    const [dismissedPosted, setDismissedPosted] = React.useState(false)
+    const [statusFilterValue, setStatusFilterValue] = React.useState("Requested")
 
     const handleChange = (event: React.SyntheticEvent, newValue: string) => {
-        setShowApprovedUserRequest(newValue);
+        setReceivedUserDetails(false)
+        setStatusFilterValue(newValue);
+        setAccessRequestListRequested(false);
     };
 
-    const getAccessRequest = (response: AxiosResponse) => {
+    const handleAccessRequestsResponse = (response: AxiosResponse) => {
         setUserRequestList(response.data as UserRequestedAccessData[])
         setRowsData(response.data as GridRowModel[])
     }
 
     const updateUserDetailsState = (response: AxiosResponse) => {
-        setUserDetails(response.data as KeyCloakUser);
+        setUsers(oldUsers => [...oldUsers, response.data as KeyCloakUser]);
     }
 
-    const keyCloakUserDetails = (email: any) => {
-        axios.get(ApiClient.userDetailsEndpoint + '/' + email)
+    const getKeyCloakUserDetails = (emails: string[]) => {
+        emails.map(email => axios.get(ApiClient.userDetailsEndpoint + '/' + email)
             .then(response => updateUserDetailsState(response))
+            .then(() => setReceivedUsersResponse(true)))
     }
 
-    const userRequested = () => {
-        setApiRequestCount(1)
+    const requestAccessRequests = () => {
+        setReceivedUserDetails(true)
         axios.get(ApiClient.requestAccessEndPoint + '?status=Requested')
-            .then(response => getAccessRequest(response))
+            .then(response => handleAccessRequestsResponse(response))
     }
 
-    const findEmail = (requestTime: any) => {
+    const findAccessRequestByEmail = (requestTime: string | number) => {
         return userRequestList.find(obj => {
             return obj.requestTime.trim() == requestTime
         });
@@ -58,33 +65,53 @@ export default function UserAccess() {
         setOpenModal(true)
     }
 
-    const approveUserAccessRequest = () => {
-        setUserDetails({} as KeyCloakUser);
-        let fond = selectedRows.map(s => findEmail(s))
-        console.log('fond hello' + fond.map(a => a?.email));
-        keyCloakUserDetails(fond.map(a => a?.email))
+    const fetchUsers = () => {
+        setUsers([{} as KeyCloakUser]);
+
+        const emails: string[] = selectedRowIds
+            .map(s => findAccessRequestByEmail(s)?.email)
+            .filter((s): s is string => !!s);
+
+        getKeyCloakUserDetails(emails)
     }
 
-    const addSelectedRows = (ids: any) => {
+    const addSelectedRowDetails = (srd: UserRequestedAccessData) => {
+        setSelectedRowDetails(oldSelectedRowDetails => [...oldSelectedRowDetails, srd])
+    }
+
+    const addSelectedRows = (ids: GridSelectionModel) => {
         console.log(ids);
-        setSelectedRows(ids)
+        setSelectedRowDetails([])
+        if (ids) {
+            ids.map(id => findAccessRequestByEmail(id))
+                .filter((s): s is UserRequestedAccessData => !!s)
+                .map(s => addSelectedRowDetails(s))
+        }
+        setSelectedRowIds(ids)
     }
 
-    const getRow = (email: string) => {
+    const findRequestByEmail = (email: string) => {
         return userRequestList.find(sr => sr.email == email)
     }
 
-    React.useEffect(() => {
-        if (apiRequestCount == 0) {
-            userRequested();
-        }
-
-        if(getRow((userDetails as KeyCloakUser).email)) {
-            axios.post(ApiClient.addUserToGroupEndpoint + '/' + (userDetails as KeyCloakUser).id, getRow((userDetails as KeyCloakUser).email))
+    const approveUserAccessRequest = (user: KeyCloakUser) => {
+        const email = findRequestByEmail((user as KeyCloakUser).email)
+        if (email) {
+            axios.post(ApiClient.addUserToGroupEndpoint + '/' + (user as KeyCloakUser).id, email)
                 .then(response => console.log("User addUserToGroupEndpoint" + response))
                 .then(() => setRequestPosted(true))
+                .then(() => setReceivedUsersResponse(false))
         }
-    }, [userDetails]);
+    }
+
+    React.useEffect(() => {
+        if (!receivedUserDetails) {
+            requestAccessRequests();
+        }
+        if (receivedUsersResponse) {
+            users.map(approveUserAccessRequest)
+        }
+    }, [users, receivedUserDetails, receivedUsersResponse]);
 
     const viewSelectAccessRequest = () => {
         return <Box sx={{height: 400, width: '100%'}}>
@@ -97,43 +124,93 @@ export default function UserAccess() {
                 checkboxSelection
                 onSelectionModelChange={addSelectedRows}
                 experimentalFeatures={{newEditingApi: true}}
-                onRowClick={(params, event:any) => {
+                onRowClick={(params, event: any) => {
                     if (!event.ignore) {
-                        rowClickOpen(findEmail(params.row.requestTime));
+                        rowClickOpen(findAccessRequestByEmail(params.row.requestTime));
                     }
                 }}
             />
             {(openModal) ? <UserRequestDetails openModal={openModal}
                                                setOpenModal={setOpenModal}
                                                rowDetails={rowDetails}
-                                               approvedPage={false}/> : <span/>
+                                               receivedUserDetails={receivedUserDetails}
+                                               setReceivedUserDetails={setReceivedUserDetails}
+                                               status={""}/> : <span/>
             }
-            <Grid container justifyContent="center">
-                <Button variant="contained" color="primary" onClick={approveUserAccessRequest}>Approve</Button>
+
+            <Grid container spacing={2} justifyContent={"center"}>
+                <Grid item xs={8} md={2}>
+                    <Button variant="outlined" onClick={fetchUsers}>Approve</Button>
+                </Grid>
+                <Grid item xs={8} md={2}>
+                    <Button variant="outlined" onClick={dismissUserRequest}>Dismiss</Button>
+                </Grid>
             </Grid>
         </Box>
     }
 
+    const dismissUserRequest = () => {
+        selectedRowDetails
+            .map(selectedRowDetail => axios.post(ApiClient.updateUserRequestEndpoint + "/" + "Dismissed", selectedRowDetail)
+                .then(response => console.log('dismiss user' + response.data)))
+        setDismissedPosted(true)
+    }
+
+    const showDismissedRequest = () => {
+        return dismissedPosted ?
+            <ConfirmUserAccess message={"dismissed"}
+                               parentRequestPosted={dismissedPosted}
+                               setParentRequestPosted={setDismissedPosted}
+                               receivedUserDetails={receivedUserDetails}
+                               setReceivedUserDetails={setReceivedUserDetails}
+                               openModel={openModal}
+                               setOpenModel={setOpenModal}
+                               emails={selectedRowDetails.map(srd => srd.email)}/> : viewSelectAccessRequest()
+    }
+
     const showApprovedOrAccessRequest = () => {
-        return requestPosted ? <UserAccessApproved userDetails={userDetails}/> : viewSelectAccessRequest()
+        console.log('userDetails ' + requestPosted + '  ' + (users as KeyCloakUser[]));
+        return requestPosted ?
+            <ConfirmUserAccess message={"granted"}
+                               parentRequestPosted={requestPosted}
+                               setParentRequestPosted={setRequestPosted}
+                               receivedUserDetails={receivedUserDetails}
+                               setReceivedUserDetails={setReceivedUserDetails}
+                               openModel={openModal}
+                               setOpenModel={setOpenModal}
+                               emails={users.map(ud => ud.email)}/> : showDismissedRequest()
     }
 
     const accessRequestOrApprovedList = () => {
-        return <div>{showApprovedRequests == "Approved" ?
-            <UserAccessApprovedList showApprovedUserRequest={showApprovedRequests}
-                                    setShowApprovedUserRequest={setShowApprovedUserRequest}/> : showApprovedOrAccessRequest()}</div>
+        switch (statusFilterValue) {
+            case "Approved" :
+                return <UserRequestStatusList accessRequestListRequested={accessRequestListRequested}
+                                              setAccessRequestListRequested={setAccessRequestListRequested}
+                                              statusView={"Approved"}
+                                              showUserRequestByStatus={statusFilterValue}
+                                              setShowUserRequestByStatus={setStatusFilterValue}/>
+            case "Dismissed" :
+                return <UserRequestStatusList accessRequestListRequested={accessRequestListRequested}
+                                              setAccessRequestListRequested={setAccessRequestListRequested}
+                                              statusView={"Dismissed"}
+                                              showUserRequestByStatus={statusFilterValue}
+                                              setShowUserRequestByStatus={setStatusFilterValue}/>
+            case "Requested" :
+                return showApprovedOrAccessRequest();
+        }
     }
 
     return (
         <Box sx={{width: '100%'}}>
             <Tabs
-                value={showApprovedRequests}
+                value={statusFilterValue}
                 onChange={handleChange}
                 textColor="secondary"
                 indicatorColor="secondary"
                 aria-label="secondary tabs example">
                 <Tab value="Requested" label="Requested Access"/>
                 <Tab value="Approved" label="Approved Access"/>
+                <Tab value="Dismissed" label="Dismissed Access"/>
             </Tabs>
             <div> {accessRequestOrApprovedList()} </div>
         </Box>

@@ -1,10 +1,10 @@
 package uk.gov.homeoffice.drt.routes
 
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.{concat, optionalHeaderValueByName, parameterMap, path, pathPrefix, redirect}
+import akka.http.scaladsl.server.Directives.{ concat, optionalHeaderValueByName, parameterMap, path, pathPrefix, redirect }
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.MethodDirectives.get
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.{ Logger, LoggerFactory }
 import uk.gov.homeoffice.drt.Urls
 import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
 import uk.gov.homeoffice.drt.authentication.User

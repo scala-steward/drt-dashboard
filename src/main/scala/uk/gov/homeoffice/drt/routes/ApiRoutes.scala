@@ -215,18 +215,41 @@ object ApiRoutes extends JsonSupport
                   entity(as[ClientUserRequestedAccessData]) { userRequestedAccessData =>
                     val user = User.fromRoles(email, rolesStr)
                     if (userRequestedAccessData.portsRequested.nonEmpty || userRequestedAccessData.regionsRequested.nonEmpty) {
-                      Future.sequence(userRequestedAccessData.getListOfPortOrRegion.map { port =>
+                      if (userRequestedAccessData.allPorts) {
                         DashboardClient
-                          .userDetailDrtApi(s"${Dashboard.drtUriForPortCode("LHR")}/data/addUserToGroup/$id/$port", user.roles, xAuthToken, "POST")
-                      })
+                          .userDetailDrtApi(s"${Dashboard.drtUriForPortCode("LHR")}/data/addUserToGroup/$id/All%20Port%20Access", user.roles, xAuthToken, "POST")
+                      } else {
+                        Future.sequence(userRequestedAccessData.getListOfPortOrRegion.map { port =>
+                          DashboardClient
+                            .userDetailDrtApi(s"${Dashboard.drtUriForPortCode("LHR")}/data/addUserToGroup/$id/$port", user.roles, xAuthToken, "POST")
+                        })
+                      }
                       DashboardClient
                         .userDetailDrtApi(s"${Dashboard.drtUriForPortCode("LHR")}/data/addUserToGroup/$id/Border%20Force", user.roles, xAuthToken, "POST")
+                      if (userRequestedAccessData.staffEditing) {
+                        DashboardClient
+                          .userDetailDrtApi(s"${Dashboard.drtUriForPortCode("LHR")}/data/addUserToGroup/$id/Staff%20Admin", user.roles, xAuthToken, "POST")
+                      }
                       UserRequestService.updateUserRequest(userRequestedAccessData, "Approved")
                       notifications.sendAccessGranted(userRequestedAccessData, clientConfig.domain, clientConfig.teamEmail)
                       complete(s"User ${userRequestedAccessData.email} update port ${userRequestedAccessData.portOrRegionText}")
                     } else {
                       complete("No port or region requested")
                     }
+                  }
+                }
+              }
+            }
+          }
+        },
+        (post & path("update-user-request" / Segment)) { status =>
+          authByRole(ManageUsers) {
+            headerValueByName("X-Auth-Roles") { _ =>
+              headerValueByName("X-Auth-Email") { _ =>
+                entity(as[ClientUserRequestedAccessData]) { userRequestedAccessData =>
+                  onComplete(UserRequestService.updateUserRequest(userRequestedAccessData, status)) {
+                    case Success(value) => complete(s"The result was $value")
+                    case Failure(ex) => complete(InternalServerError, s"An error occurred: ${ex.getMessage}")
                   }
                 }
               }

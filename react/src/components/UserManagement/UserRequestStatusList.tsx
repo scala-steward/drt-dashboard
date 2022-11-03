@@ -8,14 +8,16 @@ import {Button} from "@mui/material";
 import {columns} from "./UserAccessCommon";
 
 interface IProps {
-    showApprovedUserRequest: string;
-    setShowApprovedUserRequest: ((value: (((prevState: string) => string) | string)) => void);
+    accessRequestListRequested: boolean
+    setAccessRequestListRequested: ((value: (((prevState: boolean) => boolean) | boolean)) => void);
+    statusView: string;
+    showUserRequestByStatus: string;
+    setShowUserRequestByStatus: ((value: (((prevState: string) => string) | string)) => void);
 }
 
-export default function UserAccessApprovedList(props: IProps) {
+export default function UserRequestStatusList(props: IProps) {
     const [userRequestList, setUserRequestList] = React.useState([] as UserRequestedAccessData[]);
     const [rowsData, setRowsData] = React.useState([] as GridRowModel[]);
-    const [apiRequestCount, setApiRequestCount] = React.useState(0);
     const [rowDetails, setRowDetails] = React.useState({} as UserRequestedAccessData | undefined)
     const [openModal, setOpenModal] = React.useState(false)
 
@@ -24,25 +26,25 @@ export default function UserAccessApprovedList(props: IProps) {
         setRowsData(response.data as GridRowModel[])
     }
 
-    const approvedAccessApi = () => {
-        setApiRequestCount(1)
-        axios.get(ApiClient.requestAccessEndPoint + '?status=Approved')
+    const requestAccessRequestsWithStatus = () => {
+        props.setAccessRequestListRequested(true)
+        axios.get(ApiClient.requestAccessEndPoint + '?status=' + props.statusView)
             .then(response => updateAccessRequestData(response))
             .then(() => console.log("User request response"))
     }
 
-    const resetApprovedUserRequest = () => {
-        props.setShowApprovedUserRequest("Requested")
+    const resetUserRequestShowStatus = () => {
+        props.setShowUserRequestByStatus("Requested")
     }
 
     React.useEffect(() => {
-        if (apiRequestCount == 0) {
-            approvedAccessApi();
+        if (!props.accessRequestListRequested) {
+            requestAccessRequestsWithStatus();
         }
     });
 
     const findEmail = (requestTime: string) => {
-      return userRequestList.find(obj => {
+        return userRequestList.find(obj => {
             return obj.requestTime.trim() == requestTime
         });
     }
@@ -50,7 +52,6 @@ export default function UserAccessApprovedList(props: IProps) {
     const rowClickOpen = (userData: UserRequestedAccessData | undefined) => {
         setRowDetails(userData)
         setOpenModal(true)
-        console.log('rowClickOpen ' + openModal)
     }
 
     return (
@@ -70,11 +71,18 @@ export default function UserAccessApprovedList(props: IProps) {
             />
             {
                 (openModal) ?
-                    <UserRequestDetails openModal={openModal} setOpenModal={setOpenModal} rowDetails={rowDetails}
-                                        approvedPage={true}/> :
+                    <UserRequestDetails openModal={openModal}
+                                        setOpenModal={setOpenModal}
+                                        receivedUserDetails={props.accessRequestListRequested}
+                                        setReceivedUserDetails={props.setAccessRequestListRequested}
+                                        rowDetails={rowDetails}
+                                        status={props.statusView}/> :
                     <span/>
             }
-            <Button style={{float: 'right'}} variant="outlined" color="primary" onClick={resetApprovedUserRequest}>back</Button>
+            <Button style={{float: 'right'}}
+                    variant="outlined"
+                    color="primary"
+                    onClick={resetUserRequestShowStatus}>back</Button>
         </Box>
 
     );
