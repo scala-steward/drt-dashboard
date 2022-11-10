@@ -121,7 +121,8 @@ export default function UserAccess() {
                 columns={columns}
                 pageSize={5}
                 rowsPerPageOptions={[5]}
-                checkboxSelection
+                checkboxSelection={true}
+                disableSelectionOnClick
                 onSelectionModelChange={addSelectedRows}
                 experimentalFeatures={{newEditingApi: true}}
                 onRowClick={(params, event: any) => {
