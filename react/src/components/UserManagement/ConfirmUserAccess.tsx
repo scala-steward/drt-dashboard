@@ -37,10 +37,6 @@ export default function ConfirmUserAccess(props: IProps) {
         props.setOpenModel(false)
     }
 
-    const logMessage = () => {
-        console.log('emails' + props.emails + ' ' + props.emails.map(e => e + ' '))
-    }
-
     const moreThanOneUserDisplay = () => {
         return <div>
             The following users have had their request {messageDisplay()}
@@ -79,7 +75,6 @@ export default function ConfirmUserAccess(props: IProps) {
                 <Box sx={style}>
                     <Typography align="center" id="modal-modal-title" variant="h6" component="h2">
                         User access request {messageDisplay()}
-                        {logMessage}
                     </Typography>
                     <br/>
                     {props.emails.length > 1 ? moreThanOneUserDisplay() : singleUserDisplay()}
