@@ -4,10 +4,8 @@ import ApiClient from "../services/ApiClient";
 import axios from "axios";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
-import ListItemIcon from "@mui/material/ListItemIcon";
 import Checkbox from "@mui/material/Checkbox";
-import ListItemText from "@mui/material/ListItemText";
-import {Box, Button, Divider, FormControl, Typography} from "@mui/material";
+import {Box, Button, Divider, FormControl, FormControlLabel, Typography} from "@mui/material";
 import {PortRegion, PortRegionHelper} from "../model/Config";
 import {PortsByRegionCheckboxes} from "./PortsByRegionCheckboxes";
 import InitialRequestForm from "./InitialRequestForm";
@@ -147,32 +145,27 @@ export default function AccessRequestForm(props: IProps) {
       <p>{pageMessage()}</p>
       <List>
         <ListItem>
-          {isRccUser ?
-            <PortsByRegionCheckboxes portDisabled={true}
-                                     regions={props.regions}
-                                     selectedPorts={selectedPorts}
-                                     onSelectedPortsChange={(ports: string[]) => setSelectedPorts(ports)}/> :
-            <PortsByRegionCheckboxes portDisabled={false}
-                                     regions={props.regions}
-                                     selectedPorts={selectedPorts}
-                                     onSelectedPortsChange={(ports: string[]) => setSelectedPorts(ports)}/>
-          }
+          <PortsByRegionCheckboxes portDisabled={isRccUser}
+                                   regions={props.regions}
+                                   selectedPorts={selectedPorts}
+                                   onSelectedPortsChange={(ports: string[]) => setSelectedPorts(ports)}
+          />
         </ListItem>
         <Divider/>
         <ListItem
           button
           key={'staffing'}
         >
-          <ListItemIcon>
-            <Checkbox
+          <FormControlLabel
+            control={<Checkbox
               inputProps={{'aria-labelledby': "staffing"}}
               name="staffing"
               checked={staffingSelected}
               onChange={event => setStaffingSelected(event.target.checked)}
-            />
-          </ListItemIcon>
-          <ListItemText id="staffing"
-                        primary="I require access to enter staffing figures as my role includes planning"/>
+            />}
+            label="I require access to enter staffing figures as my role includes planning"
+            sx={{fontWeight: 'bold'}}
+          />
         </ListItem>
         <ListItem key={'line-manager'}>
           <FormControl fullWidth>
@@ -210,15 +203,16 @@ export default function AccessRequestForm(props: IProps) {
           button
           key={'agreeDeclaration'}
         >
-          <ListItemIcon>
-            <Checkbox
+          <FormControlLabel
+            control={<Checkbox
               inputProps={{'aria-labelledby': "agreeDeclaration"}}
               name="agreeDeclaration"
               checked={declarationAgreed}
               onChange={event => setDeclarationAgreed(event.target.checked)}
-            />
-          </ListItemIcon>
-          <ListItemText id="agreeDeclaration" primary="I understand and agree with the above declarations"/>
+            />}
+            label="I understand and agree with the above declarations"
+            sx={{fontWeight: 'bold'}}
+          />
         </ListItem>
         {(openModal) ? <AccessRequestAdditionalInformationForm openModal={openModal}
                                                                setOpenModal={setOpenModal}

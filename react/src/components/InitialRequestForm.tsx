@@ -19,11 +19,7 @@ export default function InitialRequestForm(props: IProps) {
           aria-labelledby='initial-radio-buttons-group-label'
           name='radio-buttons-group'
           defaultValue='port'
-          onChange={event => {
-            const updatedValue = event.target.value === 'rccu';
-            // setIsRccUser(updatedValue);
-            props.handleRccOptionCallback(updatedValue)
-          }}
+          onChange={event => props.handleRccOptionCallback(event.target.value === 'rccu')}
         >
           <FormControlLabel value='port' control={<Radio/>} label='Port level data'/>
           <FormControlLabel value='rccu' control={<Radio/>} label='RCC level data'/>
