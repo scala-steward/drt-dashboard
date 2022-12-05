@@ -30,7 +30,6 @@ export default function UserRequestStatusList(props: IProps) {
         props.setAccessRequestListRequested(true)
         axios.get(ApiClient.requestAccessEndPoint + '?status=' + props.statusView)
             .then(response => updateAccessRequestData(response))
-            .then(() => console.log("User request response"))
     }
 
     const resetUserRequestShowStatus = () => {

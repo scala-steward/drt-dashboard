@@ -35,7 +35,6 @@ interface IProps {
 }
 
 export default function AlertForm(props: IProps) {
-    const [selectedRegions, setSelectedRegions] = React.useState<string[]>([])
     const [alertPorts, setAlertPorts] = React.useState<string[]>(props.user.ports)
     const [alertClass, setAlertClass] = React.useState<string>('notice')
     const [title, setTitle] = React.useState<string>('')
@@ -54,11 +53,10 @@ export default function AlertForm(props: IProps) {
         <StyledFormControl>
             <FormControl variant="standard">
                 <PortsByRegionCheckboxes portDisabled={false}
-                                         setPorts={setAlertPorts}
+                                         onSelectedPortsChange={(ports: string[]) => setAlertPorts(ports)}
                                          regions={props.regions}
                                          selectedPorts={alertPorts}
-                                         selectedRegions={selectedRegions}
-                                         setSelectedRegions={setSelectedRegions}/>
+                />
             </FormControl>
             <FormControl variant="standard">
                 <InputLabel id="demo-simple-select-label">Alert type</InputLabel>

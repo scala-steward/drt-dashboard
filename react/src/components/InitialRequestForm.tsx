@@ -7,28 +7,24 @@ import FormLabel from '@mui/material/FormLabel';
 import {Box} from "@mui/material";
 
 interface IProps {
-    rccAccess: string;
-    handleRccOptionCallback: (option:string) => void;
+  handleRccOptionCallback: (isRccUser: boolean) => void;
 }
 
 export default function InitialRequestForm(props: IProps) {
-    const handleEvent = (event:any) => {
-        props.handleRccOptionCallback(event.target.value)
-    }
-
-    return (
-        <Box sx={{width: '100%'}}>
-            <FormControl>
-                <FormLabel id="initial-radio-buttons-group-label"><b>I require access to</b></FormLabel>
-                <RadioGroup
-                    aria-labelledby="initial-radio-buttons-group-label"
-                    defaultValue={props.rccAccess}
-                    name="radio-buttons-group"
-                >
-                    <FormControlLabel value="port" control={<Radio/>} onClick={handleEvent} label="Port level data"/>
-                    <FormControlLabel value="rccu" control={<Radio/>} onClick={handleEvent} label="RCC level data"/>
-                </RadioGroup>
-            </FormControl>
-        </Box>
-    );
+  return (
+    <Box sx={{width: '100%'}}>
+      <FormControl>
+        <FormLabel id='initial-radio-buttons-group-label'><b>I require access to</b></FormLabel>
+        <RadioGroup
+          aria-labelledby='initial-radio-buttons-group-label'
+          name='radio-buttons-group'
+          defaultValue='port'
+          onChange={event => props.handleRccOptionCallback(event.target.value === 'rccu')}
+        >
+          <FormControlLabel value='port' control={<Radio/>} label='Port level data'/>
+          <FormControlLabel value='rccu' control={<Radio/>} label='RCC level data'/>
+        </RadioGroup>
+      </FormControl>
+    </Box>
+  );
 }
