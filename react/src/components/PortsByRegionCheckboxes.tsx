@@ -50,7 +50,7 @@ export const PortsByRegionCheckboxes = (props: IProps) => {
               props.onSelectedPortsChange(updatedPorts)
             }}
           />}
-          label="All regions"
+          label={<Box sx={{fontWeight: 'bold'}}>All regions</Box>}
           sx={{fontWeight: 'bold'}}
         />
       </ListItem>
@@ -82,8 +82,7 @@ export const PortsByRegionCheckboxes = (props: IProps) => {
                       props.onSelectedPortsChange(updatedPorts)
                     }}
                   />}
-                  label={region.name}
-                  sx={{fontWeight: 'bold'}}
+                  label={<Box sx={{fontWeight: 'bold'}}>{region.name}</Box>}
                 />
               </ListItem>
               {sortedPorts.map((portCode) => {
