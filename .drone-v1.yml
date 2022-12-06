@@ -17,6 +17,9 @@ steps:
       - cd react
       - pwd && yarn install
       - pwd && yarn build
+    when:
+      event:
+        - push
 
   - name: Copy front end to resources
     pull: if-not-exists
@@ -24,6 +27,9 @@ steps:
     commands:
       - pwd && rm -rf ./src/main/resources/frontend
       - pwd && mv ./react/build ./src/main/resources/frontend
+    when:
+      event:
+        - push
     depends_on:
       - Build front end
 
