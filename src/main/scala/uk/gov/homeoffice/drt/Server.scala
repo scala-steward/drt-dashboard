@@ -6,12 +6,46 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.Directives.{ concat, getFromResource, getFromResourceDirectory }
 import akka.http.scaladsl.server.Route
+import uk.gov.homeoffice.drt.db.{ AppDatabase, UserAccessRequestDao, UserDao }
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.ports.{ PortCode, PortRegion }
-import uk.gov.homeoffice.drt.routes.{ ApiRoutes, CiriumRoutes, DrtRoutes, ExportRoutes, IndexRoute, NeboUploadRoutes }
+import uk.gov.homeoffice.drt.routes.{ ApiRoutes, CiriumRoutes, DrtRoutes, ExportRoutes, IndexRoute, NeboUploadRoutes, UserRoutes }
+import uk.gov.homeoffice.drt.services.{ UserRequestService, UserService }
 
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 import scala.util.{ Failure, Success }
+
+case class KeyClockConfig(
+  url: String,
+  tokenUrl: String,
+  clientId: String,
+  clientSecret: String)
+
+case class ServerConfig(
+  host: String,
+  port: Int,
+  teamEmail: String,
+  portRegions: Iterable[PortRegion],
+  ciriumDataUri: String,
+  rootDomain: String,
+  useHttps: Boolean,
+  notifyServiceApiKey: String,
+  accessRequestEmails: List[String],
+  neboPortCodes: Array[String],
+  keyclockUrl: String,
+  keyclockTokenUrl: String,
+  keyclockClientId: String,
+  keyclockClientSecret: String,
+  keyclockUsername: String,
+  keyclockPassword: String,
+  scheduleFrequency: Int,
+  inactivityDays: Int,
+  userTrackingFeatureFlag: Boolean) {
+  val portCodes: Iterable[PortCode] = portRegions.flatMap(_.ports)
+  val portIataCodes: Iterable[String] = portCodes.map(_.iata)
+  val clientConfig: ClientConfig = ClientConfig(portRegions, rootDomain, teamEmail)
+  val keyClockConfig: KeyClockConfig = KeyClockConfig(keyclockUrl, keyclockTokenUrl, keyclockClientId, keyclockClientSecret)
+}
 
 object Server {
 
@@ -23,22 +57,6 @@ object Server {
 
   case object Stop extends Message
 
-  case class ServerConfig(
-    host: String,
-    port: Int,
-    teamEmail: String,
-    portRegions: Iterable[PortRegion],
-    ciriumDataUri: String,
-    rootDomain: String,
-    useHttps: Boolean,
-    notifyServiceApiKey: String,
-    accessRequestEmails: List[String],
-    neboPortCodes: Array[String]) {
-    val portCodes: Iterable[PortCode] = portRegions.flatMap(_.ports)
-    val portIataCodes: Iterable[String] = portCodes.map(_.iata)
-    val clientConfig: ClientConfig = ClientConfig(portRegions, rootDomain, teamEmail)
-  }
-
   def apply(serverConfig: ServerConfig): Behavior[Message] = Behaviors.setup { ctx =>
     implicit val system: ActorSystem[Nothing] = ctx.system
     implicit val ec: ExecutionContextExecutor = system.executionContext
@@ -46,7 +64,8 @@ object Server {
     val notifications = EmailNotifications(serverConfig.notifyServiceApiKey, serverConfig.accessRequestEmails)
 
     val urls = Urls(serverConfig.rootDomain, serverConfig.useHttps)
-
+    val userRequestService = new UserRequestService(new UserAccessRequestDao(AppDatabase.db, AppDatabase.userAccessRequestsTable))
+    val userService = new UserService(new UserDao(AppDatabase.db, AppDatabase.userTable))
     val neboRoutes = NeboUploadRoutes(serverConfig.neboPortCodes.toList, new ProdHttpClient).route
     val routes: Route = concat(
       IndexRoute(
@@ -56,8 +75,9 @@ object Server {
         staticResourceDirectory = getFromResourceDirectory("frontend/static")).route,
       CiriumRoutes("cirium", serverConfig.ciriumDataUri),
       DrtRoutes("drt", serverConfig.portIataCodes),
-      ApiRoutes("api", serverConfig.clientConfig, notifications, neboRoutes),
-      ExportRoutes(new ProdHttpClient))
+      ApiRoutes("api", serverConfig.clientConfig, notifications, userRequestService, neboRoutes),
+      ExportRoutes(new ProdHttpClient),
+      UserRoutes("user", userService))
     val serverBinding: Future[Http.ServerBinding] = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
 
     ctx.pipeToSelf(serverBinding) {

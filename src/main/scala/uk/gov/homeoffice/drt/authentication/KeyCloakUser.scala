@@ -15,3 +15,9 @@ case class KeyCloakUser(
   firstName: String,
   lastName: String,
   email: String)
+
+case class KeyCloakGroup(
+  id: String,
+  name: String,
+  path: String)
+

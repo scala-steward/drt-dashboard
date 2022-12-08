@@ -9,15 +9,15 @@ import akka.http.scaladsl.server.{ Directive0, Route }
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import org.slf4j.{ Logger, LoggerFactory }
 import spray.json._
+import uk.gov.homeoffice.drt._
 import uk.gov.homeoffice.drt.alerts.{ Alert, MultiPortAlert, MultiPortAlertClient, MultiPortAlertJsonSupport }
 import uk.gov.homeoffice.drt.auth.Roles
 import uk.gov.homeoffice.drt.auth.Roles._
-import uk.gov.homeoffice.drt.authentication.{ AccessRequest, AccessRequestJsonSupport, ClientUserAccessDataJsonSupport, ClientUserRequestedAccessData, KeyCloakUser, KeyCloakUserJsonSupport, User, UserJsonSupport }
+import uk.gov.homeoffice.drt.authentication._
+import uk.gov.homeoffice.drt.db.UserAccessRequestJsonSupport
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.redlist.{ RedListJsonFormats, RedListUpdate, RedListUpdates, SetRedListUpdate }
-import uk.gov.homeoffice.drt._
-import uk.gov.homeoffice.drt.db.UserAccessRequestJsonSupport
 import uk.gov.homeoffice.drt.services.UserRequestService
 
 import scala.compat.java8.OptionConverters._
@@ -52,6 +52,7 @@ object ApiRoutes extends JsonSupport
     prefix: String,
     clientConfig: ClientConfig,
     notifications: EmailNotifications,
+    userRequestService: UserRequestService,
     neboUploadRoute: Route)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
     pathPrefix(prefix) {
       concat(
@@ -70,7 +71,7 @@ object ApiRoutes extends JsonSupport
         (post & path("access-request")) {
           headerValueByName("X-Auth-Email") { userEmail =>
             entity(as[AccessRequest]) { accessRequest =>
-              UserRequestService.saveUserRequest(userEmail, accessRequest)
+              userRequestService.saveUserRequest(userEmail, accessRequest)
               val failures = notifications.sendRequest(userEmail, accessRequest).foldLeft(List[(String, Throwable)]()) {
                 case (exceptions, (_, Success(_))) => exceptions
                 case (exceptions, (requestAddress, Failure(newException))) => (requestAddress, newException) :: exceptions
@@ -89,7 +90,7 @@ object ApiRoutes extends JsonSupport
         (get & path("access-request")) {
           parameters("status") { status =>
             headerValueByName("X-Auth-Roles") { _ =>
-              onComplete(UserRequestService.getUserRequest(status)) {
+              onComplete(userRequestService.getUserRequest(status)) {
                 case Success(value) =>
                   complete(value.toJson)
                 case Failure(ex) => complete(InternalServerError, s"An error occurred: ${ex.getMessage}")
@@ -230,7 +231,7 @@ object ApiRoutes extends JsonSupport
                         DashboardClient
                           .userDetailDrtApi(s"${Dashboard.drtUriForPortCode("LHR")}/data/addUserToGroup/$id/Staff%20Admin", user.roles, xAuthToken, "POST")
                       }
-                      UserRequestService.updateUserRequest(userRequestedAccessData, "Approved")
+                      userRequestService.updateUserRequest(userRequestedAccessData, "Approved")
                       notifications.sendAccessGranted(userRequestedAccessData, clientConfig.domain, clientConfig.teamEmail)
                       complete(s"User ${userRequestedAccessData.email} update port ${userRequestedAccessData.portOrRegionText}")
                     } else {
@@ -247,7 +248,7 @@ object ApiRoutes extends JsonSupport
             headerValueByName("X-Auth-Roles") { _ =>
               headerValueByName("X-Auth-Email") { _ =>
                 entity(as[ClientUserRequestedAccessData]) { userRequestedAccessData =>
-                  onComplete(UserRequestService.updateUserRequest(userRequestedAccessData, status)) {
+                  onComplete(userRequestService.updateUserRequest(userRequestedAccessData, status)) {
                     case Success(value) => complete(s"The result was $value")
                     case Failure(ex) => complete(InternalServerError, s"An error occurred: ${ex.getMessage}")
                   }

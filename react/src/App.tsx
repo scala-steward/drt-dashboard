@@ -3,6 +3,7 @@ import './App.css';
 import {Home} from './components/Home';
 import Alerts from './components/Alerts/Alerts';
 import UserAccess from './components/UserManagement/UserAccess';
+import UserTracking from './components/users/UserTracking';
 import {Route, Switch} from "react-router-dom";
 import Loading from "./components/Loading";
 import Navigation from "./components/Navigation";
@@ -82,6 +83,9 @@ const App = (props: PropsFromReact) => {
                     </Route>
                     <Route exact path="/userManagement">
                         <UserAccess/>
+                    </Route>
+                    <Route exact path="/userTracking">
+                        <UserTracking/>
                     </Route>
                     <Route exact path="/alerts">
                         <Alerts regions={props.config.values.portsByRegion} user={props.user.profile}/>

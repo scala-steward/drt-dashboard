@@ -16,6 +16,7 @@ export default class ApiClient implements IApiClient {
   public static userDetailsEndpoint = "/api/user-details";
   public static addUserToGroupEndpoint = "/api/accept-user-request";
   public static updateUserRequestEndpoint = "/api/update-user-request";
+  public static userListEndpoint = "/user/all";
 
 
   public fetchData(userEndPoint: string, handleResponse: (r: AxiosResponse) => void) {

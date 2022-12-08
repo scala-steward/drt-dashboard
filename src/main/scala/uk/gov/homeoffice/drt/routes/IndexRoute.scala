@@ -21,6 +21,8 @@ case object RegionPathString extends PathString
 
 case object UserManagementPathString extends PathString
 
+case object UserTrackingPathString extends PathString
+
 case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route, staticResourceDirectory: Route) {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
@@ -40,6 +42,9 @@ case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route
       },
       path("userManagement") {
         indexRouteDirectives(UserManagementPathString)
+      },
+      path("userTracking") {
+        indexRouteDirectives(UserTrackingPathString)
       },
       (get & pathPrefix("")) {
         directoryResource

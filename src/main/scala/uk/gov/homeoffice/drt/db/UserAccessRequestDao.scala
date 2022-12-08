@@ -3,13 +3,12 @@ package uk.gov.homeoffice.drt.db
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import org.joda.time.DateTime
 import slick.jdbc.PostgresProfile.api._
-import slick.lifted.Tag
+import slick.lifted.{ TableQuery, Tag }
 import spray.json.{ DefaultJsonProtocol, JsString, JsValue, JsonFormat, RootJsonFormat, deserializationError }
 import uk.gov.homeoffice.drt.authentication.AccessRequest
-import uk.gov.homeoffice.drt.services.UserRequestService.log
 
 import java.sql.Timestamp
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait UserAccessRequestJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit object DateTimeFormat extends JsonFormat[Timestamp] {
@@ -77,12 +76,8 @@ class UserAccessRequestsTable(tag: Tag) extends Table[UserAccessRequest](tag, "u
   def * = (email, portsRequested, allPorts, regionsRequested, staffing, lineManager, agreeDeclaration, accountType, portOrRegionText, staffText, status, requestTime).mapTo[UserAccessRequest]
 }
 
-object UserAccessRequestDao {
-  lazy val db = Database.forConfig("postgresDB")
-
-  val userAccessRequests = TableQuery[UserAccessRequestsTable]
-
-  def getUserAccessRequest(email: String, accessRequest: AccessRequest, timestamp: java.sql.Timestamp, status: String) = {
+trait IUserAccessRequestDao {
+  def getUserAccessRequest(email: String, accessRequest: AccessRequest, timestamp: java.sql.Timestamp, status: String): UserAccessRequest = {
     UserAccessRequest(
       email = email,
       portsRequested = accessRequest.portsRequested.mkString(","),
@@ -98,16 +93,25 @@ object UserAccessRequestDao {
       requestTime = timestamp)
   }
 
-  def insertOrUpdate(userAccessRequest: UserAccessRequest) = {
-    log.info(s"userAccessRequest $userAccessRequest")
+  def insertOrUpdate(userAccessRequest: UserAccessRequest): Future[Int]
+
+  def selectAll()(implicit executionContext: ExecutionContext): Future[Seq[UserAccessRequest]]
+
+  def selectForStatus(status: String): Future[Seq[UserAccessRequest]]
+
+}
+
+class UserAccessRequestDao(db: Database, userAccessRequests: TableQuery[UserAccessRequestsTable]) extends IUserAccessRequestDao {
+
+  def insertOrUpdate(userAccessRequest: UserAccessRequest): Future[Int] = {
     db.run(userAccessRequests insertOrUpdate userAccessRequest)
   }
 
-  def selectAll()(implicit executionContext: ExecutionContext) = {
+  def selectAll()(implicit executionContext: ExecutionContext): Future[Seq[UserAccessRequest]] = {
     db.run(userAccessRequests.result).mapTo[Seq[UserAccessRequest]]
   }
 
-  def selectForStatus(status: String) = {
+  def selectForStatus(status: String): Future[Seq[UserAccessRequest]] = {
     db.run(userAccessRequests.filter(_.status === status).result)
   }
 }
