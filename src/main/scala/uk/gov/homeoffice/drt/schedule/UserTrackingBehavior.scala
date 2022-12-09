@@ -64,15 +64,16 @@ class UserTracking(
 
   import UserTracking._
 
-  logger.info(s"Starting timer scheduler for user tracking")
-  timers.startTimerWithFixedDelay(UserTrackingKey, InactiveUserCheck, timerInterval, timerInitialDelay)
-  timers.startTimerWithFixedDelay(UserTrackingRevokeKey, RevokeUserCheck, timerInterval, timerInitialDelay)
+  logger.info(s"Starting timer scheduler for user tracking $timerInterval")
+  timers.startTimerWithFixedDelay(UserTrackingKey, InactiveUserCheck, timerInitialDelay, timerInterval)
+  timers.startTimerWithFixedDelay(UserTrackingRevokeKey, RevokeUserCheck, timerInitialDelay, timerInterval)
   val keyCloakAuthTokenService = KeyCloakAuthTokenService.getTokenBehavior(serverConfig.keyClockConfig, serverConfig.keyclockUsername, serverConfig.keyclockPassword)
   val keycloakServiceBehavior: ActorRef[KeyCloakAuthTokenService.Token] = context.spawn(keyCloakAuthTokenService, "keycloakServiceActor")
 
   private def userBehaviour()(implicit ec: ExecutionContext, system: ActorSystem): Behavior[Command] = {
     Behaviors.receiveMessage[Command] {
       case InactiveUserCheck =>
+        context.log.info("InactiveUserCheck")
         val users = userService.getInactiveUsers(numberOfInactivityDays)
         users.map(
           _.map { user =>
