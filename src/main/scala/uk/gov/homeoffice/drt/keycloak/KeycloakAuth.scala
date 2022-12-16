@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.drt.keycloak
 
-import akka.actor.ActorSystem
+import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.Accept
@@ -10,16 +10,15 @@ import org.slf4j.{ Logger, LoggerFactory }
 import spray.json.{ DefaultJsonProtocol, JsNumber, JsObject, JsString, JsValue, RootJsonFormat }
 import uk.gov.homeoffice.drt.http.WithSendAndReceive
 
-import scala.concurrent.Future
+import scala.concurrent.{ ExecutionContextExecutor, Future }
 
-abstract case class KeyCloakAuth(tokenUrl: String, clientId: String, clientSecret: String)(implicit val system: ActorSystem, mat: Materializer)
+abstract case class KeyCloakAuth(tokenUrl: String, clientId: String, clientSecret: String)(implicit val system: ActorSystem[Nothing], mat: Materializer)
   extends WithSendAndReceive with KeyCloakAuthTokenParserProtocol {
 
-  import system.dispatcher
-
+  implicit val ec: ExecutionContextExecutor = system.executionContext
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def formData(username: String, password: String, clientId: String, clientSecret: String) = FormData(Map(
+  def formData(username: String, password: String, clientId: String, clientSecret: String): FormData = FormData(Map(
     "username" -> username,
     "password" -> password,
     "client_id" -> clientId,

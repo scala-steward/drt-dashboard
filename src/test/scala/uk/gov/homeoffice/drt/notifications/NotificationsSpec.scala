@@ -3,6 +3,7 @@ package uk.gov.homeoffice.drt.notifications
 import com.typesafe.config.{ Config, ConfigFactory }
 import org.specs2.mutable.Specification
 import uk.gov.homeoffice.drt.authentication.AccessRequest
+import uk.gov.service.notify.NotificationClient
 
 import scala.util.Failure
 
@@ -10,8 +11,8 @@ class NotificationsSpec extends Specification {
   private val config: Config = ConfigFactory.load()
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
   val recipient: List[String] = config.getString("dashboard.notifications.access-request-emails").split(",").toList
-
-  val notifications: EmailNotifications = EmailNotifications(apiKey, recipient)
+  val notificationClient = new NotificationClient(apiKey)
+  val notifications: EmailNotifications = EmailNotifications(recipient, notificationClient)
 
   "Given a gov notify client" >> {
     "When I send an email with the correct personalisation tokens" >> {

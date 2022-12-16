@@ -1,26 +1,25 @@
 package uk.gov.homeoffice.drt.services
 
-import org.joda.time.DateTime
 import org.slf4j.{ Logger, LoggerFactory }
 import uk.gov.homeoffice.drt.authentication.{ AccessRequest, ClientUserRequestedAccessData }
-import uk.gov.homeoffice.drt.db.{ IUserAccessRequestDao, UserAccessRequestDao }
+import uk.gov.homeoffice.drt.db.{ IUserAccessRequestDao, UserAccessRequest }
 
 import java.sql.Timestamp
-import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class UserRequestService(userAccessRequestDao: IUserAccessRequestDao) {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def saveUserRequest(email: String, accessRequest: AccessRequest) = {
-    val userAccessRequest = userAccessRequestDao.getUserAccessRequest(email, accessRequest, new Timestamp(DateTime.now().getMillis), "Requested")
+  def saveUserRequest(email: String, accessRequest: AccessRequest, timestamp: Timestamp): Future[Int] = {
+    val userAccessRequest = userAccessRequestDao.getUserAccessRequest(email, accessRequest, timestamp, "Requested")
     userAccessRequestDao.insertOrUpdate(userAccessRequest)
   }
 
-  def updateUserRequest(clientUserRequestedAccessData: ClientUserRequestedAccessData, status: String) = {
+  def updateUserRequest(clientUserRequestedAccessData: ClientUserRequestedAccessData, status: String): Future[Int] = {
     userAccessRequestDao.insertOrUpdate(clientUserRequestedAccessData.convertUserAccessRequest.copy(status = status))
   }
 
-  def getUserRequest(status: String) = {
+  def getUserRequest(status: String): Future[Seq[UserAccessRequest]] = {
     userAccessRequestDao.selectForStatus(status)
   }
 

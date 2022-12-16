@@ -8,14 +8,14 @@ interface IApiClient {
 export default class ApiClient implements IApiClient {
   public static userEndPoint = "/api/user";
   public static configEndPoint = "/api/config";
-  public static requestAccessEndPoint = "/api/access-request";
   public static logoutEndPoint = "/oauth/logout";
   public static alertsEndPoint = "/api/alerts";
   public static neboFileUpload = "/api/nebo-upload";
   public static redListUpdates = "/api/red-list-updates";
-  public static userDetailsEndpoint = "/api/user-details";
-  public static addUserToGroupEndpoint = "/api/accept-user-request";
-  public static updateUserRequestEndpoint = "/api/update-user-request";
+  public static userDetailsEndpoint = "/user/user-details";
+  public static requestAccessEndPoint = "/user/access-request";
+  public static addUserToGroupEndpoint = "/user/accept-access-request";
+  public static updateUserRequestEndpoint = "/user/update-access-request";
   public static userListEndpoint = "/user/all";
 
 
@@ -28,7 +28,7 @@ export default class ApiClient implements IApiClient {
 
   public sendData(userEndPoint: string, data: any, handleResponse: (r: AxiosResponse) => void) {
     axios
-      .post("/api/access-request", data)
+      .post("/user/access-request", data)
       .then(r => handleResponse(r))
       .catch(t => console.log('caught: ' + t))
   }

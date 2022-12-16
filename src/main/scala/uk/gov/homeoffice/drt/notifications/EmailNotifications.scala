@@ -2,16 +2,14 @@ package uk.gov.homeoffice.drt.notifications
 
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.authentication.{AccessRequest, ClientUserRequestedAccessData}
-import uk.gov.service.notify.{NotificationClient, SendEmailResponse}
+import uk.gov.service.notify.{NotificationClient, NotificationClientApi, SendEmailResponse}
 
 import java.util
 import scala.collection.JavaConverters.mapAsJavaMapConverter
 import scala.util.Try
 
-case class EmailNotifications(apiKey: String, accessRequestEmails: List[String]) {
+case class EmailNotifications(accessRequestEmails: List[String], client: NotificationClientApi) {
   val log: Logger = LoggerFactory.getLogger(getClass)
-
-  val client = new NotificationClient(apiKey)
 
   val accessRequestEmailTemplateId = "5f34d7bb-293f-481c-826b-62661ba8a736"
 
@@ -126,7 +124,7 @@ case class EmailNotifications(apiKey: String, accessRequestEmails: List[String])
       personalisation,
       reference)
     ).recover {
-      case e => log.error(s"Error while sending email to user $email for $reference notification",e)
+      case e => log.error(s"Error while sending email to user $email for $reference notification", e)
         throw e
     }
   }

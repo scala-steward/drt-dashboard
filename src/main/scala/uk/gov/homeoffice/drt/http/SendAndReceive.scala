@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.drt.http
 
-import akka.actor.ActorSystem
+import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.{ HttpRequest, HttpResponse }
 
@@ -12,7 +12,7 @@ trait WithSendAndReceive {
 }
 
 trait ProdSendAndReceive extends WithSendAndReceive {
-  implicit val system: ActorSystem
+  implicit val system: ActorSystem[Nothing]
 
   override def sendAndReceive: SendReceive = request => Http()(system).singleRequest(request)
 }

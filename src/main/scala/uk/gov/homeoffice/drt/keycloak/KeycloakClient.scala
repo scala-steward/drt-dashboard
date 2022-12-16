@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.drt.keycloak
 
-import akka.actor.ActorSystem
+import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.{ Accept, Authorization, OAuth2BearerToken }
@@ -16,14 +16,14 @@ import scala.concurrent.duration._
 import scala.concurrent.{ Await, Future }
 import scala.language.postfixOps
 
-abstract case class KeycloakClient(token: String, keyCloakUrl: String)(implicit val system: ActorSystem, mat: Materializer)
+abstract case class KeycloakClient(token: String, keyCloakUrl: String)(implicit val system: ActorSystem[Nothing], mat: Materializer)
   extends WithSendAndReceive with KeyCloakUserParserProtocol {
 
   import KeyCloakUserFormatParser._
-  import system.dispatcher
 
   def log: Logger = LoggerFactory.getLogger(getClass)
 
+  implicit val ec = system.executionContext
   implicit val timeout: Timeout = Timeout(1 minute)
 
   def logResponse(requestName: String, resp: HttpResponse): HttpResponse = {

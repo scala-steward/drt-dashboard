@@ -10,10 +10,7 @@ import com.typesafe.config.{ Config, ConfigFactory }
 import org.specs2.mutable.Specification
 import spray.json._
 import uk.gov.homeoffice.drt.auth.Roles.{ BorderForceStaff, LHR }
-import uk.gov.homeoffice.drt.db.MockUserAccessRequestDao
-import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.ports.PortRegion
-import uk.gov.homeoffice.drt.services.UserRequestService
 import uk.gov.homeoffice.drt.{ ClientConfig, ClientConfigJsonFormats, JsonSupport }
 
 class ApiRoutesSpec extends Specification with Specs2RouteTest with JsonSupport with ClientConfigJsonFormats {
@@ -29,8 +26,6 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest with JsonSupport 
   val routes: Route = ApiRoutes(
     "api",
     clientConfig,
-    EmailNotifications(apiKey, List("access-requests@drt")),
-    new UserRequestService(new MockUserAccessRequestDao),
     neboRoutes.route)
 
   "Given a uri accessed by a user with an email but no port access, I should see an empty port list and their email address in JSON" >> {
