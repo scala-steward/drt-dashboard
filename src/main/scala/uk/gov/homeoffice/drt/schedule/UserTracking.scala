@@ -70,14 +70,18 @@ class UserTracking(serverConfig: ServerConfig,
         val users = userService.getInactiveUsers(numberOfInactivityDays)
         users.map(
           _.map { user =>
-            notifications.sendUserInactivityEmailNotification(
-              user.email,
-              serverConfig.rootDomain,
-              serverConfig.teamEmail,
-              notifications.inactiveUserNotificationTemplateId,
-              "inactive user notification")
+            if (user.email.nonEmpty) {
+              notifications.sendUserInactivityEmailNotification(
+                user.email,
+                serverConfig.rootDomain,
+                serverConfig.teamEmail,
+                notifications.inactiveUserNotificationTemplateId,
+                "inactive user notification")
+              logger.info(s"User with email ${user.email} notified due to inactivity")
+            } else {
+              logger.info(s"No email for $user to notify")
+            }
             userService.upsertUser(user.copy(inactive_email_sent = Some(new Timestamp(new Date().getTime))))
-            logger.info(s"User with email ${user.email} notified due to inactivity")
           })
         Behaviors.same
 
@@ -86,27 +90,41 @@ class UserTracking(serverConfig: ServerConfig,
         Behaviors.same
 
       case KeyCloakToken(token: KeyCloakAuthToken) =>
+        context.log.info("KeyCloakToken-RevokeAccess")
         implicit val actorSystem: ActorSystem[Nothing] = context.system
         val usersToRevoke = userService.getUsersToRevoke().map(_.take(maxSize))
         val keyClockClient = KeyCloakAuthTokenService.getKeyClockClient(serverConfig.keyClockConfig.url, token)
         val keycloakService = KeycloakService(keyClockClient)
         usersToRevoke.map { utrOption =>
           utrOption.map { utr =>
-            keycloakService.getUsersForEmail(utr.email).map { ud =>
-              ud.map { uId =>
-                if (utr.email.toLowerCase.trim == uId.email.toLowerCase.trim) {
-                  keycloakService.removeUser(uId.id)
-                  notifications.sendUserInactivityEmailNotification(
-                    uId.email,
-                    serverConfig.rootDomain,
-                    serverConfig.teamEmail,
-                    notifications.revokeAccessTemplateId,
-                    "revoked DRT Access")
-                  userService.upsertUser(utr.copy(revoked_access = Some(new Timestamp(new Date().getTime))))
-                  logger.info(s"User with email ${utr.email} access revoked due to inactivity")
+            if (utr.email.nonEmpty) {
+              keycloakService.getUsersForEmail(utr.email).map { ud =>
+                ud.map { uId =>
+                  if (utr.email.toLowerCase.trim == uId.email.toLowerCase.trim) {
+                    keycloakService.removeUser(uId.id)
+                    notifications.sendUserInactivityEmailNotification(
+                      uId.email,
+                      serverConfig.rootDomain,
+                      serverConfig.teamEmail,
+                      notifications.revokeAccessTemplateId,
+                      "revoked DRT Access")
+                    userService.upsertUser(utr.copy(revoked_access = Some(new Timestamp(new Date().getTime))))
+                    logger.info(s"User with email ${utr.email} access revoked due to inactivity")
+                  }
+                }
+              }
+            } else {
+              keycloakService.getUsersForUsername(utr.username).map { ud =>
+                ud.map { uId =>
+                  if (utr.username.toLowerCase.trim == uId.username.toLowerCase.trim) {
+                    keycloakService.removeUser(uId.id)
+                    userService.upsertUser(utr.copy(revoked_access = Some(new Timestamp(new Date().getTime))))
+                    logger.info(s"User with username ${utr.username} access revoked due to inactivity")
+                  }
                 }
               }
             }
+
           }
         }
         Behaviors.same
