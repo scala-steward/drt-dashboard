@@ -11,37 +11,34 @@ import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes._
 import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
-import uk.gov.service.notify.NotificationClient
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
-case class KeyClockConfig(
-                           url: String,
-                           tokenUrl: String,
-                           clientId: String,
-                           clientSecret: String)
+case class KeyClockConfig(url: String,
+                          tokenUrl: String,
+                          clientId: String,
+                          clientSecret: String)
 
-case class ServerConfig(
-                         host: String,
-                         port: Int,
-                         teamEmail: String,
-                         portRegions: Iterable[PortRegion],
-                         ciriumDataUri: String,
-                         rootDomain: String,
-                         useHttps: Boolean,
-                         notifyServiceApiKey: String,
-                         accessRequestEmails: List[String],
-                         neboPortCodes: Array[String],
-                         keyclockUrl: String,
-                         keyclockTokenUrl: String,
-                         keyclockClientId: String,
-                         keyclockClientSecret: String,
-                         keyclockUsername: String,
-                         keyclockPassword: String,
-                         scheduleFrequency: Int,
-                         inactivityDays: Int,
-                         userTrackingFeatureFlag: Boolean) {
+case class ServerConfig(host: String,
+                        port: Int,
+                        teamEmail: String,
+                        portRegions: Iterable[PortRegion],
+                        ciriumDataUri: String,
+                        rootDomain: String,
+                        useHttps: Boolean,
+                        notifyServiceApiKey: String,
+                        accessRequestEmails: List[String],
+                        neboPortCodes: Array[String],
+                        keyclockUrl: String,
+                        keyclockTokenUrl: String,
+                        keyclockClientId: String,
+                        keyclockClientSecret: String,
+                        keyclockUsername: String,
+                        keyclockPassword: String,
+                        scheduleFrequency: Int,
+                        inactivityDays: Int,
+                        userTrackingFeatureFlag: Boolean) {
   val portCodes: Iterable[PortCode] = portRegions.flatMap(_.ports)
   val portIataCodes: Iterable[String] = portCodes.map(_.iata)
   val clientConfig: ClientConfig = ClientConfig(portRegions, rootDomain, teamEmail)
