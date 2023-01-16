@@ -29,13 +29,12 @@ object UserRoutes extends JsonSupport
   with KeyCloakUserJsonSupport {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def apply(
-             prefix: String,
-             clientConfig: ClientConfig,
-             userService: UserService,
-             userRequestService: UserRequestService,
-             notifications: EmailNotifications,
-             keyClockUrl: String)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route = {
+  def apply(prefix: String,
+            clientConfig: ClientConfig,
+            userService: UserService,
+            userRequestService: UserRequestService,
+            notifications: EmailNotifications,
+            keyClockUrl: String)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route = {
 
     def getKeyCloakService(accessToken: String): KeycloakService = {
       val keyClockClient = new KeycloakClient(accessToken, keyClockUrl) with ProdSendAndReceive

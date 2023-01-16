@@ -20,19 +20,19 @@ case class User(
   inactive_email_sent: Option[java.sql.Timestamp],
   revoked_access: Option[java.sql.Timestamp])
 
-class UserTable(tag: Tag) extends Table[User](tag, "user") {
+class UserTable(tag: Tag, tableName: String = "user") extends Table[User](tag, tableName) {
 
-  def id = column[String]("id", O.PrimaryKey)
+  def id = column[String]("ID", O.PrimaryKey)
 
-  def username = column[String]("username")
+  def username = column[String]("USERNAME")
 
-  def email = column[String]("email")
+  def email = column[String]("EMAIL")
 
-  def latest_login = column[java.sql.Timestamp]("latest_login")
+  def latest_login = column[java.sql.Timestamp]("LATEST_LOGIN")
 
-  def inactive_email_sent = column[Option[java.sql.Timestamp]]("inactive_email_sent")
+  def inactive_email_sent = column[Option[java.sql.Timestamp]]("INACTIVE_EMAIL_SENT")
 
-  def revoked_access = column[Option[java.sql.Timestamp]]("revoked_access")
+  def revoked_access = column[Option[java.sql.Timestamp]]("REVOKED_ACCESS")
 
   def * = (id, username, email, latest_login, inactive_email_sent, revoked_access).mapTo[User]
 }
@@ -46,6 +46,7 @@ trait IUserDao {
 
   def selectAll()(implicit executionContext: ExecutionContext): Future[Seq[User]]
 
+  def deleteAll()(implicit executionContext: ExecutionContext): Future[Int]
 }
 
 class UserDao(db: Database, userTable: TableQuery[UserTable]) extends IUserDao {
@@ -71,4 +72,7 @@ class UserDao(db: Database, userTable: TableQuery[UserTable]) extends IUserDao {
     db.run(userTable.result).mapTo[Seq[User]]
   }
 
+  override def deleteAll()(implicit executionContext: ExecutionContext): Future[Int] = {
+    db.run(userTable.delete)
+  }
 }
