@@ -1,12 +1,12 @@
 package uk.gov.homeoffice.drt.schedule
 
-import akka.actor.typed.scaladsl.{ActorContext, Behaviors, TimerScheduler}
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
-import org.slf4j.{Logger, LoggerFactory}
+import akka.actor.typed.scaladsl.{ ActorContext, Behaviors, TimerScheduler }
+import akka.actor.typed.{ ActorRef, ActorSystem, Behavior }
+import org.slf4j.{ Logger, LoggerFactory }
 import uk.gov.homeoffice.drt.ServerConfig
-import uk.gov.homeoffice.drt.db.{AppDatabase, UserDao}
+import uk.gov.homeoffice.drt.db.{ AppDatabase, UserDao }
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuthTokenService.GetToken
-import uk.gov.homeoffice.drt.keycloak.{KeyCloakAuthToken, KeyCloakAuthTokenService, KeycloakService}
+import uk.gov.homeoffice.drt.keycloak.{ KeyCloakAuthToken, KeyCloakAuthTokenService, KeycloakService }
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.services.UserService
 
@@ -16,7 +16,7 @@ import scala.concurrent.ExecutionContext
 
 sealed trait Command
 
-import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.concurrent.duration.{ DurationInt, FiniteDuration }
 
 object UserTracking {
   private case object UserTrackingKey extends Command

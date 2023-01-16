@@ -51,7 +51,7 @@ class MockUserDaoSpec extends AsyncFlatSpec {
     inactive_email_sent = None,
     revoked_access = None)
 
-  "UserList" should "give all users" in {
+  "select all" should "give all users" in {
     val userList = List(user1, user2, user3, user4, user5)
     val mockUserDao = new MockUserDao()
     mockUserDao.insertOrUpdate(user1)
@@ -65,7 +65,7 @@ class MockUserDaoSpec extends AsyncFlatSpec {
     assert(allUser == userList)
   }
 
-  "UserList" should "give users who are inactive more than 60 days" in {
+  "select inactive user" should "give users who are inactive more than 60 days" in {
     val expectedUsers = List(user3)
     val mockUserDao = new MockUserDao()
     mockUserDao.insertOrUpdate(user1)
@@ -79,7 +79,7 @@ class MockUserDaoSpec extends AsyncFlatSpec {
     assert(inactiveUsers == expectedUsers)
   }
 
-  "UserList" should "give users who are notified more that 7 days back" in {
+  "select revoke access users" should "give users who are notified more that 7 days back about 60 days inactivity" in {
     val expectedUsers = List(user4)
     val mockUserDao = new MockUserDao()
     mockUserDao.insertOrUpdate(user1)

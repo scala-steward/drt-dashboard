@@ -1,10 +1,10 @@
 package uk.gov.homeoffice.drt.keycloak
 
 import akka.http.scaladsl.model.HttpResponse
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.{ Logger, LoggerFactory }
 import uk.gov.homeoffice.drt.authentication.KeyCloakUser
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 trait IKeycloakService {
   implicit val ec: ExecutionContext

@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.db
 
 import java.time.LocalDateTime
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 class MockUserDao() extends IUserDao {
   var userList = Seq.empty[User]
@@ -25,4 +25,10 @@ class MockUserDao() extends IUserDao {
   override def selectAll()(implicit executionContext: ExecutionContext): Future[Seq[User]] = {
     Future.successful(userList)
   }
+
+  override def deleteAll()(implicit executionContext: ExecutionContext): Future[Int] = {
+    userList = Seq.empty[User]
+    Future.successful(userList.size)
+  }
+
 }
