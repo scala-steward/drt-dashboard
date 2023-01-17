@@ -5,7 +5,7 @@ import akka.actor.typed.{ ActorRef, ActorSystem, Behavior }
 import uk.gov.homeoffice.drt.KeyClockConfig
 import uk.gov.homeoffice.drt.http.ProdSendAndReceive
 import uk.gov.homeoffice.drt.schedule.Command
-import uk.gov.homeoffice.drt.schedule.UserTracking.KeyCloakToken
+import uk.gov.homeoffice.drt.schedule.UserTracking.PerformAccountRevocations
 
 import java.time.Instant
 import scala.concurrent.{ ExecutionContext, ExecutionContextExecutor, Future }
@@ -32,7 +32,7 @@ object KeyCloakAuthTokenService {
           context.log.info("GetToken by {}", replyTo)
           implicit val ec: ExecutionContextExecutor = context.system.executionContext
           implicit val system: ActorSystem[Nothing] = context.system
-          getManageUserToken(keyClockConfig, manageUsername, managePassword, context).map(KeyCloakToken).map(replyTo ! _)
+          getManageUserToken(keyClockConfig, manageUsername, managePassword, context).map(PerformAccountRevocations).map(replyTo ! _)
           Behaviors.same
 
         case SetToken(token: Option[TokenData]) =>

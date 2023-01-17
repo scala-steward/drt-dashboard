@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS public.user_test
+CREATE TABLE IF NOT EXISTS user_test
 (
     id text NOT NULL,
     username text NOT NULL,

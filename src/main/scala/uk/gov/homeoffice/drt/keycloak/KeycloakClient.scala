@@ -51,7 +51,7 @@ abstract case class KeycloakClient(token: String, keyCloakUrl: String)(implicit 
       .flatMap { r => Unmarshal(r).to[List[KeyCloakUser]] }.map(_.headOption)
   }
 
-  def getUsersForUsername(username: String): Future[Option[KeyCloakUser]] = {
+  def getUserForUsername(username: String): Future[Option[KeyCloakUser]] = {
     val uri = keyCloakUrl + s"/users?username=$username"
     log.info(s"Calling key cloak: $uri")
     pipeline(HttpMethods.GET, uri, "getUsersForUsername")

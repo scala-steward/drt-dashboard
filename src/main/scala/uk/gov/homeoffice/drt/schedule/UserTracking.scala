@@ -1,10 +1,13 @@
 package uk.gov.homeoffice.drt.schedule
 
+import akka.actor.typed.scaladsl.AskPattern.{ Askable, schedulerFromActorSystem }
 import akka.actor.typed.scaladsl.{ ActorContext, Behaviors, TimerScheduler }
 import akka.actor.typed.{ ActorRef, ActorSystem, Behavior }
+import akka.util.Timeout
 import org.slf4j.{ Logger, LoggerFactory }
 import uk.gov.homeoffice.drt.ServerConfig
-import uk.gov.homeoffice.drt.db.{ AppDatabase, UserDao }
+import uk.gov.homeoffice.drt.authentication.KeyCloakUser
+import uk.gov.homeoffice.drt.db.{ AppDatabase, User, UserDao }
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuthTokenService.GetToken
 import uk.gov.homeoffice.drt.keycloak.{ KeyCloakAuthToken, KeyCloakAuthTokenService, KeycloakService }
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
@@ -27,7 +30,7 @@ object UserTracking {
 
   private case object RevokeUserCheck extends Command
 
-  case class KeyCloakToken(token: KeyCloakAuthToken) extends Command
+  case class PerformAccountRevocations(token: KeyCloakAuthToken) extends Command
 
   def apply(serverConfig: ServerConfig, timerInitialDelay: FiniteDuration, maxSize: Int, notifications: EmailNotifications): Behavior[Command] = Behaviors.setup { context: ActorContext[Command] =>
     implicit val ec = context.executionContext
@@ -44,15 +47,16 @@ object UserTracking {
   }
 }
 
-class UserTracking(serverConfig: ServerConfig,
-                   notifications: EmailNotifications,
-                   userService: UserService,
-                   timers: TimerScheduler[Command],
-                   timerInitialDelay: FiniteDuration,
-                   timerInterval: FiniteDuration,
-                   numberOfInactivityDays: Int,
-                   maxSize: Int,
-                   context: ActorContext[Command]) {
+class UserTracking(
+  serverConfig: ServerConfig,
+  notifications: EmailNotifications,
+  userService: UserService,
+  timers: TimerScheduler[Command],
+  timerInitialDelay: FiniteDuration,
+  timerInterval: FiniteDuration,
+  numberOfInactivityDays: Int,
+  maxSize: Int,
+  context: ActorContext[Command]) {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   import UserTracking._
@@ -86,39 +90,39 @@ class UserTracking(serverConfig: ServerConfig,
         Behaviors.same
 
       case RevokeUserCheck =>
-        keycloakServiceBehavior ! GetToken(context.self)
+        implicit val timeout = new Timeout(30 seconds)
+        implicit val scheduler = context.system.scheduler
+        keycloakServiceBehavior.ask(ref => GetToken(ref)).map(token => context.self ! token)
         Behaviors.same
 
-      case KeyCloakToken(token: KeyCloakAuthToken) =>
+      case PerformAccountRevocations(token: KeyCloakAuthToken) =>
         context.log.info("KeyCloakToken-RevokeAccess")
         implicit val actorSystem: ActorSystem[Nothing] = context.system
         val usersToRevoke = userService.getUsersToRevoke().map(_.take(maxSize))
         val keyClockClient = KeyCloakAuthTokenService.getKeyClockClient(serverConfig.keyClockConfig.url, token)
         val keycloakService = KeycloakService(keyClockClient)
         usersToRevoke.map { utrOption =>
-          utrOption.map { utr =>
+          utrOption.map { utr: User =>
             if (utr.email.nonEmpty) {
               keycloakService.getUsersForEmail(utr.email).map { ud =>
                 ud.map { uId =>
                   if (utr.email.toLowerCase.trim == uId.email.toLowerCase.trim) {
-                    keycloakService.removeUser(uId.id)
+                    removeUser(keycloakService, uId, utr)
                     notifications.sendUserInactivityEmailNotification(
                       uId.email,
                       serverConfig.rootDomain,
                       serverConfig.teamEmail,
                       notifications.revokeAccessTemplateId,
                       "revoked DRT Access")
-                    userService.upsertUser(utr.copy(revoked_access = Some(new Timestamp(new Date().getTime))))
                     logger.info(s"User with email ${utr.email} access revoked due to inactivity")
                   }
                 }
               }
             } else {
-              keycloakService.getUsersForUsername(utr.username).map { ud =>
+              keycloakService.getUserForUsername(utr.username).map { ud =>
                 ud.map { uId =>
                   if (utr.username.toLowerCase.trim == uId.username.toLowerCase.trim) {
-                    keycloakService.removeUser(uId.id)
-                    userService.upsertUser(utr.copy(revoked_access = Some(new Timestamp(new Date().getTime))))
+                    removeUser(keycloakService, uId, utr)
                     logger.info(s"User with username ${utr.username} access revoked due to inactivity")
                   }
                 }
@@ -133,6 +137,11 @@ class UserTracking(serverConfig: ServerConfig,
         logger.info(s"Unknown command to log")
         Behaviors.same
     }
+  }
+
+  def removeUser(keycloakService: KeycloakService, uId: KeyCloakUser, utr: User)(implicit ec: ExecutionContext) = {
+    keycloakService.removeUser(uId.id)
+    userService.upsertUser(utr.copy(revoked_access = Some(new Timestamp(new Date().getTime))))
   }
 }
 

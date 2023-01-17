@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.db
 
 import org.specs2.mutable.Specification
-import org.specs2.specification.{AfterEach, BeforeEach}
+import org.specs2.specification.{ AfterEach, BeforeEach }
 
 import java.sql.Timestamp
 import java.time.Instant
@@ -66,7 +66,6 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
     Await.result(userDao.insertOrUpdate(userWithNoEmail), 1.seconds)
 
     val allUser = Await.result(userDao.selectAll(), 1.seconds)
-    println(s"allUser $allUser")
     allUser.toSet === userList.toSet
   }
 

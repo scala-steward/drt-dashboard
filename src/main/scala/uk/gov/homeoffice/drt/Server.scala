@@ -1,19 +1,19 @@
 package uk.gov.homeoffice.drt
 
-import akka.actor.typed.scaladsl.{ ActorContext, Behaviors }
-import akka.actor.typed.{ ActorSystem, Behavior, PostStop }
+import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
+import akka.actor.typed.{ActorSystem, Behavior, PostStop}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
-import akka.http.scaladsl.server.Directives.{ concat, getFromResource, getFromResourceDirectory }
+import akka.http.scaladsl.server.Directives.{concat, getFromResource, getFromResourceDirectory}
 import akka.http.scaladsl.server.Route
-import uk.gov.homeoffice.drt.db.{ AppDatabase, UserAccessRequestDao, UserDao }
+import uk.gov.homeoffice.drt.db.{AppDatabase, UserAccessRequestDao, UserDao}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
-import uk.gov.homeoffice.drt.ports.{ PortCode, PortRegion }
+import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes._
-import uk.gov.homeoffice.drt.services.{ UserRequestService, UserService }
+import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
 
-import scala.concurrent.{ ExecutionContextExecutor, Future }
-import scala.util.{ Failure, Success }
+import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.util.{Failure, Success}
 
 case class KeyClockConfig(url: String,
                           tokenUrl: String,
