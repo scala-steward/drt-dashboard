@@ -25,8 +25,8 @@ case class KeycloakService(keycloakClient: KeycloakClient)(implicit val ec: Exec
     keycloakClient.getUsersForEmail(email)
   }
 
-  def getUsersForUsername(username: String): Future[Option[KeyCloakUser]] = {
-    keycloakClient.getUsersForUsername(username)
+  def getUserForUsername(username: String): Future[Option[KeyCloakUser]] = {
+    keycloakClient.getUserForUsername(username)
   }
 
   def removeUser(userId: String): Future[HttpResponse] = {
@@ -55,7 +55,7 @@ case class KeycloakService(keycloakClient: KeycloakClient)(implicit val ec: Exec
   }
 
   def logout(username: String): Future[Option[Future[HttpResponse]]] = {
-    keycloakClient.getUsersForUsername(username)
+    keycloakClient.getUserForUsername(username)
       .map(u =>
         u.map { ud =>
           keycloakClient.logoutUser(ud.id)

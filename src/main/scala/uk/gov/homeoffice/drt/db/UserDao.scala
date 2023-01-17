@@ -22,17 +22,17 @@ case class User(
 
 class UserTable(tag: Tag, tableName: String = "user") extends Table[User](tag, tableName) {
 
-  def id = column[String]("ID", O.PrimaryKey)
+  def id = column[String]("id", O.PrimaryKey)
 
-  def username = column[String]("USERNAME")
+  def username = column[String]("username")
 
-  def email = column[String]("EMAIL")
+  def email = column[String]("email")
 
-  def latest_login = column[java.sql.Timestamp]("LATEST_LOGIN")
+  def latest_login = column[java.sql.Timestamp]("latest_login")
 
-  def inactive_email_sent = column[Option[java.sql.Timestamp]]("INACTIVE_EMAIL_SENT")
+  def inactive_email_sent = column[Option[java.sql.Timestamp]]("inactive_email_sent")
 
-  def revoked_access = column[Option[java.sql.Timestamp]]("REVOKED_ACCESS")
+  def revoked_access = column[Option[java.sql.Timestamp]]("revoked_access")
 
   def * = (id, username, email, latest_login, inactive_email_sent, revoked_access).mapTo[User]
 }

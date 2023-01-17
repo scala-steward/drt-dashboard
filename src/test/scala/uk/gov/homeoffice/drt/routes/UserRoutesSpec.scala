@@ -5,22 +5,22 @@ import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.Specs2RouteTest
-import com.typesafe.config.{Config, ConfigFactory}
+import com.typesafe.config.{ Config, ConfigFactory }
 import org.joda.time.DateTime
 import org.specs2.mutable.Specification
-import spray.json.{JsValue, enrichAny}
+import spray.json.{ JsValue, enrichAny }
 import uk.gov.homeoffice.drt.auth.Roles.BorderForceStaff
-import uk.gov.homeoffice.drt.authentication.{AccessRequest, AccessRequestJsonSupport}
+import uk.gov.homeoffice.drt.authentication.{ AccessRequest, AccessRequestJsonSupport }
 import uk.gov.homeoffice.drt.db._
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.ports.PortRegion
-import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
-import uk.gov.homeoffice.drt.{ClientConfig, JsonSupport}
+import uk.gov.homeoffice.drt.services.{ UserRequestService, UserService }
+import uk.gov.homeoffice.drt.{ ClientConfig, JsonSupport }
 
 import java.sql.Timestamp
 import java.time.Instant
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{ Await, Future }
 
 class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport with AccessRequestJsonSupport with UserAccessRequestJsonSupport {
   val testKit: ActorTestKit = ActorTestKit()
@@ -106,9 +106,9 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
       Get("/user/all") ~>
         RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
         RawHeader("X-Auth-Email", "my@email.com") ~> userRoutes(userService, userRequestService) ~> check {
-        responseAs[String] shouldEqual
-          """[{"email":"test1@test.com","id":"poise/test1","latest_login":"2022-12-05 10:15:30.0","username":"poise/test1"},{"email":"test2@test.com","id":"poise/test2","latest_login":"2022-12-05 10:15:30.0","username":"poise/test2"}]""".stripMargin
-      }
+          responseAs[String] shouldEqual
+            """[{"email":"test1@test.com","id":"poise/test1","latest_login":"2022-12-05 10:15:30.0","username":"poise/test1"},{"email":"test2@test.com","id":"poise/test2","latest_login":"2022-12-05 10:15:30.0","username":"poise/test2"}]""".stripMargin
+        }
     }
 
     "Saves user access request" >> {
@@ -117,12 +117,12 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
       Post("/user/access-request", accessRequest.toJson) ~>
         RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
         RawHeader("X-Auth-Email", "my@email.com") ~> userRoutes(userService, userRequestService) ~> check {
-        val usersF: Future[Seq[UserAccessRequest]] = userRequestService.getUserRequest("Requested")
-        val users = Await.result(usersF, 1.seconds)
-        val userAccessRequest: UserAccessRequest = users.head
-        isAccessRequestMatching(userAccessRequest)
-        responseAs[String] shouldEqual "OK"
-      }
+          val usersF: Future[Seq[UserAccessRequest]] = userRequestService.getUserRequest("Requested")
+          val users = Await.result(usersF, 1.seconds)
+          val userAccessRequest: UserAccessRequest = users.head
+          isAccessRequestMatching(userAccessRequest)
+          responseAs[String] shouldEqual "OK"
+        }
     }
 
     "Gives user access requested" >> {
@@ -135,8 +135,8 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
       Get("/user/access-request?status=\"Requested\"") ~>
         RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
         RawHeader("X-Auth-Email", "my@email.com") ~> userRoutes(userService, userRequestService) ~> check {
-        responseAs[JsValue] shouldEqual Seq(expectedUserAccess(accessRequestToSave, currentTime)).toJson
-      }
+          responseAs[JsValue] shouldEqual Seq(expectedUserAccess(accessRequestToSave, currentTime)).toJson
+        }
     }
 
   }
