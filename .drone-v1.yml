@@ -10,7 +10,7 @@ platform:
 resources:
   requests:
     cpu: 2000
-    memory: 2000MiB
+    memory: 4000MiB
 
 steps:
   - name: Build front end
