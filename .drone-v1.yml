@@ -7,11 +7,6 @@ platform:
   os: linux
   arch: amd64
 
-resources:
-  requests:
-    cpu: 2000
-    memory: 4000MiB
-
 steps:
   - name: Build front end
     pull: if-not-exists
