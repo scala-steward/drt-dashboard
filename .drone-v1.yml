@@ -43,7 +43,7 @@ steps:
     image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:latest
     commands:
       - /root/entrypoint.sh
-      - sbt test
+      - sbt -mem 2048 test
     environment:
       ARTIFACTORY_PASSWORD:
         from_secret: ARTIFACTORY_PASSWORD
