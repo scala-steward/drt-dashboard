@@ -46,7 +46,6 @@ trait IUserDao {
 
   def selectAll()(implicit executionContext: ExecutionContext): Future[Seq[User]]
 
-  def deleteAll()(implicit executionContext: ExecutionContext): Future[Int]
 }
 
 class UserDao(db: Database, userTable: TableQuery[UserTable]) extends IUserDao {
@@ -72,7 +71,4 @@ class UserDao(db: Database, userTable: TableQuery[UserTable]) extends IUserDao {
     db.run(userTable.result).mapTo[Seq[User]]
   }
 
-  override def deleteAll()(implicit executionContext: ExecutionContext): Future[Int] = {
-    db.run(userTable.delete)
-  }
 }

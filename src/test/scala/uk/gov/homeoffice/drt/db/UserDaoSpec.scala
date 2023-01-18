@@ -2,10 +2,11 @@ package uk.gov.homeoffice.drt.db
 
 import org.specs2.mutable.Specification
 import org.specs2.specification.{ AfterEach, BeforeEach }
-
+import slick.lifted.TableQuery
+import slick.jdbc.PostgresProfile.api._
 import java.sql.Timestamp
 import java.time.Instant
-import scala.concurrent.Await
+import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 
@@ -54,11 +55,14 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
     inactive_email_sent = None,
     revoked_access = None)
 
+  def deleteUserTableData(db: Database, userTable: TableQuery[UserTable])(implicit executionContext: ExecutionContext): Int = {
+    Await.result(db.run(userTable.delete), 1.seconds)
+  }
+
   "select all" should "give all users" >> {
     val userList = List(userActive1, userActive2, userInactiveMoreThan60days, userInactiveMoreThan67days, userWithNoEmail)
     val appDatabaseTest = new AppTestDatabase()
     val userDao = new UserDao(appDatabaseTest.db, appDatabaseTest.userTestTable)
-    Await.result(userDao.deleteAll(), 1.seconds)
     userDao.insertOrUpdate(userActive1)
     userDao.insertOrUpdate(userActive2)
     userDao.insertOrUpdate(userInactiveMoreThan60days)
@@ -73,7 +77,6 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
     val expectedUsers = List(userInactiveMoreThan60days)
     val appDatabaseTest = new AppTestDatabase()
     val userDao = new UserDao(appDatabaseTest.db, appDatabaseTest.userTestTable)
-    Await.result(userDao.deleteAll(), 1.seconds)
     userDao.insertOrUpdate(userActive1)
     userDao.insertOrUpdate(userActive2)
     userDao.insertOrUpdate(userInactiveMoreThan60days)
@@ -87,7 +90,6 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
   "select revoke access users" should "give users who are notified more that 7 days back about 60 days inactivity" >> {
     val expectedUsers = List(userInactiveMoreThan67days)
     val userDao = new UserDao(appDatabaseTest.db, appDatabaseTest.userTestTable)
-    Await.result(userDao.deleteAll(), 1.seconds)
     userDao.insertOrUpdate(userActive1)
     userDao.insertOrUpdate(userActive2)
     userDao.insertOrUpdate(userInactiveMoreThan60days)
@@ -105,6 +107,7 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
 
   override protected def before: Any = {
     appDatabaseTest = new AppTestDatabase()
+    deleteUserTableData(appDatabaseTest.db, appDatabaseTest.userTestTable)
   }
 
 }

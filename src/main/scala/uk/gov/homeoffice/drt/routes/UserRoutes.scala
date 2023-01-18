@@ -6,21 +6,21 @@ import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import org.joda.time.DateTime
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.{ Logger, LoggerFactory }
 import spray.json.enrichAny
 import uk.gov.homeoffice.drt.auth.Roles.ManageUsers
 import uk.gov.homeoffice.drt.authentication._
-import uk.gov.homeoffice.drt.db.{UserAccessRequestJsonSupport, UserJsonSupport}
+import uk.gov.homeoffice.drt.db.{ UserAccessRequestJsonSupport, UserJsonSupport }
 import uk.gov.homeoffice.drt.http.ProdSendAndReceive
-import uk.gov.homeoffice.drt.keycloak.{KeycloakClient, KeycloakService}
+import uk.gov.homeoffice.drt.keycloak.{ KeycloakClient, KeycloakService }
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
-import uk.gov.homeoffice.drt.routes.ApiRoutes.{authByRole, clientUserAccessDataJsonSupportDataFormatParser}
-import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
-import uk.gov.homeoffice.drt.{ClientConfig, JsonSupport}
+import uk.gov.homeoffice.drt.routes.ApiRoutes.{ authByRole, clientUserAccessDataJsonSupportDataFormatParser }
+import uk.gov.homeoffice.drt.services.{ UserRequestService, UserService }
+import uk.gov.homeoffice.drt.{ ClientConfig, JsonSupport }
 
 import java.sql.Timestamp
-import scala.concurrent.{ExecutionContextExecutor, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.{ ExecutionContextExecutor, Future }
+import scala.util.{ Failure, Success }
 
 object UserRoutes extends JsonSupport
   with UserAccessRequestJsonSupport
@@ -29,12 +29,13 @@ object UserRoutes extends JsonSupport
   with KeyCloakUserJsonSupport {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def apply(prefix: String,
-            clientConfig: ClientConfig,
-            userService: UserService,
-            userRequestService: UserRequestService,
-            notifications: EmailNotifications,
-            keyClockUrl: String)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route = {
+  def apply(
+    prefix: String,
+    clientConfig: ClientConfig,
+    userService: UserService,
+    userRequestService: UserRequestService,
+    notifications: EmailNotifications,
+    keyClockUrl: String)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route = {
 
     def getKeyCloakService(accessToken: String): KeycloakService = {
       val keyClockClient = new KeycloakClient(accessToken, keyClockUrl) with ProdSendAndReceive

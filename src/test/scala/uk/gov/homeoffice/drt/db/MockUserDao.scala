@@ -26,7 +26,7 @@ class MockUserDao() extends IUserDao {
     Future.successful(userList)
   }
 
-  override def deleteAll()(implicit executionContext: ExecutionContext): Future[Int] = {
+  def deleteAll()(implicit executionContext: ExecutionContext): Future[Int] = {
     userList = Seq.empty[User]
     Future.successful(userList.size)
   }
