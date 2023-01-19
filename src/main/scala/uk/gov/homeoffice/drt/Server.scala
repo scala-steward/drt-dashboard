@@ -1,46 +1,46 @@
 package uk.gov.homeoffice.drt
 
-import akka.actor.typed.scaladsl.{ ActorContext, Behaviors }
-import akka.actor.typed.{ ActorSystem, Behavior, PostStop }
+import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
+import akka.actor.typed.{ActorSystem, Behavior, PostStop}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
-import akka.http.scaladsl.server.Directives.{ concat, getFromResource, getFromResourceDirectory }
+import akka.http.scaladsl.server.Directives.{concat, getFromResource, getFromResourceDirectory}
 import akka.http.scaladsl.server.Route
-import uk.gov.homeoffice.drt.db.{ AppDatabase, UserAccessRequestDao, UserDao }
+import uk.gov.homeoffice.drt.db.{AppDatabase, UserAccessRequestDao, UserDao}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
-import uk.gov.homeoffice.drt.ports.{ PortCode, PortRegion }
+import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes._
-import uk.gov.homeoffice.drt.services.{ UserRequestService, UserService }
+import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
 
-import scala.concurrent.{ ExecutionContextExecutor, Future }
-import scala.util.{ Failure, Success }
+import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.util.{Failure, Success}
 
 case class KeyClockConfig(
-  url: String,
-  tokenUrl: String,
-  clientId: String,
-  clientSecret: String)
+                           url: String,
+                           tokenUrl: String,
+                           clientId: String,
+                           clientSecret: String)
 
 case class ServerConfig(
-  host: String,
-  port: Int,
-  teamEmail: String,
-  portRegions: Iterable[PortRegion],
-  ciriumDataUri: String,
-  rootDomain: String,
-  useHttps: Boolean,
-  notifyServiceApiKey: String,
-  accessRequestEmails: List[String],
-  neboPortCodes: Array[String],
-  keyclockUrl: String,
-  keyclockTokenUrl: String,
-  keyclockClientId: String,
-  keyclockClientSecret: String,
-  keyclockUsername: String,
-  keyclockPassword: String,
-  scheduleFrequency: Int,
-  inactivityDays: Int,
-  userTrackingFeatureFlag: Boolean) {
+                         host: String,
+                         port: Int,
+                         teamEmail: String,
+                         portRegions: Iterable[PortRegion],
+                         ciriumDataUri: String,
+                         rootDomain: String,
+                         useHttps: Boolean,
+                         notifyServiceApiKey: String,
+                         accessRequestEmails: List[String],
+                         neboPortCodes: Array[String],
+                         keyclockUrl: String,
+                         keyclockTokenUrl: String,
+                         keyclockClientId: String,
+                         keyclockClientSecret: String,
+                         keyclockUsername: String,
+                         keyclockPassword: String,
+                         scheduleFrequency: Int,
+                         inactivityDays: Int,
+                         userTrackingFeatureFlag: Boolean) {
   val portCodes: Iterable[PortCode] = portRegions.flatMap(_.ports)
   val portIataCodes: Iterable[String] = portCodes.map(_.iata)
   val clientConfig: ClientConfig = ClientConfig(portRegions, rootDomain, teamEmail)

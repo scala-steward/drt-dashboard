@@ -1,15 +1,15 @@
 package uk.gov.homeoffice.drt.schedule
 
-import akka.actor.typed.scaladsl.AskPattern.{ Askable }
-import akka.actor.typed.scaladsl.{ ActorContext, Behaviors, TimerScheduler }
-import akka.actor.typed.{ ActorRef, ActorSystem, Behavior }
+import akka.actor.typed.scaladsl.AskPattern.{Askable}
+import akka.actor.typed.scaladsl.{ActorContext, Behaviors, TimerScheduler}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.util.Timeout
-import org.slf4j.{ Logger, LoggerFactory }
+import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.ServerConfig
 import uk.gov.homeoffice.drt.authentication.KeyCloakUser
-import uk.gov.homeoffice.drt.db.{ AppDatabase, User, UserDao }
+import uk.gov.homeoffice.drt.db.{AppDatabase, User, UserDao}
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuthTokenService.GetToken
-import uk.gov.homeoffice.drt.keycloak.{ KeyCloakAuthToken, KeyCloakAuthTokenService, KeycloakService }
+import uk.gov.homeoffice.drt.keycloak.{KeyCloakAuthToken, KeyCloakAuthTokenService, KeycloakService}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.services.UserService
 
@@ -19,7 +19,7 @@ import scala.concurrent.ExecutionContext
 
 sealed trait Command
 
-import scala.concurrent.duration.{ DurationInt, FiniteDuration }
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 object UserTracking {
   private case object UserTrackingKey extends Command
@@ -48,15 +48,15 @@ object UserTracking {
 }
 
 class UserTracking(
-  serverConfig: ServerConfig,
-  notifications: EmailNotifications,
-  userService: UserService,
-  timers: TimerScheduler[Command],
-  timerInitialDelay: FiniteDuration,
-  timerInterval: FiniteDuration,
-  numberOfInactivityDays: Int,
-  maxSize: Int,
-  context: ActorContext[Command]) {
+                    serverConfig: ServerConfig,
+                    notifications: EmailNotifications,
+                    userService: UserService,
+                    timers: TimerScheduler[Command],
+                    timerInitialDelay: FiniteDuration,
+                    timerInterval: FiniteDuration,
+                    numberOfInactivityDays: Int,
+                    maxSize: Int,
+                    context: ActorContext[Command]) {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   import UserTracking._
