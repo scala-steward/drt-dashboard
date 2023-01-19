@@ -44,7 +44,7 @@ abstract case class KeycloakClient(token: String, keyCloakUrl: String)(implicit 
     }
   }
 
-  def getUsersForEmail(email: String): Future[Option[KeyCloakUser]] = {
+  def getUserForEmail(email: String): Future[Option[KeyCloakUser]] = {
     val uri = keyCloakUrl + s"/users?email=$email"
     log.info(s"Calling key cloak: $uri")
     pipeline(HttpMethods.GET, uri, "getUsersForEmail")

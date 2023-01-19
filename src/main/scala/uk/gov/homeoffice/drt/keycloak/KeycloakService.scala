@@ -9,7 +9,7 @@ import scala.concurrent.{ ExecutionContext, Future }
 trait IKeycloakService {
   implicit val ec: ExecutionContext
 
-  def getUsersForEmail(email: String): Future[Option[KeyCloakUser]]
+  def getUserForEmail(email: String): Future[Option[KeyCloakUser]]
 
   def removeUser(userId: String): Future[HttpResponse]
 
@@ -21,8 +21,8 @@ trait IKeycloakService {
 case class KeycloakService(keycloakClient: KeycloakClient)(implicit val ec: ExecutionContext) extends IKeycloakService {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def getUsersForEmail(email: String): Future[Option[KeyCloakUser]] = {
-    keycloakClient.getUsersForEmail(email)
+  def getUserForEmail(email: String): Future[Option[KeyCloakUser]] = {
+    keycloakClient.getUserForEmail(email)
   }
 
   def getUserForUsername(username: String): Future[Option[KeyCloakUser]] = {

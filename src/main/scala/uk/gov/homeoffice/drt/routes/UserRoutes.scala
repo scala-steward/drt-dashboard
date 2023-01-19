@@ -90,7 +90,7 @@ object UserRoutes extends JsonSupport
                   log.info(s"request to get user details $keyClockUrl/data/userDetails/$userEmail}")
                   val keycloakService = getKeyCloakService(xAuthToken)
                   val keyCloakUser: Future[KeyCloakUser] =
-                    keycloakService.getUsersForEmail(userEmail).map {
+                    keycloakService.getUserForEmail(userEmail).map {
                       case Some(keyCloakUser) => keyCloakUser
                       case None =>
                         log.error(s"Failed at $keyClockUrl/data/userDetails/$userEmail}")

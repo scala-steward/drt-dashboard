@@ -102,28 +102,28 @@ class UserTracking(
         val keyClockClient = KeyCloakAuthTokenService.getKeyClockClient(serverConfig.keyClockConfig.url, token)
         val keycloakService = KeycloakService(keyClockClient)
         usersToRevoke.map { utrOption =>
-          utrOption.map { utr: User =>
-            if (utr.email.nonEmpty) {
-              keycloakService.getUsersForEmail(utr.email).map { ud =>
-                ud.map { uId =>
-                  if (utr.email.toLowerCase.trim == uId.email.toLowerCase.trim) {
-                    removeUser(keycloakService, uId, utr)
+          utrOption.map { userToRevoke: User =>
+            if (userToRevoke.email.nonEmpty) {
+              keycloakService.getUserForEmail(userToRevoke.email).map { ud =>
+                ud.map { userFromKeycloak =>
+                  if (userToRevoke.email.toLowerCase.trim == userFromKeycloak.email.toLowerCase.trim) {
+                    removeUser(keycloakService, userFromKeycloak, userToRevoke)
                     notifications.sendUserInactivityEmailNotification(
-                      uId.email,
+                      userFromKeycloak.email,
                       serverConfig.rootDomain,
                       serverConfig.teamEmail,
                       notifications.revokeAccessTemplateId,
                       "revoked DRT Access")
-                    logger.info(s"User with email ${utr.email} access revoked due to inactivity")
+                    logger.info(s"User with email ${userToRevoke.email} access revoked due to inactivity")
                   }
                 }
               }
             } else {
-              keycloakService.getUserForUsername(utr.username).map { ud =>
-                ud.map { uId =>
-                  if (utr.username.toLowerCase.trim == uId.username.toLowerCase.trim) {
-                    removeUser(keycloakService, uId, utr)
-                    logger.info(s"User with username ${utr.username} access revoked due to inactivity")
+              keycloakService.getUserForUsername(userToRevoke.username).map { ud =>
+                ud.map { userFromKeycloak =>
+                  if (userToRevoke.username.toLowerCase.trim == userFromKeycloak.username.toLowerCase.trim) {
+                    removeUser(keycloakService, userFromKeycloak, userToRevoke)
+                    logger.info(s"User with username ${userToRevoke.username} access revoked due to inactivity")
                   }
                 }
               }

@@ -26,7 +26,7 @@ import scala.concurrent.{ Await, ExecutionContext, Future }
 import slick.jdbc.PostgresProfile.api._
 import spray.json._
 
-class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport with AccessRequestJsonSupport with UserAccessRequestJsonSupport with UserJsonSupport with AfterEach with BeforeEach {
+class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport with AccessRequestJsonSupport with UserAccessRequestJsonSupport with UserJsonSupport with BeforeEach {
   val testKit: ActorTestKit = ActorTestKit()
   implicit val sys: ActorSystem[Nothing] = testKit.system
   private val config: Config = ConfigFactory.load()
@@ -152,10 +152,6 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
 
   def deleteUserTableData(db: Database, userTable: TableQuery[UserTable])(implicit executionContext: ExecutionContext): Int = {
     Await.result(db.run(userTable.delete), 5.seconds)
-  }
-
-  override protected def after: Any = {
-    //    Await.result(appDatabaseTest.db.shutdown, 1.seconds)
   }
 
   override protected def before: Any = {
