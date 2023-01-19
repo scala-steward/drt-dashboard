@@ -11,7 +11,6 @@ import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes._
 import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
-import uk.gov.service.notify.NotificationClient
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}

@@ -20,7 +20,7 @@ case class User(
   inactive_email_sent: Option[java.sql.Timestamp],
   revoked_access: Option[java.sql.Timestamp])
 
-class UserTable(tag: Tag) extends Table[User](tag, "user") {
+class UserTable(tag: Tag, tableName: String = "user") extends Table[User](tag, tableName) {
 
   def id = column[String]("id", O.PrimaryKey)
 
