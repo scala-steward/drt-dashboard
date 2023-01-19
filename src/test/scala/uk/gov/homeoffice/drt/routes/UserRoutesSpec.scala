@@ -41,7 +41,7 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
     "poise/test1",
     "poise/test1",
     "test1@test.com",
-    new Timestamp(stringToLocalDateTime("2022-12-05T10:15:30.00Z").toEpochMilli),
+    new Timestamp(stringToLocalDateTime("2022-12-06T10:15:30.00Z").toEpochMilli),
     None,
     None)
 
