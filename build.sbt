@@ -69,6 +69,8 @@ lazy val root = (project in file(".")).
   .enablePlugins(DockerPlugin)
   .enablePlugins(JavaAppPackaging)
 
+Test / parallelExecution := false
+
 javaOptions in Test += "-Duser.timezone=UTC"
 
 javaOptions in Runtime += "-Duser.timezone=UTC"

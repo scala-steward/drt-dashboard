@@ -8,6 +8,8 @@ import akka.http.scaladsl.testkit.Specs2RouteTest
 import com.typesafe.config.{ Config, ConfigFactory }
 import org.joda.time.DateTime
 import org.specs2.mutable.Specification
+import org.specs2.specification.{ AfterEach, BeforeEach }
+import slick.lifted.TableQuery
 import spray.json.{ JsValue, enrichAny }
 import uk.gov.homeoffice.drt.auth.Roles.BorderForceStaff
 import uk.gov.homeoffice.drt.authentication.{ AccessRequest, AccessRequestJsonSupport }
@@ -20,32 +22,40 @@ import uk.gov.homeoffice.drt.{ ClientConfig, JsonSupport }
 import java.sql.Timestamp
 import java.time.Instant
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{ Await, Future }
+import scala.concurrent.{ Await, ExecutionContext, Future }
+import slick.jdbc.PostgresProfile.api._
+import spray.json._
 
-class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport with AccessRequestJsonSupport with UserAccessRequestJsonSupport {
+class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport with AccessRequestJsonSupport with UserAccessRequestJsonSupport with UserJsonSupport with AfterEach with BeforeEach {
   val testKit: ActorTestKit = ActorTestKit()
   implicit val sys: ActorSystem[Nothing] = testKit.system
   private val config: Config = ConfigFactory.load()
   val stringToLocalDateTime: String => Instant = dateString => Instant.parse(dateString)
   val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), "someDomain.com", "test@test.com")
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
+  var appDatabaseTest: AppTestDatabase = null
+  var userTable: TableQuery[UserTable] = null
+  val tableName = "user_route_test"
+
+  val user1 = User(
+    "poise/test1",
+    "poise/test1",
+    "test1@test.com",
+    new Timestamp(stringToLocalDateTime("2022-12-05T10:15:30.00Z").toEpochMilli),
+    None,
+    None)
+
+  val user2 = User(
+    "poise/test2",
+    "poise/test2",
+    "test2@test.com",
+    new Timestamp(stringToLocalDateTime("2022-12-05T10:15:30.00Z").toEpochMilli),
+    None,
+    None)
 
   def insertUser(userService: UserService): Future[Int] = {
-    userService.upsertUser(User(
-      "poise/test1",
-      "poise/test1",
-      "test1@test.com",
-      new Timestamp(stringToLocalDateTime("2022-12-05T10:15:30.00Z").toEpochMilli),
-      None,
-      None))
-
-    userService.upsertUser(User(
-      "poise/test2",
-      "poise/test2",
-      "test2@test.com",
-      new Timestamp(stringToLocalDateTime("2022-12-05T10:15:30.00Z").toEpochMilli),
-      None,
-      None))
+    userService.upsertUser(user2)
+    userService.upsertUser(user1)
   }
 
   def userRoutes(userService: UserService, userRequestService: UserRequestService): Route = UserRoutes(
@@ -100,19 +110,18 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
   "User api" >> {
 
     "Give list of all users accessing drt" >> {
-      val userService = new UserService(new MockUserDao())
+      val userService = new UserService(new UserDao(appDatabaseTest.db, userTable))
       val userRequestService: UserRequestService = new UserRequestService(new MockUserAccessRequestDao())
-      insertUser(userService)
+      Await.result(insertUser(userService), 5.seconds)
       Get("/user/all") ~>
         RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
         RawHeader("X-Auth-Email", "my@email.com") ~> userRoutes(userService, userRequestService) ~> check {
-          responseAs[String] shouldEqual
-            """[{"email":"test1@test.com","id":"poise/test1","latest_login":"2022-12-05 10:15:30.0","username":"poise/test1"},{"email":"test2@test.com","id":"poise/test2","latest_login":"2022-12-05 10:15:30.0","username":"poise/test2"}]""".stripMargin
+          responseAs[String].parseJson === Seq(user1, user2).toJson
         }
     }
 
     "Saves user access request" >> {
-      val userService = new UserService(new MockUserDao())
+      val userService = new UserService(new UserDao(appDatabaseTest.db, userTable))
       val userRequestService: UserRequestService = new UserRequestService(new MockUserAccessRequestDao())
       Post("/user/access-request", accessRequest.toJson) ~>
         RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
@@ -126,7 +135,7 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
     }
 
     "Gives user access requested" >> {
-      val userService = new UserService(new MockUserDao())
+      val userService = new UserService(new UserDao(appDatabaseTest.db, userTable))
       val userRequestService: UserRequestService = new UserRequestService(new MockUserAccessRequestDao())
       val accessRequestToSave = accessRequest.copy(lineManager = "LineManager1")
       val currentTime = new Timestamp(DateTime.now().getMillis)
@@ -139,5 +148,20 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
         }
     }
 
+  }
+
+  def deleteUserTableData(db: Database, userTable: TableQuery[UserTable])(implicit executionContext: ExecutionContext): Int = {
+    Await.result(db.run(userTable.delete), 5.seconds)
+  }
+
+  override protected def after: Any = {
+    //    Await.result(appDatabaseTest.db.shutdown, 1.seconds)
+  }
+
+  override protected def before: Any = {
+    appDatabaseTest = new AppTestDatabase()
+    appDatabaseTest.createDbStructure(tableName)
+    userTable = appDatabaseTest.userTestTable(tableName)
+    deleteUserTableData(appDatabaseTest.db, userTable)
   }
 }

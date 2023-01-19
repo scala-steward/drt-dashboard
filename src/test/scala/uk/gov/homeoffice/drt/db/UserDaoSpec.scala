@@ -14,6 +14,8 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
 
   val secondsInADay = 24 * 60 * 60
   var appDatabaseTest: AppTestDatabase = null
+  var userTable: TableQuery[UserTable] = null
+  val tableName = "user_test"
 
   val userActive1 = User(
     id = "user1",
@@ -62,7 +64,7 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
   "select all" should "give all users" >> {
     val userList = List(userActive1, userActive2, userInactiveMoreThan60days, userInactiveMoreThan67days, userWithNoEmail)
     val appDatabaseTest = new AppTestDatabase()
-    val userDao = new UserDao(appDatabaseTest.db, appDatabaseTest.userTestTable)
+    val userDao = new UserDao(appDatabaseTest.db, userTable)
     userDao.insertOrUpdate(userActive1)
     userDao.insertOrUpdate(userActive2)
     userDao.insertOrUpdate(userInactiveMoreThan60days)
@@ -76,7 +78,7 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
   "select inactive user" should "give users who are inactive more than 60 days" >> {
     val expectedUsers = List(userInactiveMoreThan60days)
     val appDatabaseTest = new AppTestDatabase()
-    val userDao = new UserDao(appDatabaseTest.db, appDatabaseTest.userTestTable)
+    val userDao = new UserDao(appDatabaseTest.db, userTable)
     userDao.insertOrUpdate(userActive1)
     userDao.insertOrUpdate(userActive2)
     userDao.insertOrUpdate(userInactiveMoreThan60days)
@@ -89,7 +91,7 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
 
   "select revoke access users" should "give users who are notified more that 7 days back about 60 days inactivity" >> {
     val expectedUsers = List(userInactiveMoreThan67days)
-    val userDao = new UserDao(appDatabaseTest.db, appDatabaseTest.userTestTable)
+    val userDao = new UserDao(appDatabaseTest.db, userTable)
     userDao.insertOrUpdate(userActive1)
     userDao.insertOrUpdate(userActive2)
     userDao.insertOrUpdate(userInactiveMoreThan60days)
@@ -107,7 +109,9 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
 
   override protected def before: Any = {
     appDatabaseTest = new AppTestDatabase()
-    deleteUserTableData(appDatabaseTest.db, appDatabaseTest.userTestTable)
+    appDatabaseTest.createDbStructure(tableName)
+    userTable = appDatabaseTest.userTestTable(tableName)
+    deleteUserTableData(appDatabaseTest.db, userTable)
   }
 
 }

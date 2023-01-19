@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.drt.schedule
 
-import akka.actor.typed.scaladsl.AskPattern.{ Askable, schedulerFromActorSystem }
+import akka.actor.typed.scaladsl.AskPattern.{ Askable }
 import akka.actor.typed.scaladsl.{ ActorContext, Behaviors, TimerScheduler }
 import akka.actor.typed.{ ActorRef, ActorSystem, Behavior }
 import akka.util.Timeout
@@ -92,7 +92,7 @@ class UserTracking(
       case RevokeUserCheck =>
         implicit val timeout = new Timeout(30 seconds)
         implicit val scheduler = context.system.scheduler
-        keycloakServiceBehavior.ask(ref => GetToken(ref)).map(token => context.self ! token)
+        keycloakServiceBehavior.ask(ref => GetToken(ref)).map(token => context.self ! PerformAccountRevocations(token))
         Behaviors.same
 
       case PerformAccountRevocations(token: KeyCloakAuthToken) =>

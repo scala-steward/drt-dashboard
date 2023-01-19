@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS user_test
+CREATE TABLE IF NOT EXISTS user_test_init
 (
     id text NOT NULL,
     username text NOT NULL,
