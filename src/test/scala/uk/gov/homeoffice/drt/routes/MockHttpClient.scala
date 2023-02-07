@@ -7,7 +7,7 @@ import uk.gov.homeoffice.drt.HttpClient
 import scala.concurrent.{ ExecutionContextExecutor, Future }
 
 class MockHttpClient(httpResponse: HttpResponse) extends HttpClient {
-  def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[HttpResponse] = {
+  override def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[HttpResponse] = {
     Future(httpResponse)
   }
 }

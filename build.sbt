@@ -1,26 +1,28 @@
 import sbt.Keys.resolvers
 
-lazy val akkaHttpVersion = "10.2.6"
+lazy val drtLibVersion = "v20230207_1"
+lazy val drtCiriumVersion = "203"
+lazy val akkaHttpVersion = "10.4.0"
 lazy val akkaVersion = "2.7.0"
-lazy val jodaTimeVersion = "2.9.4"
-lazy val scalaLoggingVersion = "3.9.2"
-lazy val logBackClassicVersion = "1.1.3"
-lazy val scalaTagsVersion = "0.8.2"
-lazy val specs2Version = "4.6.0"
+lazy val jodaTimeVersion = "2.12.2"
+lazy val scalaLoggingVersion = "3.9.5"
+lazy val logBackClassicVersion = "1.4.5"
+lazy val scalaTagsVersion = "0.11.1"
+lazy val specs2Version = "4.19.2"
 lazy val logBackJsonVersion = "0.1.5"
-lazy val drtCiriumVersion = "56"
-lazy val drtLibVersion = "v306"
-lazy val janinoVersion = "3.1.6"
-lazy val scalaTestVersion = "3.2.9"
-lazy val jacksonDatabindVersion = "2.11.2"
+lazy val janinoVersion = "3.1.9"
+lazy val scalaTestVersion = "3.2.15"
+lazy val jacksonDatabindVersion = "2.14.2"
 lazy val notificationsJavaClientVersion = "3.17.3-RELEASE"
-lazy val scalaCsv = "1.3.8"
+lazy val scalaCsvVersion = "1.3.10"
+lazy val slickVersion = "3.4.1"
+lazy val postgresqlVersion = "42.5.3"
 
 lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
       organization := "uk.gov.homeoffice.drt",
-      scalaVersion := "2.12.8"
+      scalaVersion := "2.13.10"
     )),
 
     version := sys.env.getOrElse("DRONE_BUILD_NUMBER", sys.env.getOrElse("BUILD_ID", "DEV")),
@@ -42,12 +44,12 @@ lazy val root = (project in file(".")).
       "org.codehaus.janino" % "janino" % janinoVersion,
       "com.fasterxml.jackson.core" % "jackson-databind" % jacksonDatabindVersion,
       "uk.gov.service.notify" % "notifications-java-client" % notificationsJavaClientVersion,
-      "com.github.tototoshi" %% "scala-csv" % scalaCsv,
+      "com.github.tototoshi" %% "scala-csv" % scalaCsvVersion,
       "org.scalactic" %% "scalactic" % scalaTestVersion,
 
-      "com.typesafe.slick" %% "slick" % "3.4.1",
-      "com.typesafe.slick" %% "slick-hikaricp" % "3.4.1",
-      "org.postgresql" % "postgresql" % "42.5.1",
+      "com.typesafe.slick" %% "slick" % slickVersion,
+      "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
+      "org.postgresql" % "postgresql" % postgresqlVersion,
 
       "com.h2database" % "h2" % "2.1.214" % Test,
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
@@ -71,9 +73,9 @@ lazy val root = (project in file(".")).
 
 Test / parallelExecution := false
 
-javaOptions in Test += "-Duser.timezone=UTC"
+Test / javaOptions += "-Duser.timezone=UTC"
 
-javaOptions in Runtime += "-Duser.timezone=UTC"
+Runtime / javaOptions += "-Duser.timezone=UTC"
 
-fork in run := true
+run / fork := true
 cancelable in Global := true
