@@ -2,8 +2,8 @@ FROM openjdk:11-jre-slim-buster as stage0
 LABEL snp-multi-stage="intermediate"
 LABEL snp-multi-stage-id="9af2938f-6807-405c-bf91-02e7c8cbd4b5"
 WORKDIR /opt/docker
-COPY 2/opt /2/opt
-COPY 4/opt /4/opt
+COPY target/docker/stage/2/opt /2/opt
+COPY target/docker/stage/4/opt /4/opt
 USER root
 RUN ["chmod", "-R", "u=rX,g=rX", "/2/opt/docker"]
 RUN ["chmod", "-R", "u=rX,g=rX", "/4/opt/docker"]
