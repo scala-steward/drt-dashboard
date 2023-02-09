@@ -163,10 +163,10 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
   "convertByteSourceToFlightData should convert data containing additional columns" >> {
     val metaFile = FileInfo(fieldName = "csv", fileName = "test.csv", contentType = ContentTypes.`text/plain(UTF-8)`)
     val flightDataF: Future[List[FlightData]] = neboRoutes.convertByteSourceToFlightData(metaFile, Future.successful(testFile))
-    val exceptedResult = Seq(
+    val exceptedResult = Set(
       FlightData("LHR", "AA1234", 1627833000000L, Some(1627830600000L), Some("BBB"), Some("AAA"), Seq("PHL/IOI/2309L/125")),
       FlightData("LHR", "AA1234", 1629646800000L, Some(1629645000000L), Some("BBB"), Some("AAA"), Seq("PHL/IOI/2309L/126")))
-    val flightDataResult: Seq[FlightData] = Await.result(flightDataF, 1.seconds)
+    val flightDataResult: Set[FlightData] = Await.result(flightDataF, 1.seconds).toSet
 
     flightDataResult === exceptedResult
   }

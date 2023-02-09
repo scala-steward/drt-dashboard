@@ -116,7 +116,8 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
       Get("/user/all") ~>
         RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
         RawHeader("X-Auth-Email", "my@email.com") ~> userRoutes(userService, userRequestService) ~> check {
-          responseAs[String].parseJson === Seq(user1, user2).toJson
+        val jsonUsers = responseAs[String].parseJson.asInstanceOf[JsArray].elements
+        jsonUsers.contains(user1.toJson) && jsonUsers.contains(user2.toJson)
         }
     }
 

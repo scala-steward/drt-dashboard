@@ -90,7 +90,7 @@ class UserTracking(
         Behaviors.same
 
       case RevokeUserCheck =>
-        implicit val timeout = new Timeout(30 seconds)
+        implicit val timeout = new Timeout(30.seconds)
         implicit val scheduler = context.system.scheduler
         keycloakServiceBehavior.ask(ref => GetToken(ref)).map(token => context.self ! PerformAccountRevocations(token))
         Behaviors.same

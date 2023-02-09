@@ -11,13 +11,14 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 
 class UserDaoSpec extends Specification with AfterEach with BeforeEach {
+  sequential
 
-  val secondsInADay = 24 * 60 * 60
+  val secondsInADay: Int = 24 * 60 * 60
   var appDatabaseTest: AppTestDatabase = null
   var userTable: TableQuery[UserTable] = null
   val tableName = "user_test"
 
-  val userActive1 = User(
+  val userActive1: User = User(
     id = "user1",
     username = "user1",
     email = "user1@test.com",
@@ -25,7 +26,7 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
     inactive_email_sent = None,
     revoked_access = None)
 
-  val userActive2 = User(
+  val userActive2: User = User(
     id = "user2",
     username = "user2",
     email = "user2@test.com",
@@ -33,7 +34,7 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
     inactive_email_sent = None,
     revoked_access = None)
 
-  val userInactiveMoreThan60days = User(
+  val userInactiveMoreThan60days: User = User(
     id = "user3",
     username = "user3",
     email = "user3@test.com",
@@ -41,7 +42,7 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
     inactive_email_sent = None,
     revoked_access = None)
 
-  val userInactiveMoreThan67days = User(
+  val userInactiveMoreThan67days: User = User(
     id = "user4",
     username = "user4",
     email = "user4@test.com",
@@ -49,7 +50,7 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
     inactive_email_sent = Some(new Timestamp(Instant.now().minusSeconds(8 * secondsInADay).toEpochMilli)),
     revoked_access = None)
 
-  val userWithNoEmail = User(
+  val userWithNoEmail: User = User(
     id = "user5",
     username = "user5",
     email = "",

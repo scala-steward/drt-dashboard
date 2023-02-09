@@ -26,7 +26,8 @@ class ExportCsvService(httpClient: HttpClient) {
   def getUri(portCode: String, start: String, end: String, terminal: String): String =
     s"${Dashboard.drtUriForPortCode(portCode)}/${drtExportCsvRoutePath}/$start/$end/$terminal"
 
-  def getPortResponseForTerminal(start: String, end: String, regionName: String, port: String, terminal: String)(implicit executionContext: ExecutionContextExecutor, mat: Materializer) = {
+  def getPortResponseForTerminal(start: String, end: String, regionName: String, port: String, terminal: String)
+                                (implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[Option[PortResponse]] = {
     val uri = getUri(port, start, end, terminal)
     val httpRequest = httpClient.createPortArrivalImportRequest(uri, port)
     httpClient.send(httpRequest)
