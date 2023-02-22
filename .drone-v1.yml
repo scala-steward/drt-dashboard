@@ -62,8 +62,6 @@ steps:
     when:
       event:
         - push
-    depends_on:
-      - Test back end
 
   - name: publish
     image: plugins/ecr
