@@ -62,6 +62,8 @@ steps:
     when:
       event:
         - push
+    depends_on:
+      - Copy front end to resources
 
   - name: publish
     image: plugins/ecr
