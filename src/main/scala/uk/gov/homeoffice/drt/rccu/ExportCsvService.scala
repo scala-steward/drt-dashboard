@@ -17,14 +17,12 @@ class ExportCsvService(httpClient: HttpClient) {
 
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def drtUriForPortCode(portCode: String): String = s"http://${portCode.toLowerCase}:9000"
-
   val drtExportCsvRoutePath = "export/arrivals"
 
   def getPortRegion(region: String) = PortRegion.regions.find(_.name == region)
 
   def getUri(portCode: String, start: String, end: String, terminal: String): String =
-    s"${Dashboard.drtUriForPortCode(portCode)}/${drtExportCsvRoutePath}/$start/$end/$terminal"
+    s"${Dashboard.drtUriForPortCode(portCode)}/$drtExportCsvRoutePath/$start/$end/$terminal"
 
   def getPortResponseForTerminal(start: String, end: String, regionName: String, port: String, terminal: String)
                                 (implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[Option[PortResponse]] = {
@@ -65,5 +63,4 @@ class ExportCsvService(httpClient: HttpClient) {
     f"$portRegion-${getCurrentTimeString()}-" +
       f"$start" + endDate + ".csv"
   }
-
 }

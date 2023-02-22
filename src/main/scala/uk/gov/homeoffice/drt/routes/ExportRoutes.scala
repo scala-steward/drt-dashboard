@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.{Route, ValidationRejection}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import uk.gov.homeoffice.drt.HttpClient
-import uk.gov.homeoffice.drt.arrivals.ArrivalsHeadings.rccHeadings
+import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.rccu.{ExportCsvService, PortResponse}
@@ -47,7 +47,7 @@ object ExportRoutes {
                       .mkString("\n")
                   }
             }
-            .prepend(Source.single(rccHeadings))
+            .prepend(Source.single(ArrivalExportHeadings.regionalExportHeadings))
           complete(stream)
         }
       }.getOrElse(reject(ValidationRejection("Region not found.")))
