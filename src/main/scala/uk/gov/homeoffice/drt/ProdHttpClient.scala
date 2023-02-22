@@ -1,16 +1,16 @@
 package uk.gov.homeoffice.drt
 
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ HttpRequest, _ }
+import akka.http.scaladsl.model._
 import akka.stream.Materializer
-import org.slf4j.{ Logger, LoggerFactory }
+import org.slf4j.{Logger, LoggerFactory}
 import spray.json._
 import uk.gov.homeoffice.drt.DashboardClient._
 import uk.gov.homeoffice.drt.auth.Roles
 import uk.gov.homeoffice.drt.auth.Roles.Role
 import uk.gov.homeoffice.drt.routes.FlightData
 
-import scala.concurrent.{ ExecutionContextExecutor, Future }
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 trait HttpClient extends JsonSupport {
   val log: Logger = LoggerFactory.getLogger(getClass)
@@ -18,7 +18,10 @@ trait HttpClient extends JsonSupport {
   def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[HttpResponse]
 
   def createPortArrivalImportRequest(uri: String, portCode: String): HttpRequest = {
-    HttpRequest(method = HttpMethods.GET, uri = uri, headers = rolesToRoleHeader(List(Option(Roles.ArrivalsAndSplitsView), Roles.parse(portCode)).flatten))
+    val headersWithRoles = rolesToRoleHeader(List(
+      Option(Roles.ArrivalsAndSplitsView), Option(Roles.ApiView), Roles.parse(portCode)
+    ).flatten)
+    HttpRequest(method = HttpMethods.GET, uri = uri, headers = headersWithRoles)
   }
 
   def createDrtNeboRequest(data: List[FlightData], uri: String, portAccessRole: Option[Role]): HttpRequest = {

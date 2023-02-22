@@ -6,6 +6,7 @@ import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.Materializer
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
 
 import scala.concurrent.ExecutionContextExecutor
 
@@ -63,19 +64,19 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
   }
 
   def heathrowRegionPortTerminalData: String =
-    """Region,Port,Terminal,IATA,ICAO,Origin,Gate/Stand,Status,Scheduled,Predicted Arrival,Est Arrival,Act Arrival,Est Chox,Act Chox,Minutes off scheduled,Est PCP,Total Pax,PCP Pax,Invalid API,API e-Gates,API EEA,API Non-EEA,API Fast Track,Historical e-Gates,Historical EEA,Historical Non-EEA,Historical Fast Track,Terminal Average e-Gates,Terminal Average EEA,Terminal Average Non-EEA,Terminal Average Fast Track
-      |Heathrow,LHR,T2,flight1,information,row
-      |Heathrow,LHR,T2,flight2,information,row
-      |Heathrow,LHR,T3,flight1,information,row
-      |Heathrow,LHR,T3,flight2,information,row
-      |Heathrow,LHR,T4,flight1,information,row
-      |Heathrow,LHR,T4,flight2,information,row
-      |Heathrow,LHR,T5,flight1,information,row
-      |Heathrow,LHR,T5,flight2,information,row
-      |""".stripMargin
+    s"""${ArrivalExportHeadings.regionalExportHeadings}
+       |Heathrow,LHR,T2,flight1,information,row
+       |Heathrow,LHR,T2,flight2,information,row
+       |Heathrow,LHR,T3,flight1,information,row
+       |Heathrow,LHR,T3,flight2,information,row
+       |Heathrow,LHR,T4,flight1,information,row
+       |Heathrow,LHR,T4,flight2,information,row
+       |Heathrow,LHR,T5,flight1,information,row
+       |Heathrow,LHR,T5,flight2,information,row
+       |""".stripMargin
 
   def northRegionPortTerminalData: String =
-    """Region,Port,Terminal,IATA,ICAO,Origin,Gate/Stand,Status,Scheduled,Predicted Arrival,Est Arrival,Act Arrival,Est Chox,Act Chox,Minutes off scheduled,Est PCP,Total Pax,PCP Pax,Invalid API,API e-Gates,API EEA,API Non-EEA,API Fast Track,Historical e-Gates,Historical EEA,Historical Non-EEA,Historical Fast Track,Terminal Average e-Gates,Terminal Average EEA,Terminal Average Non-EEA,Terminal Average Fast Track
+    s"""${ArrivalExportHeadings.regionalExportHeadings}
       |North,ABZ,T1,flight1,information,row
       |North,ABZ,T1,flight2,information,row
       |North,BFS,T1,flight1,information,row
@@ -113,7 +114,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
       |""".stripMargin
 
   def southRegionPortTerminalData: String =
-    """Region,Port,Terminal,IATA,ICAO,Origin,Gate/Stand,Status,Scheduled,Predicted Arrival,Est Arrival,Act Arrival,Est Chox,Act Chox,Minutes off scheduled,Est PCP,Total Pax,PCP Pax,Invalid API,API e-Gates,API EEA,API Non-EEA,API Fast Track,Historical e-Gates,Historical EEA,Historical Non-EEA,Historical Fast Track,Terminal Average e-Gates,Terminal Average EEA,Terminal Average Non-EEA,Terminal Average Fast Track
+    s"""${ArrivalExportHeadings.regionalExportHeadings}
       |South,BOH,T1,flight1,information,row
       |South,BOH,T1,flight2,information,row
       |South,BRS,T1,flight1,information,row
@@ -135,7 +136,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
       |""".stripMargin
 
   def centralRegionPortTerminalData: String =
-    """Region,Port,Terminal,IATA,ICAO,Origin,Gate/Stand,Status,Scheduled,Predicted Arrival,Est Arrival,Act Arrival,Est Chox,Act Chox,Minutes off scheduled,Est PCP,Total Pax,PCP Pax,Invalid API,API e-Gates,API EEA,API Non-EEA,API Fast Track,Historical e-Gates,Historical EEA,Historical Non-EEA,Historical Fast Track,Terminal Average e-Gates,Terminal Average EEA,Terminal Average Non-EEA,Terminal Average Fast Track
+    s"""${ArrivalExportHeadings.regionalExportHeadings}
       |Central,BHX,T1,flight1,information,row
       |Central,BHX,T1,flight2,information,row
       |Central,BHX,T2,flight1,information,row
