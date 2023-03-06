@@ -16,7 +16,7 @@ lazy val jacksonDatabindVersion = "2.14.2"
 lazy val notificationsJavaClientVersion = "3.17.3-RELEASE"
 lazy val scalaCsvVersion = "1.3.10"
 lazy val slickVersion = "3.4.1"
-lazy val postgresqlVersion = "42.5.3"
+lazy val postgresqlVersion = "42.5.4"
 
 lazy val root = (project in file(".")).
   settings(
