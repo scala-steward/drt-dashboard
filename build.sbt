@@ -1,6 +1,6 @@
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v385"
+lazy val drtLibVersion = "v399"
 lazy val drtCiriumVersion = "203"
 lazy val akkaHttpVersion = "10.4.0"
 lazy val akkaVersion = "2.7.0"
@@ -17,6 +17,8 @@ lazy val notificationsJavaClientVersion = "3.17.3-RELEASE"
 lazy val scalaCsvVersion = "1.3.10"
 lazy val slickVersion = "3.4.1"
 lazy val postgresqlVersion = "42.5.3"
+
+ThisBuild / scapegoatVersion := "2.1.1"
 
 lazy val root = (project in file(".")).
   settings(
