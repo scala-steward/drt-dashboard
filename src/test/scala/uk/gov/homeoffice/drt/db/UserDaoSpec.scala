@@ -1,18 +1,20 @@
 package uk.gov.homeoffice.drt.db
 
 import org.specs2.mutable.Specification
-import org.specs2.specification.{ AfterEach, BeforeEach }
-import slick.lifted.TableQuery
+import org.specs2.specification.{AfterEach, BeforeEach}
 import slick.jdbc.PostgresProfile.api._
+import slick.lifted.TableQuery
 import java.sql.Timestamp
 import java.time.Instant
-import scala.concurrent.{ Await, ExecutionContext, Future }
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, ExecutionContext}
 
 class UserDaoSpec extends Specification with AfterEach with BeforeEach {
   sequential
 
+  private val numberOfInactivityDays = 60
+  private val deactivateAfterWarningDays = 7
   val secondsInADay: Int = 24 * 60 * 60
   var appDatabaseTest: AppTestDatabase = null
   var userTable: TableQuery[UserTable] = null
@@ -46,7 +48,7 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
     id = "user4",
     username = "user4",
     email = "user4@test.com",
-    latest_login = new Timestamp(Instant.now().minusSeconds(61 * secondsInADay).toEpochMilli),
+    latest_login = new Timestamp(Instant.now().minusSeconds(68 * secondsInADay).toEpochMilli),
     inactive_email_sent = Some(new Timestamp(Instant.now().minusSeconds(8 * secondsInADay).toEpochMilli)),
     revoked_access = None)
 
@@ -86,7 +88,7 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
     userDao.insertOrUpdate(userInactiveMoreThan67days)
     Await.result(userDao.insertOrUpdate(userWithNoEmail), 1.seconds)
 
-    val inactiveUsers = Await.result(userDao.selectInactiveUsers(60), 1.seconds)
+    val inactiveUsers = Await.result(userDao.selectInactiveUsers(numberOfInactivityDays), 1.seconds)
     inactiveUsers mustEqual expectedUsers
   }
 
@@ -99,9 +101,30 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
     userDao.insertOrUpdate(userInactiveMoreThan67days)
     Await.result(userDao.insertOrUpdate(userWithNoEmail), 1.seconds)
 
-    val usersToRevokeAccess = Await.result(userDao.selectUsersToRevokeAccess, 1.seconds)
+    val usersToRevokeAccess = Await.result(userDao.selectUsersToRevokeAccess(numberOfInactivityDays, deactivateAfterWarningDays), 1.seconds)
 
     usersToRevokeAccess mustEqual expectedUsers
+  }
+
+  "selected user" should "notified depending upon activity of user updated in user tracking" >> {
+    val userDao = new UserDao(appDatabaseTest.db, userTable)
+    //User activity
+    userDao.insertOrUpdate(userActive1.copy(latest_login = new Timestamp(Instant.now().minusSeconds(59 * secondsInADay).toEpochMilli)))
+    val noInactiveUser = Await.result(userDao.selectInactiveUsers(numberOfInactivityDays), 1.seconds)
+    //No user activity in 61 days
+    val inActiveUser = userActive1.copy(latest_login = new Timestamp(Instant.now().minusSeconds(61 * secondsInADay).toEpochMilli))
+    userDao.insertOrUpdate(inActiveUser)
+    val oneInActiveUser = Await.result(userDao.selectInactiveUsers(numberOfInactivityDays), 1.seconds)
+    val noUserToRevoke = Await.result(userDao.selectUsersToRevokeAccess(numberOfInactivityDays, deactivateAfterWarningDays), 1.seconds)
+    //No user activity in 68 days
+    val revokedUser = inActiveUser.copy(latest_login = new Timestamp(Instant.now().minusSeconds(68 * secondsInADay).toEpochMilli),
+      inactive_email_sent = Some(new Timestamp(Instant.now().minusSeconds(8 * secondsInADay).toEpochMilli)))
+    userDao.insertOrUpdate(revokedUser)
+    val oneUserToRevoke = Await.result(userDao.selectUsersToRevokeAccess(numberOfInactivityDays, deactivateAfterWarningDays), 1.seconds)
+
+    oneInActiveUser.head mustEqual (inActiveUser)
+    oneUserToRevoke.head mustEqual (revokedUser)
+    noInactiveUser.isEmpty && noUserToRevoke.isEmpty
   }
 
   override protected def after: Any = {
