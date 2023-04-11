@@ -74,7 +74,7 @@ object Server {
         staticResourceDirectory = getFromResourceDirectory("frontend/static")).route,
       CiriumRoutes("cirium", serverConfig.ciriumDataUri),
       DrtRoutes("drt", serverConfig.portIataCodes),
-      ApiRoutes("api", serverConfig.clientConfig, neboRoutes),
+      ApiRoutes("api", serverConfig.clientConfig, neboRoutes, userService),
       ExportRoutes(new ProdHttpClient),
       UserRoutes("user", serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keyclockUrl))
 
