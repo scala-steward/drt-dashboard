@@ -42,7 +42,7 @@ steps:
     environment:
       ARTIFACTORY_PASSWORD:
         from_secret: ARTIFACTORY_PASSWORD
-      ARTIFACTORY_USERNAME: scala-test-token
+      ARTIFACTORY_USERNAME: drt-artifactory-robot
     when:
       event:
         - push
@@ -55,12 +55,13 @@ steps:
     commands:
       - /root/entrypoint.sh
       - sbt -ivy ./.ivy2 dependencyCheck
+      - sbt -ivy ./.ivy2 -mem 4096 -J-XX:+UseG1GC clean coverage test coverageReport
       - sbt scalastyle | true
       - sbt scapegoat | true
     environment:
       ARTIFACTORY_PASSWORD:
         from_secret: ARTIFACTORY_PASSWORD
-      ARTIFACTORY_USERNAME: scala-test-token
+      ARTIFACTORY_USERNAME: drt-artifactory-robot
       ENV_LOG_LEVEL: ERROR
     when:
       event:
@@ -68,7 +69,7 @@ steps:
 
   - name: sonar-scanner
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/sonar-scanner:v3.0.1
+    image: quay.io/ukhomeofficedigital/sonar-scanner:v4.6
     commands:
       - sonar-scanner -Dsonar.projectVersion=B${DRONE_BUILD_NUMBER}
     environment:
@@ -90,7 +91,7 @@ steps:
     environment:
       ARTIFACTORY_PASSWORD:
         from_secret: ARTIFACTORY_PASSWORD
-      ARTIFACTORY_USERNAME: scala-test-token
+      ARTIFACTORY_USERNAME: drt-artifactory-robot
     when:
       event:
         - push

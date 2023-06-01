@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.drt.schedule
 
-import akka.actor.typed.scaladsl.AskPattern.{Askable}
+import akka.actor.typed.scaladsl.AskPattern.Askable
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors, TimerScheduler}
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.util.Timeout
@@ -32,7 +32,8 @@ object UserTracking {
 
   case class PerformAccountRevocations(token: KeyCloakAuthToken) extends Command
 
-  def apply(serverConfig: ServerConfig, timerInitialDelay: FiniteDuration, maxSize: Int, notifications: EmailNotifications): Behavior[Command] = Behaviors.setup { context: ActorContext[Command] =>
+  def apply(serverConfig: ServerConfig, timerInitialDelay: FiniteDuration, maxSize: Int, notifications: EmailNotifications): Behavior[Command] =
+    Behaviors.setup { context: ActorContext[Command] =>
     implicit val ec = context.executionContext
     val userService: UserService = new UserService(new UserDao(AppDatabase.db, AppDatabase.userTable))
 
@@ -43,6 +44,7 @@ object UserTracking {
       timers, timerInitialDelay,
       serverConfig.scheduleFrequency.minutes,
       serverConfig.inactivityDays,
+      serverConfig.deactivateAfterWarningDays,
       maxSize, context).userBehaviour)
   }
 }
@@ -55,6 +57,7 @@ class UserTracking(
                     timerInitialDelay: FiniteDuration,
                     timerInterval: FiniteDuration,
                     numberOfInactivityDays: Int,
+                    deactivateAfterWarningDays:Int,
                     maxSize: Int,
                     context: ActorContext[Command]) {
   val logger: Logger = LoggerFactory.getLogger(getClass)
@@ -64,7 +67,8 @@ class UserTracking(
   logger.info(s"Starting timer scheduler for user tracking $timerInterval")
   timers.startTimerWithFixedDelay(UserTrackingKey, InactiveUserCheck, timerInitialDelay, timerInterval)
   timers.startTimerWithFixedDelay(UserTrackingRevokeKey, RevokeUserCheck, timerInitialDelay, timerInterval)
-  val keyCloakAuthTokenService: Behavior[KeyCloakAuthTokenService.Token] = KeyCloakAuthTokenService.getTokenBehavior(serverConfig.keyClockConfig, serverConfig.keyclockUsername, serverConfig.keyclockPassword)
+  val keyCloakAuthTokenService: Behavior[KeyCloakAuthTokenService.Token] =
+    KeyCloakAuthTokenService.getTokenBehavior(serverConfig.keyClockConfig, serverConfig.keyclockUsername, serverConfig.keyclockPassword)
   val keycloakServiceBehavior: ActorRef[KeyCloakAuthTokenService.Token] = context.spawn(keyCloakAuthTokenService, "keycloakServiceActor")
 
   private def userBehaviour()(implicit ec: ExecutionContext): Behavior[Command] = {
@@ -98,7 +102,7 @@ class UserTracking(
       case PerformAccountRevocations(token: KeyCloakAuthToken) =>
         context.log.info("KeyCloakToken-RevokeAccess")
         implicit val actorSystem: ActorSystem[Nothing] = context.system
-        val usersToRevoke = userService.getUsersToRevoke().map(_.take(maxSize))
+        val usersToRevoke = userService.getUsersToRevoke(numberOfInactivityDays,deactivateAfterWarningDays).map(_.take(maxSize))
         val keyClockClient = KeyCloakAuthTokenService.getKeyClockClient(serverConfig.keyClockConfig.url, token)
         val keycloakService = KeycloakService(keyClockClient)
         usersToRevoke.map { utrOption =>

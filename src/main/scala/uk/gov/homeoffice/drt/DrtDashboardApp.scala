@@ -30,7 +30,8 @@ object DrtDashboardApp extends App {
     keyclockPassword = config.getString("key-cloak.password"),
     scheduleFrequency = config.getInt("user-tracking.schedule-frequency-minutes"),
     inactivityDays = config.getInt("user-tracking.inactivity-days"),
-    userTrackingFeatureFlag = config.getBoolean("user-tracking.feature-flag"))
+    userTrackingFeatureFlag = config.getBoolean("user-tracking.feature-flag"),
+    deactivateAfterWarningDays= config.getInt("user-tracking.deactivate-after-warning-days"))
 
   val emailNotifications = EmailNotifications(serverConfig.accessRequestEmails, new NotificationClient(serverConfig.notifyServiceApiKey))
   val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig, emailNotifications), "DrtDashboard")

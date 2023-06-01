@@ -1,6 +1,6 @@
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v399"
+lazy val drtLibVersion = "v495"
 lazy val drtCiriumVersion = "203"
 lazy val akkaHttpVersion = "10.4.0"
 lazy val akkaVersion = "2.7.0"
@@ -41,7 +41,7 @@ lazy val root = (project in file(".")).
       "ch.qos.logback" % "logback-classic" % logBackClassicVersion % Runtime,
       "com.lihaoyi" %% "scalatags" % scalaTagsVersion,
       "uk.gov.homeoffice" %% "drt-cirium" % drtCiriumVersion,
-      "uk.gov.homeoffice" %% "drt-lib" % drtLibVersion,
+      "uk.gov.homeoffice" %% "drt-lib" % drtLibVersion excludeAll("org.scala-lang.modules", "scala-xml"),
       "ch.qos.logback.contrib" % "logback-json-classic" % logBackJsonVersion,
       "ch.qos.logback.contrib" % "logback-jackson" % logBackJsonVersion,
       "org.codehaus.janino" % "janino" % janinoVersion,

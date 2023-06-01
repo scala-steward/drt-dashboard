@@ -1,8 +1,8 @@
 package uk.gov.homeoffice.drt.services
 
-import uk.gov.homeoffice.drt.db.{ IUserDao, User }
+import uk.gov.homeoffice.drt.db.{IUserDao, User}
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 class UserService(userDao: IUserDao) {
   def getUsers()(implicit ec: ExecutionContext): Future[Seq[User]] = {
@@ -13,8 +13,8 @@ class UserService(userDao: IUserDao) {
     userDao.selectInactiveUsers(numberOfInactivityDays)
   }
 
-  def getUsersToRevoke()(implicit ec: ExecutionContext): Future[Seq[User]] = {
-    userDao.selectUsersToRevokeAccess()
+  def getUsersToRevoke(numberOfInactivityDays: Int, deactivateAfterWarningDays: Int)(implicit ec: ExecutionContext): Future[Seq[User]] = {
+    userDao.selectUsersToRevokeAccess(numberOfInactivityDays, deactivateAfterWarningDays)
   }
 
   def upsertUser(userData: User)(implicit ec: ExecutionContext): Future[Int] = {
