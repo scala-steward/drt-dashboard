@@ -18,7 +18,7 @@ lazy val scalaCsvVersion = "1.3.10"
 lazy val slickVersion = "3.4.1"
 lazy val postgresqlVersion = "42.5.3"
 
-ThisBuild / scapegoatVersion := "2.1.1"
+ThisBuild / scapegoatVersion := "2.1.2"
 
 lazy val root = (project in file(".")).
   settings(
