@@ -1,6 +1,6 @@
 
 val pluginSbtScoverageVersion = sys.props.getOrElse(
-  "plugin.sbtscoverage.version", "2.0.6"
+  "plugin.sbtscoverage.version", "2.0.8"
 )
 
 ThisBuild / libraryDependencySchemes += "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
