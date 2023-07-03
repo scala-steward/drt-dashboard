@@ -24,7 +24,7 @@ lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
       organization := "uk.gov.homeoffice.drt",
-      scalaVersion := "2.13.10"
+      scalaVersion := "2.13.11"
     )),
 
     version := sys.env.getOrElse("DRONE_BUILD_NUMBER", sys.env.getOrElse("BUILD_ID", "DEV")),
