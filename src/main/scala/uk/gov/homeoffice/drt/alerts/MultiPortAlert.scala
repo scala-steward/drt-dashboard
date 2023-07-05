@@ -49,7 +49,7 @@ object MultiPortAlertClient extends MultiPortAlertJsonSupport {
       case (portCode, alert) =>
         log.info("Sending new alert to ${Dashboard.drtUriForPortCode(portCode)}/alerts")
         DashboardClient.postWithRoles(
-          s"${Dashboard.drtUriForPortCode(portCode)}/alerts",
+          s"${Dashboard.drtInternalUriForPortCode(portCode)}/alerts",
           alert.toJson.toString(),
           user.roles)
     }

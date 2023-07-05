@@ -88,7 +88,7 @@ case class NeboUploadRoutes(neboPortCodes: List[String], httpClient: HttpClient)
     }
 
   def sendFlightDataToPort(flightData: List[FlightData], portCode: String, httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Future[FeedStatus] = {
-    val httpRequest = httpClient.createDrtNeboRequest(flightData, s"${drtUriForPortCode(portCode)}$drtRoutePath", Roles.parse(portCode))
+    val httpRequest = httpClient.createDrtNeboRequest(flightData, s"${drtInternalUriForPortCode(portCode)}$drtRoutePath", Roles.parse(portCode))
     httpClient.send(httpRequest)
       .map(r => FeedStatus(portCode, flightData.size, r.status.toString()))
   }

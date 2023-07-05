@@ -40,14 +40,15 @@ object ExportRoutes {
               case Some(PortResponse(port, region, terminal, httpResponse)) =>
                 httpResponse.entity.dataBytes
                   .runReduce(_ ++ _)
-                  .map {
-                    _
-                      .utf8String
-                      .split("\n")
-                      .filterNot(_.contains("ICAO"))
-                      .map(line => s"${region.name},$port,$terminal,$line")
-                      .mkString("\n")
-                  }
+                  .map(_.utf8String)
+              //                  .map {
+              //                    _
+              //                      .utf8String
+              //                      .split("\n")
+              //                      .filterNot(_.contains("ICAO"))
+              //                      .map(line => s"${region.name},$port,$terminal,$line")
+              //                      .mkString("\n")
+              //                  }
             }
             .prepend(Source.single(ArrivalExportHeadings.regionalExportHeadings))
           complete(stream)
