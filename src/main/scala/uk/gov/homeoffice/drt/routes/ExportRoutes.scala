@@ -8,14 +8,13 @@ import akka.http.scaladsl.server.Directives.{complete, _}
 import akka.http.scaladsl.server.{Route, ValidationRejection}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
-import akka.util.ByteString
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
-import uk.gov.homeoffice.drt.rccu.{ExportCsvService, PortResponse}
+import uk.gov.homeoffice.drt.rccu.ExportCsvService
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.ExecutionContextExecutor
 
 object ExportRoutes {
   def apply(httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
@@ -34,21 +33,6 @@ object ExportRoutes {
             .mapAsync(16) {
               case (port, terminal) =>
                 exportCsvService.getPortResponseForTerminal(startDate, endDate, portRegion.name, port, terminal.toString)
-            }
-            .mapAsync(1) {
-              case None => Future.successful("")
-              case Some(PortResponse(port, region, terminal, httpResponse)) =>
-                httpResponse.entity.dataBytes
-                  .runReduce(_ ++ _)
-                  .map(_.utf8String)
-              //                  .map {
-              //                    _
-              //                      .utf8String
-              //                      .split("\n")
-              //                      .filterNot(_.contains("ICAO"))
-              //                      .map(line => s"${region.name},$port,$terminal,$line")
-              //                      .mkString("\n")
-              //                  }
             }
             .prepend(Source.single(ArrivalExportHeadings.regionalExportHeadings))
           complete(stream)

@@ -31,18 +31,7 @@ class ExportCsvServiceSpec extends Specification {
     val uri = exportCsvService.getUri("LHR", "2022-07-22", "2022-07-24", "T1")
     uri mustEqual expectedUri
   }
-
-  "Get response for given region port terminal" >> {
-    val response = Await.result(exportCsvService.getPortResponseForTerminal("2022-07-22", "2022-07-23", "Heathrow", "Heathrow", "T2"), 1.seconds).get
-
-    response.port must be("Heathrow")
-    response.regionName must be ("Heathrow")
-    response.terminal must be ("T2")
-    response.httpResponse.entity.dataBytes.fold(ByteString.empty)(_ ++ _).map(_.utf8String).runWith(Sink.head).map { csv =>
-      csv mustEqual csv
-    }
-  }
-
+  
   object MockHttpClient extends HttpClient {
     def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[HttpResponse] = {
       if (httpRequest.getUri().path().contains("PIK")) {
