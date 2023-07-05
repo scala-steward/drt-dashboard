@@ -43,7 +43,7 @@ class ExportCsvService(httpClient: HttpClient) {
             .recover(e => {
               log.error(s"Error while requesting export for $uri", e)
               ""
-            }
+            })
         } else {
           r.entity.discardBytes()
           log.warn(s"Not OK response $r")

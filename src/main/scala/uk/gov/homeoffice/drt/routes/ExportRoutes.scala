@@ -30,7 +30,7 @@ object ExportRoutes {
             .mapConcat {
               case Some((portStr, terminals)) => terminals.map(t => (portStr, t))
             }
-            .mapAsync(16) {
+            .mapAsync(1) {
               case (port, terminal) =>
                 exportCsvService.getPortResponseForTerminal(startDate, endDate, portRegion.name, port, terminal.toString)
             }
