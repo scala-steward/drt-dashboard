@@ -14,7 +14,7 @@ import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.rccu.{ExportCsvService, PortResponse}
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 object ExportRoutes {
   def apply(httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
@@ -34,8 +34,8 @@ object ExportRoutes {
               case (port, terminal) =>
                 exportCsvService.getPortResponseForTerminal(startDate, endDate, portRegion.name, port, terminal.toString)
             }
-            .flatMapConcat {
-              case None => Source.empty
+            .mapAsync(1) {
+              case None => Future.successful("")
               case Some(PortResponse(port, region, terminal, httpResponse)) =>
                 httpResponse.entity.dataBytes
                   .map {
@@ -46,6 +46,7 @@ object ExportRoutes {
                       .map(line => s"${region.name},$port,$terminal,$line")
                       .mkString("\n")
                   }
+                  .runReduce(_ + _)
             }
             .prepend(Source.single(ArrivalExportHeadings.regionalExportHeadings))
           complete(stream)
