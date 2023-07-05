@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import './App.css';
 import {Home} from './components/Home';
 import Alerts from './components/Alerts/Alerts';
@@ -16,6 +16,8 @@ import {RedListEditor} from "./components/RedListEditor";
 import {Container} from "@mui/material";
 import {styled} from "@mui/material/styles";
 import {RegionalPort} from "./components/RegionalPort";
+import axios from "axios";
+import ApiClient from "./services/ApiClient";
 
 
 const StyledDiv = styled('div')(() => ({
@@ -47,6 +49,22 @@ type PropsFromReact = ConnectedProps<typeof connector>
 const App = (props: PropsFromReact) => {
     const currentLocation = window.document.location;
     const logoutLink = "/oauth/logout?redirect=" + currentLocation.toString()
+
+    const [userTracked, setUserTracked] = React.useState(false);
+
+    const trackUser = () => {
+        axios
+            .get(ApiClient.userTrackingEndPoint)
+            .then(() => {
+                setUserTracked(true)
+            }).catch(reason => {
+            console.log('Unable to user tracking' + reason);
+        })
+    }
+
+    useEffect(() => {
+        trackUser();
+    }, [userTracked]);
 
     return (props.user.kind === "SignedInUser" && props.config.kind === "LoadedConfig") ?
         <StyledDiv>

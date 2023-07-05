@@ -1,12 +1,14 @@
 package uk.gov.homeoffice.drt.db
 
-import org.slf4j.{ Logger, LoggerFactory }
+import org.slf4j.{Logger, LoggerFactory}
+import slick.jdbc.PostgresProfile
 import slick.jdbc.PostgresProfile.api._
-import slick.lifted.{ TableQuery, Tag }
+import slick.lifted.{TableQuery, Tag}
 import spray.json.RootJsonFormat
 
-import java.time.LocalDateTime
-import scala.concurrent.{ ExecutionContext, Future }
+import java.sql.Timestamp
+import java.time.Instant
+import scala.concurrent.{ExecutionContext, Future}
 
 trait UserJsonSupport extends DateTimeJsonSupport {
   implicit val userFormatParser: RootJsonFormat[User] = jsonFormat6(User)
@@ -34,7 +36,8 @@ class UserTable(tag: Tag, tableName: String = "user") extends Table[User](tag, t
 
   def revoked_access = column[Option[java.sql.Timestamp]]("revoked_access")
 
-  def * = (id, username, email, latest_login, inactive_email_sent, revoked_access).mapTo[User]
+  def * = (id, username, email, latest_login, inactive_email_sent, revoked_access) <> (User.tupled, User.unapply)
+
 }
 
 trait IUserDao {
@@ -42,7 +45,7 @@ trait IUserDao {
 
   def selectInactiveUsers(numberOfInactivityDays: Int)(implicit executionContext: ExecutionContext): Future[Seq[User]]
 
-  def selectUsersToRevokeAccess()(implicit executionContext: ExecutionContext): Future[Seq[User]]
+  def selectUsersToRevokeAccess(numberOfInactivityDays: Int, deactivateAfterWarningDays: Int)(implicit executionContext: ExecutionContext): Future[Seq[User]]
 
   def selectAll()(implicit executionContext: ExecutionContext): Future[Seq[User]]
 
@@ -50,21 +53,31 @@ trait IUserDao {
 
 class UserDao(db: Database, userTable: TableQuery[UserTable]) extends IUserDao {
   val log: Logger = LoggerFactory.getLogger(getClass)
+  val secondsInADay = 60 * 60 * 24
+
+  def noActivitySinceDays(numberOfInactivityDays: Int): UserTable => Rep[Boolean] = (user: UserTable) =>
+    user.inactive_email_sent.isEmpty &&
+      user.latest_login < new Timestamp(Instant.now().minusSeconds(numberOfInactivityDays * secondsInADay).toEpochMilli)
+
+  def accessShouldBeRevoked(numberOfInactivityDays: Int, deactivateAfterWarningDays: Int): UserTable => Rep[Boolean] = (user: UserTable) =>
+    user.revoked_access.isEmpty &&
+      user.latest_login < new Timestamp(Instant.now().minusSeconds((numberOfInactivityDays + deactivateAfterWarningDays) * secondsInADay).toEpochMilli) &&
+      user.inactive_email_sent.map(_ < new Timestamp(Instant.now().minusSeconds((deactivateAfterWarningDays) * secondsInADay).toEpochMilli)).getOrElse(false)
 
   def insertOrUpdate(userData: User): Future[Int] = {
     db.run(userTable insertOrUpdate userData)
   }
 
   def selectInactiveUsers(numberOfInactivityDays: Int)(implicit executionContext: ExecutionContext): Future[Seq[User]] = {
-    db.run(userTable.result)
+    val inactiveIdx: UserTable => PostgresProfile.api.Rep[Boolean] = noActivitySinceDays(numberOfInactivityDays)
+    db.run(userTable.filter(inactiveIdx).result)
       .mapTo[Seq[User]]
-      .map(_.filter(u => u.inactive_email_sent.isEmpty && u.latest_login.toLocalDateTime.isBefore(LocalDateTime.now().minusDays(numberOfInactivityDays))))
   }
 
-  def selectUsersToRevokeAccess()(implicit executionContext: ExecutionContext): Future[Seq[User]] = {
-    db.run(userTable.result)
+  def selectUsersToRevokeAccess(numberOfInactivityDays: Int, deactivateAfterWarningDays: Int)(implicit executionContext: ExecutionContext): Future[Seq[User]] = {
+    val revokeIdx: UserTable => PostgresProfile.api.Rep[Boolean] = accessShouldBeRevoked(numberOfInactivityDays, deactivateAfterWarningDays)
+    db.run(userTable.filter(revokeIdx).result)
       .mapTo[Seq[User]]
-      .map(_.filter(u => u.revoked_access.isEmpty && u.inactive_email_sent.exists(_.toLocalDateTime.isBefore(LocalDateTime.now().minusDays(7)))))
   }
 
   def selectAll()(implicit executionContext: ExecutionContext): Future[Seq[User]] = {

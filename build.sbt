@@ -1,28 +1,30 @@
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v385"
+lazy val drtLibVersion = "v495"
 lazy val drtCiriumVersion = "203"
 lazy val akkaHttpVersion = "10.4.0"
 lazy val akkaVersion = "2.7.0"
-lazy val jodaTimeVersion = "2.12.2"
+lazy val jodaTimeVersion = "2.12.5"
 lazy val scalaLoggingVersion = "3.9.5"
-lazy val logBackClassicVersion = "1.4.5"
+lazy val logBackClassicVersion = "1.4.8"
 lazy val scalaTagsVersion = "0.11.1"
-lazy val specs2Version = "4.19.2"
+lazy val specs2Version = "4.20.0"
 lazy val logBackJsonVersion = "0.1.5"
 lazy val janinoVersion = "3.1.9"
-lazy val scalaTestVersion = "3.2.15"
+lazy val scalaTestVersion = "3.2.16"
 lazy val jacksonDatabindVersion = "2.14.2"
-lazy val notificationsJavaClientVersion = "3.17.3-RELEASE"
+lazy val notificationsJavaClientVersion = "3.19.2-RELEASE"
 lazy val scalaCsvVersion = "1.3.10"
 lazy val slickVersion = "3.4.1"
-lazy val postgresqlVersion = "42.5.3"
+lazy val postgresqlVersion = "42.5.4"
+
+ThisBuild / scapegoatVersion := "2.1.2"
 
 lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
       organization := "uk.gov.homeoffice.drt",
-      scalaVersion := "2.13.10"
+      scalaVersion := "2.13.11"
     )),
 
     version := sys.env.getOrElse("DRONE_BUILD_NUMBER", sys.env.getOrElse("BUILD_ID", "DEV")),
@@ -39,7 +41,7 @@ lazy val root = (project in file(".")).
       "ch.qos.logback" % "logback-classic" % logBackClassicVersion % Runtime,
       "com.lihaoyi" %% "scalatags" % scalaTagsVersion,
       "uk.gov.homeoffice" %% "drt-cirium" % drtCiriumVersion,
-      "uk.gov.homeoffice" %% "drt-lib" % drtLibVersion,
+      "uk.gov.homeoffice" %% "drt-lib" % drtLibVersion excludeAll("org.scala-lang.modules", "scala-xml"),
       "ch.qos.logback.contrib" % "logback-json-classic" % logBackJsonVersion,
       "ch.qos.logback.contrib" % "logback-jackson" % logBackJsonVersion,
       "org.codehaus.janino" % "janino" % janinoVersion,

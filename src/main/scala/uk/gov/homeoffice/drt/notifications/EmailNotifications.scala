@@ -113,6 +113,7 @@ case class EmailNotifications(accessRequestEmails: List[String], client: Notific
   def sendUserInactivityEmailNotification(email: String, domain: String, teamEmail: String, templateId: String, reference: String): Try[SendEmailResponse] = {
     val personalisation: util.Map[String, String] = {
       Map(
+        "emailAddress" -> email,
         "requesterUsername" -> getFirstName(email),
         "link" -> s"https://$domain",
         "teamEmail" -> teamEmail

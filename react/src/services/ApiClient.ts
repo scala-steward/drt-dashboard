@@ -7,6 +7,7 @@ interface IApiClient {
 
 export default class ApiClient implements IApiClient {
   public static userEndPoint = "/api/user";
+  public static userTrackingEndPoint = "/api/track-user";
   public static configEndPoint = "/api/config";
   public static logoutEndPoint = "/oauth/logout";
   public static alertsEndPoint = "/api/alerts";

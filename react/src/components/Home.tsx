@@ -27,4 +27,3 @@ export const Home = (props: IProps) => {
         }
     </Box>
 }
-

@@ -22,7 +22,6 @@ export default function UserAccess() {
     const [selectedRowDetails, setSelectedRowDetails] = React.useState([] as UserRequestedAccessData[]);
     const [selectedRowIds, setSelectedRowIds] = React.useState<GridRowId[]>([]);
     const [users, setUsers] = React.useState([] as KeyCloakUser[]);
-    const [receivedUsersResponse, setReceivedUsersResponse] = React.useState(false)
     const [requestPosted, setRequestPosted] = React.useState(false)
     const [dismissedPosted, setDismissedPosted] = React.useState(false)
     const [statusFilterValue, setStatusFilterValue] = React.useState("Requested")
@@ -38,14 +37,14 @@ export default function UserAccess() {
         setRowsData(response.data as GridRowModel[])
     }
 
-    const updateUserDetailsState = (response: AxiosResponse) => {
+    const approveAndUpdateUserDetailsState = (response: AxiosResponse) => {
+        approveUserAccessRequest(response.data as KeyCloakUser)
         setUsers(oldUsers => [...oldUsers, response.data as KeyCloakUser]);
     }
 
-    const getKeyCloakUserDetails = (emails: string[]) => {
+    const approveAndUpdateKeyCloakUserDetails = (emails: string[]) => {
         emails.map(email => axios.get(ApiClient.userDetailsEndpoint + '/' + email)
-            .then(response => updateUserDetailsState(response))
-            .then(() => setReceivedUsersResponse(true)))
+            .then(response => approveAndUpdateUserDetailsState(response)))
     }
 
     const requestAccessRequests = () => {
@@ -54,7 +53,7 @@ export default function UserAccess() {
             .then(response => handleAccessRequestsResponse(response))
     }
 
-    const findAccessRequestByEmail = (requestTime: string | number) => {
+    const findAccessRequestByRowId = (requestTime: string | number) => {
         return userRequestList.find(obj => {
             return obj.requestTime.trim() == requestTime
         });
@@ -65,14 +64,14 @@ export default function UserAccess() {
         setOpenModal(true)
     }
 
-    const fetchUsers = () => {
+    const approveSelectedUserRequests = () => {
         setUsers([{} as KeyCloakUser]);
 
         const emails: string[] = selectedRowIds
-            .map(s => findAccessRequestByEmail(s)?.email)
+            .map(s => findAccessRequestByRowId(s)?.email)
             .filter((s): s is string => !!s);
 
-        getKeyCloakUserDetails(emails)
+        approveAndUpdateKeyCloakUserDetails(emails)
     }
 
     const addSelectedRowDetails = (srd: UserRequestedAccessData) => {
@@ -83,7 +82,7 @@ export default function UserAccess() {
         console.log(ids);
         setSelectedRowDetails([])
         if (ids) {
-            ids.map(id => findAccessRequestByEmail(id))
+            ids.map(id => findAccessRequestByRowId(id))
                 .filter((s): s is UserRequestedAccessData => !!s)
                 .map(s => addSelectedRowDetails(s))
         }
@@ -100,7 +99,6 @@ export default function UserAccess() {
             axios.post(ApiClient.addUserToGroupEndpoint + '/' + (user as KeyCloakUser).id, email)
                 .then(response => console.log("User addUserToGroupEndpoint" + response))
                 .then(() => setRequestPosted(true))
-                .then(() => setReceivedUsersResponse(false))
         }
     }
 
@@ -108,10 +106,7 @@ export default function UserAccess() {
         if (!receivedUserDetails) {
             requestAccessRequests();
         }
-        if (receivedUsersResponse) {
-            users.map(approveUserAccessRequest)
-        }
-    }, [users, receivedUserDetails, receivedUsersResponse]);
+    }, [receivedUserDetails]);
 
     const viewSelectAccessRequest = () => {
         return <Box sx={{height: 400, width: '100%'}}>
@@ -127,7 +122,7 @@ export default function UserAccess() {
                 experimentalFeatures={{newEditingApi: true}}
                 onRowClick={(params, event: any) => {
                     if (!event.ignore) {
-                        rowClickOpen(findAccessRequestByEmail(params.row.requestTime));
+                        rowClickOpen(findAccessRequestByRowId(params.row.requestTime));
                     }
                 }}
             />
@@ -141,16 +136,16 @@ export default function UserAccess() {
 
             <Grid container spacing={2} justifyContent={"center"}>
                 <Grid item xs={8} md={2}>
-                    <Button variant="outlined" onClick={fetchUsers}>Approve</Button>
+                    <Button variant="outlined" onClick={approveSelectedUserRequests}>Approve</Button>
                 </Grid>
                 <Grid item xs={8} md={2}>
-                    <Button variant="outlined" onClick={dismissUserRequest}>Dismiss</Button>
+                    <Button variant="outlined" onClick={dismissAccessRequests}>Dismiss</Button>
                 </Grid>
             </Grid>
         </Box>
     }
 
-    const dismissUserRequest = () => {
+    const dismissAccessRequests = () => {
         selectedRowDetails
             .map(selectedRowDetail => axios.post(ApiClient.updateUserRequestEndpoint + "/" + "Dismissed", selectedRowDetail)
                 .then(response => console.log('dismiss user' + response.data)))
@@ -217,5 +212,3 @@ export default function UserAccess() {
         </Box>
     )
 }
-
-

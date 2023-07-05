@@ -47,7 +47,7 @@ case class ClientUserRequestedAccessData(
 
   def getListOfPortOrRegion = {
     if (accountType == "rccu" && regionsRequested.nonEmpty) {
-      regionsRequested.split(",").toList.map("RCC%20" + _)
+      regionsRequested.split(",").toList.map("RCC " + _)
     } else if (portsRequested.nonEmpty) {
       portsRequested.split(",").toList
     } else {
@@ -71,4 +71,3 @@ case class ClientUserRequestedAccessData(
       requestTime = new Timestamp(DateTime.parse(requestTime, DateTimeFormat.forPattern("YYYY-MM-dd HH:mm:ss.SSS")).getMillis))
   }
 }
-

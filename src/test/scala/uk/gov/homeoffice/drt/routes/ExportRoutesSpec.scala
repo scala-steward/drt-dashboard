@@ -129,8 +129,6 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
       |South,LGW,S,flight2,information,row
       |South,NQY,T1,flight1,information,row
       |South,NQY,T1,flight2,information,row
-      |South,SEN,T1,flight1,information,row
-      |South,SEN,T1,flight2,information,row
       |South,SOU,T1,flight1,information,row
       |South,SOU,T1,flight2,information,row
       |""".stripMargin
@@ -149,6 +147,8 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
       |Central,LTN,T1,flight2,information,row
       |Central,NWI,T1,flight1,information,row
       |Central,NWI,T1,flight2,information,row
+      |Central,SEN,T1,flight1,information,row
+      |Central,SEN,T1,flight2,information,row
       |Central,STN,T1,flight1,information,row
       |Central,STN,T1,flight2,information,row
       |""".stripMargin
