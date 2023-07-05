@@ -1,14 +1,14 @@
 package uk.gov.homeoffice.drt
 
 import org.specs2.mutable.Specification
-import uk.gov.homeoffice.drt.Dashboard.drtUriForPortCode
+import uk.gov.homeoffice.drt.Dashboard.drtInternalUriForPortCode
 
 class DrtUrlSpec extends Specification {
 
   "Given a port code and an endpoint I should get back an internal url that will work in kubernetes" >> {
     val portCode = "lhr"
 
-    val result = drtUriForPortCode(portCode)
+    val result = drtInternalUriForPortCode(portCode)
 
     val expected = "http://lhr:9000"
 

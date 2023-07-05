@@ -12,7 +12,7 @@ import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
-import uk.gov.homeoffice.drt.rccu.{ExportCsvService, PortResponse}
+import uk.gov.homeoffice.drt.rccu.ExportCsvService
 
 import scala.concurrent.ExecutionContextExecutor
 
@@ -33,19 +33,6 @@ object ExportRoutes {
             .mapAsync(16) {
               case (port, terminal) =>
                 exportCsvService.getPortResponseForTerminal(startDate, endDate, portRegion.name, port, terminal.toString)
-            }
-            .flatMapConcat {
-              case None => Source.empty
-              case Some(PortResponse(port, region, terminal, httpResponse)) =>
-                httpResponse.entity.dataBytes
-                  .map {
-                    _
-                      .utf8String
-                      .split("\n")
-                      .filterNot(_.contains("ICAO"))
-                      .map(line => s"${region.name},$port,$terminal,$line")
-                      .mkString("\n")
-                  }
             }
             .prepend(Source.single(ArrivalExportHeadings.regionalExportHeadings))
           complete(stream)
