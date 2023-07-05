@@ -8,6 +8,7 @@ import akka.http.scaladsl.server.Directives.{complete, _}
 import akka.http.scaladsl.server.{Route, ValidationRejection}
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
 import uk.gov.homeoffice.drt.ports.PortRegion
@@ -38,6 +39,7 @@ object ExportRoutes {
               case None => Future.successful("")
               case Some(PortResponse(port, region, terminal, httpResponse)) =>
                 httpResponse.entity.dataBytes
+                  .runReduce(_ ++ _)
                   .map {
                     _
                       .utf8String
@@ -46,7 +48,6 @@ object ExportRoutes {
                       .map(line => s"${region.name},$port,$terminal,$line")
                       .mkString("\n")
                   }
-                  .runReduce(_ + _)
             }
             .prepend(Source.single(ArrivalExportHeadings.regionalExportHeadings))
           complete(stream)

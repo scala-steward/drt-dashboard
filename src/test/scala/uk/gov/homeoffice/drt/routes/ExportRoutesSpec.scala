@@ -46,7 +46,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
   }
 
   "Request South arrival export" should {
-    "collate all port and terminal arrivals in the North region" in {
+    "collate all port and terminal arrivals in the South region" in {
       Get("/export/South/2022-08-02/2022-08-03") ~> ExportRoutes(mockHttpClient) ~> check {
         val a = responseAs[String]
         a should ===(southRegionPortTerminalData)
@@ -55,7 +55,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
   }
 
   "Request Central arrival export" should {
-    "collate all port and terminal arrivals in the North region" in {
+    "collate all port and terminal arrivals in the Central region" in {
       Get("/export/Central/2022-08-02/2022-08-03") ~> ExportRoutes(mockHttpClient) ~> check {
         val a = responseAs[String]
         a should ===(centralRegionPortTerminalData)
