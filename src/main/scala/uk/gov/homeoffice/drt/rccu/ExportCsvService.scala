@@ -2,7 +2,7 @@ package uk.gov.homeoffice.drt.rccu
 
 import akka.http.scaladsl.model.StatusCodes.OK
 import akka.stream.Materializer
-import akka.stream.scaladsl.Source
+import akka.stream.scaladsl.{Sink, Source}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.{Logger, LoggerFactory}
@@ -28,28 +28,25 @@ class ExportCsvService(httpClient: HttpClient) {
     val httpRequest = httpClient.createPortArrivalImportRequest(uri, port)
     httpClient
       .send(httpRequest)
-      .map { r =>
+      .flatMap { r =>
         log.info(s"Got response from $uri")
         if (r.status == OK) {
           r.entity.dataBytes
-            .map { chunk =>
-              log.info(s"Chunk from $uri ${chunk.size}b")
-              chunk
-                .utf8String
-//                .split("\n")
-//                .filterNot(_.contains("ICAO"))
-//                .map(line => s"$regionName,$port,$terminal,$line")
-//                .mkString("\n")
-            }
-            .recover { e =>
-              log.error(s"Error while requesting export for $uri", e)
-              ""
+            .runWith(Sink.seq)
+            .map { chunks =>
+              Source(chunks.map { chunk =>
+                chunk.utf8String
+                  .split("\n")
+                  .filterNot(_.contains("ICAO"))
+                  .map(line => s"$regionName,$port,$terminal,$line")
+                  .mkString("\n")
+              })
             }
         }
         else {
           r.entity.discardBytes()
           log.warn(s"Not OK response $r")
-          Source(List(""))
+          Future.successful(Source(List("")))
         }
       }
       .recoverWith {
