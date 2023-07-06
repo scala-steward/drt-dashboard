@@ -1,13 +1,10 @@
 package uk.gov.homeoffice.drt.rccu
 
-import akka.NotUsed
-import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes.OK
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
-import akka.util.ByteString
-import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.DateTimeFormat
+import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
@@ -18,9 +15,9 @@ class ExportCsvService(httpClient: HttpClient) {
 
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  val drtExportCsvRoutePath = "export/arrivals"
+  private val drtExportCsvRoutePath = "export/arrivals"
 
-  def getPortRegion(region: String) = PortRegion.regions.find(_.name == region)
+  def getPortRegion(region: String): Option[PortRegion] = PortRegion.regions.find(_.name == region)
 
   def getUri(portCode: String, start: String, end: String, terminal: String): String =
     s"${Dashboard.drtInternalUriForPortCode(portCode)}/$drtExportCsvRoutePath/$start/$end/$terminal"
@@ -32,20 +29,22 @@ class ExportCsvService(httpClient: HttpClient) {
     httpClient
       .send(httpRequest)
       .map { r =>
+        log.info(s"Got response from $uri")
         if (r.status == OK) {
           r.entity.dataBytes
-            .map {
-              _
+            .map { chunk =>
+              log.info(s"Chunk from $uri ${chunk.size}b")
+              chunk
                 .utf8String
-                .split("\n")
-                .filterNot(_.contains("ICAO"))
-                .map(line => s"${regionName},$port,$terminal,$line")
-                .mkString("\n")
+//                .split("\n")
+//                .filterNot(_.contains("ICAO"))
+//                .map(line => s"$regionName,$port,$terminal,$line")
+//                .mkString("\n")
             }
-            .recover(e => {
+            .recover { e =>
               log.error(s"Error while requesting export for $uri", e)
               ""
-            })
+            }
         }
         else {
           r.entity.discardBytes()
@@ -60,11 +59,11 @@ class ExportCsvService(httpClient: HttpClient) {
       }
   }
 
-  val formattedStringDate: DateTime => String = dateTime => DateTimeFormat.forPattern("yyyyMMddHHmmss").print(dateTime)
+  private val formattedStringDate: DateTime => String = dateTime => DateTimeFormat.forPattern("yyyyMMddHHmmss").print(dateTime)
 
-  val getCurrentTimeString: () => String = () => formattedStringDate(DateTime.now())
+  private val getCurrentTimeString: () => String = () => formattedStringDate(DateTime.now())
 
-  val stringToDate: String => DateTime = dateTimeString => DateTimeFormat.forPattern("yyyy-MM-dd")
+  private val stringToDate: String => DateTime = dateTimeString => DateTimeFormat.forPattern("yyyy-MM-dd")
     .withZone(DateTimeZone.forID("Europe/London"))
     .parseDateTime(dateTimeString)
 
@@ -72,9 +71,7 @@ class ExportCsvService(httpClient: HttpClient) {
     val startDateTime: DateTime = stringToDate(start)
     val endDateTime: DateTime = stringToDate(end)
     val endDate = if (endDateTime.minusDays(1).isAfter(startDateTime))
-      f"-to-${
-        end
-      }"
+      f"-to-$end"
     else ""
 
     f"$portRegion-${getCurrentTimeString()}-" +
