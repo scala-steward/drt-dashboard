@@ -34,13 +34,18 @@ class ExportCsvService(httpClient: HttpClient) {
           r.entity.dataBytes
             .runWith(Sink.seq)
             .map { chunks =>
-              Source(chunks.map { chunk =>
-                chunk.utf8String
+              log.info(s"Got ${chunks.size} chunks from $uri")
+              Source(chunks).map {
+                _.utf8String
                   .split("\n")
                   .filterNot(_.contains("ICAO"))
                   .map(line => s"$regionName,$port,$terminal,$line")
                   .mkString("\n")
-              })
+              }
+            }
+            .recover { case e: Throwable =>
+              log.error(s"Error while requesting export for $uri", e)
+              Source(List(""))
             }
         }
         else {
