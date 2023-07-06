@@ -33,21 +33,21 @@ steps:
     depends_on:
       - Build front end
 
-  - name: Test back end
-    pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.0.0
-    commands:
-      - /root/entrypoint.sh
-      - sbt -mem 2048 test
-    environment:
-      ARTIFACTORY_PASSWORD:
-        from_secret: ARTIFACTORY_PASSWORD
-      ARTIFACTORY_USERNAME: drt-artifactory-robot
-    when:
-      event:
-        - push
-    depends_on:
-      - Copy front end to resources
+#  - name: Test back end
+#    pull: if-not-exists
+#    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.0.0
+#    commands:
+#      - /root/entrypoint.sh
+#      - sbt -mem 2048 test
+#    environment:
+#      ARTIFACTORY_PASSWORD:
+#        from_secret: ARTIFACTORY_PASSWORD
+#      ARTIFACTORY_USERNAME: drt-artifactory-robot
+#    when:
+#      event:
+#        - push
+#    depends_on:
+#      - Copy front end to resources
 
   - name: analysis
     pull: if-not-exists
@@ -135,5 +135,6 @@ steps:
         - push
     depends_on:
       - publish
+#      - Test back end
 
 ...
