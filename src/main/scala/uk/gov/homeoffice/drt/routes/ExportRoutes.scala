@@ -14,10 +14,11 @@ import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.rccu.ExportCsvService
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 object ExportRoutes {
-  def apply(httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
+  def apply(httpClient: HttpClient)
+           (implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
     lazy val exportCsvService = new ExportCsvService(httpClient)
     path("export" / Segment / Segment / Segment) { (region, startDate, endDate) =>
       val fileName = exportCsvService.makeFileName(startDate, endDate, region)
@@ -34,6 +35,7 @@ object ExportRoutes {
               case (port, terminal) =>
                 exportCsvService.getPortResponseForTerminal(startDate, endDate, portRegion.name, port, terminal.toString)
             }
+            .flatMapConcat(identity)
             .prepend(Source.single(ArrivalExportHeadings.regionalExportHeadings))
           complete(stream)
         }
