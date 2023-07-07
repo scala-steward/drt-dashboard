@@ -16,7 +16,7 @@ lazy val jacksonDatabindVersion = "2.14.2"
 lazy val notificationsJavaClientVersion = "3.19.2-RELEASE"
 lazy val scalaCsvVersion = "1.3.10"
 lazy val slickVersion = "3.4.1"
-lazy val postgresqlVersion = "42.5.4"
+lazy val postgresqlVersion = "42.6.0"
 
 ThisBuild / scapegoatVersion := "2.1.2"
 
