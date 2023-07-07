@@ -29,7 +29,7 @@ class DrtPortDashboardSpec extends TestKit(ActorSystem("testActorSystem", Config
 
       val result: immutable.Seq[FeedSourceStatus] = Await.result(
         mockClient.get("")
-          .flatMap(res => Unmarshal[HttpResponse](res).to[List[FeedSourceStatus]]), 1 second)
+          .flatMap(res => Unmarshal[HttpResponse](res).to[List[FeedSourceStatus]]), 1.second)
 
       val expected = List(
         FeedSourceStatus(
@@ -44,7 +44,7 @@ class DrtPortDashboardSpec extends TestKit(ActorSystem("testActorSystem", Config
 
       val result: immutable.Seq[FeedSourceStatus] = Await.result(
         mockClient.get("")
-          .flatMap(res => Unmarshal[HttpResponse](res).to[List[FeedSourceStatus]]), 1 second)
+          .flatMap(res => Unmarshal[HttpResponse](res).to[List[FeedSourceStatus]]), 1.second)
 
       val expected = List(
         FeedSourceStatus(

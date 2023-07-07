@@ -126,6 +126,6 @@ object Dashboard {
 
   def timeSince(millis: Long): Long = System.currentTimeMillis() - millis
 
-  def drtUriForPortCode(portCode: String): String = s"http://${portCode.toLowerCase}:9000"
+  def drtInternalUriForPortCode(portCode: String): String = s"http://${portCode.toLowerCase}:9000"
 
 }

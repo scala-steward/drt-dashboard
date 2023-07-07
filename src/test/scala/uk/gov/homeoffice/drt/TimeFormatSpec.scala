@@ -2,7 +2,7 @@ package uk.gov.homeoffice.drt
 
 import org.joda.time.DateTime
 import org.specs2.mutable.Specification
-import uk.gov.homeoffice.drt.Dashboard.drtUriForPortCode
+import uk.gov.homeoffice.drt.Dashboard.drtInternalUriForPortCode
 
 class TimeFormatSpec extends Specification {
   import Dashboard.timeAgoInWords
