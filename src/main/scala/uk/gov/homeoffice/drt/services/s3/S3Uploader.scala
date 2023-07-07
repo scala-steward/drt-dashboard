@@ -21,20 +21,36 @@ case class S3Uploader(uploader: S3MultipartUploader, bucketName: String, prefix:
       .bucket(bucketName)
       .key(fullObjectKey).build()
 
-    uploader.createMultipartUpload(createMultipartUploadRequest).flatMap { uploadResponse =>
-      val uploadId = uploadResponse.uploadId()
-      data
-        .groupedWeighted(1024 * 1024 * 5)(_.length)
-        .zipWithIndex
-        .mapAsync(1) { case (next, idx) =>
-          uploadChunk(bucketName, fullObjectKey, uploadId, next, idx)
-        }
-        .runFold(List[CompletedPart]())(_ :+ _)
-        .flatMap { parts =>
-          val completeMultipartUploadRequest = makeCompleteRequest(log, bucketName, fullObjectKey, uploadId, parts)
-          completeUpload(completeMultipartUploadRequest)
-        }
-    }
+    uploader.createMultipartUpload(createMultipartUploadRequest)
+      .flatMap { uploadResponse =>
+        val uploadId = uploadResponse.uploadId()
+        data
+          .groupedWeighted(1024 * 1024 * 5)(_.length)
+          .zipWithIndex
+          .mapAsync(1) { case (next, idx) =>
+            uploadChunk(bucketName, fullObjectKey, uploadId, next, idx)
+              .recover {
+                case e: Exception =>
+                  log.error(s"Failed to upload chunk $idx", e)
+                  throw e
+              }
+          }
+          .runFold(List[CompletedPart]())(_ :+ _)
+          .flatMap { parts =>
+            val completeMultipartUploadRequest = makeCompleteRequest(log, bucketName, fullObjectKey, uploadId, parts)
+            completeUpload(completeMultipartUploadRequest)
+              .recover {
+                case e: Exception =>
+                  log.error(s"Failed to complete upload", e)
+                  throw e
+              }
+          }
+      }
+      .recover {
+        case e: Exception =>
+          log.error(s"Failed to create multipart upload", e)
+          throw e
+      }
   }
 
   private def completeUpload(completeMultipartUploadRequest: CompleteMultipartUploadRequest)
