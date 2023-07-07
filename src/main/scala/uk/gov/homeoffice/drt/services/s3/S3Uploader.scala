@@ -23,6 +23,7 @@ case class S3Uploader(uploader: S3MultipartUploader, bucketName: String, prefix:
 
     uploader.createMultipartUpload(createMultipartUploadRequest)
       .flatMap { uploadResponse =>
+        log.info(s"Created multipart upload: ${uploadResponse.uploadId()}")
         val uploadId = uploadResponse.uploadId()
         data
           .groupedWeighted(1024 * 1024 * 5)(_.length)
