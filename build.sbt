@@ -7,17 +7,17 @@ lazy val akkaVersion = "2.7.0"
 lazy val jodaTimeVersion = "2.12.5"
 lazy val scalaLoggingVersion = "3.9.5"
 lazy val logBackClassicVersion = "1.4.8"
-lazy val scalaTagsVersion = "0.11.1"
+lazy val scalaTagsVersion = "0.12.0"
 lazy val specs2Version = "4.20.0"
 lazy val logBackJsonVersion = "0.1.5"
-lazy val janinoVersion = "3.1.9"
+lazy val janinoVersion = "3.1.10"
 lazy val scalaTestVersion = "3.2.16"
-lazy val jacksonDatabindVersion = "2.14.2"
-lazy val notificationsJavaClientVersion = "3.19.2-RELEASE"
+lazy val jacksonDatabindVersion = "2.15.0"
+lazy val notificationsJavaClientVersion = "4.1.0-RELEASE"
 lazy val scalaCsvVersion = "1.3.10"
 lazy val slickVersion = "3.4.1"
-lazy val postgresqlVersion = "42.5.4"
 lazy val awsJava2SdkVersion = "2.13.73"
+lazy val postgresqlVersion = "42.6.0"
 
 ThisBuild / scapegoatVersion := "2.1.2"
 
@@ -55,7 +55,7 @@ lazy val root = (project in file(".")).
       "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
       "org.postgresql" % "postgresql" % postgresqlVersion,
 
-      "com.h2database" % "h2" % "2.1.214" % Test,
+      "com.h2database" % "h2" % "2.2.220" % Test,
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
