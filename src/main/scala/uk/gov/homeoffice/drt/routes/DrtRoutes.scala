@@ -40,7 +40,7 @@ object DrtRoutes {
       }
 
   private def eventualPortFeedStatuses(pc: String)(implicit system: ClassicActorSystemProvider, mat: Materializer, ec: ExecutionContext): Future[DashboardPortStatus] = {
-    val portFeedStatusUri = Dashboard.drtUriForPortCode(pc) + "/feed-statuses"
+    val portFeedStatusUri = Dashboard.drtInternalUriForPortCode(pc) + "/feed-statuses"
     DashboardClient.getWithRoles(portFeedStatusUri, Roles.parse(pc.toUpperCase).toList)
       .flatMap(res => Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
         .to[List[FeedSourceStatus]]

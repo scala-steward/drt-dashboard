@@ -83,7 +83,7 @@ object ApiRoutes extends JsonSupport
               setRedListUpdate =>
                 Roles.portRoles.map { portRole =>
                   DashboardClient.postWithRoles(
-                    s"${Dashboard.drtUriForPortCode(portRole.name)}/red-list/updates",
+                    s"${Dashboard.drtInternalUriForPortCode(portRole.name)}/red-list/updates",
                     setRedListUpdate.toJson.compactPrint,
                     Seq(RedListsEdit, portRole))
                 }
@@ -94,7 +94,7 @@ object ApiRoutes extends JsonSupport
         (get & path("red-list-updates")) {
           authByRole(RedListsEdit) {
             val requestPortRole = LHR
-            val uri = s"${Dashboard.drtUriForPortCode(requestPortRole.name)}/red-list/updates"
+            val uri = s"${Dashboard.drtInternalUriForPortCode(requestPortRole.name)}/red-list/updates"
             val futureRedListUpdates: Future[RedListUpdates] =
               DashboardClient
                 .getWithRoles(uri, Seq(RedListsEdit, requestPortRole))
@@ -114,7 +114,7 @@ object ApiRoutes extends JsonSupport
         (delete & path("red-list-updates" / Segment)) { dateMillisToDelete =>
           authByRole(RedListsEdit) {
             Roles.portRoles.map { portRole =>
-              val uri = s"${Dashboard.drtUriForPortCode(portRole.name)}/red-list/updates/$dateMillisToDelete"
+              val uri = s"${Dashboard.drtInternalUriForPortCode(portRole.name)}/red-list/updates/$dateMillisToDelete"
               DashboardClient.deleteWithRoles(uri, Seq(RedListsEdit, portRole))
             }
             complete(Future(StatusCodes.OK))
@@ -142,14 +142,14 @@ object ApiRoutes extends JsonSupport
 
                 val futurePortAlerts: Seq[Future[PortAlerts]] = user.accessiblePorts
                   .map { portCode =>
-                    DashboardClient.getWithRoles(s"${Dashboard.drtUriForPortCode(portCode)}/alerts/0", user.roles)
+                    DashboardClient.getWithRoles(s"${Dashboard.drtInternalUriForPortCode(portCode)}/alerts/0", user.roles)
                       .flatMap { res =>
                         Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
                           .to[List[Alert]]
                           .map(alerts => PortAlerts(portCode, alerts))
                           .recover {
                             case e: Throwable =>
-                              log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtUriForPortCode(portCode)}/alerts/0", e)
+                              log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtInternalUriForPortCode(portCode)}/alerts/0", e)
                               PortAlerts(portCode, List())
                           }
                       }
@@ -168,7 +168,7 @@ object ApiRoutes extends JsonSupport
             headerValueByName("X-Auth-Roles") { rolesStr =>
               headerValueByName("X-Auth-Email") { email =>
                 val user = User.fromRoles(email, rolesStr)
-                val deleteEndpoint = s"${Dashboard.drtUriForPortCode(port)}/alerts"
+                val deleteEndpoint = s"${Dashboard.drtInternalUriForPortCode(port)}/alerts"
                 complete(DashboardClient.deleteWithRoles(deleteEndpoint, user.roles).map { res =>
                   res.status
                 })
