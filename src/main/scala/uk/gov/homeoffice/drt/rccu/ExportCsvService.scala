@@ -2,7 +2,6 @@ package uk.gov.homeoffice.drt.rccu
 
 import akka.http.scaladsl.model.StatusCodes.OK
 import akka.stream.Materializer
-import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
@@ -24,15 +23,16 @@ class ExportCsvService(httpClient: HttpClient) {
     s"${Dashboard.drtInternalUriForPortCode(portCode)}/$drtExportCsvRoutePath/$start/$end/$terminal"
 
   def getPortResponseForTerminal(start: String, end: String, regionName: String, port: String, terminal: String)
-                                (implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[Source[ByteString, Any]] = {
+                                (implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[ByteString] = {
     val uri = getUri(port, start, end, terminal)
     val httpRequest = httpClient.createPortArrivalImportRequest(uri, port)
     httpClient
       .send(httpRequest)
-      .map { r =>
-        log.info(s"Got response from $uri")
+      .flatMap { r =>
         if (r.status == OK) {
+          log.info(s"Got 200 response from $uri")
           r.entity.dataBytes
+            .runReduce(_ ++ _)
             .map { chunk =>
               ByteString(chunk
                 .utf8String
@@ -49,14 +49,14 @@ class ExportCsvService(httpClient: HttpClient) {
         }
         else {
           r.entity.discardBytes()
-          log.error(s"Non-200 response ${r.status} from $uri")
-          Source(List(ByteString("")))
+          log.error(s"Got non-200 response ${r.status} from $uri")
+          Future.successful(ByteString(""))
         }
       }
       .recoverWith {
         case e: Throwable =>
           log.error(s"Error while requesting export for $uri", e)
-          Future.successful(Source(List(ByteString(""))))
+          Future.successful(ByteString(""))
       }
   }
 

@@ -37,7 +37,7 @@ object ExportRoutes {
             case (port, terminal) =>
               exportCsvService.getPortResponseForTerminal(startDate, endDate, portRegion.name, port, terminal.toString)
           }
-          .flatMapConcat(identity)
+//          .flatMapConcat(identity)
           .prepend(Source.single(ByteString(ArrivalExportHeadings.regionalExportHeadings)))
         s3Uploader.upload(fileName, stream)
 
