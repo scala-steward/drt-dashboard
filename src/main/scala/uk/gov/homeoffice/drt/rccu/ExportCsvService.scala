@@ -42,7 +42,7 @@ class ExportCsvService(httpClient: HttpClient) {
                 .mkString("\n")
               )
             }
-            .recover { e =>
+            .recover { case e: Throwable =>
               log.error(s"Error while requesting export for $uri", e)
               ByteString("")
             }
