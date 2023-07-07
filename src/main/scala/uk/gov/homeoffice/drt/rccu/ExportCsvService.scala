@@ -3,6 +3,7 @@ package uk.gov.homeoffice.drt.rccu
 import akka.http.scaladsl.model.StatusCodes.OK
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
+import akka.util.ByteString
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.{Logger, LoggerFactory}
@@ -23,7 +24,7 @@ class ExportCsvService(httpClient: HttpClient) {
     s"${Dashboard.drtInternalUriForPortCode(portCode)}/$drtExportCsvRoutePath/$start/$end/$terminal"
 
   def getPortResponseForTerminal(start: String, end: String, regionName: String, port: String, terminal: String)
-                                (implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[Source[String, Any]] = {
+                                (implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[Source[ByteString, Any]] = {
     val uri = getUri(port, start, end, terminal)
     val httpRequest = httpClient.createPortArrivalImportRequest(uri, port)
     httpClient
@@ -33,29 +34,29 @@ class ExportCsvService(httpClient: HttpClient) {
         if (r.status == OK) {
           r.entity.dataBytes
             .map { chunk =>
-              log.info(s"Chunk from $uri ${chunk.size}b")
-              chunk
+              ByteString(chunk
                 .utf8String
-//                .split("\n")
-//                .filterNot(_.contains("ICAO"))
-//                .map(line => s"$regionName,$port,$terminal,$line")
-//                .mkString("\n")
+                .split("\n")
+                .filterNot(_.contains("ICAO"))
+                .map(line => s"$regionName,$port,$terminal," + line)
+                .mkString("\n")
+              )
             }
             .recover { e =>
               log.error(s"Error while requesting export for $uri", e)
-              ""
+              ByteString("")
             }
         }
         else {
           r.entity.discardBytes()
-          log.warn(s"Not OK response $r")
-          Source(List(""))
+          log.error(s"Non-200 response ${r.status} from $uri")
+          Source(List(ByteString("")))
         }
       }
       .recoverWith {
         case e: Throwable =>
-          log.error(s"Error while requesting drt for $uri", e)
-          Future.successful(Source(List("")))
+          log.error(s"Error while requesting export for $uri", e)
+          Future.successful(Source(List(ByteString(""))))
       }
   }
 

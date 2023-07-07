@@ -17,6 +17,7 @@ lazy val notificationsJavaClientVersion = "3.19.2-RELEASE"
 lazy val scalaCsvVersion = "1.3.10"
 lazy val slickVersion = "3.4.1"
 lazy val postgresqlVersion = "42.5.4"
+lazy val awsJava2SdkVersion = "2.13.73"
 
 ThisBuild / scapegoatVersion := "2.1.2"
 
@@ -59,6 +60,7 @@ lazy val root = (project in file(".")).
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
       "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
+      "software.amazon.awssdk" % "s3" % awsJava2SdkVersion,
 
       "org.specs2" %% "specs2-core" % specs2Version % Test
     ),

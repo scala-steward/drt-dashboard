@@ -2,10 +2,15 @@ package uk.gov.homeoffice.drt
 
 import akka.actor.typed.ActorSystem
 import com.typesafe.config.ConfigFactory
+import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
+import software.amazon.awssdk.regions.Region
+import software.amazon.awssdk.services.s3.S3AsyncClient
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.schedule.UserTracking
+import uk.gov.homeoffice.drt.services.s3.{ProdS3MultipartUploader, S3Uploader}
 import uk.gov.service.notify.NotificationClient
+
 import scala.concurrent.duration.DurationInt
 
 object DrtDashboardApp extends App {
@@ -31,10 +36,26 @@ object DrtDashboardApp extends App {
     scheduleFrequency = config.getInt("user-tracking.schedule-frequency-minutes"),
     inactivityDays = config.getInt("user-tracking.inactivity-days"),
     userTrackingFeatureFlag = config.getBoolean("user-tracking.feature-flag"),
-    deactivateAfterWarningDays= config.getInt("user-tracking.deactivate-after-warning-days"))
+    deactivateAfterWarningDays= config.getInt("user-tracking.deactivate-after-warning-days")
+  )
+
+  val accessKey = config.getString("s3.credentials.access_key_id")
+  val secretKey = config.getString("s3.credentials.secret_key")
+  val bucketName = config.getString("s3.bucket-name")
+  val folderPrefix = config.getString("exports.s3-folder-prefix")
+
+  val credentialsProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create(accessKey, secretKey))
+
+  val s3Client: S3AsyncClient = S3AsyncClient.builder()
+    .region(Region.EU_WEST_2)
+    .credentialsProvider(credentialsProvider)
+    .build()
+
+  val multipartUploader = ProdS3MultipartUploader(s3Client)
+  val uploader = S3Uploader(multipartUploader, bucketName, Option(folderPrefix))
 
   val emailNotifications = EmailNotifications(serverConfig.accessRequestEmails, new NotificationClient(serverConfig.notifyServiceApiKey))
-  val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig, emailNotifications), "DrtDashboard")
+  val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig, emailNotifications, uploader), "DrtDashboard")
   if (serverConfig.userTrackingFeatureFlag) {
     ActorSystem(UserTracking(serverConfig, 1.minutes, 100, emailNotifications), "UserTrackingTimer")
   }
