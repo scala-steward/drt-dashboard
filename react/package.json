@@ -39,7 +39,7 @@
     "validator": "^13.7.0"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "react-scripts --openssl-legacy-provider start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jest-environment-jsdom-sixteen",
     "test-ci": "react-scripts test --watchAll=false --env=jest-environment-jsdom-sixteen",

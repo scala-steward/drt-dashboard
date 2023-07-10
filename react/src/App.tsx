@@ -15,7 +15,7 @@ import {fetchConfig} from "./store/configSlice";
 import {RedListEditor} from "./components/RedListEditor";
 import {Container} from "@mui/material";
 import {styled} from "@mui/material/styles";
-import {RegionalPort} from "./components/RegionalPort";
+import {RegionPage} from "./components/RegionPage";
 import axios from "axios";
 import ApiClient from "./services/ApiClient";
 
@@ -112,7 +112,7 @@ const App = (props: PropsFromReact) => {
                         <NeboUpload user={props.user.profile} config={props.config.values}/>
                     </Route>
                     <Route exact path="/region">
-                        <RegionalPort user={props.user.profile} config={props.config.values} region={regionName}/>
+                        <RegionPage user={props.user.profile} config={props.config.values} region={regionName}/>
                     </Route>
                     <Route exact path="/red-list-editor">
                         <RedListEditor/>
