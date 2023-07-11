@@ -18,7 +18,8 @@ import scala.concurrent.ExecutionContext
 object CiriumRoutes {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def apply(prefix: String, ciriumDataUri: String)(implicit system: ClassicActorSystemProvider, mat: Materializer, ec: ExecutionContext): Route = pathPrefix(prefix) {
+  def apply(prefix: String, ciriumDataUri: String)
+           (implicit system: ClassicActorSystemProvider, mat: Materializer, ec: ExecutionContext): Route = pathPrefix(prefix) {
     pathEnd {
       get {
         import uk.gov.homeoffice.cirium.JsonSupport._

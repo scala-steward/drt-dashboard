@@ -14,6 +14,12 @@ interface IProps {
   handleClose: () => void;
 }
 
+interface RegionExportRequest {
+  region: string
+  startDate: string
+  endDate: string
+}
+
 export default function ExportDatePicker(props: IProps) {
   const [fromValue, setFromValue] = React.useState<Date | null>(null);
   const [toValue, setToValue] = React.useState<Date | null>(null);
@@ -21,7 +27,14 @@ export default function ExportDatePicker(props: IProps) {
   const formattedDate = (date: Date) => format(date as Date, "yyyy-MM-dd")
 
   const requestExport = () => {
-    fromValue && toValue && axios.post(`/export/${props.region}/${formattedDate(fromValue)}/${formattedDate(toValue)}`)
+    fromValue && toValue && axios.post(
+      '/export',
+      {
+        region: props.region,
+        startDate: formattedDate(fromValue),
+        endDate: formattedDate(toValue),
+      } as RegionExportRequest,
+    )
     props.handleClose()
   }
 

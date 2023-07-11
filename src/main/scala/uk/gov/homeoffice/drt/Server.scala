@@ -10,7 +10,7 @@ import uk.gov.homeoffice.drt.db.{AppDatabase, UserAccessRequestDao, UserDao}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes._
-import uk.gov.homeoffice.drt.services.s3.S3Uploader
+import uk.gov.homeoffice.drt.services.s3.{S3Downloader, S3Uploader}
 import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -61,7 +61,9 @@ object Server {
 
   def apply(serverConfig: ServerConfig,
             notifications: EmailNotifications,
-            uploader: S3Uploader): Behavior[Message] =
+            uploader: S3Uploader,
+            downloader: S3Downloader,
+           ): Behavior[Message] =
     Behaviors.setup { ctx: ActorContext[Message] =>
       implicit val system: ActorSystem[Nothing] = ctx.system
       implicit val ec: ExecutionContextExecutor = system.executionContext
@@ -79,7 +81,7 @@ object Server {
         CiriumRoutes("cirium", serverConfig.ciriumDataUri),
         DrtRoutes("drt", serverConfig.portIataCodes),
         ApiRoutes("api", serverConfig.clientConfig, neboRoutes, userService),
-        ExportRoutes(new ProdHttpClient, uploader),
+        ExportRoutes(new ProdHttpClient, uploader, downloader),
         UserRoutes("user", serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keyclockUrl))
 
       val serverBinding: Future[Http.ServerBinding] = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)

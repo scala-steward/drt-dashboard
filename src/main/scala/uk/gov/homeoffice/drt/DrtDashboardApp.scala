@@ -8,7 +8,7 @@ import software.amazon.awssdk.services.s3.S3AsyncClient
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.schedule.UserTracking
-import uk.gov.homeoffice.drt.services.s3.{ProdS3MultipartUploader, S3Uploader}
+import uk.gov.homeoffice.drt.services.s3.{ProdS3MultipartUploader, S3Downloader, S3Uploader}
 import uk.gov.service.notify.NotificationClient
 
 import scala.concurrent.duration.DurationInt
@@ -53,9 +53,11 @@ object DrtDashboardApp extends App {
 
   val multipartUploader = ProdS3MultipartUploader(s3Client)
   val uploader = S3Uploader(multipartUploader, bucketName, Option(folderPrefix))
+  val downloader = S3Downloader(s3Client, bucketName)
 
   val emailNotifications = EmailNotifications(serverConfig.accessRequestEmails, new NotificationClient(serverConfig.notifyServiceApiKey))
-  val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig, emailNotifications, uploader), "DrtDashboard")
+
+  val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig, emailNotifications, uploader, downloader), "DrtDashboard")
   if (serverConfig.userTrackingFeatureFlag) {
     ActorSystem(UserTracking(serverConfig, 1.minutes, 100, emailNotifications), "UserTrackingTimer")
   }
