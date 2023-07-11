@@ -31,8 +31,10 @@ import scala.util.{Failure, Success}
 object ExportRoutes {
   private val log = LoggerFactory.getLogger(getClass)
 
-  val contentType: ContentType.WithCharset = ContentTypes.`text/plain(UTF-8)`
+  val contentType: ContentType.WithCharset = ContentTypes.`text/csv(UTF-8)`
   implicit val streamingSupport: CsvEntityStreamingSupport = EntityStreamingSupport.csv().withContentType(contentType)
+
+//  import akka.http.scaladsl.marshalling.PredefinedToEntityMarshallers._
 
   case class RegionExportRequest(region: String, startDate: LocalDate, endDate: LocalDate)
 
@@ -50,15 +52,17 @@ object ExportRoutes {
         ),
         path("export" / Segment / Segment) { case (region, createdAt) =>
           get {
+            log.info(s"Getting region export for $email / $region / $createdAt")
             val eventualStream = db.run(RegionExportQueries.get(email, region, createdAt.toLong))
               .flatMap {
                 case Some(regionExport) =>
                   val startDateString = regionExport.startDate.toString()
                   val endDateString = regionExport.endDate.toString()
-                  val fileName = exportCsvService.makeFileName(startDateString, endDateString, regionExport.region)
+                  val fileName = s"exports/${exportCsvService.makeFileName(startDateString, endDateString, regionExport.region, regionExport.createdAt)}"
+                  log.info(s"Downloading $fileName")
                   s3Downloader.download(fileName).map { stream: Source[ByteString, Future[IOResult]] =>
                     respondWithHeader(`Content-Disposition`(attachment, Map("filename" -> fileName))) {
-                      complete(Source[ByteString](List(ByteString(""))))
+                      complete(stream.map(_.utf8String))
                     }
                   }
                 case None =>
@@ -88,7 +92,7 @@ object ExportRoutes {
                                 (implicit ec: ExecutionContextExecutor, mat: Materializer): StandardRoute = {
     val startDateString = exportRequest.startDate.toString()
     val endDateString = exportRequest.endDate.toString()
-    val fileName = exportCsvService.makeFileName(startDateString, endDateString, exportRequest.region)
+    val fileName = exportCsvService.makeFileName(startDateString, endDateString, exportRequest.region, SDate.now())
     exportCsvService.getPortRegion(exportRequest.region).map { portRegion: PortRegion =>
       val regionExport = RegionExport(email, portRegion.name, exportRequest.startDate, exportRequest.endDate, "preparing", SDate.now())
       db.run(RegionExportQueries.insert(regionExport))

@@ -17,7 +17,8 @@ interface IProps {
 }
 
 interface Download {
-  id: string
+  email: string
+  region: string
   startDate: Date
   endDate: Date
   createdAt: number
@@ -67,6 +68,71 @@ export const RegionPage = (props: IProps) => {
     return moment(date).format("DD/MM/YYYY")
   }
 
+  function downloadExport(download: Download) {
+    const url = `/export/North/${download.createdAt}`
+
+
+    // const filename = `${download.region}-${formatDateDDMMYYYY(download.startDate)}-${formatDateDDMMYYYY(download.endDate)}.csv`;
+
+    // const newHandle = await window.showSaveFilePicker();
+    window.showSaveFilePicker().then(handle => {
+      handle.createWritable().then(writableStream => {
+        fetch(url, {
+          method: 'GET',
+        }).then(res => {
+          const reader = res.body.getReader();
+
+          // read() returns a promise that resolves
+          // when a value has been received
+          reader.read().then(function processText({done, value}) {
+            // Result objects contain two properties:
+            // done  - true if the stream has already given you all its data.
+            // value - some data. Always undefined when done is true.
+            if (done) {
+              console.log("Stream complete");
+              return;
+            }
+
+            const chunk = value;
+
+            writableStream.write(chunk).then(() => {
+              // Read some more, and call this function again
+              return reader.read().then(processText);
+            })
+          });
+
+          // const pump = () => reader.read()
+          //   .then(({value, done}) => {
+          //     if (done) writableStream.close();
+          //     else {
+          //       writableStream.write(value);
+          //
+          //       return writableStream.ready.then(pump);
+          //     }
+          //   });
+          //
+          // pump()
+          //   .then(() => console.log('Closed the stream, Done writing'))
+          //   .catch(err => console.log(err));
+        })
+      })
+    })
+
+    // create a FileSystemWritableFileStream to write to
+
+
+    // write our file
+    // await writableStream.write(imgBlob);
+
+    // close the file and write the contents to disk.
+    // await writableStream.close();
+
+    // const fileStream = streamSaver.createWriteStream(filename);
+    // const writer = fileStream.getWriter();
+
+
+  }
+
   return <div className="flex-container">
     <Breadcrumbs aria-label="breadcrumb">
       <Link underline="hover" color="inherit" href="/">DRT</Link>
@@ -85,6 +151,7 @@ export const RegionPage = (props: IProps) => {
             <Grid xs={6}><Typography fontWeight="bold">Date range</Typography></Grid>
             <Grid xs={3}></Grid>
             {downloads.map(download => {
+              // const downloadUrl = `/export/${download.region}/${download.createdAt}`
               return <>
                 <Grid xs={3}><Typography>{formatDateDDMMYYYYHHmm(new Date(download.createdAt))}</Typography></Grid>
                 <Grid xs={6}>
@@ -92,7 +159,12 @@ export const RegionPage = (props: IProps) => {
                 </Grid>
                 <Grid xs={3}><Typography>
                   {download.status === 'complete' ?
-                    <Link>Download</Link> :
+                    <Link onClick={
+                      (e) => {
+                        downloadExport(download)
+                        e.preventDefault()
+                      }
+                    } href="some-file" target={'_blank'}>Download</Link> :
                     download.status
                   }
                 </Typography></Grid>

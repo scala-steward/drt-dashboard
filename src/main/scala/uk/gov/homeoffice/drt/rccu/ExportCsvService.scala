@@ -7,6 +7,7 @@ import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.ports.PortRegion
+import uk.gov.homeoffice.drt.time.SDateLike
 import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -60,22 +61,19 @@ class ExportCsvService(httpClient: HttpClient) {
       }
   }
 
-  private val formattedStringDate: DateTime => String = dateTime => DateTimeFormat.forPattern("yyyyMMddHHmmss").print(dateTime)
-
-  private val getCurrentTimeString: () => String = () => formattedStringDate(DateTime.now())
-
   private val stringToDate: String => DateTime = dateTimeString => DateTimeFormat.forPattern("yyyy-MM-dd")
     .withZone(DateTimeZone.forID("Europe/London"))
     .parseDateTime(dateTimeString)
 
-  def makeFileName(start: String, end: String, portRegion: String): String = {
+  def makeFileName(start: String, end: String, portRegion: String, createdAt: SDateLike): String = {
     val startDateTime: DateTime = stringToDate(start)
     val endDateTime: DateTime = stringToDate(end)
     val endDate = if (endDateTime.minusDays(1).isAfter(startDateTime))
       f"-to-$end"
     else ""
 
-    f"$portRegion-${getCurrentTimeString()}-" +
-      f"$start" + endDate + ".csv"
+    val timestamp = f"${createdAt.getFullYear}${createdAt.getMonth}%02d${createdAt.getDate}%02d${createdAt.getHours}%02d${createdAt.getMinutes}%02d${createdAt.getSeconds}%02d"
+
+    s"$portRegion-$timestamp-$start$endDate.csv"
   }
 }
