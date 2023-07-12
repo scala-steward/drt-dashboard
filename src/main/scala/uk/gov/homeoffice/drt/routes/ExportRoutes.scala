@@ -1,15 +1,15 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.NotUsed
 import akka.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.model.{ContentType, ContentTypes}
+import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.headers.ContentDispositionTypes.attachment
 import akka.http.scaladsl.model.headers.`Content-Disposition`
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, MediaTypes}
 import akka.http.scaladsl.server.Directives.{complete, _}
 import akka.http.scaladsl.server.{Route, StandardRoute, ValidationRejection}
-import akka.stream.{IOResult, Materializer}
 import akka.stream.scaladsl.Source
+import akka.stream.{IOResult, Materializer}
 import akka.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
@@ -31,56 +31,61 @@ import scala.util.{Failure, Success}
 object ExportRoutes {
   private val log = LoggerFactory.getLogger(getClass)
 
-  val contentType: ContentType.WithCharset = ContentTypes.`text/csv(UTF-8)`
-  implicit val streamingSupport: CsvEntityStreamingSupport = EntityStreamingSupport.csv().withContentType(contentType)
-
-//  import akka.http.scaladsl.marshalling.PredefinedToEntityMarshallers._
-
   case class RegionExportRequest(region: String, startDate: LocalDate, endDate: LocalDate)
+
+  implicit val csvStreaming: CsvEntityStreamingSupport = EntityStreamingSupport.csv()
+//  implicit val csvMarshaller: ToEntityMarshaller[ByteString] =
+//    Marshaller.withFixedContentType(ContentTypes.`text/csv(UTF-8)`) { bytes =>
+//      HttpEntity(ContentTypes.`text/csv(UTF-8)`, bytes)
+//    }
+  implicit val csvMarshaller2: ToEntityMarshaller[String] =
+    Marshaller.withOpenCharset(MediaTypes.`text/csv`) { case (bytes, charset) =>
+      HttpEntity(ContentTypes.`text/csv(UTF-8)`, bytes)
+    }
 
   def apply(httpClient: HttpClient, s3Uploader: S3Uploader, s3Downloader: S3Downloader)
            (implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
     lazy val exportCsvService = new ExportCsvService(httpClient)
     headerValueByName("X-Auth-Email") { email =>
-      concat(
-        path("export")(
+      pathPrefix("export")(
+        concat(
           post(
             entity(as[RegionExportRequest]) { exportRequest =>
               handleRegionExport(s3Uploader, exportCsvService, email, exportRequest)
             }
-          )
-        ),
-        path("export" / Segment / Segment) { case (region, createdAt) =>
+          ),
           get {
-            log.info(s"Getting region export for $email / $region / $createdAt")
-            val eventualStream = db.run(RegionExportQueries.get(email, region, createdAt.toLong))
-              .flatMap {
-                case Some(regionExport) =>
-                  val startDateString = regionExport.startDate.toString()
-                  val endDateString = regionExport.endDate.toString()
-                  val fileName = s"exports/${exportCsvService.makeFileName(startDateString, endDateString, regionExport.region, regionExport.createdAt)}"
-                  log.info(s"Downloading $fileName")
-                  s3Downloader.download(fileName).map { stream: Source[ByteString, Future[IOResult]] =>
-                    respondWithHeader(`Content-Disposition`(attachment, Map("filename" -> fileName))) {
-                      complete(stream.map(_.utf8String))
-                    }
+            concat(
+              path(Segment) { region =>
+                complete(db.run(RegionExportQueries.getAll(email, region)))
+              },
+              path(Segment / Segment) { case (region, createdAt) =>
+                log.info(s"Getting region export for $email / $region / $createdAt")
+                val eventualStream = db.run(RegionExportQueries.get(email, region, createdAt.toLong))
+                  .flatMap {
+                    case Some(regionExport) =>
+                      val startDateString = regionExport.startDate.toString()
+                      val endDateString = regionExport.endDate.toString()
+                      val fileName = s"exports/${exportCsvService.makeFileName(startDateString, endDateString, regionExport.region, regionExport.createdAt)}"
+                      log.info(s"Downloading $fileName")
+                      s3Downloader.download(fileName).map { stream: Source[ByteString, Future[IOResult]] =>
+                        respondWithHeader(`Content-Disposition`(attachment, Map("filename" -> fileName))) {
+                          complete(stream.map(_.utf8String))
+                        }
+                      }
+                    case None =>
+                      Future.successful(complete("Region export not found"))
                   }
-                case None =>
-                  Future.successful(complete("Region export not found"))
+                onComplete(eventualStream) {
+                  case Success(route) => route
+                  case Failure(e) =>
+                    log.error("Failed to get region export", e)
+                    complete("Failed to get region export")
+                }
               }
-            onComplete(eventualStream) {
-              case Success(route) => route
-              case Failure(e) =>
-                log.error("Failed to get region export", e)
-                complete("Failed to get region export")
-            }
+            )
           }
-        },
-        path("export" / Segment) { region =>
-          get {
-            complete(db.run(RegionExportQueries.getAll(email, region)))
-          }
-        },
+        )
       )
     }
   }

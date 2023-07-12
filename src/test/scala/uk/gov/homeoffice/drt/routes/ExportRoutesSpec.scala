@@ -1,13 +1,16 @@
 package uk.gov.homeoffice.drt.routes
 
+import akka.http.javadsl.server.Directives.pathEnd
 import akka.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.Directives.{complete, _}
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.{Attributes, Materializer}
 import akka.stream.scaladsl.Source
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
+import uk.gov.homeoffice.drt.routes.ExportRoutes.RegionExportRequest
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
@@ -29,41 +32,77 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
 
   val mockHttpClient = new MockHttpClient(httpResponse(csv))
 
-//  "Request heathrow arrival export" should {
-//    "collate all terminal arrivals" in {
-//      Get("/export/Heathrow/2022-08-02/2022-08-03") ~> ExportRoutes(mockHttpClient) ~> check {
-//        val a = responseAs[String]
-//        a should ===(heathrowRegionPortTerminalData)
-//      }
-//    }
-//  }
-//
-//  "Request North arrival export" should {
-//    "collate all port and terminal arrivals in the North region" in {
-//      Get("/export/North/2022-08-02/2022-08-03") ~> ExportRoutes(mockHttpClient) ~> check {
-//        val a = responseAs[String]
-//        a should ===(northRegionPortTerminalData)
-//      }
-//    }
-//  }
-//
-//  "Request South arrival export" should {
-//    "collate all port and terminal arrivals in the South region" in {
-//      Get("/export/South/2022-08-02/2022-08-03") ~> ExportRoutes(mockHttpClient) ~> check {
-//        val a = responseAs[String]
-//        a should ===(southRegionPortTerminalData)
-//      }
-//    }
-//  }
-//
-//  "Request Central arrival export" should {
-//    "collate all port and terminal arrivals in the Central region" in {
-//      Get("/export/Central/2022-08-02/2022-08-03") ~> ExportRoutes(mockHttpClient) ~> check {
-//        val a = responseAs[String]
-//        a should ===(centralRegionPortTerminalData)
-//      }
-//    }
-//  }
+  val routes = pathPrefix("export")(
+    concat(
+      post(
+        complete("request export")
+      ),
+      get(
+        concat(
+          path(Segment) { region =>
+            complete(s"get for $region")
+          },
+          path(Segment / Segment) { case (region, createdAt) =>
+            complete(s"get for $region & $createdAt")
+          }
+        ))
+    ),
+  )
+
+  "route" should {
+    "behave with post" in {
+      Post("/export") ~> routes ~> check {
+        responseAs[String] shouldEqual "request export"
+      }
+    }
+    "behave with get region" in {
+      Get("/export/North") ~> routes ~> check {
+        responseAs[String] shouldEqual "get for North"
+      }
+    }
+    "behave with get region createdAt" in {
+      Get("/export/North/123456789") ~> routes ~> check {
+        responseAs[String] shouldEqual "get for North & 123456789"
+      }
+    }
+  }
+
+
+  //  "Request heathrow arrival export" should {
+  //    "collate all terminal arrivals" in {
+  //      Get("/export/Heathrow/2022-08-02/2022-08-03") ~> ExportRoutes(mockHttpClient) ~> check {
+  //        val a = responseAs[String]
+  //        a should ===(heathrowRegionPortTerminalData)
+  //      }
+  //    }
+  //  }
+  //
+  //  "Request North arrival export" should {
+  //    "collate all port and terminal arrivals in the North region" in {
+  //      Get("/export/North/2022-08-02/2022-08-03") ~> ExportRoutes(mockHttpClient) ~> check {
+  //        val a = responseAs[String]
+  //        a should ===(northRegionPortTerminalData)
+  //      }
+  //    }
+  //  }
+  //
+  //  "Request South arrival export" should {
+  //    "collate all port and terminal arrivals in the South region" in {
+  //      Get("/export/South/2022-08-02/2022-08-03") ~> ExportRoutes(mockHttpClient) ~> check {
+  //        val a = responseAs[String]
+  //        a should ===(southRegionPortTerminalData)
+  //      }
+  //    }
+  //  }
+  //
+  //  "Request Central arrival export" should {
+  //    "collate all port and terminal arrivals in the Central region" in {
+  //      Get("/export/Central/2022-08-02/2022-08-03") ~> ExportRoutes(mockHttpClient) ~> check {
+  //        val a = responseAs[String]
+  //        a should ===(centralRegionPortTerminalData)
+  //      }
+  //    }
+  //  }
 
   def heathrowRegionPortTerminalData: String =
     s"""${ArrivalExportHeadings.regionalExportHeadings}
@@ -79,80 +118,80 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
 
   def northRegionPortTerminalData: String =
     s"""${ArrivalExportHeadings.regionalExportHeadings}
-      |North,ABZ,T1,flight1,information,row
-      |North,ABZ,T1,flight2,information,row
-      |North,BFS,T1,flight1,information,row
-      |North,BFS,T1,flight2,information,row
-      |North,BHD,T1,flight1,information,row
-      |North,BHD,T1,flight2,information,row
-      |North,DSA,T1,flight1,information,row
-      |North,DSA,T1,flight2,information,row
-      |North,EDI,A1,flight1,information,row
-      |North,EDI,A1,flight2,information,row
-      |North,EDI,A2,flight1,information,row
-      |North,EDI,A2,flight2,information,row
-      |North,GLA,T1,flight1,information,row
-      |North,GLA,T1,flight2,information,row
-      |North,HUY,T1,flight1,information,row
-      |North,HUY,T1,flight2,information,row
-      |North,INV,T1,flight1,information,row
-      |North,INV,T1,flight2,information,row
-      |North,LBA,T1,flight1,information,row
-      |North,LBA,T1,flight2,information,row
-      |North,LPL,T1,flight1,information,row
-      |North,LPL,T1,flight2,information,row
-      |North,MAN,T1,flight1,information,row
-      |North,MAN,T1,flight2,information,row
-      |North,MAN,T2,flight1,information,row
-      |North,MAN,T2,flight2,information,row
-      |North,MAN,T3,flight1,information,row
-      |North,MAN,T3,flight2,information,row
-      |North,MME,T1,flight1,information,row
-      |North,MME,T1,flight2,information,row
-      |North,NCL,T1,flight1,information,row
-      |North,NCL,T1,flight2,information,row
-      |North,PIK,T1,flight1,information,row
-      |North,PIK,T1,flight2,information,row
-      |""".stripMargin
+       |North,ABZ,T1,flight1,information,row
+       |North,ABZ,T1,flight2,information,row
+       |North,BFS,T1,flight1,information,row
+       |North,BFS,T1,flight2,information,row
+       |North,BHD,T1,flight1,information,row
+       |North,BHD,T1,flight2,information,row
+       |North,DSA,T1,flight1,information,row
+       |North,DSA,T1,flight2,information,row
+       |North,EDI,A1,flight1,information,row
+       |North,EDI,A1,flight2,information,row
+       |North,EDI,A2,flight1,information,row
+       |North,EDI,A2,flight2,information,row
+       |North,GLA,T1,flight1,information,row
+       |North,GLA,T1,flight2,information,row
+       |North,HUY,T1,flight1,information,row
+       |North,HUY,T1,flight2,information,row
+       |North,INV,T1,flight1,information,row
+       |North,INV,T1,flight2,information,row
+       |North,LBA,T1,flight1,information,row
+       |North,LBA,T1,flight2,information,row
+       |North,LPL,T1,flight1,information,row
+       |North,LPL,T1,flight2,information,row
+       |North,MAN,T1,flight1,information,row
+       |North,MAN,T1,flight2,information,row
+       |North,MAN,T2,flight1,information,row
+       |North,MAN,T2,flight2,information,row
+       |North,MAN,T3,flight1,information,row
+       |North,MAN,T3,flight2,information,row
+       |North,MME,T1,flight1,information,row
+       |North,MME,T1,flight2,information,row
+       |North,NCL,T1,flight1,information,row
+       |North,NCL,T1,flight2,information,row
+       |North,PIK,T1,flight1,information,row
+       |North,PIK,T1,flight2,information,row
+       |""".stripMargin
 
   def southRegionPortTerminalData: String =
     s"""${ArrivalExportHeadings.regionalExportHeadings}
-      |South,BOH,T1,flight1,information,row
-      |South,BOH,T1,flight2,information,row
-      |South,BRS,T1,flight1,information,row
-      |South,BRS,T1,flight2,information,row
-      |South,CWL,T1,flight1,information,row
-      |South,CWL,T1,flight2,information,row
-      |South,EXT,T1,flight1,information,row
-      |South,EXT,T1,flight2,information,row
-      |South,LGW,N,flight1,information,row
-      |South,LGW,N,flight2,information,row
-      |South,LGW,S,flight1,information,row
-      |South,LGW,S,flight2,information,row
-      |South,NQY,T1,flight1,information,row
-      |South,NQY,T1,flight2,information,row
-      |South,SOU,T1,flight1,information,row
-      |South,SOU,T1,flight2,information,row
-      |""".stripMargin
+       |South,BOH,T1,flight1,information,row
+       |South,BOH,T1,flight2,information,row
+       |South,BRS,T1,flight1,information,row
+       |South,BRS,T1,flight2,information,row
+       |South,CWL,T1,flight1,information,row
+       |South,CWL,T1,flight2,information,row
+       |South,EXT,T1,flight1,information,row
+       |South,EXT,T1,flight2,information,row
+       |South,LGW,N,flight1,information,row
+       |South,LGW,N,flight2,information,row
+       |South,LGW,S,flight1,information,row
+       |South,LGW,S,flight2,information,row
+       |South,NQY,T1,flight1,information,row
+       |South,NQY,T1,flight2,information,row
+       |South,SOU,T1,flight1,information,row
+       |South,SOU,T1,flight2,information,row
+       |""".stripMargin
 
   def centralRegionPortTerminalData: String =
     s"""${ArrivalExportHeadings.regionalExportHeadings}
-      |Central,BHX,T1,flight1,information,row
-      |Central,BHX,T1,flight2,information,row
-      |Central,BHX,T2,flight1,information,row
-      |Central,BHX,T2,flight2,information,row
-      |Central,EMA,T1,flight1,information,row
-      |Central,EMA,T1,flight2,information,row
-      |Central,LCY,T1,flight1,information,row
-      |Central,LCY,T1,flight2,information,row
-      |Central,LTN,T1,flight1,information,row
-      |Central,LTN,T1,flight2,information,row
-      |Central,NWI,T1,flight1,information,row
-      |Central,NWI,T1,flight2,information,row
-      |Central,SEN,T1,flight1,information,row
-      |Central,SEN,T1,flight2,information,row
-      |Central,STN,T1,flight1,information,row
-      |Central,STN,T1,flight2,information,row
-      |""".stripMargin
+       |Central,BHX,T1,flight1,information,row
+       |Central,BHX,T1,flight2,information,row
+       |Central,BHX,T2,flight1,information,row
+       |Central,BHX,T2,flight2,information,row
+       |Central,EMA,T1,flight1,information,row
+       |Central,EMA,T1,flight2,information,row
+       |Central,LCY,T1,flight1,information,row
+       |Central,LCY,T1,flight2,information,row
+       |Central,LTN,T1,flight1,information,row
+       |Central,LTN,T1,flight2,information,row
+       |Central,NWI,T1,flight1,information,row
+       |Central,NWI,T1,flight2,information,row
+       |Central,SEN,T1,flight1,information,row
+       |Central,SEN,T1,flight2,information,row
+       |Central,STN,T1,flight1,information,row
+       |Central,STN,T1,flight2,information,row
+       |""".stripMargin
 
 }
