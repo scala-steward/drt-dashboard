@@ -68,37 +68,39 @@ export const RegionPage = (props: IProps) => {
     return moment(date).format("DD/MM/YYYY")
   }
 
-  function downloadExport(download: Download) {
-    const url = `/export/North/${download.createdAt}`
+  const sortedDownloads  = downloads ? downloads.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)) : undefined
 
-    window.showSaveFilePicker().then(handle => {
-      handle.createWritable().then(writableStream => {
-        fetch(url, {
-          method: 'GET',
-        }).then(res => {
-          const reader = res.body.getReader();
-
-          reader.read().then(function processText({done, value}) {
-            // Result objects contain two properties:
-            // done  - true if the stream has already given you all its data.
-            // value - some data. Always undefined when done is true.
-            if (done) {
-              console.log("Stream complete");
-              writableStream.close()
-              return;
-            }
-
-            const chunk = value;
-
-            writableStream.write(chunk).then(() => {
-              // Read some more, and call this function again
-              return reader.read().then(processText);
-            })
-          });
-        })
-      })
-    })
-  }
+  // function downloadExport(download: Download) {
+  //   const url = `/export/${download.region}/${download.createdAt}`
+  //
+  //   window.showSaveFilePicker().then(handle => {
+  //     handle.createWritable().then(writableStream => {
+  //       fetch(url, {
+  //         method: 'GET',
+  //       }).then(res => {
+  //         const reader = res.body.getReader();
+  //
+  //         reader.read().then(function processText({done, value}) {
+  //           // Result objects contain two properties:
+  //           // done  - true if the stream has already given you all its data.
+  //           // value - some data. Always undefined when done is true.
+  //           if (done) {
+  //             console.log("Stream complete");
+  //             writableStream.close()
+  //             return;
+  //           }
+  //
+  //           const chunk = value;
+  //
+  //           writableStream.write(chunk).then(() => {
+  //             // Read some more, and call this function again
+  //             return reader.read().then(processText);
+  //           })
+  //         });
+  //       })
+  //     })
+  //   })
+  // }
 
   return <div className="flex-container">
     <Breadcrumbs aria-label="breadcrumb">
@@ -112,12 +114,12 @@ export const RegionPage = (props: IProps) => {
           this region.</p>
         <ArrivalExport region={props.region}/>
         <h2>Downloads</h2>
-        {downloads ?
+        {sortedDownloads ?
           <Grid container spacing={2}>
             <Grid xs={3}><Typography fontWeight="bold">Created</Typography></Grid>
             <Grid xs={6}><Typography fontWeight="bold">Date range</Typography></Grid>
             <Grid xs={3}></Grid>
-            {downloads.map(download => {
+            {sortedDownloads.map(download => {
               const downloadUrl = `/export/${download.region}/${download.createdAt}`
               return <>
                 <Grid xs={3}><Typography>{formatDateDDMMYYYYHHmm(new Date(download.createdAt))}</Typography></Grid>
@@ -127,11 +129,11 @@ export const RegionPage = (props: IProps) => {
                 <Grid xs={3}><Typography>
                   {download.status === 'complete' ?
                     <Link
-                      onClick={
-                        (e) => {
-                          downloadExport(download)
-                          e.preventDefault()
-                        }}
+                      // onClick={
+                      //   (e) => {
+                      //     downloadExport(download)
+                      //     e.preventDefault()
+                      // }}
                       href={downloadUrl} target={'_blank'}>Download</Link> :
                     download.status
                   }

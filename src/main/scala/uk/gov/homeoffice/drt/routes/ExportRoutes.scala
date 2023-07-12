@@ -1,15 +1,15 @@
 package uk.gov.homeoffice.drt.routes
 
 import akka.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.headers.ContentDispositionTypes.attachment
 import akka.http.scaladsl.model.headers.`Content-Disposition`
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, MediaTypes}
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives.{complete, _}
 import akka.http.scaladsl.server.{Route, StandardRoute, ValidationRejection}
-import akka.stream.scaladsl.Source
-import akka.stream.{IOResult, Materializer}
+import akka.stream.Materializer
+import akka.stream.scaladsl.{Flow, Source}
 import akka.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
@@ -33,13 +33,9 @@ object ExportRoutes {
 
   case class RegionExportRequest(region: String, startDate: LocalDate, endDate: LocalDate)
 
-  implicit val csvStreaming: CsvEntityStreamingSupport = EntityStreamingSupport.csv()
-//  implicit val csvMarshaller: ToEntityMarshaller[ByteString] =
-//    Marshaller.withFixedContentType(ContentTypes.`text/csv(UTF-8)`) { bytes =>
-//      HttpEntity(ContentTypes.`text/csv(UTF-8)`, bytes)
-//    }
-  implicit val csvMarshaller2: ToEntityMarshaller[String] =
-    Marshaller.withOpenCharset(MediaTypes.`text/csv`) { case (bytes, charset) =>
+  implicit val csvStreaming: CsvEntityStreamingSupport = EntityStreamingSupport.csv().withFramingRenderer(Flow[ByteString])
+  implicit val csvMarshaller: ToEntityMarshaller[ByteString] =
+    Marshaller.withFixedContentType(ContentTypes.`text/csv(UTF-8)`) { bytes =>
       HttpEntity(ContentTypes.`text/csv(UTF-8)`, bytes)
     }
 
@@ -68,9 +64,9 @@ object ExportRoutes {
                       val endDateString = regionExport.endDate.toString()
                       val fileName = s"exports/${exportCsvService.makeFileName(startDateString, endDateString, regionExport.region, regionExport.createdAt)}"
                       log.info(s"Downloading $fileName")
-                      s3Downloader.download(fileName).map { stream: Source[ByteString, Future[IOResult]] =>
+                      s3Downloader.download(fileName).map { stream =>
                         respondWithHeader(`Content-Disposition`(attachment, Map("filename" -> fileName))) {
-                          complete(stream.map(_.utf8String))
+                          complete(stream)
                         }
                       }
                     case None =>
