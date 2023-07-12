@@ -5,21 +5,21 @@ import slick.jdbc.PostgresProfile.api._
 import slick.lifted.Tag
 import slick.sql.FixedSqlAction
 import uk.gov.homeoffice.drt.models.RegionExport
-import uk.gov.homeoffice.drt.time.SDate
+import uk.gov.homeoffice.drt.time.{LocalDate, SDate}
 
-import java.sql.{Date, Timestamp}
+import java.sql.Timestamp
 import scala.concurrent.ExecutionContext
 
 class RegionExportTable(tag: Tag)
-  extends Table[(String, String, Date, Date, String, Timestamp)](tag, "region_export") {
+  extends Table[(String, String, String, String, String, Timestamp)](tag, "region_export") {
 
   def email: Rep[String] = column[String]("email")
 
   def region: Rep[String] = column[String]("region")
 
-  private def startDate = column[java.sql.Date]("start_date")
+  private def startDate: Rep[String] = column[String]("start_date")
 
-  private def endDate = column[java.sql.Date]("end_date")
+  private def endDate: Rep[String] = column[String]("end_date")
 
   def status: Rep[String] = column[String]("status")
 
@@ -29,7 +29,7 @@ class RegionExportTable(tag: Tag)
 }
 
 object RegionExportQueries {
-  private val regionExports = TableQuery[RegionExportTable]
+  private val regionExports: TableQuery[RegionExportTable] = TableQuery[RegionExportTable]
 
   def get(email: String, region: String, createdAt: Long)
          (implicit ec: ExecutionContext): DBIOAction[Option[RegionExport], NoStream, Effect.Read] =
@@ -38,7 +38,7 @@ object RegionExportQueries {
       .filter(_.region === region)
       .filter(_.createdAt === new Timestamp(createdAt))
       .result
-      .map(_.headOption.map(regionExportFromRow))
+      .map(_.headOption.map(x => regionExportFromRow(x)))
 
   def getAll(email: String, region: String)
             (implicit ec: ExecutionContext): DBIOAction[Seq[RegionExport], NoStream, Effect.Read] =
@@ -49,7 +49,7 @@ object RegionExportQueries {
       .map(_.map(regionExportFromRow))
 
   def insert(regionExport: RegionExport): DBIOAction[Int, NoStream, Effect.Write] = {
-    val (startDate: Date, endDate: Date, createdAt: Timestamp) = dates(regionExport)
+    val (startDate: String, endDate: String, createdAt: Timestamp) = dates(regionExport)
     regionExports += (regionExport.email, regionExport.region, startDate, endDate, regionExport.status, createdAt)
   }
 
@@ -58,21 +58,19 @@ object RegionExportQueries {
       export <- regionExports if export.email === regionExport.email && export.region === regionExport.region
     } yield export
 
-    val (startDate: Date, endDate: Date, createdAt: Timestamp) = dates(regionExport)
+    val (startDate: String, endDate: String, createdAt: Timestamp) = dates(regionExport)
     query.update(regionExport.email, regionExport.region, startDate, endDate, regionExport.status, createdAt)
   }
 
-  private def regionExportFromRow(row: (String, String, Date, Date, String, Timestamp)): RegionExport = {
-    val startDate = SDate(row._3.getTime).toLocalDate
-    val endDate = SDate(row._4.getTime).toLocalDate
+  private def regionExportFromRow(row: (String, String, String, String, String, Timestamp)): RegionExport = {
+    val startDate = LocalDate.parse(row._3).getOrElse(throw new Exception(s"Could not parse date ${row._3}"))
+    val endDate = LocalDate.parse(row._4).getOrElse(throw new Exception(s"Could not parse date ${row._4}"))
     val createdAt = SDate(row._6.getTime)
     RegionExport(row._1, row._2, startDate, endDate, row._5, createdAt)
   }
 
-  private def dates(regionExport: RegionExport): (Date, Date, Timestamp) = {
-    val startDate = new Date(SDate(regionExport.startDate).millisSinceEpoch)
-    val endDate = new Date(SDate(regionExport.endDate).millisSinceEpoch)
+  private def dates(regionExport: RegionExport): (String, String, Timestamp) = {
     val createdAt = new Timestamp(regionExport.createdAt.millisSinceEpoch)
-    (startDate, endDate, createdAt)
+    (regionExport.startDate.toISOString, regionExport.endDate.toISOString, createdAt)
   }
 }
