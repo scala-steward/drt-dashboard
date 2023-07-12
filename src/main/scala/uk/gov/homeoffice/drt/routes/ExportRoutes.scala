@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.drt.routes
 
+import akka.Done
 import akka.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
 import akka.http.scaladsl.model.headers.ContentDispositionTypes.attachment
 import akka.http.scaladsl.model.headers.`Content-Disposition`
@@ -124,6 +125,7 @@ object ExportRoutes {
       s3Uploader.upload(fileName, stream).onComplete {
         case Success(_) =>
           updateExportStatus(regionExport, "complete")
+          log.info("Export complete")
         case Failure(exception) =>
           updateExportStatus(regionExport, "failed")
           log.error("Failed to create export", exception)
@@ -133,10 +135,17 @@ object ExportRoutes {
   }
 
   private def updateExportStatus(regionExport: RegionExport, status: String)
-                                (implicit ec: ExecutionContext): Any = {
+                                (implicit ec: ExecutionContext): Future[Boolean] = {
     val updatedRegionExport = regionExport.copy(status = status)
-    db.run(RegionExportQueries.update(updatedRegionExport)).map { _ =>
-      log.info("Region export updated")
-    }
+    db.run(RegionExportQueries.update(updatedRegionExport))
+      .map { _ =>
+        log.info("Region export updated")
+        true
+      }
+      .recover {
+        case e =>
+          log.error("Failed to update region export", e)
+          false
+      }
   }
 }

@@ -38,6 +38,12 @@ export const RegionPage = (props: IProps) => {
           fetchDownloads()
         }, 5000)
       })
+      .catch((error) => {
+        console.log(error)
+        setTimeout(() => {
+          fetchDownloads()
+        }, 5000)
+      })
   }
 
   useEffect(() => {

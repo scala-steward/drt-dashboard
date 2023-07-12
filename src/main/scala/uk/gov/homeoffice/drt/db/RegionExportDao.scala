@@ -25,6 +25,8 @@ class RegionExportTable(tag: Tag)
 
   def createdAt: Rep[Timestamp] = column[java.sql.Timestamp]("created_at")
 
+  def pk = primaryKey("pk_region_export_created", (email, region, createdAt))
+
   def * = (email, region, startDate, endDate, status, createdAt)
 }
 
@@ -55,11 +57,14 @@ object RegionExportQueries {
 
   def update(regionExport: RegionExport): FixedSqlAction[Int, NoStream, Effect.Write] = {
     val query = for {
-      export <- regionExports if export.email === regionExport.email && export.region === regionExport.region
-    } yield export
+      export <- regionExports if matches(regionExport, export)
+    } yield export.status
 
-    val (startDate: String, endDate: String, createdAt: Timestamp) = dates(regionExport)
-    query.update(regionExport.email, regionExport.region, startDate, endDate, regionExport.status, createdAt)
+    query.update(regionExport.status)
+  }
+
+  private def matches(regionExport: RegionExport, export: RegionExportTable): Rep[Boolean] = {
+    export.email === regionExport.email && export.region === regionExport.region && export.createdAt === new Timestamp(regionExport.createdAt.millisSinceEpoch)
   }
 
   private def regionExportFromRow(row: (String, String, String, String, String, Timestamp)): RegionExport = {

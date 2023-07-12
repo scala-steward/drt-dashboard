@@ -45,19 +45,13 @@ class ExportCsvService(httpClient: HttpClient) {
             }
             .recover { case e: Throwable =>
               log.error(s"Error while requesting export for $uri", e)
-              ByteString("")
+              throw new Exception(s"Error while requesting export for $uri", e)
             }
         }
         else {
           r.entity.discardBytes()
-          log.error(s"Got non-200 response ${r.status} from $uri")
-          Future.successful(ByteString(""))
+          throw new Exception(s"Got non-200 response ${r.status} from $uri")
         }
-      }
-      .recoverWith {
-        case e: Throwable =>
-          log.error(s"Error while requesting export for $uri", e)
-          Future.successful(ByteString(""))
       }
   }
 
