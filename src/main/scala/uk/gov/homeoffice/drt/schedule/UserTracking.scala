@@ -7,7 +7,7 @@ import akka.util.Timeout
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.ServerConfig
 import uk.gov.homeoffice.drt.authentication.KeyCloakUser
-import uk.gov.homeoffice.drt.db.{AppDatabase, User, UserDao}
+import uk.gov.homeoffice.drt.db.{ProdDatabase, User, UserDao}
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuthTokenService.GetToken
 import uk.gov.homeoffice.drt.keycloak.{KeyCloakAuthToken, KeyCloakAuthTokenService, KeycloakService}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
@@ -35,7 +35,7 @@ object UserTracking {
   def apply(serverConfig: ServerConfig, timerInitialDelay: FiniteDuration, maxSize: Int, notifications: EmailNotifications): Behavior[Command] =
     Behaviors.setup { context: ActorContext[Command] =>
       implicit val ec = context.executionContext
-      val userService: UserService = UserService(UserDao(AppDatabase.db))
+      val userService: UserService = UserService(UserDao(ProdDatabase.db))
 
       Behaviors.withTimers(timers => new UserTracking(
         serverConfig,

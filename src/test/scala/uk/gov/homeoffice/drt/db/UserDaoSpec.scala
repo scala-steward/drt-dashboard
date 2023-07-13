@@ -18,7 +18,7 @@ class UserDaoSpec extends Specification with BeforeEach {
   private val deactivateAfterWarningDays = 7
   val secondsInADay: Int = 24 * 60 * 60
 
-  val userDao = UserDao(AppTestDatabase.db)
+  val userDao = UserDao(TestDatabase.db)
 
   val userActive1: User = User(
     id = "user1",
@@ -124,7 +124,8 @@ class UserDaoSpec extends Specification with BeforeEach {
   lazy val db: Database = Database.forConfig("h2-db")
 
   override protected def before: Any = {
-    Await.ready(AppTestDatabase.createDbStructure, 1.second)
+    val schema = TestDatabase.userTable.schema
+    Await.ready(db.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
   }
 
 }

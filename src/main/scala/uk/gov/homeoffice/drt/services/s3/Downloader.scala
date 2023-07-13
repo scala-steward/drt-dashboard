@@ -10,7 +10,12 @@ import software.amazon.awssdk.services.s3.model.{GetObjectRequest, GetObjectResp
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.FutureConverters.CompletionStageOps
 
-case class S3Downloader(s3Client: S3AsyncClient, bucketName: String) {
+trait Downloader {
+  def download(objectKey: String)
+              (implicit ec: ExecutionContext): Future[Source[ByteString, Future[IOResult]]]
+}
+
+case class S3Downloader(s3Client: S3AsyncClient, bucketName: String) extends Downloader {
   def download(objectKey: String)
               (implicit ec: ExecutionContext): Future[Source[ByteString, Future[IOResult]]] = {
     val request = GetObjectRequest.builder()

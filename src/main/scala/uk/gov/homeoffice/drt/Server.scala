@@ -6,7 +6,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.Directives.{concat, getFromResource, getFromResourceDirectory}
 import akka.http.scaladsl.server.Route
-import uk.gov.homeoffice.drt.db.{AppDatabase, UserAccessRequestDao, UserDao}
+import uk.gov.homeoffice.drt.db.{ProdDatabase, UserAccessRequestDao, UserDao}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes._
@@ -66,8 +66,8 @@ object Server {
       implicit val system: ActorSystem[Nothing] = ctx.system
       implicit val ec: ExecutionContextExecutor = system.executionContext
       val urls = Urls(serverConfig.rootDomain, serverConfig.useHttps)
-      val userRequestService = UserRequestService(UserAccessRequestDao(AppDatabase.db))
-      val userService = UserService(UserDao(AppDatabase.db))
+      val userRequestService = UserRequestService(UserAccessRequestDao(ProdDatabase.db))
+      val userService = UserService(UserDao(ProdDatabase.db))
       val neboRoutes = NeboUploadRoutes(serverConfig.neboPortCodes.toList, new ProdHttpClient).route
 
       val routes: Route = concat(

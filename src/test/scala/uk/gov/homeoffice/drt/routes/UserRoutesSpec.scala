@@ -32,7 +32,7 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
   val stringToLocalDateTime: String => Instant = dateString => Instant.parse(dateString)
   val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), "someDomain.com", "test@test.com")
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
-  val userDao: UserDao = UserDao(AppTestDatabase.db)
+  val userDao: UserDao = UserDao(TestDatabase.db)
   val tableName = "user_route_test"
 
   val user1: User = User(
@@ -94,7 +94,7 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
   "User api" >> {
 
     "Give list of all users accessing drt" >> {
-      val userService = UserService(UserDao(AppTestDatabase.db))
+      val userService = UserService(UserDao(TestDatabase.db))
       val userRequestService: UserRequestService = UserRequestService(new MockUserAccessRequestDao())
       Await.result(insertUser(userService), 5.seconds)
       Get("/user/all") ~>
@@ -106,7 +106,7 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
     }
 
     "Saves user access request" >> {
-      val userService = UserService(UserDao(AppTestDatabase.db))
+      val userService = UserService(UserDao(TestDatabase.db))
       val userRequestService: UserRequestService = UserRequestService(new MockUserAccessRequestDao())
       Post("/user/access-request", accessRequest.toJson) ~>
         RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
@@ -116,7 +116,7 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
     }
 
     "Gives user access requested" >> {
-      val userService = UserService(UserDao(AppTestDatabase.db))
+      val userService = UserService(UserDao(TestDatabase.db))
       val userRequestService: UserRequestService = UserRequestService(new MockUserAccessRequestDao())
       val accessRequestToSave = accessRequest.copy(lineManager = "LineManager1")
       val currentTime = new Timestamp(DateTime.now().getMillis)
@@ -135,6 +135,7 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
   }
 
   override protected def before: Any = {
-    Await.ready(AppTestDatabase.createDbStructure, 1.second)
+    val schema = TestDatabase.userTable.schema
+    Await.ready(TestDatabase.db.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
   }
 }

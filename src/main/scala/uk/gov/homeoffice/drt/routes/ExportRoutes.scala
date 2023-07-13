@@ -6,7 +6,7 @@ import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
 import akka.http.scaladsl.model.headers.ContentDispositionTypes.attachment
 import akka.http.scaladsl.model.headers.`Content-Disposition`
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
-import akka.http.scaladsl.server.Directives.{complete, _}
+import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Route, StandardRoute, ValidationRejection}
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Source}
@@ -14,7 +14,7 @@ import akka.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
-import uk.gov.homeoffice.drt.db.AppDatabase.db
+import uk.gov.homeoffice.drt.db.ProdDatabase.db
 import uk.gov.homeoffice.drt.db.RegionExportQueries
 import uk.gov.homeoffice.drt.json.RegionExportJsonFormats._
 import uk.gov.homeoffice.drt.models.RegionExport

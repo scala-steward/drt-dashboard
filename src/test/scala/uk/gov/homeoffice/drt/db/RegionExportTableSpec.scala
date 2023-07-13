@@ -13,7 +13,7 @@ import scala.concurrent.{Await, ExecutionContextExecutor}
 class RegionExportTableTest extends AnyWordSpec with BeforeAndAfter {
   implicit val ec: ExecutionContextExecutor = scala.concurrent.ExecutionContext.global
 
-  val db = Database.forConfig("h2-db")
+  val db = TestDatabase.db
 
   before {
     Await.ready(db.run(DBIO.seq(RegionExportQueries.regionExports.schema.dropIfExists, RegionExportQueries.regionExports.schema.create)), 1.second)
