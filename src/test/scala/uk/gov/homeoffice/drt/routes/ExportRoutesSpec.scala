@@ -64,32 +64,15 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
     }
   }
 
-  //  "Request North arrival export" should {
-  //    "collate all port and terminal arrivals in the North region" in {
-  //      val request = RegionExportRequest("North", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
-  //      Post("/export/North/2022-08-02/2022-08-03", request) ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
-  //        responseAs[String] should ===(northRegionPortTerminalData)
-  //      }
-  //    }
-  //  }
-  //
-  //  "Request South arrival export" should {
-  //    "collate all port and terminal arrivals in the South region" in {
-  //      val request = RegionExportRequest("South", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
-  //      Post("/export/South/2022-08-02/2022-08-03", request) ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
-  //        responseAs[String] should ===(southRegionPortTerminalData)
-  //      }
-  //    }
-  //  }
-  //
-  //  "Request Central arrival export" should {
-  //    "collate all port and terminal arrivals in the Central region" in {
-  //      val request = RegionExportRequest("Central", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
-  //      Post("/export/Central/2022-08-02/2022-08-03", request) ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
-  //        responseAs[String] should ===(centralRegionPortTerminalData)
-  //      }
-  //    }
-  //  }
+  "Request north arrival export" should {
+    "collate all terminal arrivals" in {
+      val request = RegionExportRequest("North", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
+      Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
+        uploadProbe.expectMessage((s"North-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", northRegionPortTerminalData.trim))
+        responseAs[String] should ===("ok")
+      }
+    }
+  }
 
   def heathrowRegionPortTerminalData: String =
     s"""${ArrivalExportHeadings.regionalExportHeadings}
