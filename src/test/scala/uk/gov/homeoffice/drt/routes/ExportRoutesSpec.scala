@@ -73,7 +73,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
       }
     }
   }
-
+  
   def heathrowRegionPortTerminalData: String =
     s"""${ArrivalExportHeadings.regionalExportHeadings}
        |Heathrow,LHR,T2,flight1,information,row
@@ -122,46 +122,6 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
        |North,NCL,T1,flight2,information,row
        |North,PIK,T1,flight1,information,row
        |North,PIK,T1,flight2,information,row
-       |""".stripMargin
-
-  def southRegionPortTerminalData: String =
-    s"""${ArrivalExportHeadings.regionalExportHeadings}
-       |South,BOH,T1,flight1,information,row
-       |South,BOH,T1,flight2,information,row
-       |South,BRS,T1,flight1,information,row
-       |South,BRS,T1,flight2,information,row
-       |South,CWL,T1,flight1,information,row
-       |South,CWL,T1,flight2,information,row
-       |South,EXT,T1,flight1,information,row
-       |South,EXT,T1,flight2,information,row
-       |South,LGW,N,flight1,information,row
-       |South,LGW,N,flight2,information,row
-       |South,LGW,S,flight1,information,row
-       |South,LGW,S,flight2,information,row
-       |South,NQY,T1,flight1,information,row
-       |South,NQY,T1,flight2,information,row
-       |South,SOU,T1,flight1,information,row
-       |South,SOU,T1,flight2,information,row
-       |""".stripMargin
-
-  def centralRegionPortTerminalData: String =
-    s"""${ArrivalExportHeadings.regionalExportHeadings}
-       |Central,BHX,T1,flight1,information,row
-       |Central,BHX,T1,flight2,information,row
-       |Central,BHX,T2,flight1,information,row
-       |Central,BHX,T2,flight2,information,row
-       |Central,EMA,T1,flight1,information,row
-       |Central,EMA,T1,flight2,information,row
-       |Central,LCY,T1,flight1,information,row
-       |Central,LCY,T1,flight2,information,row
-       |Central,LTN,T1,flight1,information,row
-       |Central,LTN,T1,flight2,information,row
-       |Central,NWI,T1,flight1,information,row
-       |Central,NWI,T1,flight2,information,row
-       |Central,SEN,T1,flight1,information,row
-       |Central,SEN,T1,flight2,information,row
-       |Central,STN,T1,flight1,information,row
-       |Central,STN,T1,flight2,information,row
        |""".stripMargin
 
 }
