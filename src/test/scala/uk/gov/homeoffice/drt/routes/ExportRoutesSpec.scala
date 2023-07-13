@@ -1,26 +1,30 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.http.javadsl.server.Directives.pathEnd
+import akka.actor.testkit.typed.scaladsl.TestProbe
+import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
 import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Directives.{complete, _}
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.stream.{Attributes, Materializer}
+import akka.stream.Materializer
 import akka.stream.scaladsl.Source
+import akka.util.ByteString
+import akka.{Done, NotUsed}
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
 import uk.gov.homeoffice.drt.routes.ExportRoutes.RegionExportRequest
+import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
 
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 
 class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest {
+  implicit val typedSystem: ActorSystem[Nothing] = ActorSystem.wrap(system)
   implicit val mat: Materializer = Materializer(system)
   implicit val ec: ExecutionContextExecutor = mat.executionContext
 
-  implicit val streamingSupport: CsvEntityStreamingSupport = EntityStreamingSupport.csv().withContentType(ContentTypes.`text/csv(UTF-8)`)
+  implicit val csvStreaming: CsvEntityStreamingSupport = EntityStreamingSupport.csv()//.withFramingRenderer(Flow[ByteString])
 
   val csv: String =
     """IATA,ICAO,Origin,Gate/Stand,Status,Scheduled,Predicted Arrival,Est Arrival,Act Arrival,Est Chox,Act Chox,Minutes off scheduled,Est PCP,Total Pax,PCP Pax,Invalid API,API e-Gates,API EEA,API Non-EEA,API Fast Track,Historical e-Gates,Historical EEA,Historical Non-EEA,Historical Fast Track,Terminal Average e-Gates,Terminal Average EEA,Terminal Average Non-EEA,Terminal Average Fast Track
@@ -28,78 +32,61 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
       |flight2,information,row
       |""".stripMargin
 
-  val httpResponse: String => HttpResponse = csvString => HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/csv(UTF-8)`, csvString))
+  def httpResponse(content: String): HttpResponse = HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/csv(UTF-8)`, Source(Seq(ByteString(content)))))
 
-  val mockHttpClient = new MockHttpClient(httpResponse(csv))
-
-  val routes = pathPrefix("export")(
-    concat(
-      post(
-        complete("request export")
-      ),
-      get(
-        concat(
-          path(Segment) { region =>
-            complete(s"get for $region")
-          },
-          path(Segment / Segment) { case (region, createdAt) =>
-            complete(s"get for $region & $createdAt")
-          }
-        ))
-    ),
-  )
-
-  "route" should {
-    "behave with post" in {
-      Post("/export") ~> routes ~> check {
-        responseAs[String] shouldEqual "request export"
-      }
+  val mockHttpClient: MockHttpClient = MockHttpClient(httpResponse(csv))
+  val uploadProbe: TestProbe[(String, String)] = TestProbe[(String, String)]()
+  val downloadProbe: TestProbe[String] = TestProbe[String]()
+  val mockUploader: (String, Source[ByteString, Any]) => Future[Done.type] = (objectKey: String, data: Source[ByteString, Any]) =>
+    data
+      .runReduce[ByteString](_ ++ ByteString("\n") ++ _).map { bytes =>
+      uploadProbe.ref ! (objectKey, bytes.utf8String)
+      Done
     }
-    "behave with get region" in {
-      Get("/export/North") ~> routes ~> check {
-        responseAs[String] shouldEqual "get for North"
-      }
-    }
-    "behave with get region createdAt" in {
-      Get("/export/North/123456789") ~> routes ~> check {
-        responseAs[String] shouldEqual "get for North & 123456789"
+  val mockDownloader: String => Future[Source[ByteString, NotUsed]] = (objectKey: String) => {
+    downloadProbe.ref ! objectKey
+    Future.successful(Source(Seq(ByteString("1"), ByteString("2"), ByteString("3"))))
+  }
+  val now: SDateLike = SDate("2022-08-02T00:00:00")
+  val nowYYYYMMDDHHmmss = "20220802000000"
+  val nowProvider: () => SDateLike = () => now
+
+  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+  import uk.gov.homeoffice.drt.json.RegionExportJsonFormats._
+
+  "Request heathrow arrival export" should {
+    "collate all terminal arrivals" in {
+      val request = RegionExportRequest("Heathrow", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
+      Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
+        uploadProbe.expectMessage((s"Heathrow-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData.trim))
+        responseAs[String] should ===("ok")
       }
     }
   }
 
-
-  //  "Request heathrow arrival export" should {
-  //    "collate all terminal arrivals" in {
-  //      Get("/export/Heathrow/2022-08-02/2022-08-03") ~> ExportRoutes(mockHttpClient) ~> check {
-  //        val a = responseAs[String]
-  //        a should ===(heathrowRegionPortTerminalData)
-  //      }
-  //    }
-  //  }
-  //
   //  "Request North arrival export" should {
   //    "collate all port and terminal arrivals in the North region" in {
-  //      Get("/export/North/2022-08-02/2022-08-03") ~> ExportRoutes(mockHttpClient) ~> check {
-  //        val a = responseAs[String]
-  //        a should ===(northRegionPortTerminalData)
+  //      val request = RegionExportRequest("North", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
+  //      Post("/export/North/2022-08-02/2022-08-03", request) ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
+  //        responseAs[String] should ===(northRegionPortTerminalData)
   //      }
   //    }
   //  }
   //
   //  "Request South arrival export" should {
   //    "collate all port and terminal arrivals in the South region" in {
-  //      Get("/export/South/2022-08-02/2022-08-03") ~> ExportRoutes(mockHttpClient) ~> check {
-  //        val a = responseAs[String]
-  //        a should ===(southRegionPortTerminalData)
+  //      val request = RegionExportRequest("South", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
+  //      Post("/export/South/2022-08-02/2022-08-03", request) ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
+  //        responseAs[String] should ===(southRegionPortTerminalData)
   //      }
   //    }
   //  }
   //
   //  "Request Central arrival export" should {
   //    "collate all port and terminal arrivals in the Central region" in {
-  //      Get("/export/Central/2022-08-02/2022-08-03") ~> ExportRoutes(mockHttpClient) ~> check {
-  //        val a = responseAs[String]
-  //        a should ===(centralRegionPortTerminalData)
+  //      val request = RegionExportRequest("Central", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
+  //      Post("/export/Central/2022-08-02/2022-08-03", request) ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
+  //        responseAs[String] should ===(centralRegionPortTerminalData)
   //      }
   //    }
   //  }

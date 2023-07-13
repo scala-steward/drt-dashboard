@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.drt.routes
 
+import akka.Done
 import akka.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
@@ -21,8 +22,7 @@ import uk.gov.homeoffice.drt.models.RegionExport
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.rccu.ExportCsvService
-import uk.gov.homeoffice.drt.services.s3.{S3Downloader, S3Uploader}
-import uk.gov.homeoffice.drt.time.{LocalDate, SDate}
+import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
@@ -39,15 +39,19 @@ object ExportRoutes {
       HttpEntity(ContentTypes.`text/csv(UTF-8)`, bytes)
     }
 
-  def apply(httpClient: HttpClient, s3Uploader: S3Uploader, s3Downloader: S3Downloader)
+  def apply(httpClient: HttpClient,
+            upload: (String, Source[ByteString, Any]) => Future[Done],
+            download: String => Future[Source[ByteString, _]],
+            now: () => SDateLike,
+           )
            (implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
-    lazy val exportCsvService = new ExportCsvService(httpClient)
+    lazy val exportCsvService = ExportCsvService(httpClient)
     headerValueByName("X-Auth-Email") { email =>
       pathPrefix("export")(
         concat(
           post(
             entity(as[RegionExportRequest]) { exportRequest =>
-              handleRegionExport(s3Uploader, exportCsvService, email, exportRequest)
+              handleRegionExport(upload, exportCsvService, email, exportRequest, now)
             }
           ),
           get {
@@ -56,23 +60,7 @@ object ExportRoutes {
                 complete(db.run(RegionExportQueries.getAll(email, region)))
               },
               path(Segment / Segment) { case (region, createdAt) =>
-                log.info(s"Getting region export for $email / $region / $createdAt")
-                val eventualStream = db.run(RegionExportQueries.get(email, region, createdAt.toLong))
-                  .flatMap {
-                    case Some(regionExport) =>
-                      val startDateString = regionExport.startDate.toString()
-                      val endDateString = regionExport.endDate.toString()
-                      val fileName = s"exports/${exportCsvService.makeFileName(startDateString, endDateString, regionExport.region, regionExport.createdAt)}"
-                      log.info(s"Downloading $fileName")
-                      s3Downloader.download(fileName).map { stream =>
-                        respondWithHeader(`Content-Disposition`(attachment, Map("filename" -> fileName))) {
-                          complete(stream)
-                        }
-                      }
-                    case None =>
-                      Future.successful(complete("Region export not found"))
-                  }
-                onComplete(eventualStream) {
+                onComplete(getExportRoute(email, region, createdAt, exportCsvService, download)) {
                   case Success(route) => route
                   case Failure(e) =>
                     log.error("Failed to get region export", e)
@@ -86,16 +74,41 @@ object ExportRoutes {
     }
   }
 
-  private def handleRegionExport(s3Uploader: S3Uploader,
+  private def getExportRoute(email: String, region: String, createdAt: String, exportCsvService: ExportCsvService, downloader: String => Future[Source[ByteString, _]])
+                            (implicit ec: ExecutionContextExecutor): Future[Route] = {
+    log.info(s"Getting region export for $email / $region / $createdAt")
+
+    db.run(RegionExportQueries.get(email, region, createdAt.toLong))
+      .flatMap {
+        case Some(regionExport) =>
+          val startDateString = regionExport.startDate.toString()
+          val endDateString = regionExport.endDate.toString()
+          val fileName = s"exports/${exportCsvService.makeFileName(startDateString, endDateString, regionExport.region, regionExport.createdAt)}"
+          log.info(s"Downloading $fileName")
+          downloader(fileName).map { stream =>
+            respondWithHeader(`Content-Disposition`(attachment, Map("filename" -> fileName))) {
+              complete(stream)
+            }
+          }
+        case None =>
+          Future.successful(complete("Region export not found"))
+      }
+  }
+
+  private def handleRegionExport(upload: (String, Source[ByteString, Any]) => Future[Done],
                                  exportCsvService: => ExportCsvService,
                                  email: String,
-                                 exportRequest: RegionExportRequest)
+                                 exportRequest: RegionExportRequest,
+                                 now: () => SDateLike,
+                                )
                                 (implicit ec: ExecutionContextExecutor, mat: Materializer): StandardRoute = {
     val startDateString = exportRequest.startDate.toString()
     val endDateString = exportRequest.endDate.toString()
-    val fileName = exportCsvService.makeFileName(startDateString, endDateString, exportRequest.region, SDate.now())
+    val creationDate = now()
+    println(s"creationDate: $creationDate")
+    val fileName = exportCsvService.makeFileName(startDateString, endDateString, exportRequest.region, creationDate)
     exportCsvService.getPortRegion(exportRequest.region).map { portRegion: PortRegion =>
-      val regionExport = RegionExport(email, portRegion.name, exportRequest.startDate, exportRequest.endDate, "preparing", SDate.now())
+      val regionExport = RegionExport(email, portRegion.name, exportRequest.startDate, exportRequest.endDate, "preparing", creationDate)
       db.run(RegionExportQueries.insert(regionExport))
         .map(_ => log.info("Region export inserted"))
         .recover { case e => log.error("Failed to insert region export", e) }
@@ -121,7 +134,7 @@ object ExportRoutes {
         }
         .prepend(Source.single(ByteString(ArrivalExportHeadings.regionalExportHeadings)))
 
-      s3Uploader.upload(fileName, stream).onComplete {
+      upload(fileName, stream).onComplete {
         case Success(_) =>
           updateExportStatus(regionExport, "complete")
           log.info("Export complete")

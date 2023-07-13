@@ -12,7 +12,7 @@ import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-class ExportCsvService(httpClient: HttpClient) {
+case class ExportCsvService(httpClient: HttpClient) {
 
   val log: Logger = LoggerFactory.getLogger(getClass)
 
@@ -55,14 +55,8 @@ class ExportCsvService(httpClient: HttpClient) {
       }
   }
 
-  private val stringToDate: String => DateTime = dateTimeString => DateTimeFormat.forPattern("yyyy-MM-dd")
-    .withZone(DateTimeZone.forID("Europe/London"))
-    .parseDateTime(dateTimeString)
-
   def makeFileName(start: String, end: String, portRegion: String, createdAt: SDateLike): String = {
-    val startDateTime: DateTime = stringToDate(start)
-    val endDateTime: DateTime = stringToDate(end)
-    val endDate = if (endDateTime.minusDays(1).isAfter(startDateTime))
+    val endDate = if (start != end)
       f"-to-$end"
     else ""
 
