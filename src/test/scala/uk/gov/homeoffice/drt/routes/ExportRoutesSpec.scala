@@ -73,7 +73,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
       }
     }
   }
-  
+
   def heathrowRegionPortTerminalData: String =
     s"""${ArrivalExportHeadings.regionalExportHeadings}
        |Heathrow,LHR,T2,flight1,information,row

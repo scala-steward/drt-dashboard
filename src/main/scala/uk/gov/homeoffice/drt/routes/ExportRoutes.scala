@@ -105,7 +105,6 @@ object ExportRoutes {
     val startDateString = exportRequest.startDate.toString()
     val endDateString = exportRequest.endDate.toString()
     val creationDate = now()
-    println(s"creationDate: $creationDate")
     val fileName = exportCsvService.makeFileName(startDateString, endDateString, exportRequest.region, creationDate)
     exportCsvService.getPortRegion(exportRequest.region).map { portRegion: PortRegion =>
       val regionExport = RegionExport(email, portRegion.name, exportRequest.startDate, exportRequest.endDate, "preparing", creationDate)
