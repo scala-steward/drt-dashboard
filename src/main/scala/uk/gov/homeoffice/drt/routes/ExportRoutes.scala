@@ -1,11 +1,10 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.Done
 import akka.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
-import akka.http.scaladsl.model.headers.ContentDispositionTypes.attachment
-import akka.http.scaladsl.model.headers.`Content-Disposition`
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
+import akka.http.scaladsl.model.headers.ContentDispositionTypes.attachment
+import akka.http.scaladsl.model.headers.`Content-Disposition`
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives.{complete, _}
 import akka.http.scaladsl.server.{Route, StandardRoute, ValidationRejection}

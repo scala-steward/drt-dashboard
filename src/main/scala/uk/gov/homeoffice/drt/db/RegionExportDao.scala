@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.db
 
+import com.typesafe.config.ConfigFactory
 import slick.dbio.Effect
-import slick.jdbc.PostgresProfile.api._
 import slick.lifted.Tag
 import slick.sql.FixedSqlAction
 import uk.gov.homeoffice.drt.models.RegionExport
@@ -9,6 +9,15 @@ import uk.gov.homeoffice.drt.time.{LocalDate, SDate}
 
 import java.sql.Timestamp
 import scala.concurrent.ExecutionContext
+
+object Db {
+  val slickProfile = if (ConfigFactory.load().getString("env") != "test")
+    slick.jdbc.PostgresProfile
+  else
+    slick.jdbc.H2Profile
+}
+
+import Db.slickProfile.api._
 
 class RegionExportTable(tag: Tag)
   extends Table[(String, String, String, String, String, Timestamp)](tag, "region_export") {
@@ -31,7 +40,7 @@ class RegionExportTable(tag: Tag)
 }
 
 object RegionExportQueries {
-  private val regionExports: TableQuery[RegionExportTable] = TableQuery[RegionExportTable]
+  val regionExports: TableQuery[RegionExportTable] = TableQuery[RegionExportTable]
 
   def get(email: String, region: String, createdAt: Long)
          (implicit ec: ExecutionContext): DBIOAction[Option[RegionExport], NoStream, Effect.Read] =

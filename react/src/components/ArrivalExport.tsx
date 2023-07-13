@@ -10,7 +10,7 @@ interface IProps {
   region: string;
 }
 
-const BootstrapDialog = styled(Dialog)(({ theme }) => ({
+const BootstrapDialog = styled(Dialog)(({theme}) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
   },
@@ -26,27 +26,25 @@ export interface DialogTitleProps {
 }
 
 function BootstrapDialogTitle(props: DialogTitleProps) {
-  const { children, onClose } = props;
+  const {children, onClose} = props;
 
-  return (
-    <DialogTitle sx={{ m: 0, p: 2 }}>
-      {children}
-      {onClose ? (
-        <IconButton
-          aria-label="close"
-          onClick={onClose}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-      ) : null}
-    </DialogTitle>
-  );
+  return <DialogTitle sx={{m: 0, p: 2}}>
+    {children}
+    {onClose ? (
+      <IconButton
+        aria-label="close"
+        onClick={onClose}
+        sx={{
+          position: 'absolute',
+          right: 8,
+          top: 8,
+          color: (theme) => theme.palette.grey[500],
+        }}
+      >
+        <CloseIcon/>
+      </IconButton>
+    ) : null}
+  </DialogTitle>
 }
 
 export default function ArrivalExport(props: IProps) {
@@ -54,24 +52,23 @@ export default function ArrivalExport(props: IProps) {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  return (
-    <div>
-      <Button startIcon={<FileDownloadIcon/>} onClick={handleOpen}>
-        {props.region} region Export
-      </Button>
-      <BootstrapDialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="modal-modal-title"
-        aria-describedby="modal-modal-description">
-        <BootstrapDialogTitle id="customised-dialog-title" onClose={handleClose}>{props.region} region arrivals</BootstrapDialogTitle>
-        <DialogContent>
-          <DialogContentText id="modal-modal-description">
-            Choose dates and download arrivals.
-          </DialogContentText>
-          <ExportDatePicker region={props.region} handleClose={handleClose}/>
-        </DialogContent>
-      </BootstrapDialog>
-    </div>
-  );
+  return <>
+    <Button startIcon={<FileDownloadIcon/>} onClick={handleOpen}>
+      {props.region} region Export
+    </Button>
+    <BootstrapDialog
+      open={open}
+      onClose={handleClose}
+      aria-labelledby="modal-modal-title"
+      aria-describedby="modal-modal-description">
+      <BootstrapDialogTitle id="customised-dialog-title" onClose={handleClose}>{props.region} region
+        arrivals</BootstrapDialogTitle>
+      <DialogContent>
+        <DialogContentText id="modal-modal-description">
+          Choose dates and download arrivals.
+        </DialogContentText>
+        <ExportDatePicker region={props.region} handleClose={handleClose}/>
+      </DialogContent>
+    </BootstrapDialog>
+  </>
 }

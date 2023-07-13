@@ -4,10 +4,8 @@ import slick.basic.DatabaseConfig
 import slick.jdbc.JdbcProfile
 import slick.lifted.TableQuery
 
-import java.sql.Connection
-
 class AppTestDatabase {
-  lazy val dc: DatabaseConfig[JdbcProfile] = DatabaseConfig.forConfig[JdbcProfile]("h2_dc")
+  lazy val dc: DatabaseConfig[JdbcProfile] = DatabaseConfig.forConfig[JdbcProfile]("h2-db")
   lazy val db = dc.db
   def userTestTable(tableName: String): TableQuery[UserTable] =
     TableQuery[UserTable](tag => new UserTable(tag, tableName))

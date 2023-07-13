@@ -7,3 +7,4 @@ src/main/resources/frontend
 .DS_Store
 *.log
 .bsp
+*.csv

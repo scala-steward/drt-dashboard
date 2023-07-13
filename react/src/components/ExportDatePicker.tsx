@@ -38,33 +38,31 @@ export default function ExportDatePicker(props: IProps) {
     props.handleClose()
   }
 
-  return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Stack spacing={2} sx={{marginTop: 2}}>
-        <DatePicker
-          label="From Date"
-          value={fromValue}
-          onChange={(newValue) => {
-            setFromValue(newValue);
-          }}
-          renderInput={(params) => <TextField {...params} />}
-        />
-        <DatePicker
-          label="To Date"
-          value={toValue}
-          onChange={(newValue) => {
-            setToValue(newValue);
-          }}
-          renderInput={(params) => <TextField {...params} />}
-        />
-        <Button startIcon={<FileDownloadIcon/>}
-                target="_blank"
-                disabled={!fromValue || !toValue}
-                onClick={requestExport}
-        >
-          Request export
-        </Button>
-      </Stack>
-    </LocalizationProvider>
-  );
+  return <LocalizationProvider dateAdapter={AdapterDateFns}>
+    <Stack spacing={2} sx={{marginTop: 2}}>
+      <DatePicker
+        label="From Date"
+        value={fromValue}
+        onChange={(newValue) => {
+          setFromValue(newValue);
+        }}
+        renderInput={(params) => <TextField {...params} />}
+      />
+      <DatePicker
+        label="To Date"
+        value={toValue}
+        onChange={(newValue) => {
+          setToValue(newValue);
+        }}
+        renderInput={(params) => <TextField {...params} />}
+      />
+      <Button startIcon={<FileDownloadIcon/>}
+              target="_blank"
+              disabled={!fromValue || !toValue}
+              onClick={requestExport}
+      >
+        Request export
+      </Button>
+    </Stack>
+  </LocalizationProvider>
 }
