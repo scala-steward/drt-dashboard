@@ -19,8 +19,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react",
-    "noFallthroughCasesInSwitch": true,
-    "types": [ "@types/wicg-file-system-access"]
+    "noFallthroughCasesInSwitch": true
   },
   "include": [
     "src"

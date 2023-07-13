@@ -48,22 +48,6 @@ export const RegionPage = (props: IProps) => {
 
   useEffect(() => {
     fetchDownloads()
-    // setDownloads([
-    //   {
-    //     id: "1",
-    //     startDate: new Date(2022, 7, 1),
-    //     endDate: new Date(2023, 7, 1),
-    //     created: new Date(2023, 7, 10, 12, 10, 0),
-    //     status: "Pending"
-    //   },
-    //   {
-    //     id: "2",
-    //     startDate: new Date(2022, 7, 1),
-    //     endDate: new Date(2023, 7, 1),
-    //     created: new Date(2023, 7, 9, 15, 35, 0),
-    //     status: "Complete"
-    //   },
-    // ])
   }, [setDownloads])
 
   function formatDateDDMMYYYYHHmm(date: Date) {
@@ -75,38 +59,6 @@ export const RegionPage = (props: IProps) => {
   }
 
   const sortedDownloads  = downloads ? downloads.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)) : undefined
-
-  // function downloadExport(download: Download) {
-  //   const url = `/export/${download.region}/${download.createdAt}`
-  //
-  //   window.showSaveFilePicker().then(handle => {
-  //     handle.createWritable().then(writableStream => {
-  //       fetch(url, {
-  //         method: 'GET',
-  //       }).then(res => {
-  //         const reader = res.body.getReader();
-  //
-  //         reader.read().then(function processText({done, value}) {
-  //           // Result objects contain two properties:
-  //           // done  - true if the stream has already given you all its data.
-  //           // value - some data. Always undefined when done is true.
-  //           if (done) {
-  //             console.log("Stream complete");
-  //             writableStream.close()
-  //             return;
-  //           }
-  //
-  //           const chunk = value;
-  //
-  //           writableStream.write(chunk).then(() => {
-  //             // Read some more, and call this function again
-  //             return reader.read().then(processText);
-  //           })
-  //         });
-  //       })
-  //     })
-  //   })
-  // }
 
   return <div className="flex-container">
     <Breadcrumbs aria-label="breadcrumb">
@@ -134,13 +86,7 @@ export const RegionPage = (props: IProps) => {
                 </Grid>
                 <Grid xs={3}><Typography>
                   {download.status === 'complete' ?
-                    <Link
-                      // onClick={
-                      //   (e) => {
-                      //     downloadExport(download)
-                      //     e.preventDefault()
-                      // }}
-                      href={downloadUrl} target={'_blank'}>Download</Link> :
+                    <Link href={downloadUrl} target={'_blank'}>Download</Link> :
                     download.status
                   }
                 </Typography></Grid>
