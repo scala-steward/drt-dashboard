@@ -1,12 +1,11 @@
 package uk.gov.homeoffice.drt.db
 
-import slick.basic.DatabaseConfig
-import slick.jdbc.JdbcProfile
+import slick.jdbc.H2Profile.api._
 import slick.lifted.TableQuery
 
 class AppTestDatabase {
-  lazy val dc: DatabaseConfig[JdbcProfile] = DatabaseConfig.forConfig[JdbcProfile]("h2-db")
-  lazy val db = dc.db
+  lazy val db: Database = Database.forConfig("h2-db")
+
   def userTestTable(tableName: String): TableQuery[UserTable] =
     TableQuery[UserTable](tag => new UserTable(tag, tableName))
 
