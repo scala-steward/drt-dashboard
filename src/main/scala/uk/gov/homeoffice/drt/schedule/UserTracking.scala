@@ -34,32 +34,31 @@ object UserTracking {
 
   def apply(serverConfig: ServerConfig, timerInitialDelay: FiniteDuration, maxSize: Int, notifications: EmailNotifications): Behavior[Command] =
     Behaviors.setup { context: ActorContext[Command] =>
-    implicit val ec = context.executionContext
-    val userService: UserService = new UserService(new UserDao(AppDatabase.db, AppDatabase.userTable))
+      implicit val ec = context.executionContext
+      val userService: UserService = UserService(UserDao(AppDatabase.db))
 
-    Behaviors.withTimers(timers => new UserTracking(
-      serverConfig,
-      notifications,
-      userService,
-      timers, timerInitialDelay,
-      serverConfig.scheduleFrequency.minutes,
-      serverConfig.inactivityDays,
-      serverConfig.deactivateAfterWarningDays,
-      maxSize, context).userBehaviour)
-  }
+      Behaviors.withTimers(timers => new UserTracking(
+        serverConfig,
+        notifications,
+        userService,
+        timers, timerInitialDelay,
+        serverConfig.scheduleFrequency.minutes,
+        serverConfig.inactivityDays,
+        serverConfig.deactivateAfterWarningDays,
+        maxSize, context).userBehaviour)
+    }
 }
 
-class UserTracking(
-                    serverConfig: ServerConfig,
-                    notifications: EmailNotifications,
-                    userService: UserService,
-                    timers: TimerScheduler[Command],
-                    timerInitialDelay: FiniteDuration,
-                    timerInterval: FiniteDuration,
-                    numberOfInactivityDays: Int,
-                    deactivateAfterWarningDays:Int,
-                    maxSize: Int,
-                    context: ActorContext[Command]) {
+class UserTracking(serverConfig: ServerConfig,
+                   notifications: EmailNotifications,
+                   userService: UserService,
+                   timers: TimerScheduler[Command],
+                   timerInitialDelay: FiniteDuration,
+                   timerInterval: FiniteDuration,
+                   numberOfInactivityDays: Int,
+                   deactivateAfterWarningDays: Int,
+                   maxSize: Int,
+                   context: ActorContext[Command]) {
   val logger: Logger = LoggerFactory.getLogger(getClass)
 
   import UserTracking._
@@ -102,7 +101,7 @@ class UserTracking(
       case PerformAccountRevocations(token: KeyCloakAuthToken) =>
         context.log.info("KeyCloakToken-RevokeAccess")
         implicit val actorSystem: ActorSystem[Nothing] = context.system
-        val usersToRevoke = userService.getUsersToRevoke(numberOfInactivityDays,deactivateAfterWarningDays).map(_.take(maxSize))
+        val usersToRevoke = userService.getUsersToRevoke(numberOfInactivityDays, deactivateAfterWarningDays).map(_.take(maxSize))
         val keyClockClient = KeyCloakAuthTokenService.getKeyClockClient(serverConfig.keyClockConfig.url, token)
         val keycloakService = KeycloakService(keyClockClient)
         usersToRevoke.map { utrOption =>

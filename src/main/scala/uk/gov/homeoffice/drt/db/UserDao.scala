@@ -51,8 +51,11 @@ trait IUserDao {
 
 }
 
-class UserDao(db: Database, userTable: TableQuery[UserTable]) extends IUserDao {
+case class UserDao(db: Database) extends IUserDao {
   val log: Logger = LoggerFactory.getLogger(getClass)
+
+  val userTable: TableQuery[UserTable] = TableQuery[UserTable]
+
   val secondsInADay = 60 * 60 * 24
 
   def noActivitySinceDays(numberOfInactivityDays: Int): UserTable => Rep[Boolean] = (user: UserTable) =>
