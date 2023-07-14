@@ -20,44 +20,9 @@ object RegionExportJsonFormats extends DefaultJsonProtocol {
       case JsNumber(ts) => SDate(ts.toLong)
     }
 
-    override def write(obj: SDateLike): JsValue = JsNumber(obj.millisSinceEpoch)
+    override def write(obj: SDateLike): JsValue = obj.millisSinceEpoch.toJson
   }
 
-  implicit object RegionExportJsonFormat extends RootJsonFormat[RegionExport] {
-    override def read(json: JsValue): RegionExport = json match {
-      case JsObject(fields) =>
-        val email = fields("email").convertTo[String]
-        val region = fields("region").convertTo[String]
-        val startDate = fields("startDate").convertTo[LocalDate]
-        val endDate = fields("endDate").convertTo[LocalDate]
-        val status = fields("status").convertTo[String]
-        val createdAt = fields("createdAt").convertTo[SDateLike]
-        RegionExport(email, region, startDate, endDate, status, createdAt)
-    }
-
-    override def write(obj: RegionExport): JsValue = JsObject(Map(
-      "email" -> obj.email.toJson,
-      "region" -> obj.region.toJson,
-      "startDate" -> obj.startDate.toJson,
-      "endDate" -> obj.endDate.toJson,
-      "status" -> obj.status.toJson,
-      "createdAt" -> obj.createdAt.toJson,
-    ))
-  }
-
-  implicit object RegionExportRequestJsonFormat extends RootJsonFormat[RegionExportRequest] {
-    override def read(json: JsValue): RegionExportRequest = json match {
-      case JsObject(fields) =>
-        val region = fields("region").convertTo[String]
-        val startDate = fields("startDate").convertTo[LocalDate]
-        val endDate = fields("endDate").convertTo[LocalDate]
-        RegionExportRequest(region, startDate, endDate)
-    }
-
-    override def write(obj: RegionExportRequest): JsValue = JsObject(Map(
-      "region" -> obj.region.toJson,
-      "startDate" -> obj.startDate.toJson,
-      "endDate" -> obj.endDate.toJson,
-    ))
-  }
+  implicit val regionExportRequestJsonFormat: RootJsonFormat[RegionExportRequest] = jsonFormat3(RegionExportRequest.apply)
+  implicit val regionExportJsonFormat: RootJsonFormat[RegionExport] = jsonFormat6(RegionExport.apply)
 }

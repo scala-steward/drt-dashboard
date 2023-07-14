@@ -10,7 +10,7 @@ interface IProps {
   region: string;
 }
 
-const BootstrapDialog = styled(Dialog)(({theme}) => ({
+const DialogStyled = styled(Dialog)(({theme}) => ({
   '& .MuiDialogContent-root': {
     padding: theme.spacing(2),
   },
@@ -25,7 +25,7 @@ export interface DialogTitleProps {
   onClose: () => void;
 }
 
-function BootstrapDialogTitle(props: DialogTitleProps) {
+function DialogTitleWithCloseButton(props: DialogTitleProps) {
   const {children, onClose} = props;
 
   return <DialogTitle sx={{m: 0, p: 2}}>
@@ -56,19 +56,19 @@ export default function ArrivalExport(props: IProps) {
     <Button startIcon={<FileDownloadIcon/>} onClick={handleOpen}>
       {props.region} region Export
     </Button>
-    <BootstrapDialog
+    <DialogStyled
       open={open}
       onClose={handleClose}
       aria-labelledby="modal-modal-title"
       aria-describedby="modal-modal-description">
-      <BootstrapDialogTitle id="customised-dialog-title" onClose={handleClose}>{props.region} region
-        arrivals</BootstrapDialogTitle>
+      <DialogTitleWithCloseButton id="customised-dialog-title" onClose={handleClose}>{props.region} region
+        arrivals</DialogTitleWithCloseButton>
       <DialogContent>
         <DialogContentText id="modal-modal-description">
           Choose dates and download arrivals.
         </DialogContentText>
         <ExportDatePicker region={props.region} handleClose={handleClose}/>
       </DialogContent>
-    </BootstrapDialog>
+    </DialogStyled>
   </>
 }

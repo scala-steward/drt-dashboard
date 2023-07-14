@@ -1,6 +1,5 @@
 package uk.gov.homeoffice.drt.services.s3
 
-import akka.stream.IOResult
 import akka.stream.scaladsl.{Source, StreamConverters}
 import akka.util.ByteString
 import software.amazon.awssdk.core.async.AsyncResponseTransformer

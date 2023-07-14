@@ -8,8 +8,8 @@ class RegionExportJsonFormatsTest extends AnyWordSpec {
   "RegionExport" should {
     "serialise and deserialise without loss" in {
       val regionExport = RegionExport("email", "region", LocalDate(2020, 1, 1), LocalDate(2020, 1, 2), "status", SDate(2020, 1, 1))
-      val json = RegionExportJsonFormats.RegionExportJsonFormat.write(regionExport)
-      val deserialised = RegionExportJsonFormats.RegionExportJsonFormat.read(json)
+      val json = RegionExportJsonFormats.regionExportJsonFormat.write(regionExport)
+      val deserialised = RegionExportJsonFormats.regionExportJsonFormat.read(json)
       assert(deserialised == regionExport)
     }
   }

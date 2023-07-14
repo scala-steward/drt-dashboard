@@ -24,7 +24,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
   implicit val mat: Materializer = Materializer(system)
   implicit val ec: ExecutionContextExecutor = mat.executionContext
 
-  implicit val csvStreaming: CsvEntityStreamingSupport = EntityStreamingSupport.csv()//.withFramingRenderer(Flow[ByteString])
+  implicit val csvStreaming: CsvEntityStreamingSupport = EntityStreamingSupport.csv()
 
   val csv: String =
     """IATA,ICAO,Origin,Gate/Stand,Status,Scheduled,Predicted Arrival,Est Arrival,Act Arrival,Est Chox,Act Chox,Minutes off scheduled,Est PCP,Total Pax,PCP Pax,Invalid API,API e-Gates,API EEA,API Non-EEA,API Fast Track,Historical e-Gates,Historical EEA,Historical Non-EEA,Historical Fast Track,Terminal Average e-Gates,Terminal Average EEA,Terminal Average Non-EEA,Terminal Average Fast Track
