@@ -2,12 +2,12 @@ package uk.gov.homeoffice.drt.schedule
 
 import akka.actor.typed.scaladsl.AskPattern.Askable
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors, TimerScheduler}
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Scheduler}
 import akka.util.Timeout
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.ServerConfig
 import uk.gov.homeoffice.drt.authentication.KeyCloakUser
-import uk.gov.homeoffice.drt.db.{AppDatabase, User, UserDao}
+import uk.gov.homeoffice.drt.db.{ProdDatabase, User, UserDao}
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuthTokenService.GetToken
 import uk.gov.homeoffice.drt.keycloak.{KeyCloakAuthToken, KeyCloakAuthTokenService, KeycloakService}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
@@ -15,7 +15,7 @@ import uk.gov.homeoffice.drt.services.UserService
 
 import java.sql.Timestamp
 import java.util.Date
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 
 sealed trait Command
 
@@ -30,46 +30,45 @@ object UserTracking {
 
   private case object RevokeUserCheck extends Command
 
-  case class PerformAccountRevocations(token: KeyCloakAuthToken) extends Command
+  private case class PerformAccountRevocations(token: KeyCloakAuthToken) extends Command
 
   def apply(serverConfig: ServerConfig, timerInitialDelay: FiniteDuration, maxSize: Int, notifications: EmailNotifications): Behavior[Command] =
     Behaviors.setup { context: ActorContext[Command] =>
-    implicit val ec = context.executionContext
-    val userService: UserService = new UserService(new UserDao(AppDatabase.db, AppDatabase.userTable))
+      implicit val ec: ExecutionContextExecutor = context.executionContext
+      val userService: UserService = UserService(UserDao(ProdDatabase.db))
 
-    Behaviors.withTimers(timers => new UserTracking(
-      serverConfig,
-      notifications,
-      userService,
-      timers, timerInitialDelay,
-      serverConfig.scheduleFrequency.minutes,
-      serverConfig.inactivityDays,
-      serverConfig.deactivateAfterWarningDays,
-      maxSize, context).userBehaviour)
-  }
+      Behaviors.withTimers(timers => new UserTracking(
+        serverConfig,
+        notifications,
+        userService,
+        timers, timerInitialDelay,
+        serverConfig.scheduleFrequency.minutes,
+        serverConfig.inactivityDays,
+        serverConfig.deactivateAfterWarningDays,
+        maxSize, context).userBehaviour)
+    }
 }
 
-class UserTracking(
-                    serverConfig: ServerConfig,
-                    notifications: EmailNotifications,
-                    userService: UserService,
-                    timers: TimerScheduler[Command],
-                    timerInitialDelay: FiniteDuration,
-                    timerInterval: FiniteDuration,
-                    numberOfInactivityDays: Int,
-                    deactivateAfterWarningDays:Int,
-                    maxSize: Int,
-                    context: ActorContext[Command]) {
-  val logger: Logger = LoggerFactory.getLogger(getClass)
+class UserTracking(serverConfig: ServerConfig,
+                   notifications: EmailNotifications,
+                   userService: UserService,
+                   timers: TimerScheduler[Command],
+                   timerInitialDelay: FiniteDuration,
+                   timerInterval: FiniteDuration,
+                   numberOfInactivityDays: Int,
+                   deactivateAfterWarningDays: Int,
+                   maxSize: Int,
+                   context: ActorContext[Command]) {
+  private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   import UserTracking._
 
   logger.info(s"Starting timer scheduler for user tracking $timerInterval")
   timers.startTimerWithFixedDelay(UserTrackingKey, InactiveUserCheck, timerInitialDelay, timerInterval)
   timers.startTimerWithFixedDelay(UserTrackingRevokeKey, RevokeUserCheck, timerInitialDelay, timerInterval)
-  val keyCloakAuthTokenService: Behavior[KeyCloakAuthTokenService.Token] =
-    KeyCloakAuthTokenService.getTokenBehavior(serverConfig.keyClockConfig, serverConfig.keyclockUsername, serverConfig.keyclockPassword)
-  val keycloakServiceBehavior: ActorRef[KeyCloakAuthTokenService.Token] = context.spawn(keyCloakAuthTokenService, "keycloakServiceActor")
+  private val keyCloakAuthTokenService: Behavior[KeyCloakAuthTokenService.Token] =
+    KeyCloakAuthTokenService.getTokenBehavior(serverConfig.keyClockConfig, serverConfig.keycloakUsername, serverConfig.keycloakPassword)
+  private val keycloakServiceBehavior: ActorRef[KeyCloakAuthTokenService.Token] = context.spawn(keyCloakAuthTokenService, "keycloakServiceActor")
 
   private def userBehaviour()(implicit ec: ExecutionContext): Behavior[Command] = {
     Behaviors.receiveMessage[Command] {
@@ -94,15 +93,15 @@ class UserTracking(
         Behaviors.same
 
       case RevokeUserCheck =>
-        implicit val timeout = new Timeout(30.seconds)
-        implicit val scheduler = context.system.scheduler
+        implicit val timeout: Timeout = new Timeout(30.seconds)
+        implicit val scheduler: Scheduler = context.system.scheduler
         keycloakServiceBehavior.ask(ref => GetToken(ref)).map(token => context.self ! PerformAccountRevocations(token))
         Behaviors.same
 
       case PerformAccountRevocations(token: KeyCloakAuthToken) =>
         context.log.info("KeyCloakToken-RevokeAccess")
         implicit val actorSystem: ActorSystem[Nothing] = context.system
-        val usersToRevoke = userService.getUsersToRevoke(numberOfInactivityDays,deactivateAfterWarningDays).map(_.take(maxSize))
+        val usersToRevoke = userService.getUsersToRevoke(numberOfInactivityDays, deactivateAfterWarningDays).map(_.take(maxSize))
         val keyClockClient = KeyCloakAuthTokenService.getKeyClockClient(serverConfig.keyClockConfig.url, token)
         val keycloakService = KeycloakService(keyClockClient)
         usersToRevoke.map { utrOption =>
@@ -143,7 +142,8 @@ class UserTracking(
     }
   }
 
-  def removeUser(keycloakService: KeycloakService, uId: KeyCloakUser, utr: User)(implicit ec: ExecutionContext) = {
+  def removeUser(keycloakService: KeycloakService, uId: KeyCloakUser, utr: User)
+                (implicit ec: ExecutionContext): Future[Int] = {
     keycloakService.removeUser(uId.id)
     userService.upsertUser(utr.copy(revoked_access = Some(new Timestamp(new Date().getTime))))
   }

@@ -79,7 +79,8 @@ trait IUserAccessRequestDao {
 
 }
 
-class UserAccessRequestDao(db: Database, userAccessRequests: TableQuery[UserAccessRequestsTable]) extends IUserAccessRequestDao {
+case class UserAccessRequestDao(db: Database) extends IUserAccessRequestDao {
+  val userAccessRequests: TableQuery[UserAccessRequestsTable] = TableQuery[UserAccessRequestsTable]
 
   def insertOrUpdate(userAccessRequest: UserAccessRequest): Future[Int] = {
     db.run(userAccessRequests insertOrUpdate userAccessRequest)

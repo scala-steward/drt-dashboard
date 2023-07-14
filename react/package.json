@@ -10,9 +10,9 @@
     "@mui/lab": "^5.0.0-alpha.47",
     "@mui/material": "^5.9.2",
     "@mui/styled-engine": "^5.0.0",
-    "@mui/x-date-pickers": "^5.0.0-beta.3",
     "@mui/x-data-grid": "5.17.3",
     "@mui/x-data-grid-generator": "5.17.3",
+    "@mui/x-date-pickers": "^5.0.0-beta.3",
     "@reduxjs/toolkit": "^1.6.1",
     "@testing-library/react": "^11.1.2",
     "@testing-library/user-event": "^7.1.2",
@@ -39,7 +39,7 @@
     "validator": "^13.7.0"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "react-scripts --openssl-legacy-provider start",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jest-environment-jsdom-sixteen",
     "test-ci": "react-scripts test --watchAll=false --env=jest-environment-jsdom-sixteen",

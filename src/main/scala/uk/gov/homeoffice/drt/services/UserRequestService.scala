@@ -7,7 +7,7 @@ import uk.gov.homeoffice.drt.db.{ IUserAccessRequestDao, UserAccessRequest }
 import java.sql.Timestamp
 import scala.concurrent.Future
 
-class UserRequestService(userAccessRequestDao: IUserAccessRequestDao) {
+case class UserRequestService(userAccessRequestDao: IUserAccessRequestDao) {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
   def saveUserRequest(email: String, accessRequest: AccessRequest, timestamp: Timestamp): Future[Int] = {

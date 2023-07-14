@@ -31,7 +31,7 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest with JsonSupport 
 
   val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), "somedomain.com", "test@test.com")
   val neboRoutes: NeboUploadRoutes = NeboUploadRoutes(List(), new MockHttpClient(HttpResponse()))
-  val userService = new UserService(new MockUserDao)
+  val userService = UserService(new MockUserDao)
   val routes: Route = ApiRoutes(
     "api",
     clientConfig,

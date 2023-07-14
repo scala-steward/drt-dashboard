@@ -4,21 +4,21 @@ import org.specs2.mutable.Specification
 import org.specs2.specification.{AfterEach, BeforeEach}
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.TableQuery
+
 import java.sql.Timestamp
 import java.time.Instant
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext}
 
-class UserDaoSpec extends Specification with AfterEach with BeforeEach {
+class UserDaoSpec extends Specification with BeforeEach {
   sequential
 
   private val numberOfInactivityDays = 60
   private val deactivateAfterWarningDays = 7
   val secondsInADay: Int = 24 * 60 * 60
-  var appDatabaseTest: AppTestDatabase = null
-  var userTable: TableQuery[UserTable] = null
-  val tableName = "user_test"
+
+  val userDao = UserDao(TestDatabase.db)
 
   val userActive1: User = User(
     id = "user1",
@@ -66,8 +66,6 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
 
   "select all" should "give all users" >> {
     val userList = List(userActive1, userActive2, userInactiveMoreThan60days, userInactiveMoreThan67days, userWithNoEmail)
-    val appDatabaseTest = new AppTestDatabase()
-    val userDao = new UserDao(appDatabaseTest.db, userTable)
     userDao.insertOrUpdate(userActive1)
     userDao.insertOrUpdate(userActive2)
     userDao.insertOrUpdate(userInactiveMoreThan60days)
@@ -80,8 +78,6 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
 
   "select inactive user" should "give users who are inactive more than 60 days" >> {
     val expectedUsers = List(userInactiveMoreThan60days)
-    val appDatabaseTest = new AppTestDatabase()
-    val userDao = new UserDao(appDatabaseTest.db, userTable)
     userDao.insertOrUpdate(userActive1)
     userDao.insertOrUpdate(userActive2)
     userDao.insertOrUpdate(userInactiveMoreThan60days)
@@ -94,7 +90,6 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
 
   "select revoke access users" should "give users who are notified more that 7 days back about 60 days inactivity" >> {
     val expectedUsers = List(userInactiveMoreThan67days)
-    val userDao = new UserDao(appDatabaseTest.db, userTable)
     userDao.insertOrUpdate(userActive1)
     userDao.insertOrUpdate(userActive2)
     userDao.insertOrUpdate(userInactiveMoreThan60days)
@@ -107,7 +102,6 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
   }
 
   "selected user" should "notified depending upon activity of user updated in user tracking" >> {
-    val userDao = new UserDao(appDatabaseTest.db, userTable)
     //User activity
     userDao.insertOrUpdate(userActive1.copy(latest_login = new Timestamp(Instant.now().minusSeconds(59 * secondsInADay).toEpochMilli)))
     val noInactiveUser = Await.result(userDao.selectInactiveUsers(numberOfInactivityDays), 1.seconds)
@@ -127,15 +121,11 @@ class UserDaoSpec extends Specification with AfterEach with BeforeEach {
     noInactiveUser.isEmpty && noUserToRevoke.isEmpty
   }
 
-  override protected def after: Any = {
-    appDatabaseTest.db.close()
-  }
+  lazy val db: Database = Database.forConfig("h2-db")
 
   override protected def before: Any = {
-    appDatabaseTest = new AppTestDatabase()
-    appDatabaseTest.createDbStructure(tableName)
-    userTable = appDatabaseTest.userTestTable(tableName)
-    deleteUserTableData(appDatabaseTest.db, userTable)
+    val schema = TestDatabase.userTable.schema
+    Await.ready(db.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
   }
 
 }

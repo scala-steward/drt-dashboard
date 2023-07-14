@@ -6,6 +6,7 @@ import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.schedule.UserTracking
 import uk.gov.service.notify.NotificationClient
+
 import scala.concurrent.duration.DurationInt
 
 object DrtDashboardApp extends App {
@@ -22,18 +23,25 @@ object DrtDashboardApp extends App {
     accessRequestEmails = config.getString("dashboard.notifications.access-request-emails").split(",").toList,
     notifyServiceApiKey = config.getString("dashboard.notifications.gov-notify-api-key"),
     neboPortCodes = config.getString("nebo.port-codes").split(","),
-    keyclockUrl = config.getString("key-cloak.url"),
-    keyclockTokenUrl = config.getString("key-cloak.token_url"),
-    keyclockClientId = config.getString("key-cloak.client_id"),
-    keyclockClientSecret = config.getString("key-cloak.client_secret"),
-    keyclockUsername = config.getString("key-cloak.username"),
-    keyclockPassword = config.getString("key-cloak.password"),
+    keycloakUrl = config.getString("key-cloak.url"),
+    keycloakTokenUrl = config.getString("key-cloak.token_url"),
+    keycloakClientId = config.getString("key-cloak.client_id"),
+    keycloakClientSecret = config.getString("key-cloak.client_secret"),
+    keycloakUsername = config.getString("key-cloak.username"),
+    keycloakPassword = config.getString("key-cloak.password"),
     scheduleFrequency = config.getInt("user-tracking.schedule-frequency-minutes"),
     inactivityDays = config.getInt("user-tracking.inactivity-days"),
     userTrackingFeatureFlag = config.getBoolean("user-tracking.feature-flag"),
-    deactivateAfterWarningDays= config.getInt("user-tracking.deactivate-after-warning-days"))
+    deactivateAfterWarningDays = config.getInt("user-tracking.deactivate-after-warning-days"),
+    s3AccessKey = config.getString("s3.credentials.access_key_id"),
+    s3SecretAccessKey = config.getString("s3.credentials.secret_key"),
+    exportsBucketName = config.getString("s3.bucket-name"),
+    exportsFolderPrefix = config.getString("exports.s3-folder-prefix"),
+  )
+
 
   val emailNotifications = EmailNotifications(serverConfig.accessRequestEmails, new NotificationClient(serverConfig.notifyServiceApiKey))
+
   val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig, emailNotifications), "DrtDashboard")
   if (serverConfig.userTrackingFeatureFlag) {
     ActorSystem(UserTracking(serverConfig, 1.minutes, 100, emailNotifications), "UserTrackingTimer")

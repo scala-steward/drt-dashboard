@@ -13,6 +13,7 @@ import uk.gov.homeoffice.drt.ports.PortRegion
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
+
 class ExportCsvServiceSpec extends Specification {
   val testKit: ActorTestKit = ActorTestKit()
   implicit val sys: ActorSystem[Nothing] = testKit.system
@@ -31,7 +32,7 @@ class ExportCsvServiceSpec extends Specification {
     val uri = exportCsvService.getUri("LHR", "2022-07-22", "2022-07-24", "T1")
     uri mustEqual expectedUri
   }
-  
+
   object MockHttpClient extends HttpClient {
     def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[HttpResponse] = {
       if (httpRequest.getUri().path().contains("PIK")) {
