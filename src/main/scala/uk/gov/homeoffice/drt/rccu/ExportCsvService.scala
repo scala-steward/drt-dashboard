@@ -40,7 +40,7 @@ case class ExportCsvService(httpClient: HttpClient) {
                 .split("\n")
                 .filterNot(_.contains("ICAO"))
                 .map(line => s"$regionName,$port,$terminal," + line)
-                .mkString("\n")
+                .mkString("\n") + "\n"
               )
             }
             .recover { case e: Throwable =>
