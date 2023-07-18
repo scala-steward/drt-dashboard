@@ -6,19 +6,16 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.Directives.{concat, getFromResource, getFromResourceDirectory}
 import akka.http.scaladsl.server.Route
-import akka.stream.Materializer
-import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
-import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.s3.S3AsyncClient
-import uk.gov.homeoffice.drt.db.{AppDatabase, ProdDatabase, UserAccessRequestDao, UserDao}
+import uk.gov.homeoffice.drt.db._
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes._
-import uk.gov.homeoffice.drt.services.s3.{ProdS3MultipartUploader, S3Downloader, S3Uploader}
+import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
 import uk.gov.homeoffice.drt.time.SDate
+import uk.gov.homeoffice.drt.uploadTraining.FeatureGuideService
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
 case class KeyClockConfig(url: String,
@@ -48,8 +45,9 @@ case class ServerConfig(host: String,
                         userTrackingFeatureFlag: Boolean,
                         s3AccessKey: String,
                         s3SecretAccessKey: String,
-                        exportsBucketName: String,
+                        drtS3BucketName: String,
                         exportsFolderPrefix: String,
+                        featureFolderPrefix: String
                        ) {
   val portCodes: Iterable[PortCode] = portRegions.flatMap(_.ports)
   val portIataCodes: Iterable[String] = portCodes.map(_.iata)
@@ -75,9 +73,11 @@ object Server {
       val urls = Urls(serverConfig.rootDomain, serverConfig.useHttps)
       val userRequestService = UserRequestService(UserAccessRequestDao(ProdDatabase.db))
       val userService = UserService(UserDao(ProdDatabase.db))
+      val featureGuideService = FeatureGuideService(FeatureGuideDao(ProdDatabase.db), FeatureGuideViewDao(ProdDatabase.db))
       val neboRoutes = NeboUploadRoutes(serverConfig.neboPortCodes.toList, ProdHttpClient).route
 
-      val (uploader, downloader) = s3UploaderAndDownloader(serverConfig)
+      val (exportUploader, exportDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.exportsFolderPrefix)
+      val (featureUploader, featureDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.featureFolderPrefix)
 
       val routes: Route = concat(
         IndexRoute(
@@ -88,8 +88,10 @@ object Server {
         CiriumRoutes("cirium", serverConfig.ciriumDataUri),
         DrtRoutes("drt", serverConfig.portIataCodes),
         ApiRoutes("api", serverConfig.clientConfig, neboRoutes, userService),
-        ExportRoutes(ProdHttpClient, uploader.upload, downloader.download, () => SDate.now()),
-        UserRoutes("user", serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl))
+        ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
+        UserRoutes("user", serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
+        FeatureGuideRoutes("guide", featureGuideService, featureUploader, featureDownloader, serverConfig.featureFolderPrefix)
+      )
 
       val serverBinding: Future[ServerBinding] = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
 
@@ -132,18 +134,4 @@ object Server {
       starting(wasStopped = false)
     }
 
-  private def s3UploaderAndDownloader(serverConfig: ServerConfig)
-                                     (implicit ec: ExecutionContext, mat: Materializer): (S3Uploader, S3Downloader) = {
-    val credentialsProvider = StaticCredentialsProvider.create(AwsBasicCredentials.create(serverConfig.s3AccessKey, serverConfig.s3SecretAccessKey))
-
-    val s3Client: S3AsyncClient = S3AsyncClient.builder()
-      .region(Region.EU_WEST_2)
-      .credentialsProvider(credentialsProvider)
-      .build()
-
-    val multipartUploader = ProdS3MultipartUploader(s3Client)
-    val uploader = S3Uploader(multipartUploader, serverConfig.exportsBucketName, Option(serverConfig.exportsFolderPrefix))
-    val downloader = S3Downloader(s3Client, serverConfig.exportsBucketName)
-    (uploader, downloader)
-  }
 }

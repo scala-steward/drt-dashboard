@@ -18,6 +18,7 @@ import {styled} from "@mui/material/styles";
 import {RegionPage} from "./components/RegionPage";
 import axios from "axios";
 import ApiClient from "./services/ApiClient";
+import UploadForm from "./components/featureGuide/FeatureGuideUploadFile";
 
 
 const StyledDiv = styled('div')(() => ({
@@ -116,6 +117,9 @@ const App = (props: PropsFromReact) => {
                     </Route>
                     <Route exact path="/red-list-editor">
                         <RedListEditor/>
+                    </Route>
+                    <Route exact path="/feature-guide-upload">
+                        <UploadForm/>
                     </Route>
                 </Switch>
             </StyledContainer>

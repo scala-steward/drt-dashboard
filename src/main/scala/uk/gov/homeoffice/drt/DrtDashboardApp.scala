@@ -35,8 +35,9 @@ object DrtDashboardApp extends App {
     deactivateAfterWarningDays = config.getInt("user-tracking.deactivate-after-warning-days"),
     s3AccessKey = config.getString("s3.credentials.access_key_id"),
     s3SecretAccessKey = config.getString("s3.credentials.secret_key"),
-    exportsBucketName = config.getString("s3.bucket-name"),
+    drtS3BucketName = config.getString("s3.bucket-name"),
     exportsFolderPrefix = config.getString("exports.s3-folder-prefix"),
+    featureFolderPrefix = config.getString("feature-guides.s3-folder-prefix")
   )
 
 
