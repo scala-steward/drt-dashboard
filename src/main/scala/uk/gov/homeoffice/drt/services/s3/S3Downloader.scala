@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.drt.services.s3
 
+import akka.stream.IOResult
 import akka.stream.scaladsl.{Source, StreamConverters}
 import akka.util.ByteString
 import software.amazon.awssdk.core.async.AsyncResponseTransformer
@@ -11,7 +12,7 @@ import scala.jdk.FutureConverters.CompletionStageOps
 
 case class S3Downloader(s3Client: S3AsyncClient, bucketName: String)
                        (implicit ec: ExecutionContext) {
-  val download: String => Future[Source[ByteString, _]] =
+  val download: String => Future[Source[ByteString, Future[IOResult]]] =
     objectKey => {
       val request = GetObjectRequest.builder()
         .bucket(bucketName)

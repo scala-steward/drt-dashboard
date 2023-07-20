@@ -1,6 +1,6 @@
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v552"
+lazy val drtLibVersion = "v563"
 lazy val drtCiriumVersion = "203"
 lazy val akkaHttpVersion = "10.4.0"
 lazy val akkaVersion = "2.7.0"
@@ -16,7 +16,7 @@ lazy val jacksonDatabindVersion = "2.15.0"
 lazy val notificationsJavaClientVersion = "4.1.0-RELEASE"
 lazy val scalaCsvVersion = "1.3.10"
 lazy val slickVersion = "3.4.1"
-lazy val awsJava2SdkVersion = "2.13.73"
+lazy val awsJava2SdkVersion = "2.16.49"
 lazy val postgresqlVersion = "42.6.0"
 
 ThisBuild / scapegoatVersion := "2.1.2"
@@ -50,6 +50,7 @@ lazy val root = (project in file(".")).
       "uk.gov.service.notify" % "notifications-java-client" % notificationsJavaClientVersion,
       "com.github.tototoshi" %% "scala-csv" % scalaCsvVersion,
       "org.scalactic" %% "scalactic" % scalaTestVersion,
+      "software.amazon.awssdk" % "s3" % awsJava2SdkVersion,
 
       "com.typesafe.slick" %% "slick" % slickVersion,
       "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
@@ -60,7 +61,6 @@ lazy val root = (project in file(".")).
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
       "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
-      "software.amazon.awssdk" % "s3" % awsJava2SdkVersion,
 
       "org.specs2" %% "specs2-core" % specs2Version % Test
     ),

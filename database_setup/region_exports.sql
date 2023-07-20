@@ -7,4 +7,3 @@ CREATE TABLE public.region_export(
   created_at timestamp NOT NULL,
   PRIMARY KEY (email, region, created_at)
 );
-
