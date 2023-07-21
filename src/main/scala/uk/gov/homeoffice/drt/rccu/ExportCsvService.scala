@@ -34,13 +34,13 @@ case class ExportCsvService(httpClient: HttpClient) {
           log.info(s"Got 200 response from $uri")
           r.entity.dataBytes
             .runReduce(_ ++ _)
-            .map { chunk =>
-              ByteString(chunk
+            .map { content =>
+              ByteString(content
                 .utf8String
                 .split("\n")
                 .filterNot(_.contains("ICAO"))
                 .map(line => s"$regionName,$port,$terminal," + line)
-                .mkString("\n")
+                .mkString("\n") + "\n"
               )
             }
             .recover { case e: Throwable =>

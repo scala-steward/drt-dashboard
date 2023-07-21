@@ -135,6 +135,6 @@ steps:
         - push
     depends_on:
       - publish
-#      - Test back end
+      - Test back end
 
 ...

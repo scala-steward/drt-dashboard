@@ -78,6 +78,7 @@ object Server {
 
       val (exportUploader, exportDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.exportsFolderPrefix)
       val (featureUploader, featureDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.featureFolderPrefix)
+      implicit val db: ProdDatabase.type = ProdDatabase
 
       val routes: Route = concat(
         IndexRoute(

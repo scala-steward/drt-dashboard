@@ -15,8 +15,7 @@ import akka.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
-import uk.gov.homeoffice.drt.db.ProdDatabase.db
-import uk.gov.homeoffice.drt.db.RegionExportQueries
+import uk.gov.homeoffice.drt.db.{AppDatabase, RegionExportQueries}
 import uk.gov.homeoffice.drt.json.RegionExportJsonFormats._
 import uk.gov.homeoffice.drt.models.RegionExport
 import uk.gov.homeoffice.drt.ports.PortRegion
@@ -44,7 +43,7 @@ object ExportRoutes {
             download: String => Future[Source[ByteString, _]],
             now: () => SDateLike,
            )
-           (implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
+           (implicit ec: ExecutionContextExecutor, mat: Materializer, database: AppDatabase): Route = {
     lazy val exportCsvService = ExportCsvService(httpClient)
     headerValueByName("X-Auth-Email") { email =>
       pathPrefix("export")(
@@ -57,7 +56,7 @@ object ExportRoutes {
           get {
             concat(
               path(Segment) { region =>
-                complete(db.run(RegionExportQueries.getAll(email, region)))
+                complete(database.db.run(RegionExportQueries.getAll(email, region)))
               },
               path(Segment / Segment) { case (region, createdAt) =>
                 onComplete(getExportRoute(email, region, createdAt, exportCsvService, download)) {
@@ -74,11 +73,16 @@ object ExportRoutes {
     }
   }
 
-  private def getExportRoute(email: String, region: String, createdAt: String, exportCsvService: ExportCsvService, downloader: String => Future[Source[ByteString, _]])
-                            (implicit ec: ExecutionContextExecutor): Future[Route] = {
+  private def getExportRoute(email: String,
+                             region: String,
+                             createdAt: String,
+                             exportCsvService: ExportCsvService,
+                             downloader: String => Future[Source[ByteString, _]],
+                            )
+                            (implicit ec: ExecutionContextExecutor, database: AppDatabase): Future[Route] = {
     log.info(s"Getting region export for $email / $region / $createdAt")
 
-    db.run(RegionExportQueries.get(email, region, createdAt.toLong))
+    database.db.run(RegionExportQueries.get(email, region, createdAt.toLong))
       .flatMap {
         case Some(regionExport) =>
           val startDateString = regionExport.startDate.toString()
@@ -101,14 +105,14 @@ object ExportRoutes {
                                  exportRequest: RegionExportRequest,
                                  now: () => SDateLike,
                                 )
-                                (implicit ec: ExecutionContextExecutor, mat: Materializer): StandardRoute = {
+                                (implicit ec: ExecutionContextExecutor, mat: Materializer, database: AppDatabase): StandardRoute = {
     val startDateString = exportRequest.startDate.toString()
     val endDateString = exportRequest.endDate.toString()
     val creationDate = now()
     val fileName = exportCsvService.makeFileName(startDateString, endDateString, exportRequest.region, creationDate)
     exportCsvService.getPortRegion(exportRequest.region).map { portRegion: PortRegion =>
       val regionExport = RegionExport(email, portRegion.name, exportRequest.startDate, exportRequest.endDate, "preparing", creationDate)
-      db.run(RegionExportQueries.insert(regionExport))
+      database.db.run(RegionExportQueries.insert(regionExport))
         .map(_ => log.info("Region export inserted"))
         .recover { case e => log.error("Failed to insert region export", e) }
 
@@ -131,7 +135,7 @@ object ExportRoutes {
                 throw new Exception("Failed to get port response")
               }
         }
-        .prepend(Source.single(ByteString(ArrivalExportHeadings.regionalExportHeadings)))
+        .prepend(Source.single(ByteString(ArrivalExportHeadings.regionalExportHeadings + "\n")))
 
       upload(fileName, stream).onComplete {
         case Success(_) =>
@@ -146,9 +150,9 @@ object ExportRoutes {
   }
 
   private def updateExportStatus(regionExport: RegionExport, status: String)
-                                (implicit ec: ExecutionContext): Future[Boolean] = {
+                                (implicit ec: ExecutionContext, database: AppDatabase): Future[Boolean] = {
     val updatedRegionExport = regionExport.copy(status = status)
-    db.run(RegionExportQueries.update(updatedRegionExport))
+    database.db.run(RegionExportQueries.update(updatedRegionExport))
       .map { _ =>
         log.info("Region export updated")
         true
