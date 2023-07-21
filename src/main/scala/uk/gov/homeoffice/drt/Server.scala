@@ -78,6 +78,7 @@ object Server {
 
       val (exportUploader, exportDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.exportsFolderPrefix)
       val (featureUploader, featureDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.featureFolderPrefix)
+      implicit val db: ProdDatabase.type = ProdDatabase
 
       val routes: Route = concat(
         IndexRoute(
@@ -88,7 +89,7 @@ object Server {
         CiriumRoutes("cirium", serverConfig.ciriumDataUri),
         DrtRoutes("drt", serverConfig.portIataCodes),
         ApiRoutes("api", serverConfig.clientConfig, neboRoutes, userService),
-        ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now(), ProdDatabase),
+        ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
         UserRoutes("user", serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
         FeatureGuideRoutes("guide", featureGuideService, featureUploader, featureDownloader, serverConfig.featureFolderPrefix)
       )

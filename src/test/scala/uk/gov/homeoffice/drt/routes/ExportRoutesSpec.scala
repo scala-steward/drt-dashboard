@@ -16,7 +16,7 @@ import slick.dbio.DBIO
 import slick.jdbc.JdbcBackend.Database
 import uk.gov.homeoffice.drt.MockHttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
-import uk.gov.homeoffice.drt.db.TestDatabase
+import uk.gov.homeoffice.drt.db.{AppDatabase, TestDatabase}
 import uk.gov.homeoffice.drt.routes.ExportRoutes.RegionExportRequest
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
 
@@ -64,11 +64,12 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
 
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
   import uk.gov.homeoffice.drt.json.RegionExportJsonFormats._
+  implicit val testDb: AppDatabase = TestDatabase
 
   "Request heathrow arrival export" should {
     "collate all terminal arrivals" in {
       val request = RegionExportRequest("Heathrow", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
-      Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider, TestDatabase) ~> check {
+      Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
         uploadProbe.expectMessage((s"Heathrow-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
         responseAs[String] should ===("ok")
       }
@@ -78,7 +79,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
   "Request north arrival export" should {
     "collate all terminal arrivals" in {
       val request = RegionExportRequest("North", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
-      Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider, TestDatabase) ~> check {
+      Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
         uploadProbe.expectMessage((s"North-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", northRegionPortTerminalData))
         responseAs[String] should ===("ok")
       }

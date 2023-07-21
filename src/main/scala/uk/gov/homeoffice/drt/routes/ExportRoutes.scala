@@ -42,16 +42,15 @@ object ExportRoutes {
             upload: (String, Source[ByteString, Any]) => Future[Done],
             download: String => Future[Source[ByteString, _]],
             now: () => SDateLike,
-            database: AppDatabase,
            )
-           (implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
+           (implicit ec: ExecutionContextExecutor, mat: Materializer, database: AppDatabase): Route = {
     lazy val exportCsvService = ExportCsvService(httpClient)
     headerValueByName("X-Auth-Email") { email =>
       pathPrefix("export")(
         concat(
           post(
             entity(as[RegionExportRequest]) { exportRequest =>
-              handleRegionExport(upload, exportCsvService, email, exportRequest, now, database)
+              handleRegionExport(upload, exportCsvService, email, exportRequest, now)
             }
           ),
           get {
@@ -60,7 +59,7 @@ object ExportRoutes {
                 complete(database.db.run(RegionExportQueries.getAll(email, region)))
               },
               path(Segment / Segment) { case (region, createdAt) =>
-                onComplete(getExportRoute(email, region, createdAt, exportCsvService, download, database)) {
+                onComplete(getExportRoute(email, region, createdAt, exportCsvService, download)) {
                   case Success(route) => route
                   case Failure(e) =>
                     log.error("Failed to get region export", e)
@@ -79,9 +78,8 @@ object ExportRoutes {
                              createdAt: String,
                              exportCsvService: ExportCsvService,
                              downloader: String => Future[Source[ByteString, _]],
-                             database: AppDatabase,
                             )
-                            (implicit ec: ExecutionContextExecutor): Future[Route] = {
+                            (implicit ec: ExecutionContextExecutor, database: AppDatabase): Future[Route] = {
     log.info(s"Getting region export for $email / $region / $createdAt")
 
     database.db.run(RegionExportQueries.get(email, region, createdAt.toLong))
@@ -106,9 +104,8 @@ object ExportRoutes {
                                  email: String,
                                  exportRequest: RegionExportRequest,
                                  now: () => SDateLike,
-                                 database: AppDatabase,
                                 )
-                                (implicit ec: ExecutionContextExecutor, mat: Materializer): StandardRoute = {
+                                (implicit ec: ExecutionContextExecutor, mat: Materializer, database: AppDatabase): StandardRoute = {
     val startDateString = exportRequest.startDate.toString()
     val endDateString = exportRequest.endDate.toString()
     val creationDate = now()
@@ -133,7 +130,7 @@ object ExportRoutes {
               .recover { e =>
                 log.error(s"Failed to get port response for $port $terminal", e)
 
-                updateExportStatus(regionExport, "failed", database)
+                updateExportStatus(regionExport, "failed")
 
                 throw new Exception("Failed to get port response")
               }
@@ -142,18 +139,18 @@ object ExportRoutes {
 
       upload(fileName, stream).onComplete {
         case Success(_) =>
-          updateExportStatus(regionExport, "complete", database)
+          updateExportStatus(regionExport, "complete")
           log.info("Export complete")
         case Failure(exception) =>
-          updateExportStatus(regionExport, "failed", database)
+          updateExportStatus(regionExport, "failed")
           log.error("Failed to create export", exception)
       }
       complete("ok")
     }.getOrElse(reject(ValidationRejection("Region not found.")))
   }
 
-  private def updateExportStatus(regionExport: RegionExport, status: String, database: AppDatabase)
-                                (implicit ec: ExecutionContext): Future[Boolean] = {
+  private def updateExportStatus(regionExport: RegionExport, status: String)
+                                (implicit ec: ExecutionContext, database: AppDatabase): Future[Boolean] = {
     val updatedRegionExport = regionExport.copy(status = status)
     database.db.run(RegionExportQueries.update(updatedRegionExport))
       .map { _ =>
