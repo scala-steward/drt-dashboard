@@ -7,6 +7,8 @@ import slick.lifted.TableQuery
 trait AppDatabase {
   val profile: slick.jdbc.JdbcProfile
 
+  val db: profile.backend.Database
+
   lazy val userTable: TableQuery[UserTable] = TableQuery[UserTable]
 
   lazy val userAccessRequestsTable: TableQuery[UserAccessRequestsTable] = TableQuery[UserAccessRequestsTable]
@@ -16,5 +18,5 @@ trait AppDatabase {
 
 object ProdDatabase extends AppDatabase {
   override val profile: JdbcProfile = slick.jdbc.PostgresProfile
-  val db: profile.backend.Database = profile.api.Database.forConfig("postgresDB")
+  override val db: profile.backend.Database = profile.api.Database.forConfig("postgresDB")
 }

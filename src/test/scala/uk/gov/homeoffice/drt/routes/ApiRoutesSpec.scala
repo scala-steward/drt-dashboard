@@ -2,7 +2,6 @@ package uk.gov.homeoffice.drt.routes
 
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes.OK
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Route
@@ -11,10 +10,10 @@ import com.typesafe.config.{Config, ConfigFactory}
 import org.specs2.mutable.Specification
 import spray.json._
 import uk.gov.homeoffice.drt.auth.Roles.{BorderForceStaff, LHR}
-import uk.gov.homeoffice.drt.db.{MockUserDao, User}
+import uk.gov.homeoffice.drt.db.MockUserDao
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.services.UserService
-import uk.gov.homeoffice.drt.{ClientConfig, ClientConfigJsonFormats, JsonSupport}
+import uk.gov.homeoffice.drt.{ClientConfig, ClientConfigJsonFormats, JsonSupport, MockHttpClient}
 
 import java.sql.Timestamp
 import java.util.Date
@@ -30,8 +29,8 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest with JsonSupport 
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
 
   val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), "somedomain.com", "test@test.com")
-  val neboRoutes: NeboUploadRoutes = NeboUploadRoutes(List(), new MockHttpClient(HttpResponse()))
-  val userService = UserService(new MockUserDao)
+  val neboRoutes: NeboUploadRoutes = NeboUploadRoutes(List(), MockHttpClient(() => ""))
+  val userService: UserService = UserService(new MockUserDao)
   val routes: Route = ApiRoutes(
     "api",
     clientConfig,

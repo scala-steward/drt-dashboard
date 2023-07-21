@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.db
 
 import org.specs2.mutable.Specification
-import org.specs2.specification.{AfterEach, BeforeEach}
+import org.specs2.specification.BeforeEach
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.TableQuery
 

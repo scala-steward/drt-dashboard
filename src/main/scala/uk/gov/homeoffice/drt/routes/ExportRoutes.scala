@@ -15,8 +15,7 @@ import akka.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
-import uk.gov.homeoffice.drt.db.ProdDatabase.db
-import uk.gov.homeoffice.drt.db.RegionExportQueries
+import uk.gov.homeoffice.drt.db.{AppDatabase, RegionExportQueries}
 import uk.gov.homeoffice.drt.json.RegionExportJsonFormats._
 import uk.gov.homeoffice.drt.models.RegionExport
 import uk.gov.homeoffice.drt.ports.PortRegion
@@ -43,6 +42,7 @@ object ExportRoutes {
             upload: (String, Source[ByteString, Any]) => Future[Done],
             download: String => Future[Source[ByteString, _]],
             now: () => SDateLike,
+            database: AppDatabase,
            )
            (implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
     lazy val exportCsvService = ExportCsvService(httpClient)
@@ -51,16 +51,16 @@ object ExportRoutes {
         concat(
           post(
             entity(as[RegionExportRequest]) { exportRequest =>
-              handleRegionExport(upload, exportCsvService, email, exportRequest, now)
+              handleRegionExport(upload, exportCsvService, email, exportRequest, now, database)
             }
           ),
           get {
             concat(
               path(Segment) { region =>
-                complete(db.run(RegionExportQueries.getAll(email, region)))
+                complete(database.db.run(RegionExportQueries.getAll(email, region)))
               },
               path(Segment / Segment) { case (region, createdAt) =>
-                onComplete(getExportRoute(email, region, createdAt, exportCsvService, download)) {
+                onComplete(getExportRoute(email, region, createdAt, exportCsvService, download, database)) {
                   case Success(route) => route
                   case Failure(e) =>
                     log.error("Failed to get region export", e)
@@ -74,11 +74,17 @@ object ExportRoutes {
     }
   }
 
-  private def getExportRoute(email: String, region: String, createdAt: String, exportCsvService: ExportCsvService, downloader: String => Future[Source[ByteString, _]])
+  private def getExportRoute(email: String,
+                             region: String,
+                             createdAt: String,
+                             exportCsvService: ExportCsvService,
+                             downloader: String => Future[Source[ByteString, _]],
+                             database: AppDatabase,
+                            )
                             (implicit ec: ExecutionContextExecutor): Future[Route] = {
     log.info(s"Getting region export for $email / $region / $createdAt")
 
-    db.run(RegionExportQueries.get(email, region, createdAt.toLong))
+    database.db.run(RegionExportQueries.get(email, region, createdAt.toLong))
       .flatMap {
         case Some(regionExport) =>
           val startDateString = regionExport.startDate.toString()
@@ -100,6 +106,7 @@ object ExportRoutes {
                                  email: String,
                                  exportRequest: RegionExportRequest,
                                  now: () => SDateLike,
+                                 database: AppDatabase,
                                 )
                                 (implicit ec: ExecutionContextExecutor, mat: Materializer): StandardRoute = {
     val startDateString = exportRequest.startDate.toString()
@@ -108,7 +115,7 @@ object ExportRoutes {
     val fileName = exportCsvService.makeFileName(startDateString, endDateString, exportRequest.region, creationDate)
     exportCsvService.getPortRegion(exportRequest.region).map { portRegion: PortRegion =>
       val regionExport = RegionExport(email, portRegion.name, exportRequest.startDate, exportRequest.endDate, "preparing", creationDate)
-      db.run(RegionExportQueries.insert(regionExport))
+      database.db.run(RegionExportQueries.insert(regionExport))
         .map(_ => log.info("Region export inserted"))
         .recover { case e => log.error("Failed to insert region export", e) }
 
@@ -126,29 +133,29 @@ object ExportRoutes {
               .recover { e =>
                 log.error(s"Failed to get port response for $port $terminal", e)
 
-                updateExportStatus(regionExport, "failed")
+                updateExportStatus(regionExport, "failed", database)
 
                 throw new Exception("Failed to get port response")
               }
         }
-        .prepend(Source.single(ByteString(ArrivalExportHeadings.regionalExportHeadings)))
+        .prepend(Source.single(ByteString(ArrivalExportHeadings.regionalExportHeadings + "\n")))
 
       upload(fileName, stream).onComplete {
         case Success(_) =>
-          updateExportStatus(regionExport, "complete")
+          updateExportStatus(regionExport, "complete", database)
           log.info("Export complete")
         case Failure(exception) =>
-          updateExportStatus(regionExport, "failed")
+          updateExportStatus(regionExport, "failed", database)
           log.error("Failed to create export", exception)
       }
       complete("ok")
     }.getOrElse(reject(ValidationRejection("Region not found.")))
   }
 
-  private def updateExportStatus(regionExport: RegionExport, status: String)
+  private def updateExportStatus(regionExport: RegionExport, status: String, database: AppDatabase)
                                 (implicit ec: ExecutionContext): Future[Boolean] = {
     val updatedRegionExport = regionExport.copy(status = status)
-    db.run(RegionExportQueries.update(updatedRegionExport))
+    database.db.run(RegionExportQueries.update(updatedRegionExport))
       .map { _ =>
         log.info("Region export updated")
         true

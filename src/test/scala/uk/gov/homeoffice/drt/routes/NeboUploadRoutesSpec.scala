@@ -8,12 +8,13 @@ import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.http.scaladsl.testkit.Specs2RouteTest
-import com.github.tototoshi.csv.{ CSVFormat, QUOTE_MINIMAL, Quoting }
+import com.github.tototoshi.csv.{CSVFormat, QUOTE_MINIMAL, Quoting}
 import org.specs2.mutable.Specification
+import uk.gov.homeoffice.drt.MockHttpClient
 import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
 
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{ Await, ExecutionContextExecutor, Future }
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
 
@@ -22,9 +23,7 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
   implicit val sys: ActorSystem[Nothing] = testKit.system
   implicit val ec: ExecutionContextExecutor = sys.executionContext
 
-  val httpResponse = HttpResponse(StatusCodes.Accepted, entity = HttpEntity("File uploaded"))
-
-  val mockHttpClient = new MockHttpClient(httpResponse)
+  val mockHttpClient: MockHttpClient = MockHttpClient(() => "File uploaded")
 
   private val neboRoutes: NeboUploadRoutes = NeboUploadRoutes(List("lhr"), mockHttpClient)
 
@@ -94,8 +93,8 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
   "Given a correct permission to users, the user should able to upload file successfully " >> {
     Post("/nebo-upload", multipartForm) ~>
       RawHeader("X-Auth-Roles", NeboUpload.name) ~> RawHeader("X-Auth-Email", "my@email.com") ~> neboRoutes.route ~> check {
-        responseAs[String] shouldEqual """[{"flightCount":1,"portCode":"lhr","statusCode":"202 Accepted"}]"""
-      }
+      responseAs[String] shouldEqual """[{"flightCount":1,"portCode":"lhr","statusCode":"200 OK"}]"""
+    }
   }
 
   "Given a incorrect permission to users, the user is forbidden to upload" >> {
@@ -149,7 +148,7 @@ class NeboUploadRoutesSpec extends Specification with Specs2RouteTest {
         "PAK/IOI/2308L/9",
         "PAK/IOI/2308L/10",
         "PAK/IOI/2308L/11")))
-    val flightDataResult: Seq[FlightData] = Await.result(flightDataF, 1 seconds)
+    val flightDataResult: Seq[FlightData] = Await.result(flightDataF, 1.seconds)
 
     flightDataResult must containAllOf(exceptedResult)
   }

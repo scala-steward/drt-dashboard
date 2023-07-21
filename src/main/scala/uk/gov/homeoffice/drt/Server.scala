@@ -88,7 +88,7 @@ object Server {
         CiriumRoutes("cirium", serverConfig.ciriumDataUri),
         DrtRoutes("drt", serverConfig.portIataCodes),
         ApiRoutes("api", serverConfig.clientConfig, neboRoutes, userService),
-        ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
+        ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now(), ProdDatabase),
         UserRoutes("user", serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
         FeatureGuideRoutes("guide", featureGuideService, featureUploader, featureDownloader, serverConfig.featureFolderPrefix)
       )
