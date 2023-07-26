@@ -106,8 +106,6 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
        |North,BFS,T1,flight2,information,row
        |North,BHD,T1,flight1,information,row
        |North,BHD,T1,flight2,information,row
-       |North,DSA,T1,flight1,information,row
-       |North,DSA,T1,flight2,information,row
        |North,EDI,A1,flight1,information,row
        |North,EDI,A1,flight2,information,row
        |North,EDI,A2,flight1,information,row
