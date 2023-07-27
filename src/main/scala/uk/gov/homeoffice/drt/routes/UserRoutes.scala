@@ -104,14 +104,17 @@ object UserRoutes extends JsonSupport
         },
         (post & path("accept-access-request" / Segment)) { id =>
           authByRole(ManageUsers) {
-            headerValueByName("X-Auth-Roles") { rolesStr =>
-              headerValueByName("X-Auth-Email") { email =>
+            headerValueByName("X-Auth-Roles") { _ =>
+              headerValueByName("X-Auth-Email") { _ =>
                 headerValueByName("X-Auth-Token") { xAuthToken =>
                   entity(as[ClientUserRequestedAccessData]) { userRequestedAccessData =>
                     val keycloakService = getKeyCloakService(xAuthToken)
                     if (userRequestedAccessData.portsRequested.nonEmpty || userRequestedAccessData.regionsRequested.nonEmpty) {
                       if (userRequestedAccessData.allPorts) {
                         keycloakService.addUserToGroup(id, "All Port Access")
+                        if (userRequestedAccessData.accountType == "rccu") {
+                          keycloakService.addUserToGroup(id, "All RCC Access")
+                        }
                       } else {
                         Future.sequence(userRequestedAccessData.getListOfPortOrRegion.map { port =>
                           keycloakService.addUserToGroup(id, port)
