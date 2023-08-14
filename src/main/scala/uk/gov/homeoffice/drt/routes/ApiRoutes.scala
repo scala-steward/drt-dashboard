@@ -149,9 +149,14 @@ object ApiRoutes extends JsonSupport
                           .map(alerts => PortAlerts(portCode, alerts))
                           .recover {
                             case e: Throwable =>
-                              log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtInternalUriForPortCode(portCode)}/alerts/0", e)
+                              log.error(s"Failed to unmarshall json alerts for $portCode", e)
                               PortAlerts(portCode, List())
                           }
+                      }
+                      .recover {
+                        case t =>
+                          log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtInternalUriForPortCode(portCode)}/alerts/0", t)
+                          PortAlerts(portCode, List())
                       }
                   }
                   .toList
