@@ -28,7 +28,7 @@ export default function ExportDatePicker(props: IProps) {
 
   const requestExport = () => {
     fromValue && toValue && axios.post(
-      '/export',
+      '/export-region',
       {
         region: props.region,
         startDate: formattedDate(fromValue),

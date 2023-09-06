@@ -14,10 +14,8 @@ import akka.stream.scaladsl.{Flow, Source}
 import akka.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
-import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
 import uk.gov.homeoffice.drt.db.{AppDatabase, ExportQueries}
-import uk.gov.homeoffice.drt.exports.{Arrivals, ExportPort, ExportType}
-import uk.gov.homeoffice.drt.json.ExportJsonFormats.exportRequestJsonFormat
+import uk.gov.homeoffice.drt.exports.{ExportPort, ExportType}
 import uk.gov.homeoffice.drt.models.Export
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal

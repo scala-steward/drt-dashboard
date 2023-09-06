@@ -4,7 +4,7 @@ import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat, enric
 import uk.gov.homeoffice.drt.exports.{ExportPort, ExportType, ExportTypes}
 import uk.gov.homeoffice.drt.json.LocalDateJsonFormats.LocalDateJsonFormat
 import uk.gov.homeoffice.drt.json.SDateLikeJsonFormats.SDateLikeJsonFormat
-import uk.gov.homeoffice.drt.routes.ExportRoutes.ExportRequest
+import uk.gov.homeoffice.drt.routes.LegacyExportRoutes.ExportRequest
 
 object ExportJsonFormats extends DefaultJsonProtocol {
 

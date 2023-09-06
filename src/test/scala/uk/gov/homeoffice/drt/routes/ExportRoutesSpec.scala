@@ -68,8 +68,8 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
   "Request heathrow arrival export" should {
     "collate all requested terminal arrivals" in {
       val exportPorts = Seq(ExportPort("lhr", Seq("t2", "t5")))
-      val request = ExportRoutes.ExportRequest(Arrivals, exportPorts, LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
-      Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
+      val request = LegacyExportRoutes.ExportRequest(Arrivals, exportPorts, LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
+      Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> LegacyExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
         uploadProbe.expectMessage((s"lhr-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
         responseAs[String] should ===("ok")
       }

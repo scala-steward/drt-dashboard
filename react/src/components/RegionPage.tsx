@@ -31,7 +31,7 @@ export const RegionPage = (props: IProps) => {
 
   const fetchDownloads = () => {
     axios
-      .get(`/export/${props.region}`)
+      .get(`/export-region/${props.region}`)
       .then((response) => {
         setDownloads(response.data as Download[])
         setTimeout(() => {
@@ -78,7 +78,7 @@ export const RegionPage = (props: IProps) => {
             <Grid xs={6}><Typography fontWeight="bold">Date range</Typography></Grid>
             <Grid xs={3}></Grid>
             {sortedDownloads.map(download => {
-              const downloadUrl = `/export/${download.region}/${download.createdAt}`
+              const downloadUrl = `/export-region/${download.region}/${download.createdAt}`
               return <>
                 <Grid xs={3}><Typography>{formatDateDDMMYYYYHHmm(new Date(download.createdAt))}</Typography></Grid>
                 <Grid xs={6}>
