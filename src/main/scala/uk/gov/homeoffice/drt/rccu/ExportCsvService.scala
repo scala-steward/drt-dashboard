@@ -3,11 +3,11 @@ package uk.gov.homeoffice.drt.rccu
 import akka.http.scaladsl.model.StatusCodes.OK
 import akka.stream.Materializer
 import akka.util.ByteString
-import org.joda.time.format.DateTimeFormat
-import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.{Logger, LoggerFactory}
-import uk.gov.homeoffice.drt.ports.PortRegion
-import uk.gov.homeoffice.drt.time.SDateLike
+import uk.gov.homeoffice.drt.exports.ExportType
+import uk.gov.homeoffice.drt.ports.Terminals.Terminal
+import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
+import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike}
 import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -16,17 +16,15 @@ case class ExportCsvService(httpClient: HttpClient) {
 
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  private val drtExportCsvRoutePath = "export/arrivals"
-
   def getPortRegion(region: String): Option[PortRegion] = PortRegion.regions.find(_.name == region)
 
-  def getUri(portCode: String, start: String, end: String, terminal: String): String =
-    s"${Dashboard.drtInternalUriForPortCode(portCode)}/$drtExportCsvRoutePath/$start/$end/$terminal"
+  def getUri(exportType: ExportType, start: LocalDate, end: LocalDate, portCode: PortCode, terminal: Terminal): String =
+    s"${Dashboard.drtInternalUriForPortCode(portCode)}/${exportType.routePrefix}/$start/$end/$terminal"
 
-  def getPortResponseForTerminal(start: String, end: String, regionName: String, port: String, terminal: String)
+  def getPortResponseForTerminal(exportType: ExportType, start: LocalDate, end: LocalDate, portCode: PortCode, terminal: Terminal)
                                 (implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[ByteString] = {
-    val uri = getUri(port, start, end, terminal)
-    val httpRequest = httpClient.createPortArrivalImportRequest(uri, port)
+    val uri = getUri(exportType, start, end, portCode, terminal)
+    val httpRequest = httpClient.createPortArrivalImportRequest(uri, portCode)
     httpClient
       .send(httpRequest)
       .flatMap { r =>
@@ -34,15 +32,7 @@ case class ExportCsvService(httpClient: HttpClient) {
           log.info(s"Got 200 response from $uri")
           r.entity.dataBytes
             .runReduce(_ ++ _)
-            .map { content =>
-              ByteString(content
-                .utf8String
-                .split("\n")
-                .filterNot(_.contains("ICAO"))
-                .map(line => s"$regionName,$port,$terminal," + line)
-                .mkString("\n") + "\n"
-              )
-            }
+            .map(content => ByteString(content.utf8String))
             .recover { case e: Throwable =>
               log.error(s"Error while requesting export for $uri", e)
               throw new Exception(s"Error while requesting export for $uri", e)

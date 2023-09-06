@@ -1,22 +1,22 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.actor.{ ActorSystem, ClassicActorSystemProvider }
-import akka.http.scaladsl.model.{ ContentTypes, HttpEntity }
+import akka.actor.{ActorSystem, ClassicActorSystemProvider}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives.pathPrefix
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.MethodDirectives.get
 import akka.http.scaladsl.server.directives.RouteDirectives.complete
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import akka.stream.Materializer
-import org.slf4j.{ Logger, LoggerFactory }
+import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.auth.Roles
-import uk.gov.homeoffice.drt.pages.{ Drt, Layout }
-import uk.gov.homeoffice.drt.ports.PortRegion
+import uk.gov.homeoffice.drt.pages.{Drt, Layout}
+import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.services.drt.FeedJsonSupport._
-import uk.gov.homeoffice.drt.services.drt.{ DashboardPortStatus, FeedSourceStatus }
-import uk.gov.homeoffice.drt.{ Dashboard, DashboardClient }
+import uk.gov.homeoffice.drt.services.drt.{DashboardPortStatus, FeedSourceStatus}
+import uk.gov.homeoffice.drt.{Dashboard, DashboardClient}
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 object DrtRoutes {
   val log: Logger = LoggerFactory.getLogger(getClass)
@@ -40,7 +40,7 @@ object DrtRoutes {
       }
 
   private def eventualPortFeedStatuses(pc: String)(implicit system: ClassicActorSystemProvider, mat: Materializer, ec: ExecutionContext): Future[DashboardPortStatus] = {
-    val portFeedStatusUri = Dashboard.drtInternalUriForPortCode(pc) + "/feed-statuses"
+    val portFeedStatusUri = Dashboard.drtInternalUriForPortCode(PortCode(pc)) + "/feed-statuses"
     DashboardClient.getWithRoles(portFeedStatusUri, Roles.parse(pc.toUpperCase).toList)
       .flatMap(res => Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
         .to[List[FeedSourceStatus]]

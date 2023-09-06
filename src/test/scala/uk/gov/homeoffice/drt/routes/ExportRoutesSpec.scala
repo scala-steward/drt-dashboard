@@ -14,15 +14,16 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import slick.dbio.DBIO
 import slick.jdbc.JdbcBackend.Database
+import slick.jdbc.PostgresProfile.api._
 import uk.gov.homeoffice.drt.MockHttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
 import uk.gov.homeoffice.drt.db.{AppDatabase, TestDatabase}
-import uk.gov.homeoffice.drt.routes.ExportRoutes.RegionExportRequest
+import uk.gov.homeoffice.drt.exports.{Arrivals, ExportPort}
+import uk.gov.homeoffice.drt.json.ExportJsonFormats.exportRequestJsonFormat
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
-import slick.jdbc.PostgresProfile.api._
 
 
 class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest with BeforeAndAfter {
@@ -40,8 +41,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
   }
 
   val csv: String =
-    """IATA,ICAO,Origin,Gate/Stand,Status,Scheduled,Predicted Arrival,Est Arrival,Act Arrival,Est Chox,Act Chox,Minutes off scheduled,Est PCP,Total Pax,PCP Pax,Invalid API,API e-Gates,API EEA,API Non-EEA,API Fast Track,Historical e-Gates,Historical EEA,Historical Non-EEA,Historical Fast Track,Terminal Average e-Gates,Terminal Average EEA,Terminal Average Non-EEA,Terminal Average Fast Track
-      |flight1,information,row
+    """flight1,information,row
       |flight2,information,row
       |""".stripMargin
 
@@ -63,24 +63,14 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
   val nowProvider: () => SDateLike = () => now
 
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-  import uk.gov.homeoffice.drt.json.RegionExportJsonFormats._
   implicit val testDb: AppDatabase = TestDatabase
 
   "Request heathrow arrival export" should {
-    "collate all terminal arrivals" in {
-      val request = RegionExportRequest("Heathrow", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
+    "collate all requested terminal arrivals" in {
+      val exportPorts = Seq(ExportPort("lhr", Seq("t2", "t5")))
+      val request = ExportRoutes.ExportRequest(Arrivals, exportPorts, LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
       Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
-        uploadProbe.expectMessage((s"Heathrow-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
-        responseAs[String] should ===("ok")
-      }
-    }
-  }
-
-  "Request north arrival export" should {
-    "collate all terminal arrivals" in {
-      val request = RegionExportRequest("North", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
-      Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
-        uploadProbe.expectMessage((s"North-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", northRegionPortTerminalData))
+        uploadProbe.expectMessage((s"lhr-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
         responseAs[String] should ===("ok")
       }
     }
@@ -88,50 +78,9 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
 
   def heathrowRegionPortTerminalData: String =
     s"""${ArrivalExportHeadings.regionalExportHeadings}
-       |Heathrow,LHR,T2,flight1,information,row
-       |Heathrow,LHR,T2,flight2,information,row
-       |Heathrow,LHR,T3,flight1,information,row
-       |Heathrow,LHR,T3,flight2,information,row
-       |Heathrow,LHR,T4,flight1,information,row
-       |Heathrow,LHR,T4,flight2,information,row
-       |Heathrow,LHR,T5,flight1,information,row
-       |Heathrow,LHR,T5,flight2,information,row
+       |flight1,information,row
+       |flight2,information,row
+       |flight1,information,row
+       |flight2,information,row
        |""".stripMargin
-
-  def northRegionPortTerminalData: String =
-    s"""${ArrivalExportHeadings.regionalExportHeadings}
-       |North,ABZ,T1,flight1,information,row
-       |North,ABZ,T1,flight2,information,row
-       |North,BFS,T1,flight1,information,row
-       |North,BFS,T1,flight2,information,row
-       |North,BHD,T1,flight1,information,row
-       |North,BHD,T1,flight2,information,row
-       |North,EDI,A1,flight1,information,row
-       |North,EDI,A1,flight2,information,row
-       |North,EDI,A2,flight1,information,row
-       |North,EDI,A2,flight2,information,row
-       |North,GLA,T1,flight1,information,row
-       |North,GLA,T1,flight2,information,row
-       |North,HUY,T1,flight1,information,row
-       |North,HUY,T1,flight2,information,row
-       |North,INV,T1,flight1,information,row
-       |North,INV,T1,flight2,information,row
-       |North,LBA,T1,flight1,information,row
-       |North,LBA,T1,flight2,information,row
-       |North,LPL,T1,flight1,information,row
-       |North,LPL,T1,flight2,information,row
-       |North,MAN,T1,flight1,information,row
-       |North,MAN,T1,flight2,information,row
-       |North,MAN,T2,flight1,information,row
-       |North,MAN,T2,flight2,information,row
-       |North,MAN,T3,flight1,information,row
-       |North,MAN,T3,flight2,information,row
-       |North,MME,T1,flight1,information,row
-       |North,MME,T1,flight2,information,row
-       |North,NCL,T1,flight1,information,row
-       |North,NCL,T1,flight2,information,row
-       |North,PIK,T1,flight1,information,row
-       |North,PIK,T1,flight2,information,row
-       |""".stripMargin
-
 }

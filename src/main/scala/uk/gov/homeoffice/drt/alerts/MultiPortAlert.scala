@@ -3,12 +3,13 @@ package uk.gov.homeoffice.drt.alerts
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.HttpResponse
-import org.joda.time.{ DateTime, DateTimeZone }
-import org.slf4j.{ Logger, LoggerFactory }
-import spray.json.{ DefaultJsonProtocol, RootJsonFormat, enrichAny }
+import org.joda.time.{DateTime, DateTimeZone}
+import org.slf4j.{Logger, LoggerFactory}
+import spray.json.{DefaultJsonProtocol, RootJsonFormat, enrichAny}
 import uk.gov.homeoffice.drt.authentication.User
+import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.routes.PortAlerts
-import uk.gov.homeoffice.drt.{ Dashboard, DashboardClient }
+import uk.gov.homeoffice.drt.{Dashboard, DashboardClient}
 
 import scala.collection.immutable
 import scala.concurrent.Future
@@ -49,7 +50,7 @@ object MultiPortAlertClient extends MultiPortAlertJsonSupport {
       case (portCode, alert) =>
         log.info("Sending new alert to ${Dashboard.drtUriForPortCode(portCode)}/alerts")
         DashboardClient.postWithRoles(
-          s"${Dashboard.drtInternalUriForPortCode(portCode)}/alerts",
+          s"${Dashboard.drtInternalUriForPortCode(PortCode(portCode))}/alerts",
           alert.toJson.toString(),
           user.roles)
     }

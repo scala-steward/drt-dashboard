@@ -1,22 +1,23 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.http.scaladsl.model.StatusCodes.{ Forbidden, InternalServerError, MethodNotAllowed }
-import akka.http.scaladsl.server.Directives.{ complete, fileUpload, onSuccess, path }
+import akka.http.scaladsl.model.StatusCodes.{Forbidden, InternalServerError, MethodNotAllowed}
+import akka.http.scaladsl.server.Directives.{complete, fileUpload, onSuccess, path}
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.stream.Materializer
 import com.github.tototoshi.csv._
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormat
-import org.slf4j.{ Logger, LoggerFactory }
+import org.slf4j.{Logger, LoggerFactory}
 import spray.json._
 import uk.gov.homeoffice.drt.Dashboard._
 import uk.gov.homeoffice.drt.auth.Roles
 import uk.gov.homeoffice.drt.auth.Roles.NeboUpload
+import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.routes.ApiRoutes.authByRole
-import uk.gov.homeoffice.drt.{ HttpClient, JsonSupport }
+import uk.gov.homeoffice.drt.{HttpClient, JsonSupport}
 
-import scala.concurrent.{ ExecutionContextExecutor, Future }
+import scala.concurrent.{ExecutionContextExecutor, Future}
 
 case class Row(flightCode: String, arrivalPort: String, arrivalDate: String, arrivalTime: String, departureDate: Option[String], departureTime: Option[String], embarkPort: Option[String], departurePort: Option[String], urn: String)
 
@@ -88,7 +89,7 @@ case class NeboUploadRoutes(neboPortCodes: List[String], httpClient: HttpClient)
     }
 
   def sendFlightDataToPort(flightData: List[FlightData], portCode: String, httpClient: HttpClient)(implicit ec: ExecutionContextExecutor, mat: Materializer): Future[FeedStatus] = {
-    val httpRequest = httpClient.createDrtNeboRequest(flightData, s"${drtInternalUriForPortCode(portCode)}$drtRoutePath", Roles.parse(portCode))
+    val httpRequest = httpClient.createDrtNeboRequest(flightData, s"${drtInternalUriForPortCode(PortCode(portCode))}$drtRoutePath", Roles.parse(portCode))
     httpClient.send(httpRequest)
       .map(r => FeedStatus(portCode, flightData.size, r.status.toString()))
   }
