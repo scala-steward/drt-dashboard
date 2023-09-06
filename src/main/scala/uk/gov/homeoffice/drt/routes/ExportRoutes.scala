@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.db.{AppDatabase, ExportQueries}
 import uk.gov.homeoffice.drt.exports.{ExportPort, ExportType}
+import uk.gov.homeoffice.drt.json.ExportJsonFormats.exportRequestJsonFormat
 import uk.gov.homeoffice.drt.models.Export
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
@@ -88,7 +89,7 @@ object ExportRoutes {
         case Some(regionExport) =>
           val startDateString = regionExport.startDate.toString()
           val endDateString = regionExport.endDate.toString()
-          val fileName = s"exports/${exportCsvService.makeFileName(startDateString, endDateString, regionExport.createdAt)}"
+          val fileName = exportCsvService.makeFileName(startDateString, endDateString, regionExport.createdAt)
           log.info(s"Downloading $fileName")
           downloader(fileName).map { stream =>
             respondWithHeader(`Content-Disposition`(attachment, Map("filename" -> fileName))) {
@@ -110,7 +111,7 @@ object ExportRoutes {
     val startDateString = exportRequest.startDate.toString()
     val endDateString = exportRequest.endDate.toString()
     val creationDate = now()
-    val fileName = s"exports/${exportCsvService.makeFileName(startDateString, endDateString, creationDate)}"
+    val fileName = exportCsvService.makeFileName(startDateString, endDateString, creationDate)
 
     val regionExport = Export(email, exportRequest.ports.map(ep => ep.terminals.map(t => s"${ep.port}-$t").mkString("_")).mkString("__"), exportRequest.startDate, exportRequest.endDate, "preparing", creationDate)
     database.db.run(ExportQueries.insert(regionExport))

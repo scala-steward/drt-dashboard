@@ -4,7 +4,8 @@ import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat, enric
 import uk.gov.homeoffice.drt.exports.{ExportPort, ExportType, ExportTypes}
 import uk.gov.homeoffice.drt.json.LocalDateJsonFormats.LocalDateJsonFormat
 import uk.gov.homeoffice.drt.json.SDateLikeJsonFormats.SDateLikeJsonFormat
-import uk.gov.homeoffice.drt.routes.LegacyExportRoutes.ExportRequest
+import uk.gov.homeoffice.drt.models.Export
+import uk.gov.homeoffice.drt.routes.ExportRoutes.ExportRequest
 
 object ExportJsonFormats extends DefaultJsonProtocol {
 
@@ -20,5 +21,5 @@ object ExportJsonFormats extends DefaultJsonProtocol {
 
   implicit val exportRequestJsonFormat: RootJsonFormat[ExportRequest] = jsonFormat4(ExportRequest.apply)
 
-  implicit val exportJsonFormat = jsonFormat6(uk.gov.homeoffice.drt.models.Export.apply)
+  implicit val exportJsonFormat: RootJsonFormat[Export] = jsonFormat6(uk.gov.homeoffice.drt.models.Export.apply)
 }

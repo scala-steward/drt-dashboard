@@ -36,7 +36,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
   lazy val db: Database = Database.forConfig("h2-db")
 
   before {
-    val schema = TestDatabase.regionExportTable.schema
+    val schema = TestDatabase.exportTable.schema
     Await.ready(db.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
   }
 
@@ -59,7 +59,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
     Future.successful(Source(Seq(ByteString("1"), ByteString("2"), ByteString("3"))))
   }
   val now: SDateLike = SDate("2022-08-02T00:00:00")
-  val nowYYYYMMDDHHmmss = "20220802000000"
+  val nowYYYYMMDDHHmmss = "20220802000000.000"
   val nowProvider: () => SDateLike = () => now
 
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
@@ -68,9 +68,9 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
   "Request heathrow arrival export" should {
     "collate all requested terminal arrivals" in {
       val exportPorts = Seq(ExportPort("lhr", Seq("t2", "t5")))
-      val request = LegacyExportRoutes.ExportRequest(Arrivals, exportPorts, LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
-      Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> LegacyExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
-        uploadProbe.expectMessage((s"lhr-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
+      val request = ExportRoutes.ExportRequest(Arrivals, exportPorts, LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
+      Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
+        uploadProbe.expectMessage((s"$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
         responseAs[String] should ===("ok")
       }
     }

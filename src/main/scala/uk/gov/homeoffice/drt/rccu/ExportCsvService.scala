@@ -50,7 +50,9 @@ case class ExportCsvService(httpClient: HttpClient) {
       f"-to-$end"
     else ""
 
-    val timestamp = f"${createdAt.getFullYear}${createdAt.getMonth}%02d${createdAt.getDate}%02d${createdAt.getHours}%02d${createdAt.getMinutes}%02d${createdAt.getSeconds}%02d"
+    val date = f"${createdAt.getFullYear}${createdAt.getMonth}%02d${createdAt.getDate}%02d"
+    val milliseconds = createdAt.millisSinceEpoch.toString.takeRight(3)
+    val timestamp = date + f"${createdAt.getHours}%02d${createdAt.getMinutes}%02d${createdAt.getSeconds}%02d.$milliseconds"
 
     s"$timestamp-$start$endDate.csv"
   }
