@@ -15,7 +15,7 @@ import akka.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
-import uk.gov.homeoffice.drt.db.{AppDatabase, ExportQueries, RegionExportQueries}
+import uk.gov.homeoffice.drt.db.{AppDatabase, ExportQueries}
 import uk.gov.homeoffice.drt.exports.{Arrivals, ExportPort, ExportType}
 import uk.gov.homeoffice.drt.json.ExportJsonFormats.exportRequestJsonFormat
 import uk.gov.homeoffice.drt.models.Export
@@ -33,7 +33,6 @@ object ExportRoutes {
   private val log = LoggerFactory.getLogger(getClass)
 
   case class ExportRequest(exportType: ExportType, ports: Seq[ExportPort], startDate: LocalDate, endDate: LocalDate)
-
 
   implicit val csvStreaming: CsvEntityStreamingSupport = EntityStreamingSupport.csv().withFramingRenderer(Flow[ByteString])
   implicit val csvMarshaller: ToEntityMarshaller[ByteString] =
@@ -58,8 +57,13 @@ object ExportRoutes {
           ),
           get {
             concat(
-              path(Segment / Segment) { case (region, createdAt) =>
-                onComplete(getExportRoute(email, region, createdAt, exportCsvService, download)) {
+              pathEnd {
+                import uk.gov.homeoffice.drt.json.ExportJsonFormats._
+                val future: Future[Seq[Export]] = database.db.run(ExportQueries.getAll(email))
+                complete(future)
+              },
+              path(Segment) { createdAt =>
+                onComplete(getExportRoute(email, createdAt, exportCsvService, download)) {
                   case Success(route) => route
                   case Failure(e) =>
                     log.error("Failed to get region export", e)
@@ -74,20 +78,19 @@ object ExportRoutes {
   }
 
   private def getExportRoute(email: String,
-                             region: String,
                              createdAt: String,
                              exportCsvService: ExportCsvService,
                              downloader: String => Future[Source[ByteString, _]],
                             )
                             (implicit ec: ExecutionContextExecutor, database: AppDatabase): Future[Route] = {
-    log.info(s"Getting region export for $email / $region / $createdAt")
+    log.info(s"Getting region export for $email/ $createdAt")
 
-    database.db.run(RegionExportQueries.get(email, region, createdAt.toLong))
+    database.db.run(ExportQueries.get(email, createdAt.toLong))
       .flatMap {
         case Some(regionExport) =>
           val startDateString = regionExport.startDate.toString()
           val endDateString = regionExport.endDate.toString()
-          val fileName = s"exports/${exportCsvService.makeFileName(startDateString, endDateString, regionExport.region, regionExport.createdAt)}"
+          val fileName = s"exports/${exportCsvService.makeFileName(startDateString, endDateString, regionExport.createdAt)}"
           log.info(s"Downloading $fileName")
           downloader(fileName).map { stream =>
             respondWithHeader(`Content-Disposition`(attachment, Map("filename" -> fileName))) {
@@ -109,7 +112,7 @@ object ExportRoutes {
     val startDateString = exportRequest.startDate.toString()
     val endDateString = exportRequest.endDate.toString()
     val creationDate = now()
-    val fileName = exportCsvService.makeFileName(startDateString, endDateString, exportRequest.ports.map(_.port.toLowerCase).sorted.mkString("-"), creationDate)
+    val fileName = s"exports/${exportCsvService.makeFileName(startDateString, endDateString, creationDate)}"
 
     val regionExport = Export(email, exportRequest.ports.map(ep => ep.terminals.map(t => s"${ep.port}-$t").mkString("_")).mkString("__"), exportRequest.startDate, exportRequest.endDate, "preparing", creationDate)
     database.db.run(ExportQueries.insert(regionExport))
@@ -124,7 +127,7 @@ object ExportRoutes {
       .mapAsync(1) {
         case (port, terminal) =>
           exportCsvService
-            .getPortResponseForTerminal(Arrivals, exportRequest.startDate, exportRequest.endDate, port, terminal)
+            .getPortResponseForTerminal(exportRequest.exportType, exportRequest.startDate, exportRequest.endDate, port, terminal)
             .recover { e =>
               log.error(s"Failed to get port response for $port $terminal", e)
 
@@ -133,12 +136,12 @@ object ExportRoutes {
               throw new Exception("Failed to get port response")
             }
       }
-      .prepend(Source.single(ByteString(ArrivalExportHeadings.regionalExportHeadings + "\n")))
+      .prepend(Source.single(ByteString(exportRequest.exportType.headerRow + "\n")))
 
     upload(fileName, stream).onComplete {
       case Success(_) =>
         updateExportStatus(regionExport, "complete")
-        log.info("Export complete")
+        log.info(s"Export complete: $fileName")
       case Failure(exception) =>
         updateExportStatus(regionExport, "failed")
         log.error("Failed to create export", exception)

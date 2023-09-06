@@ -45,13 +45,13 @@ case class ExportCsvService(httpClient: HttpClient) {
       }
   }
 
-  def makeFileName(start: String, end: String, portRegion: String, createdAt: SDateLike): String = {
+  def makeFileName(start: String, end: String, createdAt: SDateLike): String = {
     val endDate = if (start != end)
       f"-to-$end"
     else ""
 
     val timestamp = f"${createdAt.getFullYear}${createdAt.getMonth}%02d${createdAt.getDate}%02d${createdAt.getHours}%02d${createdAt.getMinutes}%02d${createdAt.getSeconds}%02d"
 
-    s"$portRegion-$timestamp-$start$endDate.csv"
+    s"$timestamp-$start$endDate.csv"
   }
 }

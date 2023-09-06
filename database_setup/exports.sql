@@ -1,9 +1,9 @@
-CREATE TABLE public.region_export(
+CREATE TABLE public.export(
   email text NOT NULL,
-  region text NOT NULL,
+  terminals text NOT NULL,
   start_date varchar NOT NULL,
   end_date varchar NOT NULL,
   status text NOT NULL,
   created_at timestamp NOT NULL,
-  PRIMARY KEY (email, region, created_at)
+  PRIMARY KEY (email, terminals, created_at)
 );
