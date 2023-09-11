@@ -47,6 +47,7 @@ object ExportRoutes {
             now: () => SDateLike,
             emailClient: EmailClient,
             rootUrl: String,
+            teamEmail: String,
            )
            (implicit ec: ExecutionContextExecutor, mat: Materializer, database: AppDatabase): Route = {
     lazy val exportCsvService = ExportCsvService(httpClient)
@@ -55,7 +56,7 @@ object ExportRoutes {
         concat(
           post(
             entity(as[ExportRequest]) { exportRequest =>
-              handleExport(upload, exportCsvService, email, exportRequest, now, emailClient, rootUrl)
+              handleExport(upload, exportCsvService, email, exportRequest, now, emailClient, rootUrl, teamEmail)
             }
           ),
           get {
@@ -111,6 +112,7 @@ object ExportRoutes {
                            now: () => SDateLike,
                            emailClient: EmailClient,
                            rootDomain: String,
+                           teamEmail: String,
                           )
                           (implicit ec: ExecutionContextExecutor, mat: Materializer, database: AppDatabase): StandardRoute = {
     val startDateString = exportRequest.startDate.toString()
@@ -135,7 +137,7 @@ object ExportRoutes {
             .recover { e =>
               log.error(s"Failed to get port response for $port $terminal", e)
 
-              updateExportStatus(regionExport, "failed")
+              handleReportFailure(emailClient, regionExport, teamEmail)
 
               throw new Exception("Failed to get port response")
             }
@@ -144,15 +146,30 @@ object ExportRoutes {
 
     upload(fileName, stream).onComplete {
       case Success(_) =>
-        updateExportStatus(regionExport, "complete")
-        val link = s"$rootDomain/export/${regionExport.createdAt.millisSinceEpoch}"
-        emailClient.send(DownloadManagerTemplates.downloadReadyTemplateId, regionExport.email, Map("download_link" -> link))
+        handleReportReady(emailClient, rootDomain, regionExport)
         log.info(s"Export complete: $fileName")
       case Failure(exception) =>
-        updateExportStatus(regionExport, "failed")
+        handleReportFailure(emailClient, regionExport, teamEmail)
         log.error("Failed to create export", exception)
     }
     complete("ok")
+  }
+
+  private def handleReportReady(emailClient: EmailClient, rootDomain: String, regionExport: Export)
+                               (implicit ec: ExecutionContextExecutor, database: AppDatabase): Unit = {
+    updateExportStatus(regionExport, "complete")
+    val link = s"$rootDomain/export/${regionExport.createdAt.millisSinceEpoch}"
+    val emailSuccess = emailClient.send(DownloadManagerTemplates.reportReadyTemplateId, regionExport.email, Map("download_link" -> link))
+
+    if (!emailSuccess) log.error("Failed to send email")
+  }
+
+  private def handleReportFailure(emailClient: EmailClient, regionExport: Export, teamEmail: String)
+                                 (implicit ec: ExecutionContextExecutor, database: AppDatabase): Unit = {
+    updateExportStatus(regionExport, "failed")
+    val emailSuccess = emailClient.send(DownloadManagerTemplates.reportFailedTemplateId, regionExport.email, Map("support_email" -> teamEmail))
+
+    if (!emailSuccess) log.error("Failed to send email")
   }
 
   private def updateExportStatus(`export`: Export, status: String)

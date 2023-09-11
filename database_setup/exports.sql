@@ -5,5 +5,5 @@ CREATE TABLE public.export(
   end_date varchar NOT NULL,
   status text NOT NULL,
   created_at timestamp NOT NULL,
-  PRIMARY KEY (email, terminals, created_at)
+  PRIMARY KEY (email, created_at)
 );

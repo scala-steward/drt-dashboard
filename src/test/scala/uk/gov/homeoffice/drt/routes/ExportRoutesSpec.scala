@@ -81,7 +81,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
       val request = ExportRoutes.ExportRequest(Arrivals, exportPorts, LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
       Post("/export", request) ~>
         RawHeader("X-Auth-Email", "someone@somewhere.com") ~>
-        ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider, MockEmailClient(emailProbe.ref), "https://test.com") ~>
+        ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider, MockEmailClient(emailProbe.ref), "https://test.com", "team-email@zyx.com") ~>
         check {
           uploadProbe.expectMessage((s"$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
           emailProbe.expectMessage(("620271a3-888f-4d60-9f2a-dc3702699ae2", "someone@somewhere.com", Map("download_link" -> s"https://test.com/export/${now.millisSinceEpoch}")))
