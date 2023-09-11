@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.routes
 
 import akka.actor.testkit.typed.scaladsl.TestProbe
-import akka.actor.typed.ActorSystem
+import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.testkit.ScalatestRouteTest
@@ -20,11 +20,19 @@ import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
 import uk.gov.homeoffice.drt.db.{AppDatabase, TestDatabase}
 import uk.gov.homeoffice.drt.exports.{Arrivals, ExportPort}
 import uk.gov.homeoffice.drt.json.ExportJsonFormats.exportRequestJsonFormat
+import uk.gov.homeoffice.drt.notifications.EmailClient
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
+
+case class MockEmailClient(probeRef: ActorRef[(String, String, Map[String, Any])]) extends EmailClient {
+  override def send(templateId: String, emailAddress: String, personalisation: Map[String, Any]): Boolean = {
+    probeRef ! (templateId, emailAddress, personalisation)
+    true
+  }
+}
 
 class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest with BeforeAndAfter {
   implicit val typedSystem: ActorSystem[Nothing] = ActorSystem.wrap(system)
@@ -46,6 +54,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
       |""".stripMargin
 
   val mockHttpClient: MockHttpClient = MockHttpClient(() => csv)
+  val emailProbe: TestProbe[(String, String, Map[String, Any])] = TestProbe[(String, String, Map[String, Any])]()
   val uploadProbe: TestProbe[(String, String)] = TestProbe[(String, String)]()
   val downloadProbe: TestProbe[String] = TestProbe[String]()
   val mockUploader: (String, Source[ByteString, Any]) => Future[Done.type] = (objectKey: String, data: Source[ByteString, Any]) =>
@@ -63,16 +72,21 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
   val nowProvider: () => SDateLike = () => now
 
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+
   implicit val testDb: AppDatabase = TestDatabase
 
   "Request heathrow arrival export" should {
     "collate all requested terminal arrivals" in {
       val exportPorts = Seq(ExportPort("lhr", Seq("t2", "t5")))
       val request = ExportRoutes.ExportRequest(Arrivals, exportPorts, LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
-      Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
-        uploadProbe.expectMessage((s"$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
-        responseAs[String] should ===("ok")
-      }
+      Post("/export", request) ~>
+        RawHeader("X-Auth-Email", "someone@somewhere.com") ~>
+        ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider, MockEmailClient(emailProbe.ref), "https://test.com") ~>
+        check {
+          uploadProbe.expectMessage((s"$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
+          emailProbe.expectMessage(("620271a3-888f-4d60-9f2a-dc3702699ae2", "someone@somewhere.com", Map("download_link" -> s"https://test.com/export/${now.millisSinceEpoch}")))
+          responseAs[String] should ===("ok")
+        }
     }
   }
 

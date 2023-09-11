@@ -2,7 +2,7 @@ package uk.gov.homeoffice.drt
 
 import akka.actor.typed.ActorSystem
 import com.typesafe.config.ConfigFactory
-import uk.gov.homeoffice.drt.notifications.EmailNotifications
+import uk.gov.homeoffice.drt.notifications.{EmailClientImpl, EmailNotifications}
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.schedule.UserTracking
 import uk.gov.service.notify.NotificationClient
@@ -41,9 +41,13 @@ object DrtDashboardApp extends App {
   )
 
 
-  val emailNotifications = EmailNotifications(serverConfig.accessRequestEmails, new NotificationClient(serverConfig.notifyServiceApiKey))
+  private val govNotifyClient = new NotificationClient(serverConfig.notifyServiceApiKey)
 
-  val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig, emailNotifications), "DrtDashboard")
+  val emailClient: EmailClientImpl = EmailClientImpl(govNotifyClient)
+
+  private val emailNotifications = EmailNotifications(serverConfig.accessRequestEmails, govNotifyClient)
+
+  val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig, emailNotifications, emailClient), "DrtDashboard")
   if (serverConfig.userTrackingFeatureFlag) {
     ActorSystem(UserTracking(serverConfig, 1.minutes, 100, emailNotifications), "UserTrackingTimer")
   }

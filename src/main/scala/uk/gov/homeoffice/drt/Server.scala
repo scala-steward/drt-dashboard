@@ -7,7 +7,7 @@ import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.server.Directives.{concat, getFromResource, getFromResourceDirectory}
 import akka.http.scaladsl.server.Route
 import uk.gov.homeoffice.drt.db._
-import uk.gov.homeoffice.drt.notifications.EmailNotifications
+import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications}
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes._
 import uk.gov.homeoffice.drt.services.s3.S3Service
@@ -66,6 +66,7 @@ object Server {
 
   def apply(serverConfig: ServerConfig,
             notifications: EmailNotifications,
+            emailClient: EmailClient,
            ): Behavior[Message] =
     Behaviors.setup { ctx: ActorContext[Message] =>
       implicit val system: ActorSystem[Nothing] = ctx.system
@@ -90,7 +91,7 @@ object Server {
         DrtRoutes("drt", serverConfig.portIataCodes),
         ApiRoutes("api", serverConfig.clientConfig, neboRoutes, userService),
         LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
-        ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
+        ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now(), emailClient, urls.rootUrl),
         UserRoutes("user", serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
         FeatureGuideRoutes("guide", featureGuideService, featureUploader, featureDownloader)
       )

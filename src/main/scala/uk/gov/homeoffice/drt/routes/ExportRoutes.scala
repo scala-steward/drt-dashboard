@@ -18,6 +18,8 @@ import uk.gov.homeoffice.drt.db.{AppDatabase, ExportQueries}
 import uk.gov.homeoffice.drt.exports.{ExportPort, ExportType}
 import uk.gov.homeoffice.drt.json.ExportJsonFormats.exportRequestJsonFormat
 import uk.gov.homeoffice.drt.models.Export
+import uk.gov.homeoffice.drt.notifications.EmailClient
+import uk.gov.homeoffice.drt.notifications.templates.DownloadManagerTemplates
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
@@ -43,6 +45,8 @@ object ExportRoutes {
             upload: (String, Source[ByteString, Any]) => Future[Done],
             download: String => Future[Source[ByteString, _]],
             now: () => SDateLike,
+            emailClient: EmailClient,
+            rootUrl: String,
            )
            (implicit ec: ExecutionContextExecutor, mat: Materializer, database: AppDatabase): Route = {
     lazy val exportCsvService = ExportCsvService(httpClient)
@@ -51,22 +55,21 @@ object ExportRoutes {
         concat(
           post(
             entity(as[ExportRequest]) { exportRequest =>
-              handleExport(upload, exportCsvService, email, exportRequest, now)
+              handleExport(upload, exportCsvService, email, exportRequest, now, emailClient, rootUrl)
             }
           ),
           get {
             concat(
               pathEnd {
                 import uk.gov.homeoffice.drt.json.ExportJsonFormats._
-                val future: Future[Seq[Export]] = database.db.run(ExportQueries.getAll(email))
-                complete(future)
+                complete(database.db.run(ExportQueries.getAll(email)))
               },
               path(Segment) { createdAt =>
                 onComplete(getExportRoute(email, createdAt, exportCsvService, download)) {
                   case Success(route) => route
                   case Failure(e) =>
-                    log.error("Failed to get region export", e)
-                    complete("Failed to get region export")
+                    log.error("Failed to get export", e)
+                    complete("Failed to get export")
                 }
               }
             )
@@ -106,6 +109,8 @@ object ExportRoutes {
                            email: String,
                            exportRequest: ExportRequest,
                            now: () => SDateLike,
+                           emailClient: EmailClient,
+                           rootDomain: String,
                           )
                           (implicit ec: ExecutionContextExecutor, mat: Materializer, database: AppDatabase): StandardRoute = {
     val startDateString = exportRequest.startDate.toString()
@@ -140,6 +145,8 @@ object ExportRoutes {
     upload(fileName, stream).onComplete {
       case Success(_) =>
         updateExportStatus(regionExport, "complete")
+        val link = s"$rootDomain/export/${regionExport.createdAt.millisSinceEpoch}"
+        emailClient.send(DownloadManagerTemplates.downloadReadyTemplateId, regionExport.email, Map("download_link" -> link))
         log.info(s"Export complete: $fileName")
       case Failure(exception) =>
         updateExportStatus(regionExport, "failed")
