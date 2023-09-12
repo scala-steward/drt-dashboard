@@ -16,8 +16,6 @@ case class ExportCsvService(httpClient: HttpClient) {
 
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def getPortRegion(region: String): Option[PortRegion] = PortRegion.regions.find(_.name == region)
-
   def getUri(exportType: ExportType, start: LocalDate, end: LocalDate, portCode: PortCode, terminal: Terminal): String =
     s"${Dashboard.drtInternalUriForPortCode(portCode)}/api/${exportType.routePrefix}/$start/$end/$terminal"
 
