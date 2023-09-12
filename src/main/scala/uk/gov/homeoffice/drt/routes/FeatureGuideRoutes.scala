@@ -4,49 +4,23 @@ package uk.gov.homeoffice.drt.routes
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.model.HttpEntity.ChunkStreamPart
-import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Route, StandardRoute}
 import akka.stream.IOResult
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import org.slf4j.{Logger, LoggerFactory}
-import spray.json.{DefaultJsonProtocol, JsString, JsValue, JsonFormat, RootJsonFormat, deserializationError, enrichAny}
-import uk.gov.homeoffice.drt.db.FeatureGuideRow
-import uk.gov.homeoffice.drt.services.s3.{S3Downloader, S3Service, S3Uploader}
+import spray.json.{JsValue, enrichAny}
+import uk.gov.homeoffice.drt.json.FeatureGuideJsonFormats
+import uk.gov.homeoffice.drt.services.s3.{S3Downloader, S3Uploader}
 import uk.gov.homeoffice.drt.uploadTraining.FeatureGuideService
 
-import java.sql.Timestamp
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
 case class FeaturePublished(published: Boolean)
-
-trait FeatureGuideJsonFormats extends DefaultJsonProtocol {
-  implicit object TimestampFormat extends JsonFormat[Timestamp] {
-    override def write(obj: Timestamp): JsValue = JsString(obj.toString)
-
-    override def read(json: JsValue): Timestamp = json match {
-      case JsString(rawDate) => {
-        try {
-          Timestamp.valueOf(rawDate)
-        } catch {
-          case iae: IllegalArgumentException => deserializationError("Invalid date format")
-          case _: Exception => None
-        }
-      } match {
-        case dateTime: Timestamp => dateTime
-        case None => deserializationError(s"Couldn't parse date time, got $rawDate")
-      }
-    }
-  }
-
-  implicit val featureGuideRowFormatParser: RootJsonFormat[FeatureGuideRow] = jsonFormat6(FeatureGuideRow)
-
-  implicit val featurePublishedFormatParser: RootJsonFormat[FeaturePublished] = jsonFormat1(FeaturePublished)
-
-}
 
 object FeatureGuideRoutes extends FeatureGuideJsonFormats {
   val log: Logger = LoggerFactory.getLogger(getClass)
@@ -60,10 +34,11 @@ object FeatureGuideRoutes extends FeatureGuideJsonFormats {
     }
   }
 
-  def getFeatureVideoFile(downloader: S3Downloader, prefixFolder: String)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]) =
+  def getFeatureVideoFile(downloader: S3Downloader)
+                         (implicit ec: ExecutionContextExecutor): Route =
     path("get-feature-videos" / Segment) { filename =>
       get {
-        val responseStreamF: Future[Source[ByteString, Future[IOResult]]] = downloader.download(s"$prefixFolder/$filename")
+        val responseStreamF: Future[Source[ByteString, Future[IOResult]]] = downloader.download(filename)
 
         val fileEntityF: Future[ResponseEntity] = responseStreamF.map(responseStream =>
           HttpEntity.Chunked(
@@ -79,7 +54,8 @@ object FeatureGuideRoutes extends FeatureGuideJsonFormats {
       }
     }
 
-  def getFeatureGuides(featureGuideService: FeatureGuideService)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]) = path("getFeatureGuides") {
+  def getFeatureGuides(featureGuideService: FeatureGuideService)
+                      (implicit ec: ExecutionContextExecutor): Route = path("getFeatureGuides") {
     val responseF: Future[StandardRoute] = featureGuideService.getFeatureGuides().map { featureGuides =>
       val json: JsValue = featureGuides.toJson
       complete(StatusCodes.OK, json)
@@ -89,7 +65,8 @@ object FeatureGuideRoutes extends FeatureGuideJsonFormats {
 
   }
 
-  def updateFeatureGuide(featureGuideService: FeatureGuideService)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]) =
+  def updateFeatureGuide(featureGuideService: FeatureGuideService)
+                        (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
     path("updateFeatureGuide" / Segment) { featureId =>
       post {
         entity(as[Multipart.FormData]) { _ =>
@@ -103,7 +80,8 @@ object FeatureGuideRoutes extends FeatureGuideJsonFormats {
       }
     }
 
-  def publishFeatureGuide(featureGuideService: FeatureGuideService)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]) =
+  def publishFeatureGuide(featureGuideService: FeatureGuideService)
+                         (implicit ec: ExecutionContextExecutor): Route =
     path("published" / Segment) { (featureId) =>
       post {
         entity(as[FeaturePublished]) { featurePublished =>
@@ -116,7 +94,8 @@ object FeatureGuideRoutes extends FeatureGuideJsonFormats {
       }
     }
 
-  def deleteFeature(featureGuideService: FeatureGuideService)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]) =
+  def deleteFeature(featureGuideService: FeatureGuideService)
+                   (implicit ec: ExecutionContextExecutor): Route =
     path("removeFeatureGuide" / Segment) { featureId =>
       delete {
         val responseF: Future[StandardRoute] = featureGuideService.deleteFeatureGuide(featureId).map { featureGuides =>
@@ -128,7 +107,8 @@ object FeatureGuideRoutes extends FeatureGuideJsonFormats {
       }
     }
 
-  def apply(prefix: String, featureGuideService: FeatureGuideService, uploader: S3Uploader, downloader: S3Downloader, prefixFolder: String)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]) =
+  def apply(prefix: String, featureGuideService: FeatureGuideService, uploader: S3Uploader, downloader: S3Downloader)
+           (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
     pathPrefix(prefix) {
       concat(
         path("uploadFeatureGuide") {
@@ -146,6 +126,11 @@ object FeatureGuideRoutes extends FeatureGuideJsonFormats {
               }
             }
           }
-        } ~ getFeatureGuides(featureGuideService) ~ deleteFeature(featureGuideService) ~ updateFeatureGuide(featureGuideService) ~ getFeatureVideoFile(downloader, prefixFolder) ~ publishFeatureGuide(featureGuideService))
+        }
+          ~ getFeatureGuides(featureGuideService)
+          ~ deleteFeature(featureGuideService)
+          ~ updateFeatureGuide(featureGuideService)
+          ~ getFeatureVideoFile(downloader)
+          ~ publishFeatureGuide(featureGuideService))
     }
 }

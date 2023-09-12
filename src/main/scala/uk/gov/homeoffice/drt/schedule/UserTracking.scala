@@ -10,6 +10,7 @@ import uk.gov.homeoffice.drt.authentication.KeyCloakUser
 import uk.gov.homeoffice.drt.db.{ProdDatabase, User, UserDao}
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuthTokenService.GetToken
 import uk.gov.homeoffice.drt.keycloak.{KeyCloakAuthToken, KeyCloakAuthTokenService, KeycloakService}
+import uk.gov.homeoffice.drt.notifications.templates.AccessRequestTemplates.{inactiveUserNotificationTemplateId, revokeAccessTemplateId}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.services.UserService
 
@@ -82,7 +83,7 @@ class UserTracking(serverConfig: ServerConfig,
                 user.email,
                 serverConfig.rootDomain,
                 serverConfig.teamEmail,
-                notifications.inactiveUserNotificationTemplateId,
+                inactiveUserNotificationTemplateId,
                 "inactive user notification")
               logger.info(s"User with email ${user.email} notified due to inactivity")
             } else {
@@ -115,7 +116,7 @@ class UserTracking(serverConfig: ServerConfig,
                       userFromKeycloak.email,
                       serverConfig.rootDomain,
                       serverConfig.teamEmail,
-                      notifications.revokeAccessTemplateId,
+                      revokeAccessTemplateId,
                       "revoked DRT Access")
                     logger.info(s"User with email ${userToRevoke.email} access revoked due to inactivity")
                   }

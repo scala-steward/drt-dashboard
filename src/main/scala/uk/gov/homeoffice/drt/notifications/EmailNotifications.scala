@@ -2,24 +2,15 @@ package uk.gov.homeoffice.drt.notifications
 
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.authentication.{AccessRequest, ClientUserRequestedAccessData}
-import uk.gov.service.notify.{NotificationClient, NotificationClientApi, SendEmailResponse}
+import uk.gov.homeoffice.drt.notifications.templates.AccessRequestTemplates.{accessGrantedTemplateId, requestTemplateId, lineManagerNotificationTemplateId}
+import uk.gov.service.notify.{NotificationClientApi, SendEmailResponse}
 
 import java.util
-import scala.collection.JavaConverters.mapAsJavaMapConverter
+import scala.jdk.CollectionConverters.MapHasAsJava
 import scala.util.Try
 
 case class EmailNotifications(accessRequestEmails: List[String], client: NotificationClientApi) {
   val log: Logger = LoggerFactory.getLogger(getClass)
-
-  val accessRequestEmailTemplateId = "5f34d7bb-293f-481c-826b-62661ba8a736"
-
-  val accessRequestLineManagerNotificationEmailTemplateId = "c80595c3-957a-4310-a419-b2f254df3909"
-
-  val accessGrantedTemplateId = "12e36257-c485-4e13-af4f-2293d2dd34a6"
-
-  val inactiveUserNotificationTemplateId = "58224cba-7313-4dc9-96f3-d8cb34550ec8"
-
-  val revokeAccessTemplateId = "a50b8424-a8d8-49fe-b826-381623f9aace"
 
   def getFirstName(email: String): String = {
     Try(email.split("\\.").head.toLowerCase.capitalize).getOrElse(email)
@@ -88,7 +79,7 @@ case class EmailNotifications(accessRequestEmails: List[String], client: Notific
 
     accessRequestEmails.map { accessRequestEmail =>
       val maybeResponse: Try[SendEmailResponse] = Try(client.sendEmail(
-        accessRequestEmailTemplateId,
+        requestTemplateId,
         accessRequestEmail,
         personalisation,
         ""))
@@ -96,7 +87,7 @@ case class EmailNotifications(accessRequestEmails: List[String], client: Notific
     }.flatMap { accessEmailResponse =>
       if (accessRequest.lineManager.nonEmpty && (accessRequest.staffing || accessRequest.allPorts || accessRequest.portsRequested.size > 1 || accessRequest.regionsRequested.size > 1)) {
         val managerAccessEmailResponse: Try[SendEmailResponse] = Try(client.sendEmail(
-          accessRequestLineManagerNotificationEmailTemplateId,
+          lineManagerNotificationTemplateId,
           manager,
           personalisation,
           ""))

@@ -14,6 +14,8 @@ trait AppDatabase {
   lazy val userAccessRequestsTable: TableQuery[UserAccessRequestsTable] = TableQuery[UserAccessRequestsTable]
 
   lazy val regionExportTable: TableQuery[RegionExportTable] = TableQuery[RegionExportTable]
+
+  lazy val exportTable: TableQuery[ExportTable] = TableQuery[ExportTable]
 }
 
 object ProdDatabase extends AppDatabase {
