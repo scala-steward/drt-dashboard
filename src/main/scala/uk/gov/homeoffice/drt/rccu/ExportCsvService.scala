@@ -19,7 +19,7 @@ case class ExportCsvService(httpClient: HttpClient) {
   def getPortRegion(region: String): Option[PortRegion] = PortRegion.regions.find(_.name == region)
 
   def getUri(exportType: ExportType, start: LocalDate, end: LocalDate, portCode: PortCode, terminal: Terminal): String =
-    s"${Dashboard.drtInternalUriForPortCode(portCode)}/${exportType.routePrefix}/$start/$end/$terminal"
+    s"${Dashboard.drtInternalUriForPortCode(portCode)}/api/${exportType.routePrefix}/$start/$end/$terminal"
 
   def getPortResponseForTerminal(exportType: ExportType, start: LocalDate, end: LocalDate, portCode: PortCode, terminal: Terminal)
                                 (implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[ByteString] = {
