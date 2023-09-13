@@ -20,7 +20,9 @@ import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
 import uk.gov.homeoffice.drt.db.{AppDatabase, TestDatabase}
 import uk.gov.homeoffice.drt.exports.{Arrivals, ExportPort}
 import uk.gov.homeoffice.drt.json.ExportJsonFormats.exportRequestJsonFormat
+import uk.gov.homeoffice.drt.models.Export
 import uk.gov.homeoffice.drt.notifications.EmailClient
+import uk.gov.homeoffice.drt.persistence.ExportPersistence
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
 
 import scala.concurrent.duration.DurationInt
@@ -32,6 +34,22 @@ case class MockEmailClient(probeRef: ActorRef[(String, String, Map[String, Any])
     probeRef ! (templateId, emailAddress, personalisation)
     true
   }
+}
+
+case class MockExportPersistence(maybeExport: Option[Export]) extends ExportPersistence {
+  override def insert(export: Export): Future[Int] = {
+    Future.successful(1)
+  }
+
+  override def update(export: Export): Future[Int] = {
+    Future.successful(1)
+  }
+
+  override def get(email: String, createdAt: Long): Future[Option[Export]] =
+    Future.successful(maybeExport)
+
+  override def getAll(email: String): Future[Seq[Export]] =
+    Future.successful(maybeExport.toSeq)
 }
 
 class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest with BeforeAndAfter {
@@ -81,11 +99,24 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
       val request = ExportRoutes.ExportRequest(Arrivals, exportPorts, LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
       Post("/export", request) ~>
         RawHeader("X-Auth-Email", "someone@somewhere.com") ~>
-        ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider, MockEmailClient(emailProbe.ref), "https://test.com", "team-email@zyx.com") ~>
+        ExportRoutes(mockHttpClient, mockUploader, mockDownloader, MockExportPersistence(None), nowProvider, MockEmailClient(emailProbe.ref), "https://test.com", "team-email@zyx.com") ~>
         check {
           uploadProbe.expectMessage((s"$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
           emailProbe.expectMessage(("620271a3-888f-4d60-9f2a-dc3702699ae2", "someone@somewhere.com", Map("download_link" -> s"https://test.com/export/${now.millisSinceEpoch}")))
-          responseAs[String] should ===("ok")
+          responseAs[String] should ===(s"""{"status": "preparing", "createdAt": ${now.millisSinceEpoch}}""")
+        }
+    }
+  }
+
+  "Export status request" should {
+    "return the export's status given the status exists" in {
+      val createdAt = SDate("2020-06-01T00:00")
+      val export = Export("email", "", LocalDate(2020, 6, 6), LocalDate(2020, 7, 6), "complete", createdAt)
+      Get(s"/export/status/${export.createdAt.millisSinceEpoch}") ~>
+        RawHeader("X-Auth-Email", "someone@somewhere.com") ~>
+        ExportRoutes(mockHttpClient, mockUploader, mockDownloader, MockExportPersistence(Option(export)), nowProvider, MockEmailClient(emailProbe.ref), "https://test.com", "team-email@zyx.com") ~>
+        check {
+          responseAs[String] should ===(s"""{"status": "${export.status}"}""")
         }
     }
   }
