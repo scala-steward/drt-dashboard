@@ -8,6 +8,7 @@ import akka.http.scaladsl.server.Directives.{concat, getFromResource, getFromRes
 import akka.http.scaladsl.server.Route
 import uk.gov.homeoffice.drt.db._
 import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications}
+import uk.gov.homeoffice.drt.persistence.ExportPersistenceImpl
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes._
 import uk.gov.homeoffice.drt.services.s3.S3Service
@@ -91,7 +92,7 @@ object Server {
         DrtRoutes("drt", serverConfig.portIataCodes),
         ApiRoutes("api", serverConfig.clientConfig, neboRoutes, userService),
         LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
-        ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now(), emailClient, urls.rootUrl, serverConfig.teamEmail),
+        ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), () => SDate.now(), emailClient, urls.rootUrl, serverConfig.teamEmail),
         UserRoutes("user", serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
         FeatureGuideRoutes("guide", featureGuideService, featureUploader, featureDownloader)
       )

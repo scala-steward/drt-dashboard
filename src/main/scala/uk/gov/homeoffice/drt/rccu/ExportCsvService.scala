@@ -5,12 +5,12 @@ import akka.stream.Materializer
 import akka.util.ByteString
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.exports.ExportType
+import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
-import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike}
 import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, Future}
 
 case class ExportCsvService(httpClient: HttpClient) {
 
@@ -20,7 +20,7 @@ case class ExportCsvService(httpClient: HttpClient) {
     s"${Dashboard.drtInternalUriForPortCode(portCode)}/api/${exportType.routePrefix}/$start/$end/$terminal"
 
   def getPortResponseForTerminal(exportType: ExportType, start: LocalDate, end: LocalDate, portCode: PortCode, terminal: Terminal)
-                                (implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[ByteString] = {
+                                (implicit executionContext: ExecutionContext, mat: Materializer): Future[ByteString] = {
     val uri = getUri(exportType, start, end, portCode, terminal)
     val httpRequest = httpClient.createPortArrivalImportRequest(uri, portCode)
     httpClient
