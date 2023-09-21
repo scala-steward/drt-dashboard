@@ -13,7 +13,7 @@ import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import org.slf4j.{Logger, LoggerFactory}
 import spray.json.{JsValue, enrichAny}
-import uk.gov.homeoffice.drt.json.FeatureGuideJsonFormats
+import uk.gov.homeoffice.drt.json.DefaultTimeJsonProtocol
 import uk.gov.homeoffice.drt.services.s3.{S3Downloader, S3Uploader}
 import uk.gov.homeoffice.drt.uploadTraining.FeatureGuideService
 
@@ -22,7 +22,7 @@ import scala.util.{Failure, Success}
 
 case class FeaturePublished(published: Boolean)
 
-object FeatureGuideRoutes extends FeatureGuideJsonFormats {
+object FeatureGuideRoutes extends DefaultTimeJsonProtocol {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
   def routeResponse(responseF: Future[StandardRoute]): Route = {

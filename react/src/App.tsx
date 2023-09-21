@@ -19,6 +19,7 @@ import {RegionPage} from "./components/RegionPage";
 import axios from "axios";
 import ApiClient from "./services/ApiClient";
 import UploadForm from "./components/featureGuide/FeatureGuideUploadFile";
+import {DropInLanding} from "./components/dropin/DropInLanding";
 
 
 const StyledDiv = styled('div')(() => ({
@@ -85,7 +86,7 @@ const App = (props: PropsFromReact) => {
                     <div className="header-proposition">
                         <div className="logout">
                             {props.user.kind === "SignedInUser" &&
-                            <Navigation logoutLink={logoutLink} user={props.user.profile}/>}
+                                <Navigation logoutLink={logoutLink} user={props.user.profile}/>}
                         </div>
                         <div className="content">
                             <a href="/" id="proposition-name">Dynamic Response Tool</a>
@@ -120,6 +121,9 @@ const App = (props: PropsFromReact) => {
                     </Route>
                     <Route exact path="/feature-guide-upload">
                         <UploadForm/>
+                    </Route>
+                    <Route exact path="/drop-ins/list">
+                        <DropInLanding/>
                     </Route>
                 </Switch>
             </StyledContainer>

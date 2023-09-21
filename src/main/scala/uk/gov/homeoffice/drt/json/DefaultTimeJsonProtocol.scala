@@ -6,7 +6,7 @@ import uk.gov.homeoffice.drt.routes.FeaturePublished
 
 import java.sql.Timestamp
 
-trait FeatureGuideJsonFormats extends DefaultJsonProtocol {
+trait DefaultTimeJsonProtocol extends DefaultJsonProtocol {
   implicit object TimestampFormat extends JsonFormat[Timestamp] {
     override def write(obj: Timestamp): JsValue = JsString(obj.toString)
 

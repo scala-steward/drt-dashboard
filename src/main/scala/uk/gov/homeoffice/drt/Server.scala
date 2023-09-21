@@ -40,7 +40,8 @@ case class ServerConfig(host: String,
                         keycloakClientSecret: String,
                         keycloakUsername: String,
                         keycloakPassword: String,
-                        scheduleFrequency: Int,
+                        dormantUsersCheckFrequency: Int,
+                        dropInRemindersCheckFrequency: Int,
                         inactivityDays: Int,
                         deactivateAfterWarningDays: Int,
                         userTrackingFeatureFlag: Boolean,
@@ -75,6 +76,9 @@ object Server {
       val urls = Urls(serverConfig.rootDomain, serverConfig.useHttps)
       val userRequestService = UserRequestService(UserAccessRequestDao(ProdDatabase.db))
       val userService = UserService(UserDao(ProdDatabase.db))
+      val dropInDao = DropInDao(ProdDatabase.db)
+      val dropInRegistrationDao = DropInRegistrationDao(ProdDatabase.db)
+
       val featureGuideService = FeatureGuideService(FeatureGuideDao(ProdDatabase.db), FeatureGuideViewDao(ProdDatabase.db))
       val neboRoutes = NeboUploadRoutes(serverConfig.neboPortCodes.toList, ProdHttpClient).route
 
@@ -94,7 +98,9 @@ object Server {
         LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
         ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), () => SDate.now(), emailClient, urls.rootUrl, serverConfig.teamEmail),
         UserRoutes("user", serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
-        FeatureGuideRoutes("guide", featureGuideService, featureUploader, featureDownloader)
+        FeatureGuideRoutes("guide", featureGuideService, featureUploader, featureDownloader),
+        DropInRoute("drop-in",dropInDao),
+        DropInRegisterRoutes("drop-in-register",dropInRegistrationDao)
       )
 
       val serverBinding: Future[ServerBinding] = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
