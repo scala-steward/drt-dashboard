@@ -19,7 +19,7 @@ lazy val slickVersion = "3.4.1"
 lazy val awsJava2SdkVersion = "2.16.49"
 lazy val postgresqlVersion = "42.6.0"
 
-ThisBuild / scapegoatVersion := "2.1.2"
+ThisBuild / scapegoatVersion := "2.1.3"
 
 lazy val root = (project in file(".")).
   settings(
