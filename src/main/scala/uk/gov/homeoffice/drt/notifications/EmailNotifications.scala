@@ -18,7 +18,7 @@ case class EmailNotifications(accessRequestEmails: List[String], client: Notific
 
   val accessRequestLineManagerNotificationEmailTemplateId = "c80595c3-957a-4310-a419-b2f254df3909"
 
-  val accessGrantedTemplateId = "12e36257-c485-4e13-af4f-2293d2dd34a6"
+  val accessGrantedTemplateId = "1335ae5f-c1fa-490f-98e0-1b54894e8f96"
 
   val inactiveUserNotificationTemplateId = "58224cba-7313-4dc9-96f3-d8cb34550ec8"
 
@@ -35,6 +35,10 @@ case class EmailNotifications(accessRequestEmails: List[String], client: Notific
       s"https://$domain"
     else
       s"https://${curad.portsRequested.trim.toLowerCase()}.$domain/"
+  }
+
+  def getDropInLink(curad: ClientUserRequestedAccessData, domain: String): String = {
+    s"https://${curad.getListOfPortOrRegion.headOption.map(_.trim.toLowerCase).getOrElse("")}.$domain/#trainingHub/dropInBooking"
   }
 
   def sendDropInReminderEmail(email: String, dropIn: DropInRow, teamEmail: String) = {
@@ -63,6 +67,8 @@ case class EmailNotifications(accessRequestEmails: List[String], client: Notific
       Map(
         "requesterUsername" -> getFirstName(clientUserRequestedAccessData.email),
         "link" -> getLink(clientUserRequestedAccessData, domain),
+        "dropInLink" -> getDropInLink(clientUserRequestedAccessData, domain),
+        "teamEmail" -> teamEmail
       ).asJava
     Try(client.sendEmail(
       accessGrantedTemplateId,

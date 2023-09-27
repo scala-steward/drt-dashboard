@@ -33,7 +33,7 @@ export function stringToUKDate(date?: string): string | undefined {
     const ukDatetime = parsedDate.tz("Europe/London");
     const result = ukDatetime.format('YYYY-MM-DD HH:mm');
 
-    console.log("Input (assumed UTC):", date);
+    console.log("Input (UTC):", date);
     console.log("Converted to Europe/London:", result);
 
     return result;
