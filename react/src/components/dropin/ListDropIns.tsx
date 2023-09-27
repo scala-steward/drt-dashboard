@@ -23,8 +23,20 @@ export function stringToUKDate(date?: string): string | undefined {
         return undefined;
     }
 
-    const ukDatetime = moment.tz(date, "YYYY-MM-DD HH:mm:ss.S", "Europe/London");
-    return ukDatetime.format('YYYY-MM-DD HH:mm');
+    const parsedDate = moment.utc(date, "YYYY-MM-DD HH:mm:ss");
+
+    if (!parsedDate.isValid()) {
+        console.error("Invalid date provided:", date);
+        return undefined;
+    }
+
+    const ukDatetime = parsedDate.tz("Europe/London");
+    const result = ukDatetime.format('YYYY-MM-DD HH:mm');
+
+    console.log("Input (assumed UTC):", date);
+    console.log("Converted to Europe/London:", result);
+
+    return result;
 }
 
 export interface SeminarData {
