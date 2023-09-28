@@ -106,6 +106,7 @@ export function EditDropIn() {
                                     renderInput={(props) => <TextField {...props} />}
                                     label="Start Time"
                                     value={editStartTime}
+                                    inputFormat="DD/MM/YYYY HH:mm A"
                                     onChange={(newValue) => {
                                         setEditStartTime(newValue);
                                     }}
@@ -118,6 +119,7 @@ export function EditDropIn() {
                                     renderInput={(props) => <TextField {...props} />}
                                     label="End Time"
                                     value={editEndTime}
+                                    inputFormat="DD/MM/YYYY HH:mm A"
                                     onChange={(newValue) => {
                                         setEditEndTime(newValue);
                                     }}
@@ -125,7 +127,7 @@ export function EditDropIn() {
                             </LocalizationProvider>
                         </Grid>
                         <Grid item xs={12}>
-                            <Box sx={{paddingLeft: "20%"}}>
+                            <Box sx={{alignItems: "left"}}>
                                 <Button variant="outlined" type="submit">Update</Button>
                             </Box>
                         </Grid>

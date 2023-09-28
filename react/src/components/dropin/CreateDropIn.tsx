@@ -30,7 +30,7 @@ export function CreateDropIn() {
     const [error, setError] = useState(false);
     const [errorText, setErrorText] = useState('');
     const [title, setTitle] = useState('');
-    const [startTime, setStartTime] = React.useState();
+    const [startTime, setStartTime] = React.useState<Moment>();
     const [endTime, setEndTime] = React.useState<Moment>();
     const [meetingLink, setMeetingLink] = useState('');
     const [formSubmitted, setFormSubmitted] = useState(false);
@@ -48,11 +48,11 @@ export function CreateDropIn() {
     }
 
     const validateForm = () => {
-       return title && startTime && endTime && endTime.isAfter(startTime)
+        return title && startTime && endTime && endTime.isAfter(startTime)
     }
 
     const handleSubmit = (e: React.FormEvent) => {
-        if(validateForm()){
+        if (validateForm()) {
             setFormSubmitted(true);
             e.preventDefault();
             axios.post('/drop-in/save', jsonDropInData(startTime, endTime, title, meetingLink))
@@ -116,6 +116,7 @@ export function CreateDropIn() {
                                                    helperText={formSubmitted && !startTime ? "StartTime is required" : ""}/>}
                                     label="Start Time"
                                     value={startTime}
+                                    inputFormat="DD/MM/YYYY HH:mm A"
                                     onChange={(newValue) => {
                                         setStartTime(newValue);
                                         setEndTime(newValue);
@@ -140,6 +141,7 @@ export function CreateDropIn() {
                                                    helperText={formSubmitted && !endTime ? "EndTime is required" : ""}/>}
                                     label="End Time"
                                     value={endTime}
+                                    inputFormat="DD/MM/YYYY HH:mm A"
                                     onChange={(newValue) => {
                                         setEndTime(newValue);
                                     }}
@@ -155,7 +157,7 @@ export function CreateDropIn() {
                             </LocalizationProvider>
                         </Grid>
                         <Grid item xs={12}>
-                            <Box sx={{paddingLeft: "5%"}}>
+                            <Box sx={{alignItems: "left"}}>
                                 <Button variant="outlined" type="submit">Submit</Button>
                             </Box>
                         </Grid>
