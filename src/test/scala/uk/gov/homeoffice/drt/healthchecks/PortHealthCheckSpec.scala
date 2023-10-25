@@ -4,16 +4,14 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes.BadRequest
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.testkit.{ImplicitSender, TestKit}
-import akka.util.Timeout
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import uk.gov.homeoffice.drt.ports.PortCode
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.util.Success
 
 object MockHttp {
   def withResponse(percent: String, boolean: String)
@@ -43,25 +41,25 @@ class PortHealthCheckSpec
 
   "PortHealthCheck" should {
     "parse successful responses" in {
-      val responses = PortHealthCheck(PortCode("TST"), MockHttp.withResponse("25.4", "true"))
+      val responses = PortHealthCheck(PortCode("TST"), MockHttp.withResponse("50.5", "true"))
 
       Await.result(responses, 1.second) should ===(Seq(
-        PercentageHealthCheckResponse(Priority1, "API", Success(Some(25.4))),
-        PercentageHealthCheckResponse(Priority1, "Arrival Landing Times", Success(Some(25.4))),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates 60", Success(Some(25.4))),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates 120", Success(Some(25.4))),
-        BooleanHealthCheckResponse(Priority1, "Desk Updates", Success(Some(true))),
+        PercentageHealthCheckResponse(Priority1, "API", Success(Some(50.5)), Option(false)),
+        PercentageHealthCheckResponse(Priority1, "Arrival Landing Times", Success(Some(50.5)), Option(false)),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates 60", Success(Some(50.5)), Option(true)),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates 120", Success(Some(50.5)), Option(true)),
+        BooleanHealthCheckResponse(Priority1, "Desk Updates", Success(Some(true)), Option(true)),
       ))
     }
     "parse null responses" in {
       val responses = PortHealthCheck(PortCode("TST"), MockHttp.withResponse("null", "null"))
 
       Await.result(responses, 1.second) should ===(Seq(
-        PercentageHealthCheckResponse(Priority1, "API", Success(None)),
-        PercentageHealthCheckResponse(Priority1, "Arrival Landing Times", Success(None)),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates 60", Success(None)),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates 120", Success(None)),
-        BooleanHealthCheckResponse(Priority1, "Desk Updates", Success(None)),
+        PercentageHealthCheckResponse(Priority1, "API", Success(None), None),
+        PercentageHealthCheckResponse(Priority1, "Arrival Landing Times", Success(None), None),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates 60", Success(None), None),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates 120", Success(None), None),
+        BooleanHealthCheckResponse(Priority1, "Desk Updates", Success(None), None),
       ))
     }
     "handle failed responses" in {

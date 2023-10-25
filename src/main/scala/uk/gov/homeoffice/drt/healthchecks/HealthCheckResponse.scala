@@ -3,10 +3,17 @@ package uk.gov.homeoffice.drt.healthchecks
 import scala.util.Try
 
 trait HealthCheckResponse[A] {
-  val priority: FailurePriority
+  val priority: IncidentPriority
   val name: String
   val value: Try[Option[A]]
+  val isPass: Option[Boolean]
 }
 
-case class PercentageHealthCheckResponse(priority: FailurePriority, name: String, value: Try[Option[Double]]) extends HealthCheckResponse[Double]
-case class BooleanHealthCheckResponse(priority: FailurePriority, name: String, value: Try[Option[Boolean]]) extends HealthCheckResponse[Boolean]
+case class PercentageHealthCheckResponse(priority: IncidentPriority,
+                                         name: String,
+                                         value: Try[Option[Double]],
+                                         isPass: Option[Boolean]) extends HealthCheckResponse[Double]
+case class BooleanHealthCheckResponse(priority: IncidentPriority,
+                                      name: String,
+                                      value: Try[Option[Boolean]],
+                                      isPass: Option[Boolean]) extends HealthCheckResponse[Boolean]
