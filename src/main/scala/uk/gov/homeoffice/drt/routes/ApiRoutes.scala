@@ -16,6 +16,7 @@ import uk.gov.homeoffice.drt.authentication._
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.redlist.{RedListJsonFormats, RedListUpdate, RedListUpdates, SetRedListUpdate}
 import uk.gov.homeoffice.drt.services.UserService
+import uk.gov.homeoffice.drt.{Dashboard, DashboardClient}
 
 import java.sql.Timestamp
 import java.util.Date
