@@ -46,22 +46,22 @@ class PortHealthCheckSpec
       val responses = PortHealthCheck(PortCode("TST"), MockHttp.withResponse("25.4", "true"))
 
       Await.result(responses, 1.second) should ===(Seq(
-        PercentageHealthCheckResponse("API", Success(Some(25.4))),
-        PercentageHealthCheckResponse("Arrival Landing Times", Success(Some(25.4))),
-        PercentageHealthCheckResponse("Arrival Updates 60", Success(Some(25.4))),
-        PercentageHealthCheckResponse("Arrival Updates 120", Success(Some(25.4))),
-        BooleanHealthCheckResponse("Desk Updates", Success(Some(true))),
+        PercentageHealthCheckResponse(Priority1, "API", Success(Some(25.4))),
+        PercentageHealthCheckResponse(Priority1, "Arrival Landing Times", Success(Some(25.4))),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates 60", Success(Some(25.4))),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates 120", Success(Some(25.4))),
+        BooleanHealthCheckResponse(Priority1, "Desk Updates", Success(Some(true))),
       ))
     }
     "parse null responses" in {
       val responses = PortHealthCheck(PortCode("TST"), MockHttp.withResponse("null", "null"))
 
       Await.result(responses, 1.second) should ===(Seq(
-        PercentageHealthCheckResponse("API", Success(None)),
-        PercentageHealthCheckResponse("Arrival Landing Times", Success(None)),
-        PercentageHealthCheckResponse("Arrival Updates 60", Success(None)),
-        PercentageHealthCheckResponse("Arrival Updates 120", Success(None)),
-        BooleanHealthCheckResponse("Desk Updates", Success(None)),
+        PercentageHealthCheckResponse(Priority1, "API", Success(None)),
+        PercentageHealthCheckResponse(Priority1, "Arrival Landing Times", Success(None)),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates 60", Success(None)),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates 120", Success(None)),
+        BooleanHealthCheckResponse(Priority1, "Desk Updates", Success(None)),
       ))
     }
     "handle failed responses" in {

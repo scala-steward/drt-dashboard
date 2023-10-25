@@ -18,10 +18,10 @@ trait PercentageHealthCheck extends HealthCheck[Double] {
         case _ => Try(Option(str.toDouble))
       }
 
-      PercentageHealthCheckResponse(name, value)
+      PercentageHealthCheckResponse(priority, name, value)
     }
 
-  override def failure: HealthCheckResponse[Double] = PercentageHealthCheckResponse(name, Failure(new Exception("Failed to parse response")))
+  override def failure: HealthCheckResponse[Double] = PercentageHealthCheckResponse(priority, name, Failure(new Exception("Failed to parse response")))
 }
 
 trait BooleanHealthCheck extends HealthCheck[Boolean] {
@@ -32,33 +32,38 @@ trait BooleanHealthCheck extends HealthCheck[Boolean] {
         case _ => Try(Option(str.toBoolean))
       }
 
-      BooleanHealthCheckResponse(name, value)
+      BooleanHealthCheckResponse(priority, name, value)
     }
 
-  override def failure: HealthCheckResponse[Boolean] = BooleanHealthCheckResponse(name, Failure(new Exception("Failed to parse response")))
+  override def failure: HealthCheckResponse[Boolean] = BooleanHealthCheckResponse(priority, name, Failure(new Exception("Failed to parse response")))
 }
 
 case object ApiHealthCheck extends PercentageHealthCheck {
+  override val priority: FailurePriority = Priority1
   override val name: String = "API"
   override val url: String = "/health-check/received-api/60/10"
 }
 
 case object ArrivalLandingTimesHealthCheck extends PercentageHealthCheck {
+  override val priority: FailurePriority = Priority1
   override val name: String = "Arrival Landing Times"
   override val url: String = "/health-check/received-landing-times/300/1"
 }
 
 case object ArrivalUpdates60HealthCheck extends PercentageHealthCheck {
+  override val priority: FailurePriority = Priority2
   override val name: String = "Arrival Updates 60"
   override val url: String = "/health-check/received-arrival-updates/60/3"
 }
 
 case object ArrivalUpdates120HealthCheck extends PercentageHealthCheck {
+  override val priority: FailurePriority = Priority2
   override val name: String = "Arrival Updates 120"
   override val url: String = "/health-check/received-arrival-updates/120/1"
 }
 
 case object DeskUpdatesHealthCheck extends BooleanHealthCheck {
+  override val priority: FailurePriority = Priority1
   override val name: String = "Desk Updates"
   override val url: String = "/health-check/calculated-desk-updates"
 }
