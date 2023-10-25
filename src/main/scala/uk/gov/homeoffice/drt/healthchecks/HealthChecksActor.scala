@@ -29,7 +29,7 @@ object HealthChecksActor {
 
         if (alarmPreviouslyActive && !alarmNowActive)
           soundAlarm(portCode, checkName, response.priority)
-        else if (!alarmPreviouslyActive && alarmNowActive)
+        if (!alarmPreviouslyActive && alarmNowActive)
           silenceAlarm(portCode, checkName, response.priority)
 
         replyTo ! (if (alarmNowActive) AlarmActive else AlarmInactive)

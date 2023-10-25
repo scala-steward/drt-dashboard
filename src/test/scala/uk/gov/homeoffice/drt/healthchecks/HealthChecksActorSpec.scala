@@ -7,11 +7,12 @@ import akka.util.Timeout
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
+import uk.gov.homeoffice.drt.healthchecks.alarms.{AlarmActive, AlarmInactive}
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.time.SDate
 
 import scala.collection.immutable.SortedMap
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Await, ExecutionContext}
 import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success}
 
@@ -80,15 +81,18 @@ class HealthChecksActorSpec
 
       val port = PortCode("LHR")
       val failureResponse = BooleanHealthCheckResponse(Priority1, "test", Failure(new Exception("Failed to parse response")), None)
-      val startState = Map(port -> Map("test" -> SortedMap(1L -> failureResponse, 2L -> failureResponse)))
+      val successResponse = BooleanHealthCheckResponse(Priority1, "test", Success(Some(true)), Option(true))
+      val startState = Map(port -> Map("test" -> SortedMap(1L -> successResponse, 2L -> failureResponse, 3L -> failureResponse)))
 
       val actor = typedSystem.systemActorOf(HealthChecksActor(startState, soundAlarm, silenceAlarm, now, alarmTriggerConsecutiveFailures), "test1")
 
-      actor.ask(replyTo => HealthChecksActor.PortHealthCheckResponse(port, failureResponse, replyTo))
+      val response = actor.ask(replyTo => HealthChecksActor.PortHealthCheckResponse(port, failureResponse, replyTo))
+      Await.result(response, 1.second) === AlarmActive
 
       alarmSounded === true
       alarmSilenced === false
     }
+
     "update the state and silence the alarm" in {
       var alarmSounded = false
       var alarmSilenced = false
@@ -101,11 +105,12 @@ class HealthChecksActorSpec
       val failureResponse = BooleanHealthCheckResponse(Priority1, "test", Failure(new Exception("Failed to parse response")), None)
       val nonPassResponse = PercentageHealthCheckResponse(Priority1, "test", Success(Option(0)), Option(false))
       val successResponse = BooleanHealthCheckResponse(Priority1, "test", Success(Some(true)), Option(true))
-      val startState = Map(port -> Map("test" -> SortedMap(1L -> failureResponse, 2L -> failureResponse, 3L -> failureResponse)))
+      val startState = Map(port -> Map("test" -> SortedMap(1L -> failureResponse, 2L -> nonPassResponse, 3L -> failureResponse)))
 
       val actor = typedSystem.systemActorOf(HealthChecksActor(startState, soundAlarm, silenceAlarm, now, alarmTriggerConsecutiveFailures), "test2")
 
-      actor.ask(replyTo => HealthChecksActor.PortHealthCheckResponse(port, successResponse, replyTo))
+      val response = actor.ask(replyTo => HealthChecksActor.PortHealthCheckResponse(port, successResponse, replyTo))
+      Await.result(response, 1.second) === AlarmInactive
 
       alarmSounded === false
       alarmSilenced === true
