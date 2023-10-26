@@ -1,12 +1,18 @@
 package uk.gov.homeoffice.drt
 
+import akka.actor.Cancellable
+import akka.actor.typed.scaladsl.AskPattern.Askable
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import akka.actor.typed.{ActorSystem, Behavior, PostStop}
+import akka.actor.typed.{ActorSystem, Behavior, PostStop, Scheduler}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
+import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.Directives.{concat, getFromResource, getFromResourceDirectory}
 import akka.http.scaladsl.server.Route
+import akka.stream.Materializer
+import akka.util.Timeout
 import uk.gov.homeoffice.drt.db._
+import uk.gov.homeoffice.drt.healthchecks.{HealthCheckMonitor, HealthCheckResponse, HealthChecksActor, IncidentPriority}
 import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications}
 import uk.gov.homeoffice.drt.persistence.ExportPersistenceImpl
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
@@ -16,7 +22,8 @@ import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
 import uk.gov.homeoffice.drt.time.SDate
 import uk.gov.homeoffice.drt.uploadTraining.FeatureGuideService
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
 case class KeyClockConfig(url: String,
@@ -73,6 +80,7 @@ object Server {
     Behaviors.setup { ctx: ActorContext[Message] =>
       implicit val system: ActorSystem[Nothing] = ctx.system
       implicit val ec: ExecutionContextExecutor = system.executionContext
+
       val urls = Urls(serverConfig.rootDomain, serverConfig.useHttps)
       val userRequestService = UserRequestService(UserAccessRequestDao(ProdDatabase.db))
       val userService = UserService(UserDao(ProdDatabase.db))
@@ -84,6 +92,7 @@ object Server {
 
       val (exportUploader, exportDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.exportsFolderPrefix)
       val (featureUploader, featureDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.featureFolderPrefix)
+
       implicit val db: ProdDatabase.type = ProdDatabase
 
       val routes: Route = concat(
@@ -99,18 +108,18 @@ object Server {
         ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), () => SDate.now(), emailClient, urls.rootUrl, serverConfig.teamEmail),
         UserRoutes("user", serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
         FeatureGuideRoutes("guide", featureGuideService, featureUploader, featureDownloader),
-        DropInRoute("drop-in",dropInDao),
-        DropInRegisterRoutes("drop-in-register",dropInRegistrationDao)
+        DropInRoute("drop-in", dropInDao),
+        DropInRegisterRoutes("drop-in-register", dropInRegistrationDao)
       )
 
-      val serverBinding: Future[ServerBinding] = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
+      val serverBinding = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
 
       ctx.pipeToSelf(serverBinding) {
         case Success(binding) => Started(binding)
         case Failure(ex) => StartFailed(ex)
       }
 
-      def running(binding: ServerBinding): Behavior[Message] =
+      def running(binding: ServerBinding, monitor: Cancellable): Behavior[Message] =
         Behaviors.receiveMessagePartial[Message] {
           case Stop =>
             ctx.log.info(
@@ -121,6 +130,7 @@ object Server {
         }.receiveSignal {
           case (_, PostStop) =>
             binding.unbind()
+            monitor.cancel()
             Behaviors.same
         }
 
@@ -133,8 +143,13 @@ object Server {
               "Server online at http://{}:{}/",
               binding.localAddress.getHostString,
               binding.localAddress.getPort)
+
             if (wasStopped) ctx.self ! Stop
-            running(binding)
+
+            val monitor: Cancellable = startHealthCheckMonitor(serverConfig)
+
+            running(binding, monitor)
+
           case Stop =>
             // we got a stop message but haven't completed starting yet,
             // we cannot stop until starting has completed
@@ -144,4 +159,27 @@ object Server {
       starting(wasStopped = false)
     }
 
+  private def startHealthCheckMonitor(serverConfig: ServerConfig)
+                                     (implicit
+                                      system: ActorSystem[Nothing],
+                                      ec: ExecutionContext,
+                                      mat: Materializer,
+                                     ): Cancellable = {
+    implicit val timeout: Timeout = new Timeout(1.second)
+    implicit val scheduler: Scheduler = system.scheduler
+
+    val soundAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) =>
+      println(s"Alarm activated for $portCode $checkName $priority")
+    val silenceAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) =>
+      println(s"Alarm silenced for $portCode $checkName $priority")
+
+    val healthChecksActor = system.systemActorOf(HealthChecksActor(Map.empty, soundAlarm, silenceAlarm, () => SDate.now().millisSinceEpoch, 3), "health-checks")
+    val makeRequest = (request: HttpRequest) => Http().singleRequest(request)
+    val recordResponse = (port: PortCode, response: HealthCheckResponse[_]) => {
+      healthChecksActor.ask(replyTo => HealthChecksActor.PortHealthCheckResponse(port, response, replyTo))
+    }
+    println(s"Starting health check monitor for ports ${serverConfig.portCodes.mkString(", ")}")
+    val monitor = HealthCheckMonitor(makeRequest, recordResponse, serverConfig.portCodes)
+    scheduler.scheduleWithFixedDelay(1.seconds, 1.minute)(() => monitor())
+  }
 }

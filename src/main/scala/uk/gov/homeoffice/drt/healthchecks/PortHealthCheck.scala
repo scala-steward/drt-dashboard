@@ -24,6 +24,7 @@ object PortHealthCheck {
       .mapAsync(1) { check =>
         val uri = Dashboard.drtInternalUriForPortCode(port) + check.url
         val request = HttpRequest(uri = uri)
+        println(s"PortHealthCheck: $uri")
         makeRequest(request)
           .flatMap { response =>
             val status = response.status
@@ -36,6 +37,11 @@ object PortHealthCheck {
               response.entity.discardBytes()
               Future.successful(check.failure)
             }
+          }
+          .recover {
+            case t: Throwable =>
+              println(s"PortHealthCheck failed: ${t.getMessage}")
+              check.failure
           }
       }
       .runWith(Sink.seq)
