@@ -27,10 +27,10 @@ object HealthChecksActor {
         val newPortChecks = updateState(portChecks, portCode, response, checkName, now())
         val alarmNowActive = isHcAlarmActive(newPortChecks, portCode, checkName, alarmTriggerConsecutiveFailures)
 
-        if (alarmPreviouslyActive && !alarmNowActive)
-          soundAlarm(portCode, checkName, response.priority)
-        if (!alarmPreviouslyActive && alarmNowActive)
+        if (!alarmNowActive && alarmPreviouslyActive)
           silenceAlarm(portCode, checkName, response.priority)
+        if (alarmNowActive && !alarmPreviouslyActive)
+          soundAlarm(portCode, checkName, response.priority)
 
         replyTo ! (if (alarmNowActive) AlarmActive else AlarmInactive)
 
@@ -40,7 +40,10 @@ object HealthChecksActor {
   def updateState(state: Map[PortCode, Map[String, SortedMap[Long, HealthCheckResponse[_]]]], portCode: PortCode, response: HealthCheckResponse[_], checkName: String, now: Long): Map[PortCode, Map[String, SortedMap[Long, HealthCheckResponse[_]]]] = {
     val portResponses = state.getOrElse(portCode, Map.empty)
     val hcResponses = getHcResponses(portResponses, checkName)
-    val newHcResponses = hcResponses.drop(1) + (now -> response)
+    val newHcResponses = if (hcResponses.size >= 3)
+      hcResponses.drop(1) + (now -> response)
+    else
+      hcResponses + (now -> response)
     val newPortResponses = portResponses.updated(checkName, newHcResponses)
     state.updated(portCode, newPortResponses)
   }

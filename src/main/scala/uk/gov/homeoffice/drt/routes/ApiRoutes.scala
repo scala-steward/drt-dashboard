@@ -25,8 +25,7 @@ import scala.concurrent.{ExecutionContextExecutor, Future}
 
 case class PortAlerts(portCode: String, alerts: List[Alert])
 
-object ApiRoutes extends JsonSupport
-  with MultiPortAlertJsonSupport
+object ApiRoutes extends MultiPortAlertJsonSupport
   with RedListJsonFormats
   with UserJsonSupport
   with ClientConfigJsonFormats
@@ -44,11 +43,11 @@ object ApiRoutes extends JsonSupport
     }
   })
 
-  def apply(
-    prefix: String,
-    clientConfig: ClientConfig,
-    neboUploadRoute: Route,
-    userService: UserService)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
+  def apply(prefix: String,
+            clientConfig: ClientConfig,
+            userService: UserService,
+           )
+           (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
     pathPrefix(prefix) {
       concat(
         (get & path("user")) {
@@ -181,9 +180,7 @@ object ApiRoutes extends JsonSupport
               }
             }
           }
-        },
-        post {
-          neboUploadRoute
-        })
+        }
+      )
     }
 }

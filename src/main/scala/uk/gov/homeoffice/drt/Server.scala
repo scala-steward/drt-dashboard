@@ -9,6 +9,7 @@ import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.Directives.{concat, getFromResource, getFromResourceDirectory}
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.stream.Materializer
 import akka.util.Timeout
 import uk.gov.homeoffice.drt.db._
@@ -23,7 +24,7 @@ import uk.gov.homeoffice.drt.time.SDate
 import uk.gov.homeoffice.drt.uploadTraining.FeatureGuideService
 
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.util.{Failure, Success}
 
 case class KeyClockConfig(url: String,
@@ -40,7 +41,6 @@ case class ServerConfig(host: String,
                         useHttps: Boolean,
                         notifyServiceApiKey: String,
                         accessRequestEmails: List[String],
-                        neboPortCodes: Array[String],
                         keycloakUrl: String,
                         keycloakTokenUrl: String,
                         keycloakClientId: String,
@@ -56,9 +56,9 @@ case class ServerConfig(host: String,
                         s3SecretAccessKey: String,
                         drtS3BucketName: String,
                         exportsFolderPrefix: String,
-                        featureFolderPrefix: String
+                        featureFolderPrefix: String,
+                        portCodes: Seq[PortCode],
                        ) {
-  val portCodes: Iterable[PortCode] = portRegions.flatMap(_.ports)
   val portIataCodes: Iterable[String] = portCodes.map(_.iata)
   val clientConfig: ClientConfig = ClientConfig(portRegions, rootDomain, teamEmail)
   val keyClockConfig: KeyClockConfig = KeyClockConfig(keycloakUrl, keycloakTokenUrl, keycloakClientId, keycloakClientSecret)
@@ -88,7 +88,6 @@ object Server {
       val dropInRegistrationDao = DropInRegistrationDao(ProdDatabase.db)
 
       val featureGuideService = FeatureGuideService(FeatureGuideDao(ProdDatabase.db), FeatureGuideViewDao(ProdDatabase.db))
-      val neboRoutes = NeboUploadRoutes(serverConfig.neboPortCodes.toList, ProdHttpClient).route
 
       val (exportUploader, exportDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.exportsFolderPrefix)
       val (featureUploader, featureDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.featureFolderPrefix)
@@ -103,7 +102,7 @@ object Server {
           staticResourceDirectory = getFromResourceDirectory("frontend/static")).route,
         CiriumRoutes("cirium", serverConfig.ciriumDataUri),
         DrtRoutes("drt", serverConfig.portIataCodes),
-        ApiRoutes("api", serverConfig.clientConfig, neboRoutes, userService),
+        ApiRoutes("api", serverConfig.clientConfig, userService),
         LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
         ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), () => SDate.now(), emailClient, urls.rootUrl, serverConfig.teamEmail),
         UserRoutes("user", serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
@@ -174,12 +173,17 @@ object Server {
       println(s"Alarm silenced for $portCode $checkName $priority")
 
     val healthChecksActor = system.systemActorOf(HealthChecksActor(Map.empty, soundAlarm, silenceAlarm, () => SDate.now().millisSinceEpoch, 3), "health-checks")
-    val makeRequest = (request: HttpRequest) => Http().singleRequest(request)
+    val poolSettings = ConnectionPoolSettings(system)
+      .withMaxConnectionBackoff(5.seconds)
+      .withBaseConnectionBackoff(1.second)
+      .withMaxRetries(0)
+      .withMaxConnections(5)
+    val makeRequest = (request: HttpRequest) => Http().singleRequest(request, settings = poolSettings)
     val recordResponse = (port: PortCode, response: HealthCheckResponse[_]) => {
       healthChecksActor.ask(replyTo => HealthChecksActor.PortHealthCheckResponse(port, response, replyTo))
     }
     println(s"Starting health check monitor for ports ${serverConfig.portCodes.mkString(", ")}")
     val monitor = HealthCheckMonitor(makeRequest, recordResponse, serverConfig.portCodes)
-    scheduler.scheduleWithFixedDelay(1.seconds, 1.minute)(() => monitor())
+    scheduler.scheduleWithFixedDelay(1.seconds, 10.seconds)(() => monitor())
   }
 }
