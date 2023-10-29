@@ -12,6 +12,7 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.stream.Materializer
 import akka.util.Timeout
+import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.db._
 import uk.gov.homeoffice.drt.healthchecks.{HealthCheckMonitor, HealthCheckResponse, HealthChecksActor, IncidentPriority}
 import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications}
@@ -58,6 +59,9 @@ case class ServerConfig(host: String,
                         exportsFolderPrefix: String,
                         featureFolderPrefix: String,
                         portCodes: Seq[PortCode],
+                        healthCheckTriggeredNotifyTemplateId: String,
+                        healthCheckResolvedNotifyTemplateId: String,
+                        healthCheckEmailRecipient: String,
                        ) {
   val portIataCodes: Iterable[String] = portCodes.map(_.iata)
   val clientConfig: ClientConfig = ClientConfig(portRegions, rootDomain, teamEmail)
@@ -65,6 +69,8 @@ case class ServerConfig(host: String,
 }
 
 object Server {
+  private val log = LoggerFactory.getLogger(getClass)
+
   sealed trait Message
 
   private final case class StartFailed(cause: Throwable) extends Message
@@ -145,7 +151,7 @@ object Server {
 
             if (wasStopped) ctx.self ! Stop
 
-            val monitor: Cancellable = startHealthCheckMonitor(serverConfig)
+            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, emailClient)
 
             running(binding, monitor)
 
@@ -158,7 +164,9 @@ object Server {
       starting(wasStopped = false)
     }
 
-  private def startHealthCheckMonitor(serverConfig: ServerConfig)
+  private def startHealthCheckMonitor(serverConfig: ServerConfig,
+                                      emailClient: EmailClient,
+                                     )
                                      (implicit
                                       system: ActorSystem[Nothing],
                                       ec: ExecutionContext,
@@ -167,10 +175,19 @@ object Server {
     implicit val timeout: Timeout = new Timeout(1.second)
     implicit val scheduler: Scheduler = system.scheduler
 
+    def sendEmail(portCode: PortCode, checkName: String, priority: IncidentPriority, templateId: String): Unit = {
+      emailClient.send(templateId, serverConfig.healthCheckEmailRecipient, Map(
+        "port" -> portCode.toString.toUpperCase,
+        "port-lower" -> portCode.toString.toLowerCase,
+        "name" -> checkName,
+        "level" -> priority.toString,
+      ))
+    }
+
     val soundAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) =>
-      println(s"Alarm activated for $portCode $checkName $priority")
+      sendEmail(portCode, checkName, priority, serverConfig.healthCheckTriggeredNotifyTemplateId)
     val silenceAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) =>
-      println(s"Alarm silenced for $portCode $checkName $priority")
+      sendEmail(portCode, checkName, priority, serverConfig.healthCheckResolvedNotifyTemplateId)
 
     val healthChecksActor = system.systemActorOf(HealthChecksActor(Map.empty, soundAlarm, silenceAlarm, () => SDate.now().millisSinceEpoch, 3), "health-checks")
     val poolSettings = ConnectionPoolSettings(system)
@@ -182,7 +199,7 @@ object Server {
     val recordResponse = (port: PortCode, response: HealthCheckResponse[_]) => {
       healthChecksActor.ask(replyTo => HealthChecksActor.PortHealthCheckResponse(port, response, replyTo))
     }
-    println(s"Starting health check monitor for ports ${serverConfig.portCodes.mkString(", ")}")
+    log.info(s"Starting health check monitor for ports ${serverConfig.portCodes.mkString(", ")}")
     val monitor = HealthCheckMonitor(makeRequest, recordResponse, serverConfig.portCodes)
     scheduler.scheduleWithFixedDelay(1.seconds, 10.seconds)(() => monitor())
   }

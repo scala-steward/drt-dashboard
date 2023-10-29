@@ -44,6 +44,9 @@ object DrtDashboardApp extends App {
     exportsFolderPrefix = config.getString("exports.s3-folder-prefix"),
     featureFolderPrefix = config.getString("feature-guides.s3-folder-prefix"),
     portCodes = ports,
+    healthCheckTriggeredNotifyTemplateId = config.getString("health-checks.notify-templates.triggered"),
+    healthCheckResolvedNotifyTemplateId = config.getString("health-checks.notify-templates.resolved"),
+    healthCheckEmailRecipient = config.getString("health-checks.email-recipient"),
   )
 
 
