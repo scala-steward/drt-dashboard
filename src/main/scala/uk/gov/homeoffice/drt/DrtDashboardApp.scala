@@ -47,8 +47,8 @@ object DrtDashboardApp extends App {
     healthCheckTriggeredNotifyTemplateId = config.getString("health-checks.notify-templates.triggered"),
     healthCheckResolvedNotifyTemplateId = config.getString("health-checks.notify-templates.resolved"),
     healthCheckEmailRecipient = config.getString("health-checks.email-recipient"),
+    healthCheckFrequencyMinutes = config.getInt("health-checks.frequency-minutes"),
   )
-
 
   private val govNotifyClient = new NotificationClient(serverConfig.notifyServiceApiKey)
 

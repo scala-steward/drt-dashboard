@@ -62,6 +62,7 @@ case class ServerConfig(host: String,
                         healthCheckTriggeredNotifyTemplateId: String,
                         healthCheckResolvedNotifyTemplateId: String,
                         healthCheckEmailRecipient: String,
+                        healthCheckFrequencyMinutes: Int,
                        ) {
   val portIataCodes: Iterable[String] = portCodes.map(_.iata)
   val clientConfig: ClientConfig = ClientConfig(portRegions, rootDomain, teamEmail)
@@ -201,6 +202,6 @@ object Server {
     }
     log.info(s"Starting health check monitor for ports ${serverConfig.portCodes.mkString(", ")}")
     val monitor = HealthCheckMonitor(makeRequest, recordResponse, serverConfig.portCodes)
-    scheduler.scheduleWithFixedDelay(1.seconds, 10.seconds)(() => monitor())
+    scheduler.scheduleWithFixedDelay(30.seconds, serverConfig.healthCheckFrequencyMinutes.minutes)(() => monitor())
   }
 }
