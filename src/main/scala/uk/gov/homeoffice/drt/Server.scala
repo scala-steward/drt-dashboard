@@ -180,7 +180,6 @@ object Server {
     def sendEmail(portCode: PortCode, checkName: String, priority: IncidentPriority, templateId: String): Unit = {
       emailClient.send(templateId, serverConfig.healthCheckEmailRecipient, Map(
         "port" -> portCode.toString.toUpperCase,
-        "port-lower" -> portCode.toString.toLowerCase,
         "name" -> checkName,
         "level" -> priority.toString,
         "link" -> urls.urlForPort(portCode.toString())
