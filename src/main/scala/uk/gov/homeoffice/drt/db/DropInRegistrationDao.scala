@@ -63,4 +63,14 @@ case class DropInRegistrationDao(db: Database) {
     result
   }
 
+  def findRegistrationsByEmail(email: String): Future[Seq[DropInRegistrationRow]] = {
+    val query = dropInRegistrationTable.filter(r => r.email === email.trim).result
+    val result = db.run(query)
+    result
+  }
+
+  def insertRegistration(email:String, dropInId: Int, registeredAt: Timestamp, emailSentAt: Option[Timestamp]): Future[Int] = {
+    val insertAction = dropInRegistrationTable += DropInRegistrationRow(email, dropInId, registeredAt, emailSentAt)
+    db.run(insertAction)
+  }
 }

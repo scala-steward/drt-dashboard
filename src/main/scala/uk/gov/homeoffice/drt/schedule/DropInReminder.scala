@@ -4,9 +4,9 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors, TimerScheduler}
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.ServerConfig
-import uk.gov.homeoffice.drt.db.{ProdDatabase, DropInDao, DropInRegistrationDao}
+import uk.gov.homeoffice.drt.db.{DropInDao, DropInRegistrationDao, ProdDatabase, UserAccessRequestDao, UserDao}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
-import uk.gov.homeoffice.drt.services.DropInService
+import uk.gov.homeoffice.drt.services.{DropInService, UserRequestService, UserService}
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
@@ -20,7 +20,10 @@ object DropInReminder {
   def apply(serverConfig: ServerConfig, timerInitialDelay: FiniteDuration, maxSize: Int, notifications: EmailNotifications): Behavior[DropInCommand] =
     Behaviors.setup { context: ActorContext[DropInCommand] =>
       implicit val ec: ExecutionContextExecutor = context.executionContext
-      val dropInService: DropInService = new DropInService(DropInDao(ProdDatabase.db), DropInRegistrationDao(ProdDatabase.db), serverConfig)
+      val dropInService: DropInService = new DropInService(DropInDao(ProdDatabase.db),
+        DropInRegistrationDao(ProdDatabase.db),
+        UserService(UserDao(ProdDatabase.db)),
+        UserRequestService(UserAccessRequestDao(ProdDatabase.db)), serverConfig.teamEmail)
 
       Behaviors.withTimers(timers => new DropInReminder(
         notifications,
