@@ -152,7 +152,7 @@ object Server {
 
             if (wasStopped) ctx.self ! Stop
 
-            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, emailClient)
+            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, emailClient, urls)
 
             running(binding, monitor)
 
