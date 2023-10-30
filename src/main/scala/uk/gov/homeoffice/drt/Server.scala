@@ -167,6 +167,7 @@ object Server {
 
   private def startHealthCheckMonitor(serverConfig: ServerConfig,
                                       emailClient: EmailClient,
+                                      urls: Urls,
                                      )
                                      (implicit
                                       system: ActorSystem[Nothing],
@@ -182,6 +183,7 @@ object Server {
         "port-lower" -> portCode.toString.toLowerCase,
         "name" -> checkName,
         "level" -> priority.toString,
+        "link" -> urls.urlForPort(portCode.toString())
       ))
     }
 
