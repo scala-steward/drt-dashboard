@@ -65,9 +65,11 @@ object ApiRoutes extends MultiPortAlertJsonSupport
                   id = usernameOption.getOrElse(email),
                   username = usernameOption.getOrElse(email),
                   email = email,
+                  drop_in_notification_at = None,
                   latest_login = new Timestamp(new Date().getTime),
                   inactive_email_sent = None,
-                  revoked_access = None))
+                  revoked_access = None,
+                  created_at = Some(new Timestamp(new Date().getTime))), Some("userTracking"))
               complete(StatusCodes.OK)
             }
           }

@@ -3,8 +3,8 @@ package uk.gov.homeoffice.drt
 import akka.actor.typed.ActorSystem
 import com.typesafe.config.ConfigFactory
 import uk.gov.homeoffice.drt.notifications.{EmailClientImpl, EmailNotifications}
+import uk.gov.homeoffice.drt.schedule.{DropInNotification, DropInReminder, UserTracking}
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
-import uk.gov.homeoffice.drt.schedule.{DropInReminder, UserTracking}
 import uk.gov.service.notify.NotificationClient
 
 import scala.concurrent.duration.DurationInt
@@ -35,6 +35,7 @@ object DrtDashboardApp extends App {
     keycloakPassword = config.getString("key-cloak.password"),
     dormantUsersCheckFrequency = config.getInt("user-tracking.schedule-frequency-minutes"),
     dropInRemindersCheckFrequency = config.getInt("drop-in-registration.schedule-frequency-minutes"),
+    dropInNotificationFrequency = config.getInt("drop-in-notification.schedule-frequency-minutes"),
     inactivityDays = config.getInt("user-tracking.inactivity-days"),
     userTrackingFeatureFlag = config.getBoolean("user-tracking.feature-flag"),
     deactivateAfterWarningDays = config.getInt("user-tracking.deactivate-after-warning-days"),
@@ -59,7 +60,8 @@ object DrtDashboardApp extends App {
   val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig, emailNotifications, emailClient), "DrtDashboard")
   if (serverConfig.userTrackingFeatureFlag) {
     ActorSystem(UserTracking(serverConfig, 1.minutes, 100, emailNotifications), "UserTrackingTimer")
-    ActorSystem(DropInReminder(serverConfig, 1.minutes, 100, emailNotifications), "SeminarReminderTimer")
   }
+  ActorSystem(DropInReminder(serverConfig, 1.minutes, 100, emailNotifications), "DropInReminderTimer")
+  ActorSystem(DropInNotification(serverConfig, 1.minutes, 100, emailNotifications), "DropInNotificationReminderTimer")
 
 }

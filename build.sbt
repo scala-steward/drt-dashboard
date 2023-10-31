@@ -18,6 +18,7 @@ lazy val scalaCsvVersion = "1.3.10"
 lazy val slickVersion = "3.4.1"
 lazy val awsJava2SdkVersion = "2.16.49"
 lazy val postgresqlVersion = "42.6.0"
+lazy val mockitoVersion = "4.6.1"
 
 ThisBuild / scapegoatVersion := "2.1.2"
 
@@ -61,9 +62,10 @@ lazy val root = (project in file(".")).
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
       "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
+      "org.specs2" %% "specs2-core" % specs2Version % Test,
+      "org.mockito" % "mockito-core" % mockitoVersion % Test,
 
-      "org.specs2" %% "specs2-core" % specs2Version % Test
-    ),
+),
 
     resolvers += "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/",
     resolvers += "Artifactory Realm release local" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-release-local/",

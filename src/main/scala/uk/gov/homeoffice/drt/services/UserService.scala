@@ -17,8 +17,12 @@ case class UserService(userDao: IUserDao) {
     userDao.selectUsersToRevokeAccess(numberOfInactivityDays, deactivateAfterWarningDays)
   }
 
-  def upsertUser(userData: User)(implicit ec: ExecutionContext): Future[Int] = {
-    userDao.insertOrUpdate(userData)
+  def upsertUser(userData: User, purpose: Option[String])(implicit ec: ExecutionContext): Future[Int] = {
+    userDao.upsertUser(userData, purpose)
+  }
+
+  def getUsersWithoutDropInNotification(implicit ec: ExecutionContext): Future[Seq[User]] = {
+    userDao.getUsersWithoutDropInNotification()
   }
 
 }

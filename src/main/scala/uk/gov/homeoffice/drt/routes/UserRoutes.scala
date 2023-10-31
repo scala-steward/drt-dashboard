@@ -11,7 +11,7 @@ import spray.json.enrichAny
 import uk.gov.homeoffice.drt.ClientConfig
 import uk.gov.homeoffice.drt.auth.Roles.ManageUsers
 import uk.gov.homeoffice.drt.authentication._
-import uk.gov.homeoffice.drt.db.{UserAccessRequestJsonSupport, UserJsonSupport}
+import uk.gov.homeoffice.drt.db.{User, UserAccessRequestJsonSupport, UserJsonSupport}
 import uk.gov.homeoffice.drt.http.ProdSendAndReceive
 import uk.gov.homeoffice.drt.keycloak.{KeycloakClient, KeycloakService}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
@@ -125,6 +125,15 @@ object UserRoutes extends UserAccessRequestJsonSupport
                       }
                       userRequestService.updateUserRequest(userRequestedAccessData, "Approved")
                       notifications.sendAccessGranted(userRequestedAccessData, clientConfig.domain, clientConfig.teamEmail)
+                      userService.upsertUser(
+                        User(id = userRequestedAccessData.email,
+                          username = userRequestedAccessData.email,
+                          email = userRequestedAccessData.email,
+                          latest_login = new Timestamp(DateTime.now().getMillis),
+                          inactive_email_sent = None,
+                          revoked_access = None,
+                          drop_in_notification_at = None,
+                          created_at = Some(new Timestamp(DateTime.now().getMillis))),Some("Approved"))
                       complete(s"User ${userRequestedAccessData.email} update port ${userRequestedAccessData.portOrRegionText}")
                     } else {
                       complete("No port or region requested")

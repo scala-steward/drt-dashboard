@@ -1,0 +1,17 @@
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date [%level] from %logger in %thread - %message%n%xException</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Log SQL statements -->
+    <logger name="slick.jdbc" level="INFO" />
+
+    <!-- If you're using H2 database for testing, enable debug logging for it too -->
+    <logger name="org.h2" level="INFO" />
+
+    <root level="ERROR">
+        <appender-ref ref="STDOUT" />
+    </root>
+</configuration>

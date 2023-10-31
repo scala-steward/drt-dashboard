@@ -51,15 +51,15 @@ object UserTracking {
 }
 
 class UserTracking(serverConfig: ServerConfig,
-                   notifications: EmailNotifications,
-                   userService: UserService,
-                   timers: TimerScheduler[Command],
-                   timerInitialDelay: FiniteDuration,
-                   timerInterval: FiniteDuration,
-                   numberOfInactivityDays: Int,
-                   deactivateAfterWarningDays: Int,
-                   maxSize: Int,
-                   context: ActorContext[Command]) {
+  notifications: EmailNotifications,
+  userService: UserService,
+  timers: TimerScheduler[Command],
+  timerInitialDelay: FiniteDuration,
+  timerInterval: FiniteDuration,
+  numberOfInactivityDays: Int,
+  deactivateAfterWarningDays: Int,
+  maxSize: Int,
+  context: ActorContext[Command]) {
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   import UserTracking._
@@ -89,7 +89,7 @@ class UserTracking(serverConfig: ServerConfig,
             } else {
               logger.info(s"No email for $user to notify")
             }
-            userService.upsertUser(user.copy(inactive_email_sent = Some(new Timestamp(new Date().getTime))))
+            userService.upsertUser(user.copy(inactive_email_sent = Some(new Timestamp(new Date().getTime))), Some("inactivity"))
           })
         Behaviors.same
 
@@ -144,9 +144,9 @@ class UserTracking(serverConfig: ServerConfig,
   }
 
   def removeUser(keycloakService: KeycloakService, uId: KeyCloakUser, utr: User)
-                (implicit ec: ExecutionContext): Future[Int] = {
+    (implicit ec: ExecutionContext): Future[Int] = {
     keycloakService.removeUser(uId.id)
-    userService.upsertUser(utr.copy(revoked_access = Some(new Timestamp(new Date().getTime))))
+    userService.upsertUser(utr.copy(revoked_access = Some(new Timestamp(new Date().getTime))), Some("revoked"))
   }
 }
 
