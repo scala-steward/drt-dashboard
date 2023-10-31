@@ -2,6 +2,7 @@ package uk.gov.homeoffice.drt.routes
 
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.ActorSystem
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.StatusCodes.OK
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Route
@@ -13,14 +14,14 @@ import uk.gov.homeoffice.drt.auth.Roles.{BorderForceStaff, LHR}
 import uk.gov.homeoffice.drt.db.MockUserDao
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.services.UserService
-import uk.gov.homeoffice.drt.{ClientConfig, ClientConfigJsonFormats, JsonSupport, MockHttpClient}
+import uk.gov.homeoffice.drt.{ClientConfig, ClientConfigJsonFormats, MockHttpClient}
 
 import java.sql.Timestamp
 import java.util.Date
 import scala.concurrent.Await
 import scala.concurrent.duration.DurationInt
 
-class ApiRoutesSpec extends Specification with Specs2RouteTest with JsonSupport with ClientConfigJsonFormats {
+class ApiRoutesSpec extends Specification with Specs2RouteTest with ClientConfigJsonFormats with SprayJsonSupport with DefaultJsonProtocol{
   val testKit: ActorTestKit = ActorTestKit()
 
   implicit val sys: ActorSystem[Nothing] = testKit.system
@@ -29,12 +30,8 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest with JsonSupport 
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
 
   val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), "somedomain.com", "test@test.com")
-  val neboRoutes: NeboUploadRoutes = NeboUploadRoutes(List(), MockHttpClient(() => ""))
   val userService: UserService = UserService(new MockUserDao)
-  val routes: Route = ApiRoutes(
-    "api",
-    clientConfig,
-    neboRoutes.route, userService)
+  val routes: Route = ApiRoutes("api", clientConfig, userService)
 
   "Given a uri accessed by a user with an email but no port access, I should see an empty port list and their email address in JSON" >> {
     Get("/api/user") ~>

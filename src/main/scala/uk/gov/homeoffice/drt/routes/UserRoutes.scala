@@ -8,6 +8,7 @@ import akka.http.scaladsl.server.Route
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 import spray.json.enrichAny
+import uk.gov.homeoffice.drt.ClientConfig
 import uk.gov.homeoffice.drt.auth.Roles.ManageUsers
 import uk.gov.homeoffice.drt.authentication._
 import uk.gov.homeoffice.drt.db.{User, UserAccessRequestJsonSupport, UserJsonSupport}
@@ -16,14 +17,12 @@ import uk.gov.homeoffice.drt.keycloak.{KeycloakClient, KeycloakService}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.routes.ApiRoutes.{authByRole, clientUserAccessDataJsonSupportDataFormatParser}
 import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
-import uk.gov.homeoffice.drt.{ClientConfig, JsonSupport}
 
 import java.sql.Timestamp
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
-object UserRoutes extends JsonSupport
-  with UserAccessRequestJsonSupport
+object UserRoutes extends UserAccessRequestJsonSupport
   with UserJsonSupport
   with AccessRequestJsonSupport
   with KeyCloakUserJsonSupport {

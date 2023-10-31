@@ -2,6 +2,7 @@ package uk.gov.homeoffice.drt.routes
 
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.ActorSystem
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.Specs2RouteTest
@@ -12,20 +13,28 @@ import org.specs2.specification.BeforeEach
 import slick.jdbc.PostgresProfile.api._
 import slick.lifted.TableQuery
 import spray.json._
+import uk.gov.homeoffice.drt.ClientConfig
 import uk.gov.homeoffice.drt.auth.Roles.BorderForceStaff
 import uk.gov.homeoffice.drt.authentication.{AccessRequest, AccessRequestJsonSupport}
 import uk.gov.homeoffice.drt.db._
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
-import uk.gov.homeoffice.drt.{ClientConfig, JsonSupport}
 
 import java.sql.Timestamp
 import java.time.Instant
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future}
 
-class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport with AccessRequestJsonSupport with UserAccessRequestJsonSupport with UserJsonSupport with BeforeEach {
+class UserRoutesSpec extends Specification
+  with Specs2RouteTest
+  with SprayJsonSupport
+  with DefaultJsonProtocol
+  with AccessRequestJsonSupport
+  with UserAccessRequestJsonSupport
+  with UserJsonSupport
+  with BeforeEach {
+
   val testKit: ActorTestKit = ActorTestKit()
   implicit val sys: ActorSystem[Nothing] = testKit.system
   private val config: Config = ConfigFactory.load()
@@ -106,7 +115,7 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
         RawHeader("X-Auth-Email", "my@email.com") ~> userRoutes(userService, userRequestService) ~> check {
         val jsonUsers = responseAs[String].parseJson.asInstanceOf[JsArray].elements
         jsonUsers.contains(user1.toJson) && jsonUsers.contains(user2.toJson)
-        }
+      }
     }
 
     "Saves user access request" >> {
@@ -115,8 +124,8 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
       Post("/user/access-request", accessRequest.toJson) ~>
         RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
         RawHeader("X-Auth-Email", "my@email.com") ~> userRoutes(userService, userRequestService) ~> check {
-          responseAs[String] shouldEqual "OK"
-        }
+        responseAs[String] shouldEqual "OK"
+      }
     }
 
     "Gives user access requested" >> {
@@ -128,8 +137,8 @@ class UserRoutesSpec extends Specification with Specs2RouteTest with JsonSupport
       Get("/user/access-request?status=\"Requested\"") ~>
         RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
         RawHeader("X-Auth-Email", "my@email.com") ~> userRoutes(userService, userRequestService) ~> check {
-          responseAs[JsValue] shouldEqual Seq(expectedUserAccess(accessRequestToSave, currentTime)).toJson
-        }
+        responseAs[JsValue] shouldEqual Seq(expectedUserAccess(accessRequestToSave, currentTime)).toJson
+      }
     }
 
   }
