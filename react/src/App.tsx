@@ -7,12 +7,10 @@ import UserTracking from './components/users/UserTracking';
 import {Route, Switch} from "react-router-dom";
 import Loading from "./components/Loading";
 import Navigation from "./components/Navigation";
-import NeboUpload from "./components/NeboUpload";
 import {RootState, rootStore} from "./store/rootReducer";
 import {connect, ConnectedProps} from "react-redux";
 import {fetchUserProfile} from "./store/userSlice";
 import {fetchConfig} from "./store/configSlice";
-import {RedListEditor} from "./components/RedListEditor";
 import {Container} from "@mui/material";
 import {styled} from "@mui/material/styles";
 import {RegionPage} from "./components/RegionPage";
@@ -108,14 +106,8 @@ const App = (props: PropsFromReact) => {
                     <Route exact path="/alerts">
                         <Alerts regions={props.config.values.portsByRegion} user={props.user.profile}/>
                     </Route>
-                    <Route exact path="/upload">
-                        <NeboUpload user={props.user.profile} config={props.config.values}/>
-                    </Route>
-                    <Route exact path="/region/:name">
+                    <Route exact path="/region/:regionName">
                         <RegionPage user={props.user.profile} config={props.config.values}/>
-                    </Route>
-                    <Route exact path="/red-list-editor">
-                        <RedListEditor/>
                     </Route>
                     <Route exact path="/feature-guide-upload">
                         <UploadForm/>

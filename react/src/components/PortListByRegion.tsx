@@ -25,7 +25,7 @@ export const PortListByRegion = (props: { user: UserProfile, regions: PortRegion
             }}>
                 {props.user.roles.includes("rcc:" + region.name.toLowerCase()) ?
                     <Button style={{fontSize: '18px'}}
-                            href={'/region?regionName=' + region.name}>{region.name}</Button> :
+                            href={`/region/${region.name.toLowerCase()}`}>{region.name}</Button> :
                     <Button style={{fontSize: '18px', color: 'black'}} disabled={true}>{region.name}</Button>
                 }
                 <List>

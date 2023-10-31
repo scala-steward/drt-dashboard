@@ -25,6 +25,17 @@ export default function Navigation(props: IProps) {
         setAnchorEl(null);
     };
 
+    const menuItems = [
+        {label: 'Home', link: '/', roles: []},
+        {label: 'Access requests', link: '/userManagement', roles: ['manage-users']},
+        {label: 'Alert notices', link: '/alerts', roles: ['manage-users']},
+        {label: 'Feature guides', link: '/feature-guide-upload', roles: ['manage-users']},
+        {label: 'Health checks', link: '/health-checks', roles: ['manage-users']},
+        {label: 'Drop-ins', link: '/drop-ins/list', roles: ['manage-users']},
+        {label: 'Users', link: '/userTracking', roles: ['manage-users']},
+        {label: 'Log out', link: props.logoutLink, roles: []},
+    ]
+
     return (
         <Box>
             <TriggerButton
@@ -43,19 +54,13 @@ export default function Navigation(props: IProps) {
                 open={!!anchorEl}
                 onClose={handleClose}
             >
-                <MenuItem onClick={handleClose}><Link to="/">Home</Link></MenuItem>
-                {props.user.roles.includes("manage-users") ?
-                    <MenuItem onClick={handleClose}><Link to="/userManagement">Access Requests</Link></MenuItem> : ""}
-                {props.user.roles.includes("create-alerts") ?
-                    <MenuItem onClick={handleClose}><Link to="/alerts">Alerts</Link></MenuItem> : ""}
-                {props.user.roles.includes("manage-users") ?
-                    <MenuItem onClick={handleClose}><Link to="/feature-guide-upload">Feature
-                        Guides</Link></MenuItem> : ""}
-                {props.user.roles.includes("manage-users") ?
-                    <MenuItem onClick={handleClose}><Link to="/drop-ins/list">Drop-ins</Link></MenuItem> : ""}
-                {props.user.roles.includes("manage-users") ?
-                    <MenuItem onClick={handleClose}><Link to="/userTracking">Users</Link></MenuItem> : ""}
-                <MenuItem onClick={handleClose}><a href={props.logoutLink} id="proposition-name">Log out</a></MenuItem>
+                {menuItems.map(item => {
+                    if (item.roles.length === 0 || item.roles.some(role => props.user.roles.includes(role))) {
+                        return <MenuItem onClick={handleClose}><Link to={item.link}>
+                            {item.label}
+                        </Link></MenuItem>
+                    }
+                })}
             </Menu>
         </Box>
     );
