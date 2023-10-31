@@ -40,25 +40,21 @@ export default function Navigation(props: IProps) {
                 id="navigation"
                 anchorEl={anchorEl}
                 keepMounted
-                open={Boolean(anchorEl)}
+                open={!!anchorEl}
                 onClose={handleClose}
             >
                 <MenuItem onClick={handleClose}><Link to="/">Home</Link></MenuItem>
                 {props.user.roles.includes("manage-users") ?
-                    <MenuItem onClick={handleClose}><Link to="/userManagement">User Management</Link></MenuItem> : ""}
-                {props.user.roles.includes("manage-users") ?
-                    <MenuItem onClick={handleClose}><Link to="/userTracking">User Tracking</Link></MenuItem> : ""}
+                    <MenuItem onClick={handleClose}><Link to="/userManagement">Access Requests</Link></MenuItem> : ""}
                 {props.user.roles.includes("create-alerts") ?
                     <MenuItem onClick={handleClose}><Link to="/alerts">Alerts</Link></MenuItem> : ""}
-                {props.user.roles.includes("nebo:upload") ?
-                    <MenuItem onClick={handleClose}><Link to="/upload">Nebo Upload</Link></MenuItem> : ""}
-                {props.user.roles.includes("red-lists:edit") ?
-                    <MenuItem onClick={handleClose}><Link to="/red-list-editor">Edit red list</Link></MenuItem> : ""}
                 {props.user.roles.includes("manage-users") ?
                     <MenuItem onClick={handleClose}><Link to="/feature-guide-upload">Feature
                         Guides</Link></MenuItem> : ""}
                 {props.user.roles.includes("manage-users") ?
-                    <MenuItem onClick={handleClose}><Link to="/drop-ins/list">Manage Drop-ins</Link></MenuItem> : ""}
+                    <MenuItem onClick={handleClose}><Link to="/drop-ins/list">Drop-ins</Link></MenuItem> : ""}
+                {props.user.roles.includes("manage-users") ?
+                    <MenuItem onClick={handleClose}><Link to="/userTracking">Users</Link></MenuItem> : ""}
                 <MenuItem onClick={handleClose}><a href={props.logoutLink} id="proposition-name">Log out</a></MenuItem>
             </Menu>
         </Box>

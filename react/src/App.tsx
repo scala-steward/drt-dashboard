@@ -34,8 +34,6 @@ const StyledContainer = styled(Container)(() => ({
     display: 'inline-block',
 }));
 
-const regionName = new URLSearchParams(window.location.search).get('regionName')
-
 rootStore.dispatch(fetchUserProfile())
 rootStore.dispatch(fetchConfig())
 
@@ -113,8 +111,8 @@ const App = (props: PropsFromReact) => {
                     <Route exact path="/upload">
                         <NeboUpload user={props.user.profile} config={props.config.values}/>
                     </Route>
-                    <Route exact path="/region">
-                        <RegionPage user={props.user.profile} config={props.config.values} region={regionName}/>
+                    <Route exact path="/region/:name">
+                        <RegionPage user={props.user.profile} config={props.config.values}/>
                     </Route>
                     <Route exact path="/red-list-editor">
                         <RedListEditor/>

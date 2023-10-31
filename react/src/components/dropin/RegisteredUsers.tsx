@@ -57,7 +57,7 @@ export function RegisteredUsers() {
     const [selectedRow, setSelectedRow] = React.useState<SeminarData | null>(null);
     const [error, setError] = useState(false);
     const [unregister, setUnregister] = useState(false);
-    const [redirectTo, setRedirectTo] = useState(null);
+    const [redirectTo, setRedirectTo] = useState<string | null>(null);
 
     const handleRemove = (userData: DropInRegisteredUsers | undefined) => {
         setRowDetails(userData)

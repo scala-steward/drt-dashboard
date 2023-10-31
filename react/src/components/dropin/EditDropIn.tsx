@@ -6,7 +6,7 @@ import TextField from "@mui/material/TextField";
 import {LocalizationProvider} from "@mui/x-date-pickers/LocalizationProvider";
 import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
 import Box from "@mui/material/Box";
-import moment from 'moment';
+import moment, {Moment} from 'moment';
 import {AdapterMoment} from "@mui/x-date-pickers/AdapterMoment";
 import {jsonDropInData} from "./CreateDropIn";
 import {useParams} from 'react-router-dom';
@@ -16,10 +16,11 @@ import {Alert} from "../DialogComponent";
 export function EditDropIn() {
     const [redirectTo, setRedirectTo] = useState('');
     const {dropInId} = useParams<{ dropInId: string }>();
-    const [editTitle, setEditTitle] = React.useState()
-    const [editStartTime, setEditStartTime] = React.useState();
-    const [editEndTime, setEditEndTime] = React.useState();
-    const [editMeetingLink, setEditMeetingLink] = React.useState();
+    const [editTitle, setEditTitle] = React.useState<string>('')
+    const [editStartTime, setEditStartTime] = React.useState<Moment | null>(null);
+    const [editEndTime, setEditEndTime] = React.useState<Moment | null>(null);
+
+    const [editMeetingLink, setEditMeetingLink] = React.useState<string>('');
     const [error, setError] = useState(false);
 
     const handleResponse = (response: AxiosResponse) => {

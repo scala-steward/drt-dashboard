@@ -53,7 +53,7 @@ const UploadForm: React.FC = () => {
     e.preventDefault();
 
     const formData = new FormData();
-    formData.append('webmFile', video);
+    video && formData.append('webmFile', video);
     formData.append('title', text);
     formData.append('markdownContent', markdownContent);
     axios.post('/guide/uploadFeatureGuide', formData)
@@ -106,8 +106,10 @@ const UploadForm: React.FC = () => {
                 <Button variant="contained" color="primary" onClick={handlePreviewOpen}>Preview</Button>
               </div> : <span/>}
 
-            <PreviewComponent videoURL={video ? videoUrl : ""} title={text}
-                              markdownContent={markdownContent} openPreview={openPreview}
+            <PreviewComponent videoURL={video ? videoUrl : ""}
+                              title={text}
+                              markdownContent={markdownContent}
+                              openPreview={openPreview}
                               setOpenPreview={setOpenPreview}/>
           </div>
 

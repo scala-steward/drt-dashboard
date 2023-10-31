@@ -15,7 +15,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import {PublishComponent} from "./PublishComponent";
 
 interface Props {
-  setViewFeatureGuides: ((value: (((prevState: boolean) => boolean) | boolean)) => void);
+  setViewFeatureGuides: (view: boolean) => void;
 }
 
 export interface FeatureData {
@@ -26,7 +26,7 @@ export interface FeatureData {
   markdownContent: string;
 }
 
-export const ListFeatureGuide: React.FC = (props: Props) => {
+export const ListFeatureGuide = (props: Props) => {
 
   const featureColumns: GridColDef[] = [
     {
@@ -199,11 +199,14 @@ export const ListFeatureGuide: React.FC = (props: Props) => {
                           color="primary"
                           onClick={handleBack}>back</Button>
                 </Box>
-                <PreviewComponent id={rowDetails?.id} title={rowDetails?.title}
+                <PreviewComponent id={rowDetails?.id}
+                                  title={rowDetails?.title}
                                   videoURL={"/guide/get-feature-videos/" + rowDetails?.fileName}
                                   markdownContent={rowDetails?.markdownContent}
-                                  openPreview={openPreview} setOpenPreview={setOpenPreview}
-                                  setReceivedData={setReceivedData} isEdit={true}
+                                  openPreview={openPreview}
+                                  setOpenPreview={setOpenPreview}
+                                  setReceivedData={setReceivedData}
+                                  isEdit={true}
                                   showEdit={showEdit} setShowEdit={setShowEdit}/>
               </div>
   )
