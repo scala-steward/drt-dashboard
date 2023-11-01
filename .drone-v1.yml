@@ -10,7 +10,7 @@ platform:
 steps:
   - name: Build front end
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.1.0
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.2.0-beta
     environment:
       CI: false
     commands:
@@ -23,7 +23,7 @@ steps:
 
   - name: Copy front end to resources
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.1.0
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.2.0-beta
     commands:
       - pwd && rm -rf ./src/main/resources/frontend
       - pwd && mv ./react/build ./src/main/resources/frontend
@@ -35,7 +35,7 @@ steps:
 
   - name: Test back end
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.1.0
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.2.0-beta
     commands:
       - sbt -mem 2048 test
     environment:
@@ -50,7 +50,7 @@ steps:
 
   - name: analysis
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.1.0
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.2.0-beta
     commands:
       - /root/entrypoint.sh
       - sbt -ivy ./.ivy2 dependencyCheck
@@ -82,7 +82,7 @@ steps:
 
   - name: Build docker image
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.1.0
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.2.0-beta
     commands:
       - /root/entrypoint.sh
       - sbt docker:stage
