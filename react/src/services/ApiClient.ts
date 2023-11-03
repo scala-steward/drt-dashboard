@@ -11,8 +11,7 @@ export default class ApiClient implements IApiClient {
   public static configEndPoint = "/api/config";
   public static logoutEndPoint = "/oauth/logout";
   public static alertsEndPoint = "/api/alerts";
-  public static neboFileUpload = "/api/nebo-upload";
-  public static redListUpdates = "/api/red-list-updates";
+  public static healthCheckPauses = "/api/health-check-pauses";
   public static userDetailsEndpoint = "/user/user-details";
   public static requestAccessEndPoint = "/user/access-request";
   public static addUserToGroupEndpoint = "/user/accept-access-request";
