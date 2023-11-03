@@ -1,23 +1,14 @@
 package uk.gov.homeoffice.drt.db
 
-import com.typesafe.config.ConfigFactory
 import slick.dbio.Effect
 import slick.lifted.Tag
 import slick.sql.FixedSqlAction
+import uk.gov.homeoffice.drt.db.Db.slickProfile.api._
 import uk.gov.homeoffice.drt.models.Export
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate}
 
 import java.sql.Timestamp
 import scala.concurrent.ExecutionContext
-
-object Db {
-  val slickProfile = if (ConfigFactory.load().getString("env") != "test")
-    slick.jdbc.PostgresProfile
-  else
-    slick.jdbc.H2Profile
-}
-
-import Db.slickProfile.api._
 
 class ExportTable(tag: Tag)
   extends Table[(String, String, String, String, String, Timestamp)](tag, "export") {

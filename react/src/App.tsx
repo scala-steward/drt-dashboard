@@ -18,6 +18,7 @@ import axios from "axios";
 import ApiClient from "./services/ApiClient";
 import UploadForm from "./components/featureGuide/FeatureGuideUploadFile";
 import {DropInLanding} from "./components/dropin/DropInLanding";
+import {HealthCheckEditor} from "./components/HealthCheckPausesEditor";
 
 
 const StyledDiv = styled('div')(() => ({
@@ -114,6 +115,9 @@ const App = (props: PropsFromReact) => {
                     </Route>
                     <Route exact path="/drop-ins/list">
                         <DropInLanding/>
+                    </Route>
+                    <Route exact path="/health-checks">
+                        <HealthCheckEditor/>
                     </Route>
                 </Switch>
             </StyledContainer>

@@ -2,31 +2,32 @@ package uk.gov.homeoffice.drt.routes
 
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, StatusCodes}
-import akka.http.scaladsl.server.Directives.{complete, pathPrefix, _}
+import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.directives.MethodDirectives.get
 import akka.http.scaladsl.server.{Directive0, Route}
 import akka.http.scaladsl.unmarshalling.Unmarshal
 import org.slf4j.{Logger, LoggerFactory}
 import spray.json._
-import uk.gov.homeoffice.drt._
 import uk.gov.homeoffice.drt.alerts.{Alert, MultiPortAlert, MultiPortAlertClient, MultiPortAlertJsonSupport}
-import uk.gov.homeoffice.drt.auth.Roles
 import uk.gov.homeoffice.drt.auth.Roles._
 import uk.gov.homeoffice.drt.authentication._
+import uk.gov.homeoffice.drt.healthchecks.ScheduledPause
+import uk.gov.homeoffice.drt.json.ScheduledPauseJsonFormats.scheduledPauseJsonFormat
+import uk.gov.homeoffice.drt.persistence.ScheduledPausePersistence
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
-import uk.gov.homeoffice.drt.redlist.{RedListJsonFormats, RedListUpdate, RedListUpdates, SetRedListUpdate}
 import uk.gov.homeoffice.drt.services.UserService
-import uk.gov.homeoffice.drt.{Dashboard, DashboardClient}
+import uk.gov.homeoffice.drt._
+import uk.gov.homeoffice.drt.time.SDate
 
 import java.sql.Timestamp
 import java.util.Date
 import scala.compat.java8.OptionConverters._
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.util.{Failure, Success}
 
 case class PortAlerts(portCode: String, alerts: List[Alert])
 
 object ApiRoutes extends MultiPortAlertJsonSupport
-  with RedListJsonFormats
   with UserJsonSupport
   with ClientConfigJsonFormats
   with ClientUserAccessDataJsonSupport {
@@ -46,6 +47,7 @@ object ApiRoutes extends MultiPortAlertJsonSupport
   def apply(prefix: String,
             clientConfig: ClientConfig,
             userService: UserService,
+            scheduledPausePersistence: ScheduledPausePersistence,
            )
            (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
     pathPrefix(prefix) {
@@ -79,47 +81,25 @@ object ApiRoutes extends MultiPortAlertJsonSupport
             complete(clientConfig)
           }
         },
-        (post & path("red-list-updates")) {
-          authByRole(RedListsEdit) {
-            entity(as[SetRedListUpdate]) {
-              setRedListUpdate =>
-                Roles.portRoles.map { portRole =>
-                  DashboardClient.postWithRoles(
-                    s"${Dashboard.drtInternalUriForPortCode(PortCode(portRole.name))}/red-list/updates",
-                    setRedListUpdate.toJson.compactPrint,
-                    Seq(RedListsEdit, portRole))
-                }
-                complete(Future(StatusCodes.OK))
+        (post & path("health-check-pauses")) {
+          authByRole(HealthChecksEdit) {
+            entity(as[ScheduledPause]) { scheduledPause =>
+              log.info(s"Received health check pause to save")
+              handleFutureOperation(scheduledPausePersistence.insert(scheduledPause), "Failed to save health check pause")
             }
           }
         },
-        (get & path("red-list-updates")) {
-          authByRole(RedListsEdit) {
-            val requestPortRole = LHR
-            val uri = s"${Dashboard.drtInternalUriForPortCode(PortCode(requestPortRole.name))}/red-list/updates"
-            val futureRedListUpdates: Future[RedListUpdates] =
-              DashboardClient
-                .getWithRoles(uri, Seq(RedListsEdit, requestPortRole))
-                .flatMap { res =>
-                  Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
-                    .to[List[RedListUpdate]]
-                    .map(r => RedListUpdates(r.map(ru => (ru.effectiveFrom, ru)).toMap))
-                    .recover {
-                      case e: Throwable =>
-                        log.error(s"Failed to retrieve red list updates for ${requestPortRole.name} at $uri", e)
-                        RedListUpdates.empty
-                    }
-                }
-            complete(futureRedListUpdates)
+        (get & path("health-check-pauses")) {
+          authByRole(HealthChecksEdit) {
+            complete(scheduledPausePersistence.get(Option(SDate.now().millisSinceEpoch)))
           }
         },
-        (delete & path("red-list-updates" / Segment)) { dateMillisToDelete =>
-          authByRole(RedListsEdit) {
-            Roles.portRoles.map { portRole =>
-              val uri = s"${Dashboard.drtInternalUriForPortCode(PortCode(portRole.name))}/red-list/updates/$dateMillisToDelete"
-              DashboardClient.deleteWithRoles(uri, Seq(RedListsEdit, portRole))
-            }
-            complete(Future(StatusCodes.OK))
+        (delete & path("health-check-pauses" / Segment / Segment)) { (from, to) =>
+          val fromMillis = from.toLong
+          val toMillis = to.toLong
+          authByRole(HealthChecksEdit) {
+            log.info(s"Received health check pause to delete")
+            handleFutureOperation(scheduledPausePersistence.delete(fromMillis, toMillis), "Failed to delete health check pause")
           }
         },
         (post & path("alerts")) {
@@ -184,5 +164,14 @@ object ApiRoutes extends MultiPortAlertJsonSupport
           }
         }
       )
+    }
+
+  private def handleFutureOperation(eventual: Future[_], errorMsg: String)
+                                   (implicit ec: ExecutionContext): Route =
+    onComplete(eventual) {
+      case Success(_) => complete(Future(StatusCodes.OK))
+      case Failure(t) =>
+        log.error(errorMsg, t)
+        complete(StatusCodes.InternalServerError)
     }
 }
