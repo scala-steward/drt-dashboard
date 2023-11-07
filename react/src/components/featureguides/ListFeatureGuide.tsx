@@ -167,49 +167,45 @@ export const ListFeatureGuide = (props: Props) => {
     setOpenPreview(true)
   }
 
-  return (
-    error ? <div style={{marginTop: '20px', color: 'red'}}> Errored for the task <br/>
-        <Button style={{float: 'right'}} variant="outlined" color="primary" onClick={handleBack}>back</Button>
-      </div> :
-      publish ? <PublishComponent id={rowDetails?.id} showAction={publish} setShowAction={setPublish}
-                                  setReceivedData={setReceivedData} actionString={"publish"}/> :
-        unPublish ? <PublishComponent id={rowDetails?.id} showAction={unPublish} setShowAction={setUnPublish}
-                                      setReceivedData={setReceivedData} actionString={"unPublish"}/> :
-          showDelete ?
-            <DeleteComponent id={rowDetails?.id} showDelete={showDelete} setShowDelete={setShowDelete}
-                             setOpenPreview={setOpenPreview} setReceivedData={setReceivedData}/> :
-            showEdit ? <FeatureGuideEdit id={rowDetails?.id} title={rowDetails?.title}
-                                         videoURL={"/guide/get-feature-videos/" + rowDetails?.fileName}
-                                         markdownContent={rowDetails?.markdownContent}
-                                         showEdit={showEdit} setShowEdit={setShowEdit}
-                                         setReceivedData={setReceivedData}
-              /> :
-              <div>
-                <h1>Feature Guide List</h1>
-                <Box sx={{height: 400, width: '100%'}}>
-                  <DataGrid
-                    getRowId={(rowsData) => rowsData.id}
-                    rows={rowsData}
-                    columns={featureColumns}
-                    pageSize={5}
-                    rowsPerPageOptions={[5]}
-                    experimentalFeatures={{newEditingApi: true}}
-                  />
-                  <Button style={{float: 'right'}} variant="outlined"
-                          color="primary"
-                          onClick={handleBack}>back</Button>
-                </Box>
-                <PreviewComponent id={rowDetails?.id}
-                                  title={rowDetails?.title}
-                                  videoURL={"/guide/get-feature-videos/" + rowDetails?.fileName}
-                                  markdownContent={rowDetails?.markdownContent}
-                                  openPreview={openPreview}
-                                  setOpenPreview={setOpenPreview}
-                                  setReceivedData={setReceivedData}
-                                  isEdit={true}
-                                  showEdit={showEdit} setShowEdit={setShowEdit}/>
-              </div>
-  )
+  return error ? <div style={{marginTop: '20px', color: 'red'}}> Errored for the task <br/>
+      <Button style={{float: 'right'}} variant="outlined" color="primary" onClick={handleBack}>back</Button>
+    </div> :
+    publish ? <PublishComponent id={rowDetails?.id} showAction={publish} setShowAction={setPublish}
+                                setReceivedData={setReceivedData} actionString={"publish"}/> :
+      unPublish ? <PublishComponent id={rowDetails?.id} showAction={unPublish} setShowAction={setUnPublish}
+                                    setReceivedData={setReceivedData} actionString={"unPublish"}/> :
+        showDelete ?
+          <DeleteComponent id={rowDetails?.id} showDelete={showDelete} setShowDelete={setShowDelete}
+                           setOpenPreview={setOpenPreview} setReceivedData={setReceivedData}/> :
+          showEdit ? <FeatureGuideEdit id={rowDetails?.id} title={rowDetails?.title}
+                                       videoURL={"/guide/get-feature-videos/" + rowDetails?.fileName}
+                                       markdownContent={rowDetails?.markdownContent}
+                                       showEdit={showEdit} setShowEdit={setShowEdit}
+                                       setReceivedData={setReceivedData}
+            /> :
+            <div>
+              <h1>Feature Guide List</h1>
+              <Box sx={{height: 400, width: '100%'}}>
+                <DataGrid
+                  getRowId={(rowsData) => rowsData.id}
+                  rows={rowsData}
+                  columns={featureColumns}
+                  pageSizeOptions={[5]}
+                />
+                <Button style={{float: 'right'}} variant="outlined"
+                        color="primary"
+                        onClick={handleBack}>back</Button>
+              </Box>
+              <PreviewComponent id={rowDetails?.id}
+                                title={rowDetails?.title}
+                                videoURL={"/guide/get-feature-videos/" + rowDetails?.fileName}
+                                markdownContent={rowDetails?.markdownContent}
+                                openPreview={openPreview}
+                                setOpenPreview={setOpenPreview}
+                                setReceivedData={setReceivedData}
+                                isEdit={true}
+                                showEdit={showEdit} setShowEdit={setShowEdit}/>
+            </div>;
 }
 
 

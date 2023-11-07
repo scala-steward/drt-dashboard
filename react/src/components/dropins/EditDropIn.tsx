@@ -9,8 +9,7 @@ import Box from "@mui/material/Box";
 import moment, {Moment} from 'moment';
 import {AdapterMoment} from "@mui/x-date-pickers/AdapterMoment";
 import {jsonDropInData} from "./CreateDropIn";
-import {useParams} from 'react-router-dom';
-import {redirect} from 'react-router-dom';
+import {redirect, useParams} from 'react-router-dom';
 import {Alert} from "../DialogComponent";
 
 export function EditDropIn() {
@@ -102,10 +101,10 @@ export function EditDropIn() {
             <Grid item xs={12}>
               <LocalizationProvider dateAdapter={AdapterMoment}>
                 <DateTimePicker
-                  renderInput={(props) => <TextField {...props} />}
+                  slotProps={{ textField: { variant: 'outlined' } }}
                   label="Start Time"
                   value={editStartTime}
-                  inputFormat="DD/MM/YYYY HH:mm A"
+                  format="DD/MM/YYYY HH:mm A"
                   onChange={(newValue) => {
                     setEditStartTime(newValue);
                   }}
@@ -115,10 +114,10 @@ export function EditDropIn() {
             <Grid item xs={12}>
               <LocalizationProvider dateAdapter={AdapterMoment}>
                 <DateTimePicker
-                  renderInput={(props) => <TextField {...props} />}
+                  slotProps={{ textField: { variant: 'outlined' } }}
                   label="End Time"
                   value={editEndTime}
-                  inputFormat="DD/MM/YYYY HH:mm A"
+                  format="DD/MM/YYYY HH:mm A"
                   onChange={(newValue) => {
                     setEditEndTime(newValue);
                   }}
@@ -133,5 +132,5 @@ export function EditDropIn() {
           </Grid>
         </form>
       </div>}</div>
-  )
+  );
 }

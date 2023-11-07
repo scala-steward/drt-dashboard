@@ -3,11 +3,11 @@ import './index.css';
 import {App} from './App';
 import {BrowserRouter} from "react-router-dom";
 import {AdapterMoment} from '@mui/x-date-pickers/AdapterMoment';
-import LocalizationProvider from '@mui/lab/LocalizationProvider';
 import * as serviceWorker from './serviceWorker';
 import {StyledEngineProvider} from '@mui/material/styles';
 import {createRoot} from 'react-dom/client';
-
+import 'moment/locale/en-gb';
+import {LocalizationProvider} from "@mui/x-date-pickers/LocalizationProvider";
 
 const container = document.getElementById('root');
 const root = createRoot(container!);
@@ -18,7 +18,7 @@ root.render(
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
     <StyledEngineProvider injectFirst>
       <BrowserRouter>
-        <LocalizationProvider dateAdapter={AdapterMoment}>
+        <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale={'en-gb'}>
             <StyledEngineProvider injectFirst>
                 <App/>
             </StyledEngineProvider>

@@ -1,6 +1,6 @@
 import axios from "axios";
 import ApiClient from "../services/ApiClient";
-import {PortAlerts} from "../components/Alerts/ViewAlerts";
+import {PortAlerts} from "../components/alerts/ViewAlerts";
 
 
 export const fetchAlerts = (onSuccess: (r: PortAlerts[]) => void) => {

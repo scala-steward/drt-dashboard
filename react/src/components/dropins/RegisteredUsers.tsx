@@ -7,7 +7,7 @@ import Box from "@mui/material/Box";
 import axios, {AxiosResponse} from "axios";
 import {DialogActionComponent} from "./DialogActionComponent";
 import {redirect, useParams} from "react-router-dom";
-import {SeminarData} from "./ListDropIns";
+import {SeminarData} from "./DropInsList";
 import {Alert} from "../DialogComponent";
 
 export interface DropInRegisteredUsers {
@@ -23,7 +23,6 @@ export function RegisteredUsers() {
       field: 'dropInId',
       headerName: 'Id',
       width: 200,
-      hide: true,
     },
     {
       field: 'email',
@@ -122,9 +121,7 @@ export function RegisteredUsers() {
             getRowId={(rowsData) => rowsData.email + '_' + rowsData.dropInId}
             rows={rowsData}
             columns={columns}
-            pageSize={5}
-            rowsPerPageOptions={[5]}
-            experimentalFeatures={{newEditingApi: true}}
+            pageSizeOptions={[5]}
           />
           <Button style={{float: 'right'}} variant="outlined"
                   color="primary"
@@ -138,5 +135,5 @@ export function RegisteredUsers() {
         />
       </div>
       } </div>
-  )
+  );
 }

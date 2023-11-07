@@ -11,37 +11,37 @@ import Button from '@mui/material/Button';
 import {UserProfile} from "../model/User";
 
 export const PortListByRegion = (props: { user: UserProfile, regions: PortRegion[], drtDomain: string }) => {
-    return <Box sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'space-start',
-    }}
-    >
-        {props.regions.map((region) => {
-            const sortedPorts = region.ports.sort()
-            return <Box sx={{
-                minWidth: '200px',
-                marginRight: '50px'
-            }}>
-                {props.user.roles.includes("rcc:" + region.name.toLowerCase()) ?
-                    <Button style={{fontSize: '18px'}}
-                            href={`/region/${region.name.toLowerCase()}`}>{region.name}</Button> :
-                    <Button style={{fontSize: '18px', color: 'black'}} disabled={true}>{region.name}</Button>
-                }
-                <List>
-                    {sortedPorts.map((portCode) => {
-                        let portCodeLC = portCode.toLowerCase();
-                        const url = 'https://' + portCodeLC + '.' + props.drtDomain;
-                        return <Box key={portCode}>
-                            <ListItem button component="a" href={url} id={"port-link-" + portCodeLC}>
-                                <ListItemIcon><Icon/></ListItemIcon>
-                                <ListItemText primary={portCode.toUpperCase()}/>
-                            </ListItem>
-                            <Divider variant="inset" component="li"/>
-                        </Box>
-                    })}
-                </List>
+  return <Box sx={{
+    display: 'flex',
+    flexWrap: 'wrap',
+    justifyContent: 'space-start',
+  }}
+  >
+    {props.regions.map((region) => {
+      const sortedPorts = region.ports.sort()
+      return <Box
+        sx={{minWidth: '200px', marginRight: '50px'}}
+        key={region.name}
+      >
+        {props.user.roles.includes("rcc:" + region.name.toLowerCase()) ?
+          <Button style={{fontSize: '18px'}}
+                  href={`/region/${region.name.toLowerCase()}`}>{region.name}</Button> :
+          <Button style={{fontSize: '18px', color: 'black'}} disabled={true}>{region.name}</Button>
+        }
+        <List>
+          {sortedPorts.map((portCode) => {
+            let portCodeLC = portCode.toLowerCase();
+            const url = 'https://' + portCodeLC + '.' + props.drtDomain;
+            return <Box key={portCode}>
+              <ListItem button component="a" href={url} id={"port-link-" + portCodeLC}>
+                <ListItemIcon><Icon/></ListItemIcon>
+                <ListItemText primary={portCode.toUpperCase()}/>
+              </ListItem>
+              <Divider variant="inset" component="li"/>
             </Box>
-        })}
-    </Box>
+          })}
+        </List>
+      </Box>
+    })}
+  </Box>
 }

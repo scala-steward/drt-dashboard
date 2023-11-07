@@ -7,15 +7,16 @@ import PreviewIcon from "@mui/icons-material/Preview";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import axios, {AxiosResponse} from "axios";
-import {Snackbar} from "@mui/material";
+import {Breadcrumbs, FormControlLabel, Snackbar, Stack} from "@mui/material";
 import Box from "@mui/material/Box";
 import {ViewDropIn} from "./ViewDropIn";
 import {CalendarViewMonth} from "@mui/icons-material";
 import {DialogActionComponent} from "./DialogActionComponent";
 import moment from 'moment-timezone';
-import {Link, redirect, useParams} from "react-router-dom";
+import {Link} from "react-router-dom";
 import {Alert} from "../DialogComponent";
-import FormControlLabel from "@mui/material/FormControlLabel";
+import Typography from "@mui/material/Typography";
+import Button from "@mui/material/Button";
 import Checkbox from "@mui/material/Checkbox";
 
 export function stringToUKDate(date?: string): string | undefined {
@@ -48,13 +49,12 @@ export interface SeminarData {
   isPublished: boolean;
 }
 
-export function ListDropIns() {
+export function DropInsList() {
 
   const dropInColumns: GridColDef[] = [
     {
       field: 'id',
       headerName: 'Id',
-      hide: true,
       width: 50
     },
     {
@@ -69,7 +69,6 @@ export function ListDropIns() {
       renderCell: (params) => {
         return <div>{stringToUKDate(params.value)}</div>;
       }
-
     },
     {
       field: 'endTime',
@@ -155,9 +154,6 @@ export function ListDropIns() {
     },
   ];
 
-  const {listAll: listAllParam} = useParams<{ listAll?: string }>();
-  const {operations: operationsParam} = useParams<{ operations?: string }>();
-  const showAll = listAllParam ? listAllParam === 'true' : false;
   const [rowsData, setRowsData] = React.useState([] as GridRowModel[]);
   const [error, setError] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
@@ -165,7 +161,7 @@ export function ListDropIns() {
   const [unPublish, setUnPublish] = useState(false);
   const [view, setView] = useState(false);
   const [rowDetails, setRowDetails] = React.useState({} as SeminarData | undefined);
-  const [checked, setChecked] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [saved, setSaved] = useState(false);
   const [edited, setEdited] = useState(false);
 
@@ -182,7 +178,6 @@ export function ListDropIns() {
     setRowDetails(userData)
     setUnPublish(true);
   }
-
 
   const handleDelete = (userData: SeminarData | undefined) => {
     setEdited(false)
@@ -201,14 +196,12 @@ export function ListDropIns() {
   }
 
   useEffect(() => {
-    if (operationsParam === 'saved') {
-      setSaved(true);
-      redirect('/drop-ins/list')
-    }
-    if (operationsParam === 'edited') {
-      setEdited(true);
-      redirect('/drop-ins/list')
-    }
+    // if (operationsParam === 'saved') {
+    //   setSaved(true);
+    // }
+    // if (operationsParam === 'edited') {
+    //   setEdited(true);
+    // }
     axios.get('/drop-in/getList/' + showAll)
       .then(response => handleResponse(response))
       .then(data => {
@@ -228,11 +221,6 @@ export function ListDropIns() {
     setView(true)
   }
 
-  const handleToggle = () => {
-    setChecked(!showAll);
-    redirect('/drop-ins/list/' + !showAll)
-  }
-
   const handleSavedClose = () => {
     setSaved(false);
   };
@@ -241,80 +229,80 @@ export function ListDropIns() {
     setEdited(false);
   };
 
-  return (
-    <div>
-      {
-        <div>
-          <h1>Drop-ins List | <Link to={`/drop-ins/new`}>Create New</Link> | <FormControlLabel
-            control={<Checkbox
-              checked={checked}
-              onChange={handleToggle}
-              value="singleRadio"
-              color="primary"
-            />} label={"include previous drop-ins"}/></h1>
-          <Snackbar
-            anchorOrigin={{vertical: 'top', horizontal: 'center'}}
-            open={saved}
-            autoHideDuration={6000}
-            onClose={() => handleSavedClose()}>
-            <Alert onClose={() => handleSavedClose()} severity="success" sx={{width: '100%'}}>
-              Drop-In saved successfully ! Please check the drop-in list.
-            </Alert>
-          </Snackbar>
-          <Snackbar
-            anchorOrigin={{vertical: 'top', horizontal: 'center'}}
-            open={edited}
-            autoHideDuration={6000}
-            onClose={() => handleEditedClose()}>
-            <Alert onClose={() => handleEditedClose()} severity="success" sx={{width: '100%'}}>
-              Drop-In updated successfully ! Please check the drop-in list.
-            </Alert>
-          </Snackbar>
-          <Snackbar
-            anchorOrigin={{vertical: 'top', horizontal: 'center'}}
-            open={error}
-            autoHideDuration={6000}
-            onClose={() => handleBack}>
-            <Alert onClose={handleBack} severity="success" sx={{width: '100%'}}>
-              There was a problem fetching the list of drop-ins. Please try reloading the page.
-            </Alert>
-          </Snackbar>
-          <Box sx={{height: 400, width: '100%'}}>
-            <DataGrid
-              getRowId={(rowsData) => rowsData.id}
-              rows={rowsData}
-              columns={dropInColumns}
-              pageSize={5}
-              rowsPerPageOptions={[5]}
-              experimentalFeatures={{newEditingApi: true}}
-            />
-          </Box>
-          <ViewDropIn id={rowDetails?.id} title={rowDetails?.title}
-                      startTime={rowDetails?.startTime}
-                      endTime={rowDetails?.endTime}
-                      meetingLink={rowDetails?.meetingLink}
-                      view={view} setView={setView}
-          />
-          <DialogActionComponent actionMethod='DELETE'
-                                 actionString='remove drop-in'
-                                 actionUrl={'/drop-in/delete/' + rowDetails?.id}
-                                 showDialog={showDelete}
-                                 setShowDialog={setShowDelete}
-          />
-          <DialogActionComponent actionUrl={'/drop-in/published/' + rowDetails?.id}
-                                 actionString="publish"
-                                 actionMethod="POST"
-                                 showDialog={publish}
-                                 setShowDialog={setPublish}
-          />
-          <DialogActionComponent actionUrl={'/drop-in/published/' + rowDetails?.id}
-                                 actionString="unPublish"
-                                 actionMethod="POST"
-                                 showDialog={unPublish}
-                                 setShowDialog={setUnPublish}
-          />
-        </div>
-      }</div>
-  )
-
+  return <div>
+    <Breadcrumbs>
+      <Link to={"/"}>
+        Home
+      </Link>
+      <Typography color="text.primary">Drop-ins</Typography>
+    </Breadcrumbs>
+    <Stack sx={{mt: 4, gap: 1, alignItems: 'stretch'}}>
+      <Stack direction={'row'} spacing={2} justifyContent={'space-between'}>
+        <Button variant={'outlined'}><Link to={'/drop-ins/new'}>Add new drop-in session</Link></Button>
+        <FormControlLabel
+          label={'Show all'}
+          control={<Checkbox checked={showAll} onChange={() => setShowAll(!showAll)} color="primary"/>}
+        />
+      </Stack>
+      <Snackbar
+        anchorOrigin={{vertical: 'top', horizontal: 'center'}}
+        open={saved}
+        autoHideDuration={6000}
+        onClose={() => handleSavedClose()}>
+        <Alert onClose={() => handleSavedClose()} severity="success" sx={{width: '100%'}}>
+          Drop-In saved successfully ! Please check the drop-in list.
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        anchorOrigin={{vertical: 'top', horizontal: 'center'}}
+        open={edited}
+        autoHideDuration={6000}
+        onClose={() => handleEditedClose()}>
+        <Alert onClose={() => handleEditedClose()} severity="success" sx={{width: '100%'}}>
+          Drop-In updated successfully ! Please check the drop-in list.
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        anchorOrigin={{vertical: 'top', horizontal: 'center'}}
+        open={error}
+        autoHideDuration={6000}
+        onClose={() => handleBack}>
+        <Alert onClose={handleBack} severity="success" sx={{width: '100%'}}>
+          There was a problem fetching the list of drop-ins. Please try reloading the page.
+        </Alert>
+      </Snackbar>
+      <Box sx={{height: 400, width: '100%'}}>
+        <DataGrid
+          getRowId={(rowsData) => rowsData.id}
+          rows={rowsData}
+          columns={dropInColumns}
+          pageSizeOptions={[5]}
+        />
+      </Box>
+      <ViewDropIn id={rowDetails?.id} title={rowDetails?.title}
+                  startTime={rowDetails?.startTime}
+                  endTime={rowDetails?.endTime}
+                  meetingLink={rowDetails?.meetingLink}
+                  view={view} setView={setView}
+      />
+      <DialogActionComponent actionMethod='DELETE'
+                             actionString='remove drop-in'
+                             actionUrl={'/drop-in/delete/' + rowDetails?.id}
+                             showDialog={showDelete}
+                             setShowDialog={setShowDelete}
+      />
+      <DialogActionComponent actionUrl={'/drop-in/published/' + rowDetails?.id}
+                             actionString="publish"
+                             actionMethod="POST"
+                             showDialog={publish}
+                             setShowDialog={setPublish}
+      />
+      <DialogActionComponent actionUrl={'/drop-in/published/' + rowDetails?.id}
+                             actionString="unPublish"
+                             actionMethod="POST"
+                             showDialog={unPublish}
+                             setShowDialog={setUnPublish}
+      />
+    </Stack>
+  </div>
 }

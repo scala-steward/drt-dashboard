@@ -108,13 +108,17 @@ export function CreateDropIn() {
             <Grid item xs={12}>
               <LocalizationProvider dateAdapter={AdapterMoment}>
                 {hasFocusStartTime || startTime ? <DateTimePicker
-                  renderInput={(props) =>
-                    <TextField required {...props}
-                               error={formSubmitted && !startTime}
-                               helperText={formSubmitted && !startTime ? "StartTime is required" : ""}/>}
+                  slotProps={{
+                    textField: {
+                      variant: 'outlined',
+                      required: true,
+                      error: formSubmitted && !startTime,
+                      helperText: (formSubmitted && !startTime) ? "StartTime is required" : ""
+                    }
+                  }}
                   label="Start Time"
                   value={startTime}
-                  inputFormat="DD/MM/YYYY HH:mm A"
+                  format="DD/MM/YYYY HH:mm A"
                   onChange={(newValue) => {
                     setStartTime(newValue);
                     setEndTime(newValue);
@@ -124,7 +128,7 @@ export function CreateDropIn() {
                     label="Start Time"
                     onClick={() => setHasFocusStartTime(true)}
                     error={formSubmitted && !startTime}
-                    helperText={formSubmitted && !startTime ? "StartTime is required" : ""}
+                    helperText={formSubmitted && !startTime ? "Start time is required" : ""}
                   />
                 )}
               </LocalizationProvider>
@@ -132,13 +136,17 @@ export function CreateDropIn() {
             <Grid item xs={12}>
               <LocalizationProvider dateAdapter={AdapterMoment}>
                 {hasFocusEndTime || endTime ? <DateTimePicker
-                  renderInput={(props) =>
-                    <TextField required {...props}
-                               error={formSubmitted && !endTime}
-                               helperText={formSubmitted && !endTime ? "EndTime is required" : ""}/>}
+                  slotProps={{
+                    textField: {
+                      variant: 'outlined',
+                      required: true,
+                      error: formSubmitted && !endTime,
+                      helperText: (formSubmitted && !endTime) ? "End time is required" : ""
+                    }
+                  }}
                   label="End Time"
                   value={endTime}
-                  inputFormat="DD/MM/YYYY HH:mm A"
+                  format="DD/MM/YYYY HH:mm A"
                   onChange={(newValue) => {
                     setEndTime(newValue);
                   }}
@@ -161,5 +169,5 @@ export function CreateDropIn() {
         </form>
       </Box>
     </div>
-  )
+  );
 }

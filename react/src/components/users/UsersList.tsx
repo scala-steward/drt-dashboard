@@ -6,6 +6,9 @@ import axios from "axios";
 import ApiClient from "../../services/ApiClient";
 import {GridValueFormatterParams} from "@mui/x-data-grid/models/params/gridCellParams";
 import moment from "moment-timezone";
+import {Breadcrumbs} from "@mui/material";
+import Typography from "@mui/material/Typography";
+import Link from "@mui/material/Link";
 
 const formatDate = (param: GridValueFormatterParams) => {
   return moment(param?.value).format("YYYY-MM-DD HH:mm")
@@ -16,7 +19,6 @@ export const userColumns: GridColDef[] = [
     field: 'id',
     headerName: 'Id',
     width: 100,
-    hide: true
   },
   {
     field: 'username',
@@ -54,7 +56,7 @@ export const userColumns: GridColDef[] = [
 
 ];
 
-export default function UserTracking() {
+export default function UsersList() {
   const [rowsData, setRowsData] = React.useState([] as GridRowModel[]);
 
   useEffect(() => {
@@ -66,15 +68,26 @@ export default function UserTracking() {
     fetchUsers();
   }, []);
 
-  return (
+  return <>
+    <Breadcrumbs>
+      <Link underline="hover" color="inherit" href="/">
+        MUI
+      </Link>
+      <Link
+        underline="hover"
+        color="inherit"
+        href="/material-ui/getting-started/installation/"
+      >
+        Core
+      </Link>
+      <Typography color="text.primary">Breadcrumbs</Typography>
+    </Breadcrumbs>
     <Box sx={{height: 400, width: '100%'}}>
       <DataGrid
         rows={rowsData}
         columns={userColumns}
-        pageSize={5}
-        rowsPerPageOptions={[5]}
-        experimentalFeatures={{newEditingApi: true}}
+        pageSizeOptions={[5]}
       />
     </Box>
-  )
+  </>
 }

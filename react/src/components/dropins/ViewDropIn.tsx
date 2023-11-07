@@ -4,7 +4,7 @@ import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
 import Typography from "@mui/material/Typography";
-import {stringToUKDate} from "./ListDropIns";
+import {stringToUKDate} from "./DropInsList";
 
 interface Props {
     id: string | undefined;
