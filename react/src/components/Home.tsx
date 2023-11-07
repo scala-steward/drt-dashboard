@@ -14,7 +14,6 @@ interface IProps {
 
 
 export const Home = (props: IProps) => {
-
     const isRccUser = () => {
         return props.user.roles.includes("rcc:central") || props.user.roles.includes("rcc:heathrow") || props.user.roles.includes("rcc:north") || props.user.roles.includes("rcc:south")
     }

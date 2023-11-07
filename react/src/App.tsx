@@ -2,15 +2,12 @@ import React, {useEffect} from 'react';
 import './App.css';
 import {Home} from './components/Home';
 import Alerts from './components/Alerts/Alerts';
-import UserAccess from './components/UserManagement/UserAccess';
+import AccessRequests from './components/UserManagement/AccessRequests';
 import UserTracking from './components/users/UserTracking';
-import {Route, Switch} from "react-router-dom";
+import {Route, Routes} from "react-router-dom";
 import Loading from "./components/Loading";
 import Navigation from "./components/Navigation";
-import {RootState, rootStore} from "./store/rootReducer";
-import {connect, ConnectedProps} from "react-redux";
-import {fetchUserProfile} from "./store/userSlice";
-import {fetchConfig} from "./store/configSlice";
+import {useConfig} from "./store/configSlice";
 import {Container} from "@mui/material";
 import {styled} from "@mui/material/styles";
 import {RegionPage} from "./components/RegionPage";
@@ -19,117 +16,85 @@ import ApiClient from "./services/ApiClient";
 import UploadForm from "./components/featureGuide/FeatureGuideUploadFile";
 import {DropInLanding} from "./components/dropin/DropInLanding";
 import {HealthCheckEditor} from "./components/HealthCheckPausesEditor";
-
+import {useUser} from "./store/userSlice";
 
 const StyledDiv = styled('div')(() => ({
-    textAlign: 'center',
+  textAlign: 'center',
 }));
 
 const StyledContainer = styled(Container)(() => ({
-    margin: 5,
-    padding: 15,
-    textAlign: 'left',
-    minHeight: 500,
-    display: 'inline-block',
+  margin: 5,
+  padding: 15,
+  textAlign: 'left',
+  minHeight: 500,
+  display: 'inline-block',
 }));
 
-rootStore.dispatch(fetchUserProfile())
-rootStore.dispatch(fetchConfig())
+export const App = () => {
+  const {user} = useUser()
+  const {config} = useConfig()
 
-const mapState = (state: RootState) => ({
-    user: state.user,
-    config: state.config
-})
+  const currentLocation = window.document.location;
+  const logoutLink = "/oauth/logout?redirect=" + currentLocation.toString()
 
-const connector = connect(mapState)
-
-type PropsFromReact = ConnectedProps<typeof connector>
-
-const App = (props: PropsFromReact) => {
-    const currentLocation = window.document.location;
-    const logoutLink = "/oauth/logout?redirect=" + currentLocation.toString()
-
-    const [userTracked, setUserTracked] = React.useState(false);
-
-    const trackUser = () => {
-        axios
-            .get(ApiClient.userTrackingEndPoint)
-            .then(() => {
-                setUserTracked(true)
-            }).catch(reason => {
-            console.log('Unable to user tracking' + reason);
+  useEffect(() => {
+    const trackUser = async () =>
+      axios
+        .get(ApiClient.userTrackingEndPoint)
+        .catch(reason => {
+          console.log('Unable to user tracking' + reason);
         })
-    }
 
-    useEffect(() => {
-        trackUser();
-    }, [userTracked]);
+    trackUser();
+  }, []);
 
-    return (props.user.kind === "SignedInUser" && props.config.kind === "LoadedConfig") ?
-        <StyledDiv>
-            <header role="banner" id="global-header" className=" with-proposition">
-                <div className="header-wrapper">
-                    <div className="header-global">
-                        <div className="header-logo">
-                            <a href="https://www.gov.uk" title="Go to the GOV.UK homepage"
-                               id="global-header-logo"
-                               className="content">
-                                <img
-                                    src="images/gov.uk_logotype_crown_invert_trans.png"
-                                    width="36" height="32" alt=""/> GOV.UK
-                            </a>
-                        </div>
-                    </div>
-                    <div className="header-proposition">
-                        <div className="logout">
-                            {props.user.kind === "SignedInUser" &&
-                                <Navigation logoutLink={logoutLink} user={props.user.profile}/>}
-                        </div>
-                        <div className="content">
-                            <a href="/" id="proposition-name">Dynamic Response Tool</a>
-                        </div>
-                    </div>
-                </div>
-            </header>
+  return (user.kind === "SignedInUser" && config.kind === "LoadedConfig") ?
+    <StyledDiv>
+      <header role="banner" id="global-header" className=" with-proposition">
+        <div className="header-wrapper">
+          <div className="header-global">
+            <div className="header-logo">
+              <a href="https://www.gov.uk" title="Go to the GOV.UK homepage"
+                 id="global-header-logo"
+                 className="content">
+                <img
+                  src="images/gov.uk_logotype_crown_invert_trans.png"
+                  width="36" height="32" alt=""/> GOV.UK
+              </a>
+            </div>
+          </div>
+          <div className="header-proposition">
+            <div className="logout">
+              {user.kind === "SignedInUser" &&
+                  <Navigation logoutLink={logoutLink} user={user.profile}/>}
+            </div>
+            <div className="content">
+              <a href="/" id="proposition-name">Dynamic Response Tool</a>
+            </div>
+          </div>
+        </div>
+      </header>
 
-            <div id="global-header-bar"/>
-            <StyledContainer>
-                <Switch>
-                    <Route exact path="/">
-                        <Home config={props.config.values} user={props.user.profile}/>
-                    </Route>
-                    <Route exact path="/userManagement">
-                        <UserAccess/>
-                    </Route>
-                    <Route exact path="/userTracking">
-                        <UserTracking/>
-                    </Route>
-                    <Route exact path="/alerts">
-                        <Alerts regions={props.config.values.portsByRegion} user={props.user.profile}/>
-                    </Route>
-                    <Route exact path="/region/:regionName">
-                        <RegionPage user={props.user.profile} config={props.config.values}/>
-                    </Route>
-                    <Route exact path="/feature-guide-upload">
-                        <UploadForm/>
-                    </Route>
-                    <Route exact path="/drop-ins/list">
-                        <DropInLanding/>
-                    </Route>
-                    <Route exact path="/health-checks">
-                        <HealthCheckEditor/>
-                    </Route>
-                </Switch>
-            </StyledContainer>
-            <footer className="group js-footer" id="footer" role="contentinfo">
-                <div className="footer-wrapper">
-                    <div className="footer-meta">
-                        <div className="footer-meta-inner">
-                        </div>
-                    </div>
-                </div>
-            </footer>
-        </StyledDiv> : <Loading/>
+      <div id="global-header-bar"/>
+      <StyledContainer>
+        <Routes>
+          <Route path="/" element={<Home config={config.values} user={user.profile}/>}/>
+          <Route path="/access-requests" element={<AccessRequests/>}/>
+          <Route path="/users" element={<UserTracking/>}/>
+          <Route path="/alerts" element={<Alerts regions={config.values.portsByRegion} user={user.profile}/>}/>
+          <Route path="/region/:regionName" element={<RegionPage user={user.profile} config={config.values}/>}/>
+          <Route path="/feature-guide-upload" element={<UploadForm/>}/>
+          <Route path="/drop-ins/list" element={<DropInLanding/>}/>
+          <Route path="/health-checks" element={<HealthCheckEditor/>}/>
+        </Routes>
+      </StyledContainer>
+      <footer className="group js-footer" id="footer" role="contentinfo">
+        <div className="footer-wrapper">
+          <div className="footer-meta">
+            <div className="footer-meta-inner">
+            </div>
+          </div>
+        </div>
+      </footer>
+    </StyledDiv> : <Loading/>
 }
-
-export default connector(App)

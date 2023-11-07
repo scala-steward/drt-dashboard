@@ -12,7 +12,7 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import {columns, KeyCloakUser} from "./UserAccessCommon";
 
-export default function UserAccess() {
+export default function AccessRequests() {
     const [accessRequestListRequested, setAccessRequestListRequested] = React.useState(false);
     const [userRequestList, setUserRequestList] = React.useState([] as UserRequestedAccessData[]);
     const [rowsData, setRowsData] = React.useState([] as GridRowModel[]);

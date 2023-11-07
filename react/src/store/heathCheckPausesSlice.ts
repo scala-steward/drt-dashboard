@@ -1,9 +1,13 @@
-import {createAsyncThunk} from "@reduxjs/toolkit";
 import axios from "axios";
 import ApiClient from "../services/ApiClient";
 import {ScheduledHealthCheckPause} from "../components/healthcheckpauseseditor/model";
 import {useEffect, useState} from "react";
 
+
+export interface HealthCheckPauseList {
+  count: number
+  results: ScheduledHealthCheckPause[]
+}
 
 export type RequestSetHealthCheckPauses = {
   pause: ScheduledHealthCheckPause
@@ -18,31 +22,25 @@ export type RequestDeleteHealthCheckPauses = {
   onFailure: () => void
 }
 
-export const saveHealthCheckPauses = createAsyncThunk(
-  'healthCheckPauses/save',
-  async (request: RequestSetHealthCheckPauses) => {
-    axios
-      .post(ApiClient.healthCheckPauses, request.pause)
-      .then(() => request.onSuccess())
-      .catch(reason => {
-        console.log('Failed to save red list updates: ' + reason)
-        request.onFailure()
-      })
-  }
-)
+export const deleteHealthCheckPause = (request: RequestDeleteHealthCheckPauses) => {
+  axios
+    .delete(`${ApiClient.healthCheckPauses}/${request.startsAt}/${request.endsAt}`)
+    .then(() => request.onSuccess())
+    .catch(reason => {
+      console.log('Failed to delete red list updates: ' + reason)
+      request.onFailure()
+    })
+}
 
-export const deleteHealthCheckPause = createAsyncThunk(
-  'healthCheckPauses/delete',
-  async (request: RequestDeleteHealthCheckPauses) => {
-    axios
-      .delete(`${ApiClient.healthCheckPauses}/${request.startsAt}/${request.endsAt}`)
-      .then(() => request.onSuccess())
-      .catch(reason => {
-        console.log('Failed to delete red list updates: ' + reason)
-        request.onFailure()
-      })
-  }
-)
+export const saveHealthCheckPauses = (request: RequestSetHealthCheckPauses) => {
+  axios
+    .post(ApiClient.healthCheckPauses, request.pause)
+    .then(() => request.onSuccess())
+    .catch(reason => {
+      console.log('Failed to save red list updates: ' + reason)
+      request.onFailure()
+    })
+}
 
 export const useHealthCheckPauses = (refreshedAt: number) => {
   const [healthCheckPauses, setHealthCheckPauses] = useState<ScheduledHealthCheckPause[]>([])

@@ -3,7 +3,6 @@ import moment from "moment-timezone";
 import AlertLike from "../../model/Alert";
 import {Box, Button, Container, Typography} from "@mui/material";
 import {styled} from "@mui/material/styles";
-import {rootStore} from "../../store/rootReducer";
 import {deleteAlertsForPort, fetchAlerts} from "../../store/alertsSlice";
 
 
@@ -71,24 +70,21 @@ function ListAlerts() {
   const [allPortAlerts, setAllPortAlerts] = React.useState<AllPortAlerts>({kind: "PortAlertsNotLoaded"});
 
   useEffect(() => {
-    if (allPortAlerts.kind === 'PortAlertsNotLoaded') {
-      const d = rootStore.dispatch(fetchAlerts((a: PortAlerts[]) => setAllPortAlerts({
-        kind: "PortAlertsLoaded",
-        portAlerts: a
-      })))
-      return () => d.abort()
-    }
-  }, [allPortAlerts, setAllPortAlerts])
+    fetchAlerts((a: PortAlerts[]) => setAllPortAlerts({
+      kind: "PortAlertsLoaded",
+      portAlerts: a
+    }))
+  }, [])
 
   const clearAlertForPort = (portCode: string) => () =>
-    rootStore.dispatch(deleteAlertsForPort({
+    deleteAlertsForPort({
       portCode: portCode, onSuccess: () => {
         allPortAlerts.kind === 'PortAlertsLoaded' && setAllPortAlerts({
           ...allPortAlerts,
           portAlerts: allPortAlerts.portAlerts.filter(pa => pa.portCode !== portCode)
         })
       }
-    }))
+    })
 
   return <Container>{allPortAlerts.kind === 'PortAlertsLoaded' && allPortAlerts.portAlerts.map(portAlerts => {
     return <Box key={portAlerts.portCode}>

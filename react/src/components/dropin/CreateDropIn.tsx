@@ -11,7 +11,7 @@ import {AdapterMoment} from "@mui/x-date-pickers/AdapterMoment";
 import {Moment} from "moment";
 import {Snackbar} from "@mui/material";
 import {Alert} from "../DialogComponent";
-import {Redirect} from "react-router-dom";
+import {redirect} from "react-router-dom";
 
 export function jsonDropInData(startTime: Moment | null, endTime: Moment | null, title: string, meetingLink: string) {
   const startTimeString = startTime?.format()
@@ -26,7 +26,6 @@ export function jsonDropInData(startTime: Moment | null, endTime: Moment | null,
 
 export function CreateDropIn() {
   moment.tz.setDefault('Europe/London');
-  const [redirectTo, setRedirectTo] = useState('');
   const [error, setError] = useState(false);
   const [errorText, setErrorText] = useState('');
   const [title, setTitle] = useState('');
@@ -39,7 +38,7 @@ export function CreateDropIn() {
 
   const handleResponse = (response: AxiosResponse) => {
     if (response.status === 200) {
-      setRedirectTo('/drop-ins/list/crud/saved');
+      redirect('/drop-ins/list/crud/saved');
       response.data
     } else {
       setError(true);
@@ -76,7 +75,6 @@ export function CreateDropIn() {
 
   return (
     <div>
-      {redirectTo && <Redirect to={redirectTo}/>}
       <Box>
         <h1>Create Drop-In</h1>
         <Snackbar

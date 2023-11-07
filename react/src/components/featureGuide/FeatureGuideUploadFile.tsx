@@ -16,7 +16,7 @@ const UploadForm: React.FC = () => {
   const [videoUrl, setVideoUrl] = useState('');
 
   const handlePreviewOpen = () => {
-    setVideoUrl(URL.createObjectURL(video));
+    video && setVideoUrl(URL.createObjectURL(video));
   }
 
   useEffect(() => {

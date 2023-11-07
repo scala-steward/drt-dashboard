@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {
+  Box,
   Button,
   Dialog,
   DialogActions,
@@ -13,7 +14,6 @@ import {
 import {Cancel, Delete, Save} from "@mui/icons-material";
 import {ScheduledHealthCheckPause} from "./healthcheckpauseseditor/model";
 import moment from "moment-timezone";
-import {styled} from "@mui/material/styles";
 import Loading from "./Loading";
 import {deleteHealthCheckPause, saveHealthCheckPauses, useHealthCheckPauses} from "../store/heathCheckPausesSlice";
 import Typography from "@mui/material/Typography";
@@ -21,28 +21,8 @@ import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
 import {AdapterMoment} from "@mui/x-date-pickers/AdapterMoment";
 import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
 import {Moment} from "moment";
-import {rootStore} from "../store/rootReducer";
+import {DataGrid} from "@mui/x-data-grid";
 
-
-const RootGrid = styled(Grid)(() => ({
-  flexGrow: 1,
-  maxWidth: 800,
-}));
-
-const TableGrid = styled(Grid)(() => ({
-  marginTop: 25
-}));
-
-const TitleGridItem = styled(Grid)(({theme}) => ({
-  padding: theme.spacing(1),
-  color: theme.palette.text.secondary,
-  fontSize: 20,
-}));
-
-const RowGridItem = styled(Grid)(({theme}) => ({
-  padding: theme.spacing(1),
-  color: theme.palette.text.primary,
-}));
 
 type ConfirmOpen = {
   kind: 'open'
@@ -62,6 +42,41 @@ export const HealthCheckEditor = () => {
   const [newPause, setNewPause] = useState<ScheduledHealthCheckPause | null>(null)
   const [confirm, setConfirm] = useState<Confirm>({kind: 'closed'})
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null)
+
+  const columns = [
+    {
+      field: 'startsAt',
+      headerName: 'From',
+      valueGetter: (params: any) => moment(params.row.startsAt).format("HH:mm, Do MMM YYYY"),
+      width: 200
+    },
+    {
+      field: 'endsAt',
+      headerName: 'To',
+      valueGetter: (params: any) => moment(params.row.endsAt).format("HH:mm, Do MMM YYYY"),
+      width: 200
+    },
+    {
+      field: 'createdAt',
+      headerName: 'Created',
+      valueGetter: (params: any) => moment(params.row.createdAt).format("HH:mm, Do MMM YYYY"),
+      width: 200
+    },
+    {
+      field: 'delete',
+      headerName: '',
+      width: 200,
+      renderCell: (params: any) =>
+        <Button color="primary" variant="outlined"
+                size="medium"
+                onClick={() => setConfirm({
+                  kind: 'open',
+                  message: 'Are you sure you want to remove this health check pause?',
+                  onConfirm: confirmDeletePause(params.row.startsAt, params.row.endsAt),
+                })}><Delete/></Button>
+    },
+  ]
+
 
   const today: () => Moment = () => {
     return moment()
@@ -86,7 +101,7 @@ export const HealthCheckEditor = () => {
 
   const saveNewPause = (pause: ScheduledHealthCheckPause) => {
     console.log(`Saving new pause ${JSON.stringify(pause)}`)
-    rootStore.dispatch(saveHealthCheckPauses({
+    saveHealthCheckPauses({
       pause: pause,
       onSuccess: () => {
         console.log(`Saved new pause ${JSON.stringify(pause)}`)
@@ -97,12 +112,12 @@ export const HealthCheckEditor = () => {
         console.log(`Failed to save new pause ${JSON.stringify(pause)}`)
         setSnackbarMessage('Sorry, I couldn\'t save the new pause. Please try again later.')
       }
-    }))
+    })
   }
 
   const deletePause = (from: number, to: number) => {
     console.log(`Deleting pause ${from} to ${to}`)
-    rootStore.dispatch(deleteHealthCheckPause({
+    deleteHealthCheckPause({
       startsAt: from,
       endsAt: to,
       onSuccess: () => {
@@ -113,7 +128,7 @@ export const HealthCheckEditor = () => {
         console.log(`Failed to delete pause ${from} to ${to}`)
         setSnackbarMessage('Sorry, I couldn\'t delete the pause. Please try again later.')
       }
-    }))
+    })
   }
 
   const confirmDeletePause = (from: number, to: number) => () => {
@@ -121,8 +136,10 @@ export const HealthCheckEditor = () => {
     deletePause(from, to)
   }
 
+  const rows = healthCheckPauses.sort((a, b) => -1 * (a.startsAt.valueOf() - b.startsAt.valueOf()))
+
   return (
-    <RootGrid container={true}>
+    <Stack sx={{my: 2, gap: 2}}>
       <LocalizationProvider dateAdapter={AdapterMoment}>
         <Snackbar
           anchorOrigin={{vertical: 'top', horizontal: 'center'}}
@@ -137,7 +154,7 @@ export const HealthCheckEditor = () => {
         <Grid container={true} item={true}>
           <Button color="primary" variant="outlined" size="medium" onClick={addNewPause}>Add a new pause</Button>
         </Grid>
-        <TableGrid container={true} item={true}>
+        <Box>
           {newPause &&
               <Dialog open={true} maxWidth="xs">
                   <DialogTitle>
@@ -185,36 +202,17 @@ export const HealthCheckEditor = () => {
               <Typography variant={'body1'}>Sorry, I couldn't load the existing pauses</Typography> :
               healthCheckPauses.length === 0 ?
                 <Typography variant={'body1'}>There are no existing pauses</Typography> :
-                <Grid container={true}>
-                  <React.Fragment>
-                    <Grid container={true} item={true} xs={8}>
-                      <TitleGridItem item={true} xs={4}>From</TitleGridItem>
-                      <TitleGridItem item={true} xs={4}>To</TitleGridItem>
-                    </Grid>
-                    <TitleGridItem item={true} xs={4}/>
-                  </React.Fragment>
-                  {healthCheckPauses.sort((a, b) => -1 * (a.startsAt.valueOf() - b.startsAt.valueOf())).map(pause => {
-                    return <React.Fragment key={pause.startsAt.valueOf()}>
-                      <Grid container={true} item={true} xs={8}>
-                        <RowGridItem item={true}
-                                     xs={4}>{moment(pause.startsAt).format("HH:MM, Do MMM YYYY")}</RowGridItem>
-                        <RowGridItem item={true}
-                                     xs={4}>{moment(pause.endsAt).format("HH:MM, Do MMM YYYY")}</RowGridItem>
-                      </Grid>
-                      <RowGridItem item={true} xs={2}><Button color="primary" variant="outlined"
-                                                              size="medium"
-                                                              onClick={() => setConfirm({
-                                                                kind: 'open',
-                                                                message: 'Are you sure you want to remove this health check pause?',
-                                                                onConfirm: confirmDeletePause(pause.startsAt, pause.endsAt)
-                                                              })}><Delete/></Button></RowGridItem>
-                    </React.Fragment>
-                  })
-                  }
-                </Grid>
+                <Box sx={{height: 400, width: '100%'}}>
+                  <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    getRowId={(r) => r.createdAt.valueOf().toString()}
+                    disableSelectionOnClick={true}
+                  />
+                </Box>
           }
-        </TableGrid>
+        </Box>
       </LocalizationProvider>
-    </RootGrid>
+    </Stack>
   );
 }
