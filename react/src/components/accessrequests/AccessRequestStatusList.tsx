@@ -3,9 +3,9 @@ import Box from '@mui/material/Box';
 import {DataGrid, GridRowModel} from '@mui/x-data-grid';
 import ApiClient from "../../services/ApiClient";
 import axios, {AxiosResponse} from "axios";
-import UserRequestDetails, {UserRequestedAccessData} from "./UserRequestDetails";
+import AccessRequestDetails, {UserRequestedAccessData} from "./AccessRequestDetails";
 import {Button} from "@mui/material";
-import {columns} from "./UserAccessCommon";
+import {columns} from "./AccessRequestCommon";
 
 interface IProps {
   accessRequestListRequested: boolean
@@ -15,7 +15,7 @@ interface IProps {
   setShowUserRequestByStatus: ((value: (((prevState: string) => string) | string)) => void);
 }
 
-export default function UserRequestStatusList(props: IProps) {
+export default function AccessRequestStatusList(props: IProps) {
   const [userRequestList, setUserRequestList] = React.useState([] as UserRequestedAccessData[]);
   const [rowsData, setRowsData] = React.useState([] as GridRowModel[]);
   const [rowDetails, setRowDetails] = React.useState({} as UserRequestedAccessData | undefined)
@@ -68,12 +68,12 @@ export default function UserRequestStatusList(props: IProps) {
       />
       {
         (openModal) ?
-          <UserRequestDetails openModal={openModal}
-                              setOpenModal={setOpenModal}
-                              receivedUserDetails={props.accessRequestListRequested}
-                              setReceivedUserDetails={props.setAccessRequestListRequested}
-                              rowDetails={rowDetails}
-                              status={props.statusView}/> :
+          <AccessRequestDetails openModal={openModal}
+                                setOpenModal={setOpenModal}
+                                receivedUserDetails={props.accessRequestListRequested}
+                                setReceivedUserDetails={props.setAccessRequestListRequested}
+                                rowDetails={rowDetails}
+                                status={props.statusView}/> :
           <span/>
       }
       <Button style={{float: 'right'}}

@@ -3,14 +3,14 @@ import Box from '@mui/material/Box';
 import {DataGrid, GridRowId, GridRowModel} from '@mui/x-data-grid';
 import ApiClient from "../../services/ApiClient";
 import axios, {AxiosResponse} from "axios";
-import UserRequestDetails, {UserRequestedAccessData} from "./UserRequestDetails";
-import ConfirmUserAccess from "./ConfirmUserAccess";
-import UserRequestStatusList from "./UserRequestStatusList";
+import AccessRequestDetails, {UserRequestedAccessData} from "./AccessRequestDetails";
+import ConfirmAccessRequest from "./ConfirmAccessRequest";
+import AccessRequestStatusList from "./AccessRequestStatusList";
 import {Button} from "@mui/material";
 import Grid from '@mui/material/Grid';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
-import {columns, KeyCloakUser} from "./UserAccessCommon";
+import {columns, KeyCloakUser} from "./AccessRequestCommon";
 import {GridRowSelectionModel} from "@mui/x-data-grid/models/gridRowSelectionModel";
 
 export default function AccessRequests() {
@@ -126,12 +126,12 @@ export default function AccessRequests() {
             }
           }}
         />
-        {(openModal) ? <UserRequestDetails openModal={openModal}
-                                           setOpenModal={setOpenModal}
-                                           rowDetails={rowDetails}
-                                           receivedUserDetails={receivedUserDetails}
-                                           setReceivedUserDetails={setReceivedUserDetails}
-                                           status={""}/> : <span/>
+        {(openModal) ? <AccessRequestDetails openModal={openModal}
+                                             setOpenModal={setOpenModal}
+                                             rowDetails={rowDetails}
+                                             receivedUserDetails={receivedUserDetails}
+                                             setReceivedUserDetails={setReceivedUserDetails}
+                                             status={""}/> : <span/>
         }
 
         <Grid container spacing={2} justifyContent={"center"}>
@@ -155,43 +155,43 @@ export default function AccessRequests() {
 
   const showDismissedRequest = () => {
     return dismissedPosted ?
-      <ConfirmUserAccess message={"dismissed"}
-                         parentRequestPosted={dismissedPosted}
-                         setParentRequestPosted={setDismissedPosted}
-                         receivedUserDetails={receivedUserDetails}
-                         setReceivedUserDetails={setReceivedUserDetails}
-                         openModel={openModal}
-                         setOpenModel={setOpenModal}
-                         emails={selectedRowDetails.map(srd => srd.email)}/> : viewSelectAccessRequest()
+      <ConfirmAccessRequest message={"dismissed"}
+                            parentRequestPosted={dismissedPosted}
+                            setParentRequestPosted={setDismissedPosted}
+                            receivedUserDetails={receivedUserDetails}
+                            setReceivedUserDetails={setReceivedUserDetails}
+                            openModel={openModal}
+                            setOpenModel={setOpenModal}
+                            emails={selectedRowDetails.map(srd => srd.email)}/> : viewSelectAccessRequest()
   }
 
   const showApprovedOrAccessRequest = () => {
     console.log('userDetails ' + requestPosted + '  ' + (users as KeyCloakUser[]));
     return requestPosted ?
-      <ConfirmUserAccess message={"granted"}
-                         parentRequestPosted={requestPosted}
-                         setParentRequestPosted={setRequestPosted}
-                         receivedUserDetails={receivedUserDetails}
-                         setReceivedUserDetails={setReceivedUserDetails}
-                         openModel={openModal}
-                         setOpenModel={setOpenModal}
-                         emails={users.map(ud => ud.email)}/> : showDismissedRequest()
+      <ConfirmAccessRequest message={"granted"}
+                            parentRequestPosted={requestPosted}
+                            setParentRequestPosted={setRequestPosted}
+                            receivedUserDetails={receivedUserDetails}
+                            setReceivedUserDetails={setReceivedUserDetails}
+                            openModel={openModal}
+                            setOpenModel={setOpenModal}
+                            emails={users.map(ud => ud.email)}/> : showDismissedRequest()
   }
 
   const accessRequestOrApprovedList = () => {
     switch (statusFilterValue) {
       case "Approved" :
-        return <UserRequestStatusList accessRequestListRequested={accessRequestListRequested}
-                                      setAccessRequestListRequested={setAccessRequestListRequested}
-                                      statusView={"Approved"}
-                                      showUserRequestByStatus={statusFilterValue}
-                                      setShowUserRequestByStatus={setStatusFilterValue}/>
+        return <AccessRequestStatusList accessRequestListRequested={accessRequestListRequested}
+                                        setAccessRequestListRequested={setAccessRequestListRequested}
+                                        statusView={"Approved"}
+                                        showUserRequestByStatus={statusFilterValue}
+                                        setShowUserRequestByStatus={setStatusFilterValue}/>
       case "Dismissed" :
-        return <UserRequestStatusList accessRequestListRequested={accessRequestListRequested}
-                                      setAccessRequestListRequested={setAccessRequestListRequested}
-                                      statusView={"Dismissed"}
-                                      showUserRequestByStatus={statusFilterValue}
-                                      setShowUserRequestByStatus={setStatusFilterValue}/>
+        return <AccessRequestStatusList accessRequestListRequested={accessRequestListRequested}
+                                        setAccessRequestListRequested={setAccessRequestListRequested}
+                                        statusView={"Dismissed"}
+                                        showUserRequestByStatus={statusFilterValue}
+                                        setShowUserRequestByStatus={setStatusFilterValue}/>
       case "Requested" :
         return showApprovedOrAccessRequest();
     }
