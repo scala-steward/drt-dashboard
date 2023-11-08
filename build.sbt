@@ -35,8 +35,6 @@ lazy val root = (project in file(".")).
     dockerBaseImage := "openjdk:11-jre-slim-buster",
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
-      "com.typesafe.akka" %% "akka-persistence-typed" % akkaVersion,
-      "com.typesafe.akka" %% "akka-persistence-testkit" % akkaVersion % Test,
       "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
       "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,

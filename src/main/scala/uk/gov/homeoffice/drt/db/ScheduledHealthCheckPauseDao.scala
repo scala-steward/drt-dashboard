@@ -45,7 +45,7 @@ case class ScheduledHealthCheckPauseDao(now: () => SDateLike) {
          (implicit ec: ExecutionContext): DBIOAction[Seq[ScheduledPause], NoStream, Effect.Read] = {
     val query = table.sortBy(_.startsAt)
     maybeAfter
-      .map(after => query.filter(_.startsAt > new Timestamp(after)))
+      .map(after => query.filter(_.endsAt > new Timestamp(after)))
       .getOrElse(query)
       .result
       .map(_.map(r =>
