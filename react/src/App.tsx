@@ -7,19 +7,20 @@ import UsersList from './components/users/UsersList';
 import {Route, Routes} from "react-router-dom";
 import Loading from "./components/Loading";
 import Navigation from "./components/Navigation";
-import {useConfig} from "./store/configSlice";
+import {useConfig} from "./store/config";
 import {Container} from "@mui/material";
 import {styled} from "@mui/material/styles";
 import {RegionPage} from "./components/RegionPage";
 import axios from "axios";
 import ApiClient from "./services/ApiClient";
 import UploadForm from "./components/featureguides/FeatureGuideUploadFile";
-import {HealthCheckEditor} from "./components/HealthCheckPausesEditor";
-import {useUser} from "./store/userSlice";
-import {DropInsList} from "./components/dropins/DropInsList";
-import {CreateDropIn} from "./components/dropins/CreateDropIn";
-import {EditDropIn} from "./components/dropins/EditDropIn";
-import {RegisteredUsers} from "./components/dropins/RegisteredUsers";
+import {HealthCheckEditor} from "./components/healthcheckpauseseditor/HealthCheckPausesEditor";
+import {useUser} from "./store/user";
+import {DropInSessionsList} from "./components/dropins/DropInSessionsList";
+import {AddOrEditDropInSession} from "./components/dropins/AddOrEditDropInSession";
+import {DropInSessionRegistrations} from "./components/dropins/DropInSessionRegistrations";
+import {SnackbarProvider} from 'notistack';
+import Link from "@mui/material/Link";
 
 const StyledDiv = styled('div')(() => ({
   textAlign: 'center',
@@ -57,13 +58,15 @@ export const App = () => {
         <div className="header-wrapper">
           <div className="header-global">
             <div className="header-logo">
-              <a href="https://www.gov.uk" title="Go to the GOV.UK homepage"
-                 id="global-header-logo"
-                 className="content">
+              <Link href="https://www.gov.uk" title="Go to the GOV.UK homepage"
+                    id="global-header-logo"
+                    className="content"
+                    sx={{display: 'flex', gap: 1, alignItems: 'center', justifyItems: 'center'}}>
                 <img
-                  src="images/gov.uk_logotype_crown_invert_trans.png"
-                  width="36" height="32" alt=""/> GOV.UK
-              </a>
+                  src="/images/gov.uk_logotype_crown.png"
+                  width="36" height="32" alt=""/>
+                GOV.UK
+              </Link>
             </div>
           </div>
           <div className="header-proposition">
@@ -80,6 +83,12 @@ export const App = () => {
 
       <div id="global-header-bar"/>
       <StyledContainer>
+        <SnackbarProvider
+          anchorOrigin={{
+            vertical: 'top',
+            horizontal: 'center'
+          }}
+        />
         <Routes>
           <Route path="/" element={<Home config={config.values} user={user.profile}/>}/>
           <Route path="/access-requests" element={<AccessRequests/>}/>
@@ -88,12 +97,12 @@ export const App = () => {
           <Route path="/region/:regionName" element={<RegionPage user={user.profile} config={config.values}/>}/>
           <Route path="/feature-guide-upload" element={<UploadForm/>}/>
           <Route path="/drop-ins">
-            <Route path="" element={<DropInsList/>}/>
-            <Route path="list/crud/:operations" element={<DropInsList/>}/>
-            <Route path="list/:listAll?" element={<DropInsList/>}/>
-            <Route path="new" element={<CreateDropIn/>}/>
-            <Route path="edit/:dropInId" element={<EditDropIn/>}/>
-            <Route path="list/registeredUsers/:dropInId" element={<RegisteredUsers/>}/>
+            <Route path="" element={<DropInSessionsList/>}/>
+            <Route path="list/crud/:operations" element={<DropInSessionsList/>}/>
+            <Route path="list/:listAll?" element={<DropInSessionsList/>}/>
+            <Route path="edit" element={<AddOrEditDropInSession/>}/>
+            <Route path="edit/:dropInId" element={<AddOrEditDropInSession/>}/>
+            <Route path="list/registered-users/:dropInId" element={<DropInSessionRegistrations/>}/>
           </Route>
           <Route path="/health-checks" element={<HealthCheckEditor/>}/>
         </Routes>

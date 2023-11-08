@@ -3,7 +3,7 @@ import moment from "moment-timezone";
 import AlertLike from "../../model/Alert";
 import {Box, Button, Container, Typography} from "@mui/material";
 import {styled} from "@mui/material/styles";
-import {deleteAlertsForPort, fetchAlerts} from "../../store/alertsSlice";
+import {deleteAlertsForPort, fetchAlerts} from "../../store/alerts";
 
 
 const PREFIX = 'SaveAlert';

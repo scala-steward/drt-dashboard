@@ -19,7 +19,7 @@ export const useUser = () => {
       })
       .finally(() => setLoading(false))
     fetch()
-  }, [fetch])
+  }, [])
 
   return {user: user, loadingUser: loading, failedUser: failed}
 }

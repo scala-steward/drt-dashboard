@@ -1,10 +1,10 @@
 import React, {useState} from 'react';
 import {Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Snackbar, Stack} from "@mui/material";
 import {Cancel, Delete, Save} from "@mui/icons-material";
-import {ScheduledHealthCheckPause} from "./healthcheckpauseseditor/model";
+import {ScheduledHealthCheckPause} from "./model";
 import moment from "moment-timezone";
-import Loading from "./Loading";
-import {deleteHealthCheckPause, saveHealthCheckPauses, useHealthCheckPauses} from "../store/heathCheckPausesSlice";
+import Loading from "../Loading";
+import {deleteHealthCheckPause, saveHealthCheckPauses, useHealthCheckPauses} from "../../store/heathCheckPauses";
 import Typography from "@mui/material/Typography";
 import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
 import {AdapterMoment} from "@mui/x-date-pickers/AdapterMoment";

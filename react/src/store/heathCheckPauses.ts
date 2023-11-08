@@ -4,11 +4,6 @@ import {ScheduledHealthCheckPause} from "../components/healthcheckpauseseditor/m
 import {useEffect, useState} from "react";
 
 
-export interface HealthCheckPauseList {
-  count: number
-  results: ScheduledHealthCheckPause[]
-}
-
 export type RequestSetHealthCheckPauses = {
   pause: ScheduledHealthCheckPause
   onSuccess: () => void
