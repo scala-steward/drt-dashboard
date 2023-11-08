@@ -98,8 +98,7 @@ export const App = () => {
           <Route path="/feature-guide-upload" element={<UploadForm/>}/>
           <Route path="/drop-ins">
             <Route path="" element={<DropInSessionsList/>}/>
-            <Route path="list/crud/:operations" element={<DropInSessionsList/>}/>
-            <Route path="list/:listAll?" element={<DropInSessionsList/>}/>
+            <Route path="list" element={<DropInSessionsList/>}/>
             <Route path="edit" element={<AddOrEditDropInSession/>}/>
             <Route path="edit/:dropInId" element={<AddOrEditDropInSession/>}/>
             <Route path="list/registered-users/:dropInId" element={<DropInSessionRegistrations/>}/>
