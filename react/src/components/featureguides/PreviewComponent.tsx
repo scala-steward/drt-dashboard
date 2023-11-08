@@ -100,9 +100,9 @@ export function PreviewComponent(props: Props) {
                     <div>{props.title}</div>
                   </Grid>
                   <Grid item xs={12} sx={{"font": "Arial", "padding-left": "16px"}}>
-                    {props.markdownContent && props.markdownContent.split('\n').map((line, _) => (
-                      <div>{line}</div>
-                    ))}
+                    {props.markdownContent && props.markdownContent
+                      .split('\n')
+                      .map(line => <div>{line}</div>)}
                   </Grid>
                 </Grid>
               </Grid>
