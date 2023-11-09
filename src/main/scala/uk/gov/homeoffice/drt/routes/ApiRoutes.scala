@@ -13,7 +13,7 @@ import uk.gov.homeoffice.drt.auth.Roles._
 import uk.gov.homeoffice.drt.authentication._
 import uk.gov.homeoffice.drt.healthchecks.ScheduledPause
 import uk.gov.homeoffice.drt.json.ScheduledPauseJsonFormats.scheduledPauseJsonFormat
-import uk.gov.homeoffice.drt.persistence.ScheduledPausePersistence
+import uk.gov.homeoffice.drt.persistence.ScheduledHealthCheckPausePersistence
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.services.UserService
 import uk.gov.homeoffice.drt._
@@ -47,7 +47,7 @@ object ApiRoutes extends MultiPortAlertJsonSupport
   def apply(prefix: String,
             clientConfig: ClientConfig,
             userService: UserService,
-            scheduledPausePersistence: ScheduledPausePersistence,
+            scheduledPausePersistence: ScheduledHealthCheckPausePersistence,
            )
            (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
     pathPrefix(prefix) {

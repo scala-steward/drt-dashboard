@@ -6,7 +6,7 @@ import uk.gov.homeoffice.drt.time.SDateLike
 
 import scala.concurrent.{ExecutionContext, Future}
 
-trait ScheduledPausePersistence {
+trait ScheduledHealthCheckPausePersistence {
   def insert(export: ScheduledPause): Future[Int]
 
   def get(maybeAfter: Option[Long]): Future[Seq[ScheduledPause]]
@@ -14,8 +14,8 @@ trait ScheduledPausePersistence {
   def delete(from: Long, to: Long): Future[Int]
 }
 
-case class ScheduledPausePersistenceImpl(database: AppDatabase, now: () => SDateLike)
-                                        (implicit ec: ExecutionContext) extends ScheduledPausePersistence {
+case class ScheduledHealthCheckPausePersistenceImpl(database: AppDatabase, now: () => SDateLike)
+                                                   (implicit ec: ExecutionContext) extends ScheduledHealthCheckPausePersistence {
   private val dao: ScheduledHealthCheckPauseDao = ScheduledHealthCheckPauseDao(now)
 
   override def insert(export: ScheduledPause): Future[Int] = database.db.run(dao.insert(export))

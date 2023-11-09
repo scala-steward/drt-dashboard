@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.db._
 import uk.gov.homeoffice.drt.healthchecks.{HealthCheckMonitor, HealthCheckResponse, HealthChecksActor, IncidentPriority}
 import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications}
-import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledPausePersistenceImpl}
+import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealthCheckPausePersistenceImpl}
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes._
 import uk.gov.homeoffice.drt.services.s3.S3Service
@@ -112,7 +112,7 @@ object Server {
           staticResourceDirectory = getFromResourceDirectory("frontend/static")).route,
         CiriumRoutes("cirium", serverConfig.ciriumDataUri),
         DrtRoutes("drt", serverConfig.portIataCodes),
-        ApiRoutes("api", serverConfig.clientConfig, userService, ScheduledPausePersistenceImpl(db, now)),
+        ApiRoutes("api", serverConfig.clientConfig, userService, ScheduledHealthCheckPausePersistenceImpl(db, now)),
         LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
         ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), () => SDate.now(), emailClient, urls.rootUrl, serverConfig.teamEmail),
         UserRoutes("user", serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),

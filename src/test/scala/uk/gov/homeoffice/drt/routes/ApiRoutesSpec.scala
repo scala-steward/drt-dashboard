@@ -12,6 +12,7 @@ import org.specs2.mutable.Specification
 import spray.json._
 import uk.gov.homeoffice.drt.auth.Roles.{BorderForceStaff, LHR}
 import uk.gov.homeoffice.drt.db.MockUserDao
+import uk.gov.homeoffice.drt.persistence.MockScheduledHealthCheckPausePersistence
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.services.UserService
 import uk.gov.homeoffice.drt.{ClientConfig, ClientConfigJsonFormats, MockHttpClient}
@@ -31,7 +32,7 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest with ClientConfig
 
   val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), "somedomain.com", "test@test.com")
   val userService: UserService = UserService(new MockUserDao)
-  val routes: Route = ApiRoutes("api", clientConfig, userService)
+  val routes: Route = ApiRoutes("api", clientConfig, userService, MockScheduledHealthCheckPausePersistence)
 
   "Given a uri accessed by a user with an email but no port access, I should see an empty port list and their email address in JSON" >> {
     Get("/api/user") ~>
