@@ -14,7 +14,7 @@ import akka.stream.Materializer
 import akka.util.Timeout
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.db._
-import uk.gov.homeoffice.drt.healthchecks.{HealthCheckMonitor, HealthCheckResponse, HealthChecksActor, IncidentPriority}
+import uk.gov.homeoffice.drt.healthchecks.{CheckScheduledPauses, HealthCheckMonitor, HealthCheckResponse, HealthChecksActor, IncidentPriority}
 import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications}
 import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealthCheckPausePersistenceImpl}
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
@@ -102,7 +102,7 @@ object Server {
       val (exportUploader, exportDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.exportsFolderPrefix)
       val (featureUploader, featureDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.featureFolderPrefix)
 
-      implicit val db: ProdDatabase.type = ProdDatabase
+      implicit val db: AppDatabase = ProdDatabase
 
       val routes: Route = concat(
         IndexRoute(
@@ -155,7 +155,7 @@ object Server {
 
             if (wasStopped) ctx.self ! Stop
 
-            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, emailClient, urls)
+            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, emailClient, urls, db)
 
             running(binding, monitor)
 
@@ -171,6 +171,7 @@ object Server {
   private def startHealthCheckMonitor(serverConfig: ServerConfig,
                                       emailClient: EmailClient,
                                       urls: Urls,
+                                      db: AppDatabase,
                                      )
                                      (implicit
                                       system: ActorSystem[Nothing],
@@ -206,6 +207,20 @@ object Server {
     }
     log.info(s"Starting health check monitor for ports ${serverConfig.portCodes.mkString(", ")}")
     val monitor = HealthCheckMonitor(makeRequest, recordResponse, serverConfig.portCodes)
-    scheduler.scheduleWithFixedDelay(30.seconds, serverConfig.healthCheckFrequencyMinutes.minutes)(() => monitor())
+    val pausesProvider = CheckScheduledPauses.pausesProvider(ScheduledHealthCheckPausePersistenceImpl(db, () => SDate.now()))
+    val pauseIsActive = CheckScheduledPauses.activePauseChecker(pausesProvider)
+    object Check extends Runnable {
+      override def run(): Unit = {
+        pauseIsActive().foreach { paused =>
+          if (paused)
+            log.info("Health check monitor paused")
+          else {
+            log.info("Health check monitor running")
+            monitor()
+          }
+        }
+      }
+    }
+    scheduler.scheduleWithFixedDelay(30.seconds, serverConfig.healthCheckFrequencyMinutes.minutes)(Check)
   }
 }
