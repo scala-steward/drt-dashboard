@@ -189,7 +189,7 @@ export function DropInSessionsList() {
       <Link to={"/"}>
         Home
       </Link>
-      <Typography color="text.primary">Drop-ins</Typography>
+      <Typography color="text.primary">Drop-in sessions</Typography>
     </Breadcrumbs>
     <Stack direction={'row'} spacing={2} justifyContent={'space-between'}>
       <Link to={'/drop-ins/edit'}><Button variant={'outlined'}>Add new drop-in session</Button></Link>

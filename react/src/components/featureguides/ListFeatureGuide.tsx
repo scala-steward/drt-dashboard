@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import axios, {AxiosResponse} from "axios";
 import {DataGrid, GridColDef, GridRenderCellParams, GridRowModel} from "@mui/x-data-grid";
 import Box from "@mui/material/Box";
-import {Button} from "@mui/material";
+import {Breadcrumbs, Button, Stack} from "@mui/material";
 import {PreviewComponent} from "./PreviewComponent";
 import {FeatureGuideEdit} from "./FeatureGuideEdit";
 import PublishIcon from '@mui/icons-material/Publish';
@@ -13,6 +13,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import {DeleteComponent} from "./DeleteComponent";
 import EditIcon from '@mui/icons-material/Edit';
 import {PublishComponent} from "./PublishComponent";
+import {Link} from "react-router-dom";
+import Typography from "@mui/material/Typography";
 
 interface Props {
   setViewFeatureGuides: (view: boolean) => void;
@@ -183,8 +185,14 @@ export const ListFeatureGuide = (props: Props) => {
                                        showEdit={showEdit} setShowEdit={setShowEdit}
                                        setReceivedData={setReceivedData}
             /> :
-            <div>
-              <h1>Feature Guide List</h1>
+            <Stack sx={{mt: 2, gap: 4, alignItems: 'stretch'}}>
+              <Breadcrumbs>
+                <Link to={"/"}>
+                  Home
+                </Link>
+                <Typography color="text.primary">Feature guides</Typography>
+              </Breadcrumbs>
+
               <Box sx={{height: 400, width: '100%'}}>
                 <DataGrid
                   getRowId={(rowsData) => rowsData.id}
@@ -192,7 +200,7 @@ export const ListFeatureGuide = (props: Props) => {
                   columns={featureColumns}
                   pageSizeOptions={[5]}
                 />
-                <Button style={{float: 'right'}} variant="outlined"
+                <Button variant="outlined"
                         color="primary"
                         onClick={handleBack}>back</Button>
               </Box>
@@ -205,7 +213,7 @@ export const ListFeatureGuide = (props: Props) => {
                                 setReceivedData={setReceivedData}
                                 isEdit={true}
                                 showEdit={showEdit} setShowEdit={setShowEdit}/>
-            </div>;
+            </Stack>;
 }
 
 

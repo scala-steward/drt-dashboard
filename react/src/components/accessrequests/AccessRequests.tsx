@@ -6,12 +6,14 @@ import axios, {AxiosResponse} from "axios";
 import AccessRequestDetails, {UserRequestedAccessData} from "./AccessRequestDetails";
 import ConfirmAccessRequest from "./ConfirmAccessRequest";
 import AccessRequestStatusList from "./AccessRequestStatusList";
-import {Button} from "@mui/material";
+import {Breadcrumbs, Button, Stack} from "@mui/material";
 import Grid from '@mui/material/Grid';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import {columns, KeyCloakUser} from "./AccessRequestCommon";
 import {GridRowSelectionModel} from "@mui/x-data-grid/models/gridRowSelectionModel";
+import {Link} from "react-router-dom";
+import Typography from "@mui/material/Typography";
 
 export default function AccessRequests() {
   const [accessRequestListRequested, setAccessRequestListRequested] = React.useState(false);
@@ -110,40 +112,38 @@ export default function AccessRequests() {
   }, [receivedUserDetails]);
 
   const viewSelectAccessRequest = () => {
-    return (
-      <Box sx={{height: 400, width: '100%'}}>
-        <DataGrid
-          getRowId={(rowsData) => rowsData.requestTime}
-          rows={rowsData}
-          columns={columns}
-          pageSizeOptions={[5]}
-          checkboxSelection={true}
-          disableRowSelectionOnClick
-          onRowSelectionModelChange={addSelectedRows}
-          onRowClick={(params, event: any) => {
-            if (!event.ignore) {
-              rowClickOpen(findAccessRequestByRowId(params.row.requestTime));
-            }
-          }}
-        />
-        {(openModal) ? <AccessRequestDetails openModal={openModal}
-                                             setOpenModal={setOpenModal}
-                                             rowDetails={rowDetails}
-                                             receivedUserDetails={receivedUserDetails}
-                                             setReceivedUserDetails={setReceivedUserDetails}
-                                             status={""}/> : <span/>
-        }
+    return <Box sx={{height: 400, width: '100%'}}>
+      <DataGrid
+        getRowId={(rowsData) => rowsData.requestTime}
+        rows={rowsData}
+        columns={columns}
+        pageSizeOptions={[5]}
+        checkboxSelection={true}
+        disableRowSelectionOnClick
+        onRowSelectionModelChange={addSelectedRows}
+        onRowClick={(params, event: any) => {
+          if (!event.ignore) {
+            rowClickOpen(findAccessRequestByRowId(params.row.requestTime));
+          }
+        }}
+      />
+      {(openModal) ? <AccessRequestDetails openModal={openModal}
+                                           setOpenModal={setOpenModal}
+                                           rowDetails={rowDetails}
+                                           receivedUserDetails={receivedUserDetails}
+                                           setReceivedUserDetails={setReceivedUserDetails}
+                                           status={""}/> : <span/>
+      }
 
-        <Grid container spacing={2} justifyContent={"center"}>
-          <Grid item xs={8} md={2}>
-            <Button variant="outlined" onClick={approveSelectedUserRequests}>Approve</Button>
-          </Grid>
-          <Grid item xs={8} md={2}>
-            <Button variant="outlined" onClick={dismissAccessRequests}>Dismiss</Button>
-          </Grid>
+      <Grid container spacing={2} justifyContent={"center"}>
+        <Grid item xs={8} md={2}>
+          <Button variant="outlined" onClick={approveSelectedUserRequests}>Approve</Button>
         </Grid>
-      </Box>
-    );
+        <Grid item xs={8} md={2}>
+          <Button variant="outlined" onClick={dismissAccessRequests}>Dismiss</Button>
+        </Grid>
+      </Grid>
+    </Box>
   }
 
   const dismissAccessRequests = () => {
@@ -197,7 +197,13 @@ export default function AccessRequests() {
     }
   }
 
-  return (
+  return <Stack sx={{mt: 2, gap: 4, alignItems: 'stretch'}}>
+    <Breadcrumbs>
+      <Link to={"/"}>
+        Home
+      </Link>
+      <Typography color="text.primary">Access requests</Typography>
+    </Breadcrumbs>
     <Box sx={{width: '100%'}}>
       <Tabs
         value={statusFilterValue}
@@ -211,5 +217,5 @@ export default function AccessRequests() {
       </Tabs>
       <div> {accessRequestOrApprovedList()} </div>
     </Box>
-  )
+  </Stack>
 }
