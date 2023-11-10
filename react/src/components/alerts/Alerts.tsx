@@ -22,7 +22,7 @@ export default function Alerts(props: IProps) {
 
   const changeTabs = (event: React.ChangeEvent<any>, newValue: number) => setSelectedTab(newValue);
 
-  return <Stack sx={{mt: 2, gap: 4, alignItems: 'stretch'}}>
+  return <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
     <Breadcrumbs>
       <Link to={"/"}>
         Home

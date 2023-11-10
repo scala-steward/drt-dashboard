@@ -185,15 +185,15 @@ export function DropInSessionsList() {
       })
   }
 
-  return <Stack sx={{mt: 2, gap: 4, alignItems: 'stretch'}}>
+  return <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
     <Breadcrumbs>
       <Link to={"/"}>
         Home
       </Link>
       <Typography color="text.primary">Drop-in sessions</Typography>
     </Breadcrumbs>
-    <Stack direction={'row'} spacing={2} justifyContent={'space-between'}>
-      <Link to={'/drop-ins/edit'}><Button variant={'outlined'}>Add new drop-in session</Button></Link>
+    <Stack direction={'row'} justifyContent={'space-between'}>
+      <Link to={'/drop-ins/edit'}><Button variant={'outlined'}>New drop in session</Button></Link>
       <FormControlLabel
         label={'Show all'}
         control={<Checkbox checked={showAll} onChange={() => setShowAll(!showAll)} color="primary"/>}
@@ -214,35 +214,33 @@ export function DropInSessionsList() {
             />
           </Box>
     }
-    <ViewDropInSession id={rowDetails?.id} title={rowDetails?.title}
+    <ViewDropInSession id={rowDetails?.id}
+                       title={rowDetails?.title}
                        startTime={rowDetails?.startTime}
                        endTime={rowDetails?.endTime}
                        meetingLink={rowDetails?.meetingLink}
-                       view={view} setView={setView}
-    />
+                       view={view}
+                       setView={setView}/>
     {showDelete && <DialogComponent
         actionText='remove drop-in'
         onCancel={() => setShowDelete(false)}
         onConfirm={() => {
           deleteSession(rowDetails?.id as string)
           setShowDelete(false)
-        }}
-    />}
+        }}/>}
     {publish && <DialogComponent
         actionText="publish"
         onCancel={() => setShowDelete(false)}
         onConfirm={() => {
           updatePublished(rowDetails?.id as string, true)
           setPublish(false)
-        }}
-    />}
+        }}/>}
     {unPublish && <DialogComponent
         actionText="unPublish"
         onCancel={() => setShowDelete(false)}
         onConfirm={() => {
           updatePublished(rowDetails?.id as string, false)
           setUnPublish(false)
-        }}
-    />}
+        }}/>}
   </Stack>
 }

@@ -4,7 +4,6 @@ import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
 import {DateTimePicker} from '@mui/x-date-pickers/DateTimePicker';
 import TextField from '@mui/material/TextField';
 import Button from "@mui/material/Button";
-import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import moment from 'moment-timezone';
 import {AdapterMoment} from "@mui/x-date-pickers/AdapterMoment";
@@ -102,8 +101,7 @@ export function AddOrEditDropInSession() {
     }
   };
 
-  return (
-    <Stack sx={{mt: 2, gap: 4, alignItems: 'stretch'}}>
+  return <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
       <Breadcrumbs>
         <Link to={"/"}>
           Home
@@ -154,7 +152,7 @@ export function AddOrEditDropInSession() {
             </LocalizationProvider>
           </Grid>
           <Grid item xs={12}>
-            <LocalizationProvider dateAdapter={AdapterMoment}>
+            <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale={'en-gb'}>
               <DateTimePicker
                 slotProps={{
                   textField: {
@@ -172,14 +170,12 @@ export function AddOrEditDropInSession() {
             </LocalizationProvider>
           </Grid>
           <Grid item xs={12}>
-            <Box sx={{alignItems: "left"}}>
-              <Button variant={"outlined"} type={"submit"}>
-                {sessionId ? 'Save changes' : 'Save'}
-              </Button>
-            </Box>
+            <Stack gap={1} direction={'row'}>
+              <Button variant={"outlined"} onClick={() => navigate('/drop-ins')}>Cancel</Button>
+              <Button variant={"outlined"} type={"submit"}>{sessionId ? 'Save changes' : 'Save'}</Button>
+            </Stack>
           </Grid>
         </Grid>
       </form>
     </Stack>
-  );
 }

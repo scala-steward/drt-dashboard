@@ -1,5 +1,4 @@
 import * as React from 'react';
-import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
 import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
 import {DatePicker} from '@mui/x-date-pickers/DatePicker';
 import Button from '@mui/material/Button';
@@ -7,6 +6,8 @@ import format from 'date-fns/format';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import {Stack} from "@mui/material";
 import axios from "axios";
+import {AdapterMoment} from "@mui/x-date-pickers/AdapterMoment";
+import {Moment} from "moment";
 
 interface IProps {
   region: string;
@@ -20,10 +21,10 @@ interface RegionExportRequest {
 }
 
 export default function ExportDatePicker(props: IProps) {
-  const [fromValue, setFromValue] = React.useState<Date | null>(null);
-  const [toValue, setToValue] = React.useState<Date | null>(null);
+  const [fromValue, setFromValue] = React.useState<Moment | null>(null);
+  const [toValue, setToValue] = React.useState<Moment | null>(null);
 
-  const formattedDate = (date: Date) => format(date as Date, "yyyy-MM-dd")
+  const formattedDate = (date: Moment) => format(date, "dd-MM-yyyy")
 
   const requestExport = () => {
     fromValue && toValue && axios.post(
@@ -37,8 +38,8 @@ export default function ExportDatePicker(props: IProps) {
     props.handleClose()
   }
 
-  return <LocalizationProvider dateAdapter={AdapterDateFns}>
-    <Stack spacing={2} sx={{marginTop: 2}}>
+  return <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale={'en-gb'}>
+    <Stack spacing={2} sx={{mt: 2}}>
       <DatePicker
         label="From Date"
         value={fromValue}

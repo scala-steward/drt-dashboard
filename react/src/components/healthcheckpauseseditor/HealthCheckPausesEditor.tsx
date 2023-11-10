@@ -1,16 +1,5 @@
 import React, {useState} from 'react'
-import {
-  Box,
-  Breadcrumbs,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Grid,
-  Snackbar,
-  Stack
-} from "@mui/material"
+import {Box, Breadcrumbs, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack} from "@mui/material"
 import {Cancel, Delete, Save} from "@mui/icons-material"
 import {ScheduledHealthCheckPause} from "./model"
 import moment from "moment-timezone"
@@ -24,6 +13,7 @@ import {Moment} from "moment"
 import {DataGrid} from "@mui/x-data-grid"
 import {Alert} from "@mui/lab"
 import {Link} from "react-router-dom"
+import {enqueueSnackbar} from "notistack";
 
 type ConfirmOpen = {
   kind: 'open'
@@ -42,7 +32,6 @@ export const HealthCheckEditor = () => {
   const {healthCheckPauses, loading, failed} = useHealthCheckPauses(requestRefreshAt.valueOf())
   const [newPause, setNewPause] = useState<ScheduledHealthCheckPause | null>(null)
   const [confirm, setConfirm] = useState<Confirm>({kind: 'closed'})
-  const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null)
   const [newPauseIsValid, setNewPauseIsValid] = useState<boolean>(true)
 
   moment.locale('en-gb')
@@ -128,7 +117,7 @@ export const HealthCheckEditor = () => {
       },
       onFailure: () => {
         console.log(`Failed to save new pause ${JSON.stringify(pause)}`)
-        setSnackbarMessage('Sorry, I couldn\'t save the new pause. Please try again later.')
+        enqueueSnackbar("Sorry, I couldn't save the new pause. Please try again later.")
       }
     })
   }
@@ -144,7 +133,7 @@ export const HealthCheckEditor = () => {
       },
       onFailure: () => {
         console.log(`Failed to delete pause ${from} to ${to}`)
-        setSnackbarMessage('Sorry, I couldn\'t delete the pause. Please try again later.')
+        enqueueSnackbar("Sorry, I couldn't delete the pause. Please try again later.")
       }
     })
   }
@@ -157,28 +146,21 @@ export const HealthCheckEditor = () => {
   const rows = [...healthCheckPauses]
     .sort((a, b) => -1 * (b.startsAt.valueOf() - a.startsAt.valueOf()))
 
-  return <Stack sx={{my: 2, gap: 4}}>
-    <Breadcrumbs>
-      <Link to={"/"}>
-        Home
-      </Link>
-      <Typography color="text.primary">Health check pauses</Typography>
-    </Breadcrumbs>
-    <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale={'en-gb'}>
-      <Snackbar
-        anchorOrigin={{vertical: 'top', horizontal: 'center'}}
-        open={!!snackbarMessage}
-        autoHideDuration={6000}
-        onClose={() => setSnackbarMessage('')}
-        message={snackbarMessage}
-      />
-      <Grid container={true} item={true}>
-        <h1>Scheduled health check pauses</h1>
-      </Grid>
-      <Grid container={true} item={true}>
-        <Button color="primary" variant="outlined" size="medium" onClick={addNewPause}>Add a new pause</Button>
-      </Grid>
-      <Box>
+  return <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale={'en-gb'}>
+    <Stack gap={4} alignItems={'left'} sx={{my: 2}}>
+      <Breadcrumbs>
+        <Link to={"/"}>
+          Home
+        </Link>
+        <Typography color="text.primary">Health check pauses</Typography>
+      </Breadcrumbs>
+      <>
+        <Link to={''} onClick={e => {
+          e.preventDefault()
+          addNewPause()
+        }}><Button color="primary" variant="outlined" size="medium">Add a new pause</Button></Link>
+      </>
+      <>
         {newPause &&
             <Dialog open={true} maxWidth="xs">
                 <DialogTitle>
@@ -241,7 +223,7 @@ export const HealthCheckEditor = () => {
                 />
               </Box>
         }
-      </Box>
-    </LocalizationProvider>
-  </Stack>
+      </>
+    </Stack>
+  </LocalizationProvider>
 }

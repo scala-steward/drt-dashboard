@@ -107,7 +107,7 @@ export function DropInSessionRegistrations() {
       })
   }
 
-  return <Stack sx={{mt: 2, gap: 4, alignItems: 'stretch'}}>
+  return <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
     <Breadcrumbs>
       <Link to={"/"}>
         Home

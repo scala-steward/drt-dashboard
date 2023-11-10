@@ -22,9 +22,6 @@ export const AddOrEditFeatureGuide = () => {
   const params = useParams()
   const guideId = params['guideId'] ? params['guideId'] : ''
 
-  console.log(`params: ${params}`)
-  console.log(`guideId: ${guideId}`)
-
   if (guideId) {
     useEffect(() => {
       const fetch = () => axios.get(`/guide/getFeatureGuide/${guideId}`)
@@ -81,7 +78,7 @@ export const AddOrEditFeatureGuide = () => {
       .catch(() => enqueueSnackbar('Feature guide upload failed', {variant: 'error'}))
   }
 
-  return <Stack sx={{mt: 2, gap: 4, alignItems: 'stretch'}}>
+  return <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
     <Breadcrumbs>
       <Link to={"/"}>
         Home
@@ -106,7 +103,10 @@ export const AddOrEditFeatureGuide = () => {
           handleMarkdownChange={event => setMarkdownContent(event.target.value)}
         />
       </div>
-      <Button variant="outlined" color="primary" type="submit">{guideId ? 'Save changes' : 'Save'}</Button>
+      <Stack gap={1} direction={'row'}>
+        <Button variant={"outlined"} onClick={() => navigate('/feature-guides')}>Cancel</Button>
+        <Button variant={"outlined"} color={"primary"} type={"submit"}>{guideId ? 'Save changes' : 'Save'}</Button>
+      </Stack>
     </form>
     {markdownContent.length > 0 ?
       <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
@@ -115,7 +115,13 @@ export const AddOrEditFeatureGuide = () => {
 
     {openPreview &&
         <PreviewComponent
-            guide={{id: '', title: title, markdownContent: markdownContent, fileName: '', uploadTime: ''} as FeatureData}
+            guide={{
+              id: '',
+              title: title,
+              markdownContent: markdownContent,
+              fileName: '',
+              uploadTime: ''
+            } as FeatureData}
             videoUrl={videoUrl}
             onClose={() => setOpenPreview(false)}
             actionsAvailable={false}
