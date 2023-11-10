@@ -2,10 +2,11 @@ import React, {useState} from "react";
 import {Breadcrumbs, Button, Stack} from "@mui/material";
 import {MarkdownEditor} from "./MarkdownEditor";
 import {PreviewComponent} from "./PreviewComponent";
-import axios, {AxiosResponse} from "axios";
+import axios from "axios";
 import {Link} from "react-router-dom";
 import Typography from "@mui/material/Typography";
 import TextField from "@mui/material/TextField";
+import {enqueueSnackbar} from "notistack";
 
 interface Props {
   id: string | undefined;
@@ -17,7 +18,7 @@ interface Props {
   setShowEdit: ((value: (((prevState: boolean) => boolean) | boolean)) => void);
 }
 
-export function FeatureGuideEdit(props: Props) {
+export function EditFeatureGuide(props: Props) {
   const [editTitle, setEditTitle] = React.useState(props.title)
   const [editMarkdownContent, setEditMarkdownContent] = React.useState(props.markdownContent)
   const [openPreview, setOpenPreview] = React.useState(false)
@@ -42,25 +43,21 @@ export function FeatureGuideEdit(props: Props) {
     props.setShowEdit(false);
   }
 
-  const handleResponse = (response: AxiosResponse) => {
-    if (response.status === 200) {
-      setUpdated(true);
-      response.data
-    } else {
-      setError(true);
-      response.data
-    }
-  }
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData();
     formData.append('title', editTitle ? editTitle : '');
     formData.append('markdownContent', editMarkdownContent ? editMarkdownContent : '');
     axios.post('/guide/updateFeatureGuide/' + props.id, formData)
-      .then(response => handleResponse(response))
-      .then(data => {
-        console.log(data);
+      .then(response => {
+        if (response.status === 200) {
+          setUpdated(true);
+          response.data
+        } else {
+          enqueueSnackbar('Feature guide update failed', {variant: 'error'})
+          response.data
+        }
+
       })
       .catch(error => {
         setError(true);
@@ -81,10 +78,7 @@ export function FeatureGuideEdit(props: Props) {
             <Link to={"/"}>
               Home
             </Link>
-            <Link to={"/feature-guide-upload"} onClick={event => {
-              event.preventDefault()
-              props.setShowEdit(false)
-            }}>
+            <Link to={"/feature-guides"}>
               Feature guides
             </Link>
             <Typography color="text.primary">Edit feature guide :: {editTitle}</Typography>
@@ -110,11 +104,11 @@ export function FeatureGuideEdit(props: Props) {
             <span/>
           }
 
-          <PreviewComponent title={editTitle}
-                            videoURL={props.videoURL}
-                            markdownContent={editMarkdownContent}
-                            openPreview={openPreview}
-                            setOpenPreview={setOpenPreview}/>
+          {/*<PreviewComponent title={editTitle}*/}
+          {/*                  videoURL={props.videoURL}*/}
+          {/*                  markdownContent={editMarkdownContent}*/}
+          {/*                  openPreview={openPreview}*/}
+          {/*                  setOpenPreview={setOpenPreview}/>*/}
 
         </Stack>
   )

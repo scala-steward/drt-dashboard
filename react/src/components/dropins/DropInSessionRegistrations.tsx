@@ -28,12 +28,12 @@ export function DropInSessionRegistrations() {
     },
     {
       field: 'registeredAt',
-      headerName: 'Registration Time',
+      headerName: 'Registered',
       width: 150,
     },
     {
       field: 'emailSentAt',
-      headerName: 'Email Sent Time',
+      headerName: 'Reminder Sent',
       width: 150,
     },
     {

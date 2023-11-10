@@ -13,7 +13,6 @@ import {styled} from "@mui/material/styles";
 import {RegionPage} from "./components/RegionPage";
 import axios from "axios";
 import ApiClient from "./services/ApiClient";
-import UploadForm from "./components/featureguides/FeatureGuideUploadFile";
 import {HealthCheckEditor} from "./components/healthcheckpauseseditor/HealthCheckPausesEditor";
 import {useUser} from "./store/user";
 import {DropInSessionsList} from "./components/dropins/DropInSessionsList";
@@ -21,6 +20,8 @@ import {AddOrEditDropInSession} from "./components/dropins/AddOrEditDropInSessio
 import {DropInSessionRegistrations} from "./components/dropins/DropInSessionRegistrations";
 import {SnackbarProvider} from 'notistack';
 import Link from "@mui/material/Link";
+import {FeatureGuidesList} from "./components/featureguides/FeatureGuidesList";
+import {AddOrEditFeatureGuide} from "./components/featureguides/AddOrEditFeatureGuide";
 
 const StyledDiv = styled('div')(() => ({
   textAlign: 'center',
@@ -90,20 +91,24 @@ export const App = () => {
           }}
         />
         <Routes>
-          <Route path="/" element={<Home config={config.values} user={user.profile}/>}/>
-          <Route path="/access-requests" element={<AccessRequests/>}/>
-          <Route path="/users" element={<UsersList/>}/>
-          <Route path="/alerts" element={<Alerts regions={config.values.portsByRegion} user={user.profile}/>}/>
-          <Route path="/region/:regionName" element={<RegionPage user={user.profile} config={config.values}/>}/>
-          <Route path="/feature-guide-upload" element={<UploadForm/>}/>
-          <Route path="/drop-ins">
-            <Route path="" element={<DropInSessionsList/>}/>
-            <Route path="list" element={<DropInSessionsList/>}/>
-            <Route path="edit" element={<AddOrEditDropInSession/>}/>
-            <Route path="edit/:dropInId" element={<AddOrEditDropInSession/>}/>
-            <Route path="list/registered-users/:dropInId" element={<DropInSessionRegistrations/>}/>
+          <Route path={"/"} element={<Home config={config.values} user={user.profile}/>}/>
+          <Route path={"/access-requests"} element={<AccessRequests/>}/>
+          <Route path={"/users"} element={<UsersList/>}/>
+          <Route path={"/alerts"} element={<Alerts regions={config.values.portsByRegion} user={user.profile}/>}/>
+          <Route path={"/region/:regionName"} element={<RegionPage user={user.profile} config={config.values}/>}/>
+          <Route path={"/feature-guides"}>
+            <Route path={""} element={<FeatureGuidesList/>}/>
+            <Route path={"edit"} element={<AddOrEditFeatureGuide/>}/>
+            <Route path={"edit/:guideId"} element={<AddOrEditFeatureGuide/>}/>
           </Route>
-          <Route path="/health-checks" element={<HealthCheckEditor/>}/>
+          <Route path={"/drop-ins"}>
+            <Route path={""} element={<DropInSessionsList/>}/>
+            <Route path={"list"} element={<DropInSessionsList/>}/>
+            <Route path={"edit"} element={<AddOrEditDropInSession/>}/>
+            <Route path={"edit/:dropInId"} element={<AddOrEditDropInSession/>}/>
+            <Route path={"list/registered-users/:dropInId"} element={<DropInSessionRegistrations/>}/>
+          </Route>
+          <Route path={"/health-checks"} element={<HealthCheckEditor/>}/>
         </Routes>
       </StyledContainer>
       <footer className="group js-footer" id="footer" role="contentinfo">

@@ -17,7 +17,7 @@ import uk.gov.homeoffice.drt.json.DefaultTimeJsonProtocol
 import uk.gov.homeoffice.drt.services.s3.{S3Downloader, S3Uploader}
 import uk.gov.homeoffice.drt.uploadTraining.FeatureGuideService
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
 case class FeaturePublished(published: Boolean)
@@ -54,15 +54,24 @@ object FeatureGuideRoutes extends DefaultTimeJsonProtocol {
       }
     }
 
+  def getFeatureGuide(featureGuideService: FeatureGuideService)
+                     (implicit ec: ExecutionContextExecutor): Route = path("getFeatureGuide" / Segment) { id =>
+    val responseF = featureGuideService.getFeatureGuide(id.toInt).map {
+      case Some(featureGuide) => complete(StatusCodes.OK, featureGuide.toJson)
+      case None => complete(StatusCodes.NotFound, s"Feature guide with id $id not found")
+    }
+
+    routeResponse(responseF)
+  }
+
   def getFeatureGuides(featureGuideService: FeatureGuideService)
                       (implicit ec: ExecutionContextExecutor): Route = path("getFeatureGuides") {
-    val responseF: Future[StandardRoute] = featureGuideService.getFeatureGuides().map { featureGuides =>
+    val responseF = featureGuideService.getFeatureGuides.map { featureGuides =>
       val json: JsValue = featureGuides.toJson
       complete(StatusCodes.OK, json)
     }
 
     routeResponse(responseF)
-
   }
 
   def updateFeatureGuide(featureGuideService: FeatureGuideService)
@@ -111,26 +120,32 @@ object FeatureGuideRoutes extends DefaultTimeJsonProtocol {
            (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
     pathPrefix(prefix) {
       concat(
-        path("uploadFeatureGuide") {
-          post {
-            entity(as[Multipart.FormData]) { _ =>
-              formFields('title, 'markdownContent) { (title, markdownContent) =>
-                fileUpload("webmFile") {
-                  case (metadata, byteSource) =>
-                    val filename = metadata.fileName
-                    featureGuideService.insertFeatureGuide(filename, title, markdownContent)
-                    val responseF = uploader.upload(filename, byteSource)
-                      .map(_ => complete(StatusCodes.OK, s"File $filename uploaded successfully"))
-                    routeResponse(responseF)
-                }
-              }
-            }
-          }
-        }
+        uploadVideo(featureGuideService, uploader)
+          ~ getFeatureGuide(featureGuideService)
           ~ getFeatureGuides(featureGuideService)
           ~ deleteFeature(featureGuideService)
           ~ updateFeatureGuide(featureGuideService)
           ~ getFeatureVideoFile(downloader)
           ~ publishFeatureGuide(featureGuideService))
     }
+
+  private def uploadVideo(featureGuideService: FeatureGuideService, uploader: S3Uploader)
+                         (implicit ec: ExecutionContext) = {
+    path("uploadFeatureGuide") {
+      post {
+        entity(as[Multipart.FormData]) { _ =>
+          formFields('title, 'markdownContent) { (title, markdownContent) =>
+            fileUpload("webmFile") {
+              case (metadata, byteSource) =>
+                val filename = metadata.fileName
+                featureGuideService.insertFeatureGuide(filename, title, markdownContent)
+                val responseF = uploader.upload(filename, byteSource)
+                  .map(_ => complete(StatusCodes.OK, s"File $filename uploaded successfully"))
+                routeResponse(responseF)
+            }
+          }
+        }
+      }
+    }
+  }
 }

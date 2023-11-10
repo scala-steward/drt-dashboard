@@ -30,7 +30,7 @@ export default function Navigation(props: IProps) {
     {label: 'Access requests', link: '/access-requests', roles: ['manage-users']},
     {label: 'Alert notices', link: '/alerts', roles: ['manage-users']},
     {label: 'Drop-ins', link: '/drop-ins', roles: ['manage-users']},
-    {label: 'Feature guides', link: '/feature-guide-upload', roles: ['manage-users']},
+    {label: 'Feature guides', link: '/feature-guides', roles: ['manage-users']},
     {label: 'Health checks', link: '/health-checks', roles: ['health-checks:edit']},
     {label: 'Users', link: '/users', roles: ['manage-users']},
     {label: 'Log out', link: props.logoutLink, roles: []},

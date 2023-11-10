@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState} from 'react'
 import {
   Box,
   Breadcrumbs,
@@ -10,20 +10,20 @@ import {
   Grid,
   Snackbar,
   Stack
-} from "@mui/material";
-import {Cancel, Delete, Save} from "@mui/icons-material";
-import {ScheduledHealthCheckPause} from "./model";
-import moment from "moment-timezone";
-import Loading from "../Loading";
-import {deleteHealthCheckPause, saveHealthCheckPauses, useHealthCheckPauses} from "../../store/heathCheckPauses";
-import Typography from "@mui/material/Typography";
-import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker";
-import {AdapterMoment} from "@mui/x-date-pickers/AdapterMoment";
-import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
-import {Moment} from "moment";
-import {DataGrid} from "@mui/x-data-grid";
-import {Alert} from "@mui/lab";
-import {Link} from "react-router-dom";
+} from "@mui/material"
+import {Cancel, Delete, Save} from "@mui/icons-material"
+import {ScheduledHealthCheckPause} from "./model"
+import moment from "moment-timezone"
+import Loading from "../Loading"
+import {deleteHealthCheckPause, saveHealthCheckPauses, useHealthCheckPauses} from "../../store/heathCheckPauses"
+import Typography from "@mui/material/Typography"
+import {DateTimePicker} from "@mui/x-date-pickers/DateTimePicker"
+import {AdapterMoment} from "@mui/x-date-pickers/AdapterMoment"
+import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider'
+import {Moment} from "moment"
+import {DataGrid} from "@mui/x-data-grid"
+import {Alert} from "@mui/lab"
+import {Link} from "react-router-dom"
 
 type ConfirmOpen = {
   kind: 'open'
