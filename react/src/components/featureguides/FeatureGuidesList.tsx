@@ -56,10 +56,11 @@ export const FeatureGuidesList = () => {
       headerName: '',
       width: 50,
       renderCell: (params: GridRenderCellParams) => (
-        <IconButton aria-label="publish">
+        <IconButton aria-label="publish"
+                    onClick={() => params.row.published ? setUnpublishId(params.row.id) : setPublishId(params.row.id)}>
           {params.row.published === true ?
-            <PublishIcon onClick={() => setUnpublishId(params.row.id)}/> :
-            <UnpublishedIcon onClick={() => setPublishId(params.row.id)}/>}
+            <PublishIcon/> :
+            <UnpublishedIcon/>}
         </IconButton>
       ),
     },
@@ -68,8 +69,8 @@ export const FeatureGuidesList = () => {
       headerName: '',
       width: 50,
       renderCell: (params: GridRenderCellParams) => (
-        <IconButton aria-label="preview">
-          <PreviewIcon onClick={() => setPreviewGuide(params.row as FeatureData)}/>
+        <IconButton aria-label="preview" onClick={() => setPreviewGuide(params.row as FeatureData)}>
+          <PreviewIcon/>
         </IconButton>
       ),
     },
@@ -78,8 +79,8 @@ export const FeatureGuidesList = () => {
       headerName: '',
       width: 50,
       renderCell: (params: GridRenderCellParams) => (
-        <IconButton aria-label="delete">
-          <DeleteIcon onClick={() => setDeleteId(params.row.id)}/>
+        <IconButton aria-label="delete" onClick={() => setDeleteId(params.row.id)}>
+          <DeleteIcon/>
         </IconButton>
       ),
     },
@@ -88,8 +89,8 @@ export const FeatureGuidesList = () => {
       headerName: '',
       width: 50,
       renderCell: (params: GridRenderCellParams) => (
-        <IconButton aria-label="delete">
-          <EditIcon onClick={() => navigate(`/feature-guides/edit/${params.row.id}`)}/>
+        <IconButton aria-label="delete" onClick={() => navigate(`/feature-guides/edit/${params.row.id}`)}>
+          <EditIcon/>
         </IconButton>
       ),
     },

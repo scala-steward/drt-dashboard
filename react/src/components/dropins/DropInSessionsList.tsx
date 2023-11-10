@@ -80,10 +80,11 @@ export function DropInSessionsList() {
       headerName: '',
       width: 50,
       renderCell: (params: GridRenderCellParams) => (
-        <IconButton aria-label="publish">
+        <IconButton aria-label="publish"
+                    onClick={() => params.row.isPublished ? handleUnPublish(params.row) : handlePublish(params.row)}>
           {params.row.isPublished === true ?
-            <PublishIcon onClick={() => handleUnPublish(params.row as SeminarData)}/> :
-            <UnpublishedIcon onClick={() => handlePublish(params.row as SeminarData)}/>}
+            <PublishIcon/> :
+            <UnpublishedIcon/>}
         </IconButton>
       ),
     },
@@ -92,8 +93,8 @@ export function DropInSessionsList() {
       headerName: '',
       width: 50,
       renderCell: (params: GridRenderCellParams) => (
-        <IconButton aria-label="view">
-          <PreviewIcon onClick={() => rowClickOpen(params.row as SeminarData)}/>
+        <IconButton aria-label="view" onClick={() => rowClickOpen(params.row as SeminarData)}>
+          <PreviewIcon/>
         </IconButton>
       ),
     },
@@ -102,8 +103,8 @@ export function DropInSessionsList() {
       headerName: '',
       width: 50,
       renderCell: (params: GridRenderCellParams) => (
-        <IconButton aria-label="delete">
-          <DeleteIcon onClick={() => handleDelete(params.row as SeminarData)}/>
+        <IconButton aria-label="delete" onClick={() => handleDelete(params.row as SeminarData)}>
+          <DeleteIcon/>
         </IconButton>
       ),
     },

@@ -166,7 +166,6 @@ export default function AccessRequests() {
   }
 
   const showApprovedOrAccessRequest = () => {
-    console.log('userDetails ' + requestPosted + '  ' + (users as KeyCloakUser[]));
     return requestPosted ?
       <ConfirmAccessRequest message={"granted"}
                             parentRequestPosted={requestPosted}
