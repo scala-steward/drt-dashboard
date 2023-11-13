@@ -5,62 +5,63 @@ import {Link} from "react-router-dom";
 import {UserProfile} from "../model/User";
 
 const TriggerButton = styled(Button)(({theme}) => ({
-    marginTop: theme.spacing(-1),
-    padding: theme.spacing(0),
+  marginTop: theme.spacing(-1),
+  padding: theme.spacing(0),
 }));
 
 interface IProps {
-    logoutLink: string,
-    user: UserProfile
+  logoutLink: string,
+  user: UserProfile
 }
 
 export default function Navigation(props: IProps) {
-    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
-    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-        setAnchorEl(event.currentTarget);
-    };
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
 
-    const handleClose = () => {
-        setAnchorEl(null);
-    };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
 
-    return (
-        <Box>
-            <TriggerButton
-                aria-controls="navigation"
-                aria-haspopup="true"
-                variant={"contained"}
-                onClick={handleClick}
-                sx={{marginTop: '0px'}}
-            >
-                Menu
-            </TriggerButton>
-            <Menu
-                id="navigation"
-                anchorEl={anchorEl}
-                keepMounted
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-            >
-                <MenuItem onClick={handleClose}><Link to="/">Home</Link></MenuItem>
-                {props.user.roles.includes("manage-users") ?
-                    <MenuItem onClick={handleClose}><Link to="/userManagement">User Management</Link></MenuItem> : ""}
-                {props.user.roles.includes("manage-users") ?
-                    <MenuItem onClick={handleClose}><Link to="/userTracking">User Tracking</Link></MenuItem> : ""}
-                {props.user.roles.includes("create-alerts") ?
-                    <MenuItem onClick={handleClose}><Link to="/alerts">Alerts</Link></MenuItem> : ""}
-                {props.user.roles.includes("nebo:upload") ?
-                    <MenuItem onClick={handleClose}><Link to="/upload">Nebo Upload</Link></MenuItem> : ""}
-                {props.user.roles.includes("red-lists:edit") ?
-                    <MenuItem onClick={handleClose}><Link to="/red-list-editor">Edit red list</Link></MenuItem> : ""}
-                {props.user.roles.includes("manage-users") ?
-                    <MenuItem onClick={handleClose}><Link to="/feature-guide-upload">Feature
-                        Guides</Link></MenuItem> : ""}
-                {props.user.roles.includes("manage-users") ?
-                    <MenuItem onClick={handleClose}><Link to="/drop-ins/list">Manage Drop-ins</Link></MenuItem> : ""}
-                <MenuItem onClick={handleClose}><a href={props.logoutLink} id="proposition-name">Log out</a></MenuItem>
-            </Menu>
-        </Box>
-    );
+  const menuItems = [
+    {label: 'Home', link: '/', roles: []},
+    {label: 'Access requests', link: '/access-requests', roles: ['manage-users']},
+    {label: 'Alert notices', link: '/alerts', roles: ['manage-users']},
+    {label: 'Drop-in sessions', link: '/drop-in-sessions', roles: ['manage-users']},
+    {label: 'Feature guides', link: '/feature-guides', roles: ['manage-users']},
+    {label: 'Health checks', link: '/health-checks', roles: ['health-checks:edit']},
+    {label: 'Users', link: '/users', roles: ['manage-users']},
+    {label: 'Log out', link: props.logoutLink, roles: []},
+  ]
+
+  return (
+    <Box>
+      <TriggerButton
+        aria-controls="navigation"
+        aria-haspopup="true"
+        variant={"contained"}
+        onClick={handleClick}
+        sx={{marginTop: '0px'}}
+      >
+        Menu
+      </TriggerButton>
+      <Menu
+        id="navigation"
+        anchorEl={anchorEl}
+        keepMounted
+        open={!!anchorEl}
+        onClose={handleClose}
+      >
+        {menuItems.map(item => {
+          if (item.roles.length === 0 || item.roles.some(role => props.user.roles.includes(role))) {
+            return <MenuItem onClick={handleClose} key={item.label}>
+              <Link to={item.link}>{item.label}</Link>
+            </MenuItem>
+          }
+        })}
+      </Menu>
+    </Box>
+  );
 }

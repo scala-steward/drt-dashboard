@@ -1,6 +1,6 @@
 import React from 'react';
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
-import Alerts from "../../components/Alerts/Alerts";
+import Alerts from "../../components/alerts/Alerts";
 import {setupServer} from "msw/node";
 import {rest} from "msw";
 import {UserProfile} from "../../model/User";

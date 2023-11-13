@@ -2,15 +2,16 @@ package uk.gov.homeoffice.drt.uploadTraining
 
 import uk.gov.homeoffice.drt.db.{FeatureGuideDao, FeatureGuideRow, FeatureGuideViewDao}
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 
-case class FeatureGuideService(featureGuideDao: FeatureGuideDao, featureGuideViewDao: FeatureGuideViewDao) {
-  def updatePublishFeatureGuide(featureId: String, publish: Boolean) = {
+case class FeatureGuideService(featureGuideDao: FeatureGuideDao, featureGuideViewDao: FeatureGuideViewDao)
+                              (implicit ec: ExecutionContext) {
+  def updatePublishFeatureGuide(featureId: String, publish: Boolean): Future[Int] = {
     featureGuideDao.updatePublishFeatureGuide(featureId, publish)
   }
 
-  def updateFeatureGuide(featureId: String, title: String, markdownContent: String) = {
+  def updateFeatureGuide(featureId: String, title: String, markdownContent: String): Future[Int] = {
     featureGuideDao.updateFeatureGuide(featureId, title, markdownContent)
     featureGuideViewDao.deleteViewForFeature(featureId)
   }
@@ -19,7 +20,11 @@ case class FeatureGuideService(featureGuideDao: FeatureGuideDao, featureGuideVie
     featureGuideDao.deleteFeatureGuide(featureId)
   }
 
-  def getFeatureGuides(): Future[Seq[FeatureGuideRow]] = {
+  def getFeatureGuide(id: Int): Future[Option[FeatureGuideRow]] = {
+    featureGuideDao.getFeatureGuide(id)
+  }
+
+  def getFeatureGuides: Future[Seq[FeatureGuideRow]] = {
     featureGuideDao.getFeatureGuides()
   }
 

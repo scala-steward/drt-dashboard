@@ -11,14 +11,17 @@ export default class ApiClient implements IApiClient {
   public static configEndPoint = "/api/config";
   public static logoutEndPoint = "/oauth/logout";
   public static alertsEndPoint = "/api/alerts";
-  public static neboFileUpload = "/api/nebo-upload";
-  public static redListUpdates = "/api/red-list-updates";
-  public static userDetailsEndpoint = "/user/user-details";
-  public static requestAccessEndPoint = "/user/access-request";
-  public static addUserToGroupEndpoint = "/user/accept-access-request";
-  public static updateUserRequestEndpoint = "/user/update-access-request";
-  public static userListEndpoint = "/user/all";
-
+  public static healthCheckPauses = "/api/health-check-pauses";
+  public static userDetailsEndpoint = "/api/users/user-details";
+  public static requestAccessEndPoint = "/api/users/access-request";
+  public static addUserToGroupEndpoint = "/api/users/accept-access-request";
+  public static updateUserRequestEndpoint = "/api/users/update-access-request";
+  public static userListEndpoint = "/api/users/all";
+  public static getDropInSessionEndpoint = "/api/drop-in-sessions";
+  public static dropInSessionUpdatePublishedEndpoint = "/api/drop-in-sessions/update-published";
+  public static dropInSessionDeletePublishedEndpoint = "/api/drop-in-sessions";
+  public static dropInSessionRegistrationsEndpoint = "/api/drop-in-register";
+  public static dropInSessionRegistrationDeleteEndpoint = "/api/drop-in-register";
 
   public fetchData(userEndPoint: string, handleResponse: (r: AxiosResponse) => void) {
     axios

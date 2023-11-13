@@ -17,7 +17,7 @@ import uk.gov.homeoffice.drt.json.DefaultTimeJsonProtocol
 import uk.gov.homeoffice.drt.services.s3.{S3Downloader, S3Uploader}
 import uk.gov.homeoffice.drt.uploadTraining.FeatureGuideService
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
 case class FeaturePublished(published: Boolean)
@@ -54,21 +54,52 @@ object FeatureGuideRoutes extends DefaultTimeJsonProtocol {
       }
     }
 
+  def getFeatureGuide(featureGuideService: FeatureGuideService)
+                     (implicit ec: ExecutionContextExecutor): Route = {
+    get {
+      path(Segment) { id =>
+        val responseF = featureGuideService.getFeatureGuide(id.toInt).map {
+          case Some(featureGuide) => complete(StatusCodes.OK, featureGuide.toJson)
+          case None => complete(StatusCodes.NotFound, s"Feature guide with id $id not found")
+        }
+
+        routeResponse(responseF)
+      }
+    }
+  }
+
   def getFeatureGuides(featureGuideService: FeatureGuideService)
-                      (implicit ec: ExecutionContextExecutor): Route = path("getFeatureGuides") {
-    val responseF: Future[StandardRoute] = featureGuideService.getFeatureGuides().map { featureGuides =>
-      val json: JsValue = featureGuides.toJson
-      complete(StatusCodes.OK, json)
+                      (implicit ec: ExecutionContextExecutor): Route =
+    get {
+      val responseF = featureGuideService.getFeatureGuides.map { featureGuides =>
+        val json: JsValue = featureGuides.toJson
+        complete(StatusCodes.OK, json)
+      }
+
+      routeResponse(responseF)
     }
 
-    routeResponse(responseF)
-
-  }
+  def createFeatureGuide(featureGuideService: FeatureGuideService, uploader: S3Uploader)
+                        (implicit ec: ExecutionContext): Route =
+    post {
+      entity(as[Multipart.FormData]) { _ =>
+        formFields('title, 'markdownContent) { (title, markdownContent) =>
+          fileUpload("webmFile") {
+            case (metadata, byteSource) =>
+              val filename = metadata.fileName
+              featureGuideService.insertFeatureGuide(filename, title, markdownContent)
+              val responseF = uploader.upload(filename, byteSource)
+                .map(_ => complete(StatusCodes.OK, s"File $filename uploaded successfully"))
+              routeResponse(responseF)
+          }
+        }
+      }
+    }
 
   def updateFeatureGuide(featureGuideService: FeatureGuideService)
                         (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
-    path("updateFeatureGuide" / Segment) { featureId =>
-      post {
+    put {
+      path(Segment) { featureId =>
         entity(as[Multipart.FormData]) { _ =>
           formFields('title, 'markdownContent) { (title, markdownContent) =>
             val responseF = featureGuideService.updateFeatureGuide(featureId, title, markdownContent)
@@ -82,22 +113,21 @@ object FeatureGuideRoutes extends DefaultTimeJsonProtocol {
 
   def publishFeatureGuide(featureGuideService: FeatureGuideService)
                          (implicit ec: ExecutionContextExecutor): Route =
-    path("published" / Segment) { (featureId) =>
+    path("update-published" / Segment) { featureId =>
       post {
         entity(as[FeaturePublished]) { featurePublished =>
           val responseF = featureGuideService.updatePublishFeatureGuide(featureId, featurePublished.published)
             .map(_ => complete(StatusCodes.OK, s"Feature $featureId is published successfully"))
 
           routeResponse(responseF)
-
         }
       }
     }
 
   def deleteFeature(featureGuideService: FeatureGuideService)
                    (implicit ec: ExecutionContextExecutor): Route =
-    path("removeFeatureGuide" / Segment) { featureId =>
-      delete {
+    delete {
+      path(Segment) { featureId =>
         val responseF: Future[StandardRoute] = featureGuideService.deleteFeatureGuide(featureId).map { featureGuides =>
           val json: JsValue = featureGuides.toJson
           complete(StatusCodes.OK, json)
@@ -107,30 +137,21 @@ object FeatureGuideRoutes extends DefaultTimeJsonProtocol {
       }
     }
 
-  def apply(prefix: String, featureGuideService: FeatureGuideService, uploader: S3Uploader, downloader: S3Downloader)
+  def apply(featureGuideService: FeatureGuideService, uploader: S3Uploader, downloader: S3Downloader)
            (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
-    pathPrefix(prefix) {
+    pathPrefix("api" / "feature-guides") {
       concat(
-        path("uploadFeatureGuide") {
-          post {
-            entity(as[Multipart.FormData]) { _ =>
-              formFields('title, 'markdownContent) { (title, markdownContent) =>
-                fileUpload("webmFile") {
-                  case (metadata, byteSource) =>
-                    val filename = metadata.fileName
-                    featureGuideService.insertFeatureGuide(filename, title, markdownContent)
-                    val responseF = uploader.upload(filename, byteSource)
-                      .map(_ => complete(StatusCodes.OK, s"File $filename uploaded successfully"))
-                    routeResponse(responseF)
-                }
-              }
-            }
-          }
-        }
-          ~ getFeatureGuides(featureGuideService)
-          ~ deleteFeature(featureGuideService)
-          ~ updateFeatureGuide(featureGuideService)
-          ~ getFeatureVideoFile(downloader)
-          ~ publishFeatureGuide(featureGuideService))
+        pathEnd {
+          concat(
+            getFeatureGuides(featureGuideService),
+            createFeatureGuide(featureGuideService, uploader),
+          )
+        },
+        getFeatureVideoFile(downloader),
+        getFeatureGuide(featureGuideService),
+        updateFeatureGuide(featureGuideService),
+        publishFeatureGuide(featureGuideService),
+        deleteFeature(featureGuideService),
+      )
     }
 }

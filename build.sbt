@@ -1,6 +1,6 @@
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v606"
+lazy val drtLibVersion = "v637"
 lazy val drtCiriumVersion = "203"
 lazy val akkaHttpVersion = "10.4.0"
 lazy val akkaVersion = "2.7.0"
@@ -34,9 +34,9 @@ lazy val root = (project in file(".")).
     credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
     dockerBaseImage := "openjdk:11-jre-slim-buster",
     libraryDependencies ++= Seq(
+      "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
       "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
-      "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
       "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,

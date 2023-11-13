@@ -9,11 +9,12 @@ import {Box, Breadcrumbs} from "@mui/material";
 import Grid from "@mui/material/Unstable_Grid2";
 import moment from "moment-timezone";
 import axios from "axios";
+import {useParams} from "react-router-dom";
+import {StringUtils} from "../utils/StringUtils";
 
 interface IProps {
   user: UserProfile;
   config: ConfigValues;
-  region: string;
 }
 
 interface Download {
@@ -29,9 +30,11 @@ export const RegionPage = (props: IProps) => {
 
   const [downloads, setDownloads] = React.useState<Download[] | undefined>(undefined)
 
+  const { regionName } = useParams() as { regionName: string }
+
   const fetchDownloads = () => {
     axios
-      .get(`/export-region/${props.region}`)
+      .get(`/export-region/${regionName}`)
       .then((response) => {
         setDownloads(response.data as Download[])
         setTimeout(() => {
@@ -63,14 +66,14 @@ export const RegionPage = (props: IProps) => {
   return <div className="flex-container">
     <Breadcrumbs aria-label="breadcrumb">
       <Link underline="hover" color="inherit" href="/">DRT</Link>
-      <Typography color="text.primary">{props.region}</Typography>
+      <Typography color="text.primary">{StringUtils.ucFirst(regionName)}</Typography>
     </Breadcrumbs>
-    {props.user.roles.includes("rcc:" + props.region.toLowerCase()) ?
+    {props.user.roles.includes("rcc:" + regionName.toLowerCase()) ?
       <Box>
-        <h1>{props.region} region</h1>
+        <h1>{StringUtils.ucFirst(regionName)} region</h1>
         <p>You can download an arrivals export covering all port terminals in
           this region.</p>
-        <ArrivalExport region={props.region}/>
+        <ArrivalExport region={regionName}/>
         <h2>Downloads</h2>
         {sortedDownloads ?
           <Grid container spacing={2}>

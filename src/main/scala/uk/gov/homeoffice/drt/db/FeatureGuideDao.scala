@@ -5,7 +5,7 @@ import slick.jdbc.PostgresProfile.api._
 import slick.lifted.ProvenShape
 
 import java.sql.Timestamp
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 case class FeatureGuideRow(id: Option[Int], uploadTime: Timestamp, fileName: Option[String], title: Option[String], markdownContent: String, published: Boolean)
 
@@ -46,6 +46,12 @@ case class FeatureGuideDao(db: Database) {
   def deleteFeatureGuide(featureId: String): Future[Int] = {
     val query = FeatureGuideTable.filter(_.id === featureId.trim.toInt).delete
     db.run(query)
+  }
+
+  def getFeatureGuide(id: Int)
+                     (implicit ec: ExecutionContext): Future[Option[FeatureGuideRow]] = {
+    val query = FeatureGuideTable.filter(_.id === id).result
+    db.run(query).map(_.headOption)
   }
 
   def getFeatureGuides(): Future[Seq[FeatureGuideRow]] = {
