@@ -19,7 +19,7 @@ case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route
     concat(
       path("")(indexRouteDirectives),
       pathPrefix("access-requests")(indexRouteDirectives),
-      pathPrefix("user")(indexRouteDirectives),
+      pathPrefix("users")(indexRouteDirectives),
       pathPrefix("alerts")(indexRouteDirectives),
       pathPrefix("region")(indexRouteDirectives),
       pathPrefix("feature-guides")(indexRouteDirectives),

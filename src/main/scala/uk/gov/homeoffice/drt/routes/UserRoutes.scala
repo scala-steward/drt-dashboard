@@ -28,20 +28,20 @@ object UserRoutes extends UserAccessRequestJsonSupport
   with KeyCloakUserJsonSupport {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def apply(
-             prefix: String,
-             clientConfig: ClientConfig,
-             userService: UserService,
-             userRequestService: UserRequestService,
-             notifications: EmailNotifications,
-             keyClockUrl: String)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route = {
+  def apply(clientConfig: ClientConfig,
+            userService: UserService,
+            userRequestService: UserRequestService,
+            notifications: EmailNotifications,
+            keyClockUrl: String,
+           )
+           (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route = {
 
     def getKeyCloakService(accessToken: String): KeycloakService = {
       val keyClockClient = new KeycloakClient(accessToken, keyClockUrl) with ProdSendAndReceive
       new KeycloakService(keyClockClient)
     }
 
-    pathPrefix(prefix) {
+    pathPrefix("api" / "users") {
       concat(
         (post & path("access-request")) {
           headerValueByName("X-Auth-Email") { userEmail =>
@@ -133,7 +133,7 @@ object UserRoutes extends UserAccessRequestJsonSupport
                           inactive_email_sent = None,
                           revoked_access = None,
                           drop_in_notification_at = None,
-                          created_at = Some(new Timestamp(DateTime.now().getMillis))),Some("Approved"))
+                          created_at = Some(new Timestamp(DateTime.now().getMillis))), Some("Approved"))
                       complete(s"User ${userRequestedAccessData.email} update port ${userRequestedAccessData.portOrRegionText}")
                     } else {
                       complete("No port or region requested")

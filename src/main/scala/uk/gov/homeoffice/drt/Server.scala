@@ -117,7 +117,7 @@ object Server {
 //        DrtRoutes("drt", serverConfig.portIataCodes),
         LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
         ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), () => SDate.now(), emailClient, urls.rootUrl, serverConfig.teamEmail),
-        UserRoutes("user", serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
+        UserRoutes(serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
         FeatureGuideRoutes(featureGuideService, featureUploader, featureDownloader),
         ApiRoutes("api", serverConfig.clientConfig, userService, ScheduledHealthCheckPausePersistenceImpl(db, now)),
         DropInSessionsRoute(dropInDao),
