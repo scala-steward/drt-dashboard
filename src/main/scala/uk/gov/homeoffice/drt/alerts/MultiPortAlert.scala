@@ -48,7 +48,7 @@ object MultiPortAlertClient extends MultiPortAlertJsonSupport {
   def saveAlertsForPorts(portCodes: Iterable[String], multiPortAlert: MultiPortAlert, user: User)(implicit system: ActorSystem[Nothing]): immutable.Iterable[Future[HttpResponse]] =
     multiPortAlert.alertForPorts(portCodes).map {
       case (portCode, alert) =>
-        log.info("Sending new alert to ${Dashboard.drtUriForPortCode(portCode)}/alerts")
+        log.info(s"Sending new alert to ${Dashboard.drtUriForPortCode(portCode)}/alerts")
         DashboardClient.postWithRoles(
           s"${Dashboard.drtInternalUriForPortCode(PortCode(portCode))}/alerts",
           alert.toJson.toString(),
