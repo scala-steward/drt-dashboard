@@ -4,7 +4,6 @@ import {DataGrid, GridRowModel} from '@mui/x-data-grid';
 import ApiClient from "../../services/ApiClient";
 import axios, {AxiosResponse} from "axios";
 import AccessRequestDetails, {UserRequestedAccessData} from "./AccessRequestDetails";
-import {Button} from "@mui/material";
 import {columns} from "./AccessRequestCommon";
 
 interface IProps {
@@ -30,10 +29,6 @@ export default function AccessRequestStatusList(props: IProps) {
     props.setAccessRequestListRequested(true)
     axios.get(ApiClient.requestAccessEndPoint + '?status=' + props.statusView)
       .then(response => updateAccessRequestData(response))
-  }
-
-  const resetUserRequestShowStatus = () => {
-    props.setShowUserRequestByStatus("Requested")
   }
 
   React.useEffect(() => {
@@ -76,10 +71,6 @@ export default function AccessRequestStatusList(props: IProps) {
                                 status={props.statusView}/> :
           <span/>
       }
-      <Button style={{float: 'right'}}
-              variant="outlined"
-              color="primary"
-              onClick={resetUserRequestShowStatus}>back</Button>
     </Box>
   );
 }

@@ -19,7 +19,7 @@ export const useDropInSessions = (showAll: boolean, refreshedAt: number) => {
 
   useEffect(() => {
     const fetch = async () => axios
-      .get(`${ApiClient.getDropInSessionsEndpoint}/${showAll}`)
+      .get(`${ApiClient.getDropInSessionEndpoint}?list-all=${showAll}`)
       .then(res => setDropInSessions(res.data as DropInSession[]))
       .catch(err => {
         console.log('Failed to get health check pauses: ' + err)
@@ -27,7 +27,7 @@ export const useDropInSessions = (showAll: boolean, refreshedAt: number) => {
       })
       .finally(() => setLoading(false))
     fetch()
-  }, [fetch, refreshedAt])
+  }, [showAll, refreshedAt])
 
   return {dropInSessions, loading, failed}
 }

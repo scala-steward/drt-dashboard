@@ -113,7 +113,7 @@ export function DropInSessionsList() {
       headerName: '',
       width: 50,
       renderCell: (params: GridRenderCellParams) => (
-        <Link to={`/drop-ins/edit/${params.row.id}`}>
+        <Link to={`/drop-in-sessions/edit/${params.row.id}`}>
           <IconButton aria-label="edit">
             <EditIcon/>
           </IconButton>
@@ -125,7 +125,7 @@ export function DropInSessionsList() {
       headerName: '',
       width: 50,
       renderCell: (params: GridRenderCellParams) => (
-        <Link to={`/drop-ins/list/registered-users/${params.row.id}`}>
+        <Link to={`/drop-in-sessions/list/registered-users/${params.row.id}`}>
           <IconButton aria-label="users-registered">
             <CalendarViewMonth/>
           </IconButton>
@@ -175,7 +175,7 @@ export function DropInSessionsList() {
   }
 
   const deleteSession = (id: string) => {
-    axios.delete(`${ApiClient.dropInSessionDeletePublishedEndpoint}/${id}`)
+    axios.delete(`${ApiClient.getDropInSessionEndpoint}/${id}`)
       .then(response => {
         if (response.status === 200) {
           enqueueSnackbar('Drop-in session deleted')
@@ -193,7 +193,7 @@ export function DropInSessionsList() {
       <Typography color="text.primary">Drop-in sessions</Typography>
     </Breadcrumbs>
     <Stack direction={'row'} justifyContent={'space-between'}>
-      <Link to={'/drop-ins/edit'}><Button variant={'outlined'}>New drop in session</Button></Link>
+      <Link to={'/drop-in-sessions/edit'}><Button variant={'outlined'}>New drop in session</Button></Link>
       <FormControlLabel
         label={'Show all'}
         control={<Checkbox checked={showAll} onChange={() => setShowAll(!showAll)} color="primary"/>}

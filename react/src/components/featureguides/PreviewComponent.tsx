@@ -8,10 +8,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import {useNavigate} from "react-router-dom";
 import {DialogComponent} from "../DialogComponent";
 import {deleteFeatureGuide} from "../../store/featureGuides";
-import {FeatureData} from "./FeatureGuidesList";
+import {FeatureGuide} from "./FeatureGuidesList";
 
 interface Props {
-  guide: FeatureData
+  guide: FeatureGuide
   videoUrl: string
   onClose: () => void
   actionsAvailable: boolean

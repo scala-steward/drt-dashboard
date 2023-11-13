@@ -17,14 +17,11 @@ export default class ApiClient implements IApiClient {
   public static addUserToGroupEndpoint = "/user/accept-access-request";
   public static updateUserRequestEndpoint = "/user/update-access-request";
   public static userListEndpoint = "/user/all";
-  public static getDropInSessionEndpoint = "/drop-in/get";
-  public static getDropInSessionsEndpoint = "/drop-in/getList";
-  public static updateDropInSessionEndpoint = "/drop-in/update";
-  public static saveDropInSessionEndpoint = "/drop-in/save";
-  public static dropInSessionUpdatePublishedEndpoint = "/drop-in/published";
-  public static dropInSessionDeletePublishedEndpoint = "/drop-in/delete";
-  public static dropInSessionRegistrationsEndpoint = "/drop-in-register/users";
-  public static dropInSessionRegistrationDeleteEndpoint = "/drop-in-register/remove";
+  public static getDropInSessionEndpoint = "/api/drop-in-sessions";
+  public static dropInSessionUpdatePublishedEndpoint = "/api/drop-in-sessions/update-published";
+  public static dropInSessionDeletePublishedEndpoint = "/api/drop-in-sessions";
+  public static dropInSessionRegistrationsEndpoint = "/api/drop-in-register";
+  public static dropInSessionRegistrationDeleteEndpoint = "/api/drop-in-register";
 
   public fetchData(userEndPoint: string, handleResponse: (r: AxiosResponse) => void) {
     axios

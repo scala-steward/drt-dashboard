@@ -7,7 +7,7 @@ import {Breadcrumbs, Stack} from "@mui/material"
 import {Link, useNavigate, useParams} from "react-router-dom"
 import Typography from "@mui/material/Typography"
 import {enqueueSnackbar} from "notistack"
-import {FeatureData} from "./FeatureGuidesList"
+import {FeatureGuide} from "./FeatureGuidesList"
 import TextField from "@mui/material/TextField"
 
 export const AddOrEditFeatureGuide = () => {
@@ -24,10 +24,10 @@ export const AddOrEditFeatureGuide = () => {
 
   if (guideId) {
     useEffect(() => {
-      const fetch = () => axios.get(`/guide/getFeatureGuide/${guideId}`)
+      const fetch = () => axios.get(`/api/feature-guides/${guideId}`)
         .then(response => {
           if (response.status === 200) {
-            const guide = response.data as FeatureData
+            const guide = response.data as FeatureGuide
             setTitle(guide.title)
             setMarkdownContent(guide.markdownContent)
             setFileName(guide.fileName)
@@ -53,7 +53,7 @@ export const AddOrEditFeatureGuide = () => {
     }
   }
 
-  const videoUrl = video ? URL.createObjectURL(video) : "/guide/get-feature-videos/" + fileName
+  const videoUrl = video ? URL.createObjectURL(video) : "/api/feature-guides/get-feature-videos/" + fileName
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -64,8 +64,11 @@ export const AddOrEditFeatureGuide = () => {
     video && formData.append('webmFile', video)
     formData.append('title', title)
     formData.append('markdownContent', markdownContent)
-    const url = guideId ? `/guide/updateFeatureGuide/${guideId}` : '/guide/updateFeatureGuide'
-    axios.post(url, formData)
+    const doAction = guideId ?
+      axios.put(`/api/feature-guides/${guideId}`, formData) :
+      axios.post('/api/feature-guides', formData)
+
+    doAction
       .then(response => {
           if (response.status === 200) {
             enqueueSnackbar('Feature guide uploaded successfully', {variant: 'success'})
@@ -121,7 +124,7 @@ export const AddOrEditFeatureGuide = () => {
               markdownContent: markdownContent,
               fileName: '',
               uploadTime: ''
-            } as FeatureData}
+            } as FeatureGuide}
             videoUrl={videoUrl}
             onClose={() => setOpenPreview(false)}
             actionsAvailable={false}

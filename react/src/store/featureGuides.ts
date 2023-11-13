@@ -1,10 +1,10 @@
 import axios from "axios";
 import {enqueueSnackbar} from "notistack";
 import {useEffect, useState} from "react";
-import {ScheduledHealthCheckPause} from "../components/healthcheckpauseseditor/model";
+import {FeatureGuide} from "../components/featureguides/FeatureGuidesList";
 
 export const deleteFeatureGuide = (id: string) => {
-  axios.delete(`/guide/removeFeatureGuide/${id}`, )
+  axios.delete(`/api/feature-guides/${id}`, )
     .then(response => {
       if (response.status === 200)
         enqueueSnackbar('Feature guide deleted successfully', {variant: 'success'})
@@ -18,7 +18,7 @@ export const deleteFeatureGuide = (id: string) => {
 }
 
 export const updatePublishedStatus = (id: string, publish: boolean, onComplete: () => void) => {
-  axios.post(`/guide/published/${id}`, {published: publish})
+  axios.post(`/api/feature-guides/update-published/${id}`, {published: publish})
     .then(response => {
       if (response.status === 200)
         enqueueSnackbar('Feature guide ' + (publish ? 'published' : 'unpublished') + ' successfully', {variant: 'success'})
@@ -33,12 +33,12 @@ export const updatePublishedStatus = (id: string, publish: boolean, onComplete: 
 }
 
 export const useFeatureGuides = (refreshedAt: number) => {
-  const [features, setFeatures] = useState<ScheduledHealthCheckPause[]>([])
+  const [features, setFeatures] = useState<FeatureGuide[]>([])
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
-    const fetch = () => axios.get('/guide/getFeatureGuides')
+    const fetch = () => axios.get('/api/feature-guides')
       .then(response => {
         if (response.status === 200) {
           setFeatures(response.data)

@@ -7,7 +7,6 @@ import AccessRequestDetails, {UserRequestedAccessData} from "./AccessRequestDeta
 import ConfirmAccessRequest from "./ConfirmAccessRequest";
 import AccessRequestStatusList from "./AccessRequestStatusList";
 import {Breadcrumbs, Button, Stack} from "@mui/material";
-import Grid from '@mui/material/Grid';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import {columns, KeyCloakUser} from "./AccessRequestCommon";
@@ -135,18 +134,14 @@ export default function AccessRequests() {
                                            status={""}/> : <span/>
       }
 
-      <Grid container spacing={2} justifyContent={"center"}>
-        <Grid item xs={8} md={2}>
+      {selectedRowIds.length > 0 && <Stack gap={1} direction={'row'} sx={{my: 2}}>
           <Button variant="outlined" onClick={approveSelectedUserRequests}>Approve</Button>
-        </Grid>
-        <Grid item xs={8} md={2}>
-          <Button variant="outlined" onClick={dismissAccessRequests}>Dismiss</Button>
-        </Grid>
-      </Grid>
+          <Button variant="outlined" onClick={dismissSelectedAccessRequests}>Dismiss</Button>
+      </Stack>}
     </Box>
   }
 
-  const dismissAccessRequests = () => {
+  const dismissSelectedAccessRequests = () => {
     selectedRowDetails
       .map(selectedRowDetail => axios.post(ApiClient.updateUserRequestEndpoint + "/" + "Dismissed", selectedRowDetail)
         .then(response => console.log('dismiss user' + response.data)))
@@ -196,7 +191,7 @@ export default function AccessRequests() {
     }
   }
 
-  return <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
+  return <Stack gap={4} alignItems={'stretch'} sx={{mt: 2, mb: 10}}>
     <Breadcrumbs>
       <Link to={"/"}>
         Home

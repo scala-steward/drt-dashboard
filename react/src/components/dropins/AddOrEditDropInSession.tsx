@@ -79,15 +79,15 @@ export function AddOrEditDropInSession() {
       e.preventDefault();
       const data = jsonDropInData(startTime, endTime, title, meetingLink)
       const submitAction = sessionId ?
-        axios.put(`${ApiClient.updateDropInSessionEndpoint}/${sessionId}`, data) :
-        axios.post(ApiClient.saveDropInSessionEndpoint, data)
+        axios.put(`${ApiClient.getDropInSessionEndpoint}/${sessionId}`, data) :
+        axios.post(ApiClient.getDropInSessionEndpoint, data)
 
       submitAction
         .then(res => {
           if (res.status === 200) {
             console.log('Drop-in guide saved')
             enqueueSnackbar('Drop-in guide saved', {variant: 'success'})
-            navigate('/drop-ins')
+            navigate('/drop-in-sessions')
           } else
             enqueueSnackbar('There was a problem saving the drop-in guide. Please try again later.')
         })
@@ -106,7 +106,7 @@ export function AddOrEditDropInSession() {
         <Link to={"/"}>
           Home
         </Link>
-        <Link to={"/drop-ins"}>
+        <Link to={"/drop-in-sessions"}>
           Drop-in sessions
         </Link>
         <Typography color="text.primary">Add session</Typography>
@@ -171,7 +171,7 @@ export function AddOrEditDropInSession() {
           </Grid>
           <Grid item xs={12}>
             <Stack gap={1} direction={'row'}>
-              <Button variant={"outlined"} onClick={() => navigate('/drop-ins')}>Cancel</Button>
+              <Button variant={"outlined"} onClick={() => navigate('/drop-in-sessions')}>Cancel</Button>
               <Button variant={"outlined"} type={"submit"}>{sessionId ? 'Save changes' : 'Save'}</Button>
             </Stack>
           </Grid>

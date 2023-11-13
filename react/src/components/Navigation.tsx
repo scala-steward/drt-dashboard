@@ -29,7 +29,7 @@ export default function Navigation(props: IProps) {
     {label: 'Home', link: '/', roles: []},
     {label: 'Access requests', link: '/access-requests', roles: ['manage-users']},
     {label: 'Alert notices', link: '/alerts', roles: ['manage-users']},
-    {label: 'Drop-in sessions', link: '/drop-ins', roles: ['manage-users']},
+    {label: 'Drop-in sessions', link: '/drop-in-sessions', roles: ['manage-users']},
     {label: 'Feature guides', link: '/feature-guides', roles: ['manage-users']},
     {label: 'Health checks', link: '/health-checks', roles: ['health-checks:edit']},
     {label: 'Users', link: '/users', roles: ['manage-users']},

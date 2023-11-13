@@ -6,9 +6,9 @@ import axios from "axios";
 import ApiClient from "../../services/ApiClient";
 import {GridValueFormatterParams} from "@mui/x-data-grid/models/params/gridCellParams";
 import moment from "moment-timezone";
-import {Breadcrumbs} from "@mui/material";
+import {Breadcrumbs, Stack} from "@mui/material";
 import Typography from "@mui/material/Typography";
-import Link from "@mui/material/Link";
+import {Link} from "react-router-dom";
 
 const formatDate = (param: GridValueFormatterParams) => {
   return moment(param?.value).format("YYYY-MM-DD HH:mm")
@@ -68,19 +68,12 @@ export default function UsersList() {
     fetchUsers();
   }, []);
 
-  return <>
+  return <Stack gap={4} sx={{mt: 2}}>
     <Breadcrumbs>
-      <Link underline="hover" color="inherit" href="/">
-        MUI
+      <Link to="/">
+        Home
       </Link>
-      <Link
-        underline="hover"
-        color="inherit"
-        href="/material-ui/getting-started/installation/"
-      >
-        Core
-      </Link>
-      <Typography color="text.primary">Breadcrumbs</Typography>
+      <Typography color="text.primary">Users</Typography>
     </Breadcrumbs>
     <Box sx={{height: 400, width: '100%'}}>
       <DataGrid
@@ -89,5 +82,5 @@ export default function UsersList() {
         pageSizeOptions={[5]}
       />
     </Box>
-  </>
+  </Stack>
 }

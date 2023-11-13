@@ -115,13 +115,13 @@ object Server {
         indexRoutes,
 //        CiriumRoutes("cirium", serverConfig.ciriumDataUri),
 //        DrtRoutes("drt", serverConfig.portIataCodes),
-        ApiRoutes("api", serverConfig.clientConfig, userService, ScheduledHealthCheckPausePersistenceImpl(db, now)),
         LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
         ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), () => SDate.now(), emailClient, urls.rootUrl, serverConfig.teamEmail),
         UserRoutes("user", serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
-        FeatureGuideRoutes("guide", featureGuideService, featureUploader, featureDownloader),
-        DropInRoute("drop-in", dropInDao),
-        DropInRegisterRoutes("drop-in-register", dropInRegistrationDao)
+        FeatureGuideRoutes(featureGuideService, featureUploader, featureDownloader),
+        ApiRoutes("api", serverConfig.clientConfig, userService, ScheduledHealthCheckPausePersistenceImpl(db, now)),
+        DropInSessionsRoute(dropInDao),
+        DropInRegisterRoutes(dropInRegistrationDao)
       )
 
       val serverBinding = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)

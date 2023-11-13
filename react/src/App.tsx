@@ -101,7 +101,7 @@ export const App = () => {
             <Route path={"edit"} element={<AddOrEditFeatureGuide/>}/>
             <Route path={"edit/:guideId"} element={<AddOrEditFeatureGuide/>}/>
           </Route>
-          <Route path={"/drop-ins"}>
+          <Route path={"/drop-in-sessions"}>
             <Route path={""} element={<DropInSessionsList/>}/>
             <Route path={"list"} element={<DropInSessionsList/>}/>
             <Route path={"edit"} element={<AddOrEditDropInSession/>}/>

@@ -17,7 +17,7 @@ import Loading from "../Loading"
 import moment from "moment-timezone"
 import Button from "@mui/material/Button";
 
-export interface FeatureData {
+export interface FeatureGuide {
   id: string
   title: string
   fileName: string
@@ -27,7 +27,7 @@ export interface FeatureData {
 
 export const FeatureGuidesList = () => {
   const navigate = useNavigate()
-  const [previewGuide, setPreviewGuide] = React.useState<FeatureData | undefined>(undefined)
+  const [previewGuide, setPreviewGuide] = React.useState<FeatureGuide | undefined>(undefined)
 
   const featureColumns: GridColDef[] = [
     {
@@ -70,7 +70,7 @@ export const FeatureGuidesList = () => {
       headerName: '',
       width: 50,
       renderCell: (params: GridRenderCellParams) => (
-        <IconButton aria-label="preview" onClick={() => setPreviewGuide(params.row as FeatureData)}>
+        <IconButton aria-label="preview" onClick={() => setPreviewGuide(params.row as FeatureGuide)}>
           <PreviewIcon/>
         </IconButton>
       ),
@@ -99,9 +99,9 @@ export const FeatureGuidesList = () => {
 
   const [requestedAt, setRequestedAt] = useState<number>(moment().valueOf())
   const {features, loading, failed} = useFeatureGuides(requestedAt)
-  const [deleteId, setDeleteId] = useState(undefined)
-  const [publishId, setPublishId] = useState(undefined)
-  const [unpublishId, setUnpublishId] = useState(undefined)
+  const [deleteId, setDeleteId] = useState<string|undefined>(undefined)
+  const [publishId, setPublishId] = useState<string|undefined>(undefined)
+  const [unpublishId, setUnpublishId] = useState<string|undefined>(undefined)
 
   return <Stack gap={4} alignItems={"stretch"} sx={{mt: 2}}>
     <Breadcrumbs>
@@ -132,19 +132,24 @@ export const FeatureGuidesList = () => {
                                        actionsAvailable={true}/>}
     {publishId && <DialogComponent actionText={'publish'}
                                    onConfirm={() => {
-                                     updatePublishedStatus(previewGuide?.id as string, true, () => setPublishId(undefined))
-                                     setRequestedAt(moment().valueOf())
+                                     publishId && updatePublishedStatus(publishId, true, () => {
+                                       setPublishId(undefined)
+                                       setRequestedAt(moment().valueOf())
+                                     })
                                    }}
                                    onCancel={() => setPublishId(undefined)}/>}
     {unpublishId && <DialogComponent actionText={'unpublish'}
                                      onConfirm={() => {
-                                       updatePublishedStatus(previewGuide?.id as string, true, () => setUnpublishId(undefined))
-                                       setRequestedAt(moment().valueOf())
+                                       unpublishId && updatePublishedStatus(unpublishId, false, () => {
+                                         setUnpublishId(undefined)
+                                         setRequestedAt(moment().valueOf())
+                                       })
                                      }}
                                      onCancel={() => setUnpublishId(undefined)}/>}
     {deleteId && <DialogComponent actionText={'delete'}
                                   onConfirm={() => {
-                                    deleteFeatureGuide(previewGuide?.id as string)
+                                    deleteId && deleteFeatureGuide(deleteId)
+                                    setDeleteId(undefined)
                                     setRequestedAt(moment().valueOf())
                                   }}
                                   onCancel={() => setDeleteId(undefined)}/>}

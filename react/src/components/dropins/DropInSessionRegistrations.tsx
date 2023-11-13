@@ -2,10 +2,10 @@ import React, {useEffect, useState} from 'react';
 import {DataGrid, GridColDef, GridRenderCellParams, GridRowModel} from "@mui/x-data-grid";
 import IconButton from "@mui/material/IconButton";
 import DeleteIcon from "@mui/icons-material/Delete";
-import {Breadcrumbs, Button, Snackbar, Stack} from "@mui/material";
+import {Breadcrumbs, Snackbar, Stack} from "@mui/material";
 import Box from "@mui/material/Box";
 import axios, {AxiosResponse} from "axios";
-import {Link, useNavigate, useParams} from "react-router-dom";
+import {Link, useParams} from "react-router-dom";
 import {SeminarData} from "./DropInSessionsList";
 import {Alert, DialogComponent} from "../DialogComponent";
 import {enqueueSnackbar} from "notistack";
@@ -47,7 +47,6 @@ export function DropInSessionRegistrations() {
       ),
     },
   ];
-  const navigate = useNavigate()
   const {dropInId} = useParams<{ dropInId: string }>()
   const [rowsData, setRowsData] = React.useState([] as GridRowModel[])
   const [rowDetails, setRowDetails] = React.useState({} as DropInRegisteredUsers | undefined)
@@ -92,11 +91,6 @@ export function DropInSessionRegistrations() {
       });
   }, [dropInId, unregister]);
 
-  const handleBack = () => {
-    setError(false);
-    navigate('/drop-ins/list');
-  }
-
   const removeRegistration = (sessionId: string, email: string) => {
     axios.delete(`${ApiClient.dropInSessionRegistrationDeleteEndpoint}/${sessionId}/${email}`)
       .then(response => {
@@ -112,7 +106,7 @@ export function DropInSessionRegistrations() {
       <Link to={"/"}>
         Home
       </Link>
-      <Link to={"/drop-ins"}>
+      <Link to={"/drop-in-sessions"}>
         Drop-in sessions
       </Link>
       <Typography color="text.primary">Registrations :: {dropInSession?.title}</Typography>
@@ -133,9 +127,6 @@ export function DropInSessionRegistrations() {
         columns={columns}
         pageSizeOptions={[5]}
       />
-      <Button style={{float: 'right'}} variant="outlined"
-              color="primary"
-              onClick={handleBack}>back</Button>
     </Box>
     {unregister && <DialogComponent actionText='unregister'
                                     onCancel={() => setUnregister(false)}
