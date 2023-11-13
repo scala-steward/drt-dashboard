@@ -38,7 +38,7 @@ object UserRoutes extends UserAccessRequestJsonSupport
 
     def getKeyCloakService(accessToken: String): KeycloakService = {
       val keyClockClient = new KeycloakClient(accessToken, keyClockUrl) with ProdSendAndReceive
-      new KeycloakService(keyClockClient)
+      KeycloakService(keyClockClient)
     }
 
     pathPrefix("api" / "users") {
