@@ -2,7 +2,6 @@ import * as React from 'react';
 import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
 import {DatePicker} from '@mui/x-date-pickers/DatePicker';
 import Button from '@mui/material/Button';
-import format from 'date-fns/format';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import {Stack} from "@mui/material";
 import axios from "axios";
@@ -24,7 +23,7 @@ export default function ExportDatePicker(props: IProps) {
   const [fromValue, setFromValue] = React.useState<Moment | null>(null);
   const [toValue, setToValue] = React.useState<Moment | null>(null);
 
-  const formattedDate = (date: Moment) => format(date, "dd-MM-yyyy")
+  const formattedDate = (date: Moment) => date.format("DD-MM-yyyy")
 
   const requestExport = () => {
     fromValue && toValue && axios.post(
