@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.routes
 
 import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.{ concat, optionalHeaderValueByName, parameterMap, path, pathPrefix, redirect }
+import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.MethodDirectives.get
 import org.slf4j.{ Logger, LoggerFactory }
@@ -41,7 +41,7 @@ case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route
       path("upload") {
         indexRouteDirectives(UploadPathString)
       },
-      path("region") {
+      pathPrefix("region") {
         indexRouteDirectives(RegionPathString)
       },
       path("userManagement") {

@@ -104,14 +104,17 @@ object Server {
 
       implicit val db: AppDatabase = ProdDatabase
 
+      val indexRoutes = IndexRoute(
+        urls,
+        indexResource = getFromResource("frontend/index.html"),
+        directoryResource = getFromResourceDirectory("frontend"),
+        staticResourceDirectory = getFromResourceDirectory("frontend/static")
+      ).route
+
       val routes: Route = concat(
-        IndexRoute(
-          urls,
-          indexResource = getFromResource("frontend/index.html"),
-          directoryResource = getFromResourceDirectory("frontend"),
-          staticResourceDirectory = getFromResourceDirectory("frontend/static")).route,
-        CiriumRoutes("cirium", serverConfig.ciriumDataUri),
-        DrtRoutes("drt", serverConfig.portIataCodes),
+        indexRoutes,
+//        CiriumRoutes("cirium", serverConfig.ciriumDataUri),
+//        DrtRoutes("drt", serverConfig.portIataCodes),
         ApiRoutes("api", serverConfig.clientConfig, userService, ScheduledHealthCheckPausePersistenceImpl(db, now)),
         LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
         ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), () => SDate.now(), emailClient, urls.rootUrl, serverConfig.teamEmail),
