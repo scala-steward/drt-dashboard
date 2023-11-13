@@ -70,7 +70,6 @@ class UserRoutesSpec extends Specification
   }
 
   def userRoutes(userService: UserService, userRequestService: UserRequestService): Route = UserRoutes(
-    "user",
     clientConfig,
     userService,
     userRequestService,
