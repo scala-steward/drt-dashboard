@@ -67,6 +67,8 @@ steps:
       branch: leader
       event:
         - push
+    depends_on:
+      - Build docker image
 
   - name: sonar-scanner
     pull: if-not-exists
