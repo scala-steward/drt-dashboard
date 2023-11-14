@@ -95,7 +95,7 @@ steps:
       event:
         - push
     depends_on:
-      - Copy front end to resources
+      - Test back end
 
   - name: publish
     image: plugins/ecr
