@@ -139,7 +139,7 @@ object FeatureGuideRoutes extends DefaultTimeJsonProtocol {
 
   def apply(featureGuideService: FeatureGuideService, uploader: S3Uploader, downloader: S3Downloader)
            (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
-    pathPrefix("api" / "feature-guides") {
+    pathPrefix("feature-guides") {
       concat(
         pathEnd {
           concat(

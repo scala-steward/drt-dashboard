@@ -29,6 +29,8 @@ export default class ApiClient implements IApiClient {
   public static featureGuidesVideosEndpoint = "/api/feature-guides/get-feature-videos"
   public static featureGuidesUpdatePublishedEndpoint = "/api/feature-guides/update-published"
 
+  public static exportRegionEndpoint = "/api/export-region"
+
 
   public fetchData(userEndPoint: string, handleResponse: (r: AxiosResponse) => void) {
     axios

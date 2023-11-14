@@ -1,23 +1,37 @@
 package uk.gov.homeoffice.drt.routes
 
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.directives.MethodDirectives.get
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.Urls
 import uk.gov.homeoffice.drt.authentication.User
 
-trait PathString
 
-case object RootPathString extends PathString
-
-case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route, staticResourceDirectory: Route) {
+case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route) {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
   val route: Route =
     concat(
-      path("")(indexRouteDirectives),
+      pathPrefix("static") {
+        getFromResourceDirectory("frontend/static")
+      },
+      pathPrefix("images") {
+        getFromResourceDirectory("frontend/images")
+      },
+      pathPrefix("") {
+        concat(
+          pathEnd {
+            respondWithHeaders(Seq(
+              RawHeader("Cache-Control", "no-cache, no-store, must-revalidate"),
+              RawHeader("Pragma", "no-cache"),
+              RawHeader("Expires", "0"),
+            ))(indexRouteDirectives)
+          },
+          getFromResourceDirectory("frontend")
+        )
+      },
       pathPrefix("access-requests")(indexRouteDirectives),
       pathPrefix("users")(indexRouteDirectives),
       pathPrefix("alerts")(indexRouteDirectives),
@@ -25,9 +39,6 @@ case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route
       pathPrefix("feature-guides")(indexRouteDirectives),
       pathPrefix("drop-in-sessions")(indexRouteDirectives),
       pathPrefix("health-checks")(indexRouteDirectives),
-      (get & pathPrefix(""))(directoryResource),
-      (get & pathPrefix("static"))(staticResourceDirectory),
-      (get & pathPrefix("images"))(staticResourceDirectory),
     )
 
   def indexRouteDirectives: Route = {

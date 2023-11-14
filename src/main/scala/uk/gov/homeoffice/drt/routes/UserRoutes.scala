@@ -41,7 +41,7 @@ object UserRoutes extends UserAccessRequestJsonSupport
       KeycloakService(keyClockClient)
     }
 
-    pathPrefix("api" / "users") {
+    pathPrefix("users") {
       concat(
         (post & path("access-request")) {
           headerValueByName("X-Auth-Email") { userEmail =>

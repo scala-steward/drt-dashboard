@@ -11,6 +11,7 @@ import moment from "moment-timezone";
 import axios from "axios";
 import {useParams} from "react-router-dom";
 import {StringUtils} from "../utils/StringUtils";
+import ApiClient from "../services/ApiClient";
 
 interface IProps {
   user: UserProfile;
@@ -34,7 +35,7 @@ export const RegionPage = (props: IProps) => {
 
   const fetchDownloads = () => {
     axios
-      .get(`/export-region/${regionName}`)
+      .get(`${ApiClient.exportRegionEndpoint}/${regionName}`)
       .then((response) => {
         setDownloads(response.data as Download[])
         setTimeout(() => {
@@ -81,7 +82,7 @@ export const RegionPage = (props: IProps) => {
             <Grid xs={6}><Typography fontWeight="bold">Date range</Typography></Grid>
             <Grid xs={3}></Grid>
             {sortedDownloads.map(download => {
-              const downloadUrl = `/export-region/${download.region}/${download.createdAt}`
+              const downloadUrl = `${ApiClient.exportRegionEndpoint}/${download.region}/${download.createdAt}`
               return <>
                 <Grid xs={3}><Typography>{formatDateDDMMYYYYHHmm(new Date(download.createdAt))}</Typography></Grid>
                 <Grid xs={6}>
