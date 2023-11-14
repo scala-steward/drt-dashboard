@@ -90,7 +90,7 @@ object DropInSessionsRoute extends BaseRoute with DropInJsonFormats {
     }
 
   def apply(dropInDao: DropInDao)(implicit ec: ExecutionContext): Route =
-    pathPrefix("api" / "drop-in-sessions") {
+    pathPrefix("drop-in-sessions") {
       concat(
         pathEnd(
           concat(

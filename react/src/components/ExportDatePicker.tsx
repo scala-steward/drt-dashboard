@@ -7,6 +7,7 @@ import {Stack} from "@mui/material";
 import axios from "axios";
 import {AdapterMoment} from "@mui/x-date-pickers/AdapterMoment";
 import {Moment} from "moment";
+import ApiClient from "../services/ApiClient";
 
 interface IProps {
   region: string;
@@ -27,7 +28,7 @@ export default function ExportDatePicker(props: IProps) {
 
   const requestExport = () => {
     fromValue && toValue && axios.post(
-      '/export-region',
+      ApiClient.exportRegionEndpoint,
       {
         region: props.region,
         startDate: formattedDate(fromValue),

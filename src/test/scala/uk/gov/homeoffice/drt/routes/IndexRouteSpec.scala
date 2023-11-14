@@ -20,11 +20,7 @@ class IndexRouteSpec extends Specification with Specs2RouteTest {
 
   val dummyRoute: StandardRoute = complete("dummy")
 
-  val indexRoute: IndexRoute = IndexRoute(
-    urls = urls,
-    indexResource = complete("the app"),
-    directoryResource = dummyRoute,
-    staticResourceDirectory = dummyRoute)
+  val indexRoute: IndexRoute = IndexRoute(urls = urls, indexResource = complete("the app"))
 
   val routes: Route = indexRoute.indexRouteDirectives
 

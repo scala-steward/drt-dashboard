@@ -7,7 +7,7 @@ import akka.actor.typed.{ActorSystem, Behavior, PostStop, Scheduler}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.model.HttpRequest
-import akka.http.scaladsl.server.Directives.{concat, getFromResource, getFromResourceDirectory}
+import akka.http.scaladsl.server.Directives.{concat, getFromResource, getFromResourceDirectory, pathPrefix}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.stream.Materializer
@@ -104,24 +104,23 @@ object Server {
 
       implicit val db: AppDatabase = ProdDatabase
 
-      val indexRoutes = IndexRoute(
-        urls,
-        indexResource = getFromResource("frontend/index.html"),
-        directoryResource = getFromResourceDirectory("frontend"),
-        staticResourceDirectory = getFromResourceDirectory("frontend/static")
-      ).route
+      val indexRoutes = IndexRoute(urls, indexResource = getFromResource("frontend/index.html")).route
 
       val routes: Route = concat(
         indexRoutes,
-//        CiriumRoutes("cirium", serverConfig.ciriumDataUri),
-//        DrtRoutes("drt", serverConfig.portIataCodes),
-        LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
-        ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), () => SDate.now(), emailClient, urls.rootUrl, serverConfig.teamEmail),
-        UserRoutes(serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
-        FeatureGuideRoutes(featureGuideService, featureUploader, featureDownloader),
-        ApiRoutes("api", serverConfig.clientConfig, userService, ScheduledHealthCheckPausePersistenceImpl(db, now)),
-        DropInSessionsRoute(dropInDao),
-        DropInRegisterRoutes(dropInRegistrationDao)
+        pathPrefix("api") {
+          concat(
+            CiriumRoutes(serverConfig.ciriumDataUri),
+            DrtRoutes(serverConfig.portIataCodes),
+            LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
+            ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), () => SDate.now(), emailClient, urls.rootUrl, serverConfig.teamEmail),
+            UserRoutes(serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
+            FeatureGuideRoutes(featureGuideService, featureUploader, featureDownloader),
+            ApiRoutes(serverConfig.clientConfig, userService, ScheduledHealthCheckPausePersistenceImpl(db, now)),
+            DropInSessionsRoute(dropInDao),
+            DropInRegisterRoutes(dropInRegistrationDao)
+          )
+        }
       )
 
       val serverBinding = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)

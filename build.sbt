@@ -1,9 +1,9 @@
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v637"
+lazy val drtLibVersion = "v643"
 lazy val drtCiriumVersion = "203"
-lazy val akkaHttpVersion = "10.4.0"
-lazy val akkaVersion = "2.7.0"
+lazy val akkaHttpVersion = "10.5.3"
+lazy val akkaVersion = "2.8.5"
 lazy val jodaTimeVersion = "2.12.5"
 lazy val scalaLoggingVersion = "3.9.5"
 lazy val logBackClassicVersion = "1.4.8"
@@ -36,6 +36,7 @@ lazy val root = (project in file(".")).
     libraryDependencies ++= Seq(
       "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
       "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
+      "com.typesafe.akka" %% "akka-http-caching" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
       "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,

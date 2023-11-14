@@ -2,9 +2,10 @@ import axios from "axios";
 import {enqueueSnackbar} from "notistack";
 import {useEffect, useState} from "react";
 import {FeatureGuide} from "../components/featureguides/FeatureGuidesList";
+import ApiClient from "../services/ApiClient";
 
 export const deleteFeatureGuide = (id: string) => {
-  axios.delete(`/api/feature-guides/${id}`, )
+  axios.delete(`${ApiClient.featureGuidesEndpoint}/${id}`, )
     .then(response => {
       if (response.status === 200)
         enqueueSnackbar('Feature guide deleted successfully', {variant: 'success'})
@@ -18,7 +19,7 @@ export const deleteFeatureGuide = (id: string) => {
 }
 
 export const updatePublishedStatus = (id: string, publish: boolean, onComplete: () => void) => {
-  axios.post(`/api/feature-guides/update-published/${id}`, {published: publish})
+  axios.post(`${ApiClient.featureGuidesUpdatePublishedEndpoint}/${id}`, {published: publish})
     .then(response => {
       if (response.status === 200)
         enqueueSnackbar('Feature guide ' + (publish ? 'published' : 'unpublished') + ' successfully', {variant: 'success'})
@@ -38,7 +39,7 @@ export const useFeatureGuides = (refreshedAt: number) => {
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
-    const fetch = () => axios.get('/api/feature-guides')
+    const fetch = () => axios.get(ApiClient.featureGuidesEndpoint)
       .then(response => {
         if (response.status === 200) {
           setFeatures(response.data)

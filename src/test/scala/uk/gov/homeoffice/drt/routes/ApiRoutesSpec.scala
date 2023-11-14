@@ -32,10 +32,10 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest with ClientConfig
 
   val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), "somedomain.com", "test@test.com")
   val userService: UserService = UserService(new MockUserDao)
-  val routes: Route = ApiRoutes("api", clientConfig, userService, MockScheduledHealthCheckPausePersistence)
+  val routes: Route = ApiRoutes(clientConfig, userService, MockScheduledHealthCheckPausePersistence)
 
   "Given a uri accessed by a user with an email but no port access, I should see an empty port list and their email address in JSON" >> {
-    Get("/api/user") ~>
+    Get("/user") ~>
       RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
       RawHeader("X-Auth-Email", "my@email.com") ~> routes ~> check {
       responseAs[String] shouldEqual """{"ports":[],"roles":["border-force-staff"],"email":"my@email.com"}"""
@@ -43,7 +43,7 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest with ClientConfig
   }
 
   "Given a uri accessed by a user with an email and LHR port access, I should see LHR in the port list and their email address in JSON" >> {
-    Get("/api/user") ~>
+    Get("/user") ~>
       RawHeader("X-Auth-Roles", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~>
       RawHeader("X-Auth-Email", "my@email.com") ~> routes ~> check {
       responseAs[String] shouldEqual """{"ports":["LHR"],"roles":["border-force-staff","LHR"],"email":"my@email.com"}"""
@@ -51,7 +51,7 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest with ClientConfig
   }
 
   "Given an api request for config, I should see a JSON response containing the config passed to ApiRoutes" >> {
-    Get("/api/config") ~>
+    Get("/config") ~>
       RawHeader("X-Auth-Roles", "") ~>
       RawHeader("X-Auth-Email", "my@email.com") ~> routes ~> check {
       responseAs[JsValue] shouldEqual clientConfig.toJson
@@ -59,7 +59,7 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest with ClientConfig
   }
 
   "When user tracking is received with expected headers, user details is present in user table" >> {
-    Get("/api/track-user") ~>
+    Get("/track-user") ~>
       RawHeader("X-Auth-Roles", "") ~>
       RawHeader("X-Auth-username", "my") ~>
       RawHeader("X-Auth-Email", "my@email.com") ~> routes ~> check {

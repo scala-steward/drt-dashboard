@@ -44,127 +44,124 @@ object ApiRoutes extends MultiPortAlertJsonSupport
     }
   })
 
-  def apply(prefix: String,
-            clientConfig: ClientConfig,
+  def apply(clientConfig: ClientConfig,
             userService: UserService,
             scheduledPausePersistence: ScheduledHealthCheckPausePersistence,
            )
            (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
-    pathPrefix(prefix) {
-      concat(
-        (get & path("user")) {
+    concat(
+      (get & path("user")) {
+        headerValueByName("X-Auth-Roles") { rolesStr =>
+          headerValueByName("X-Auth-Email") { email =>
+            complete(User.fromRoles(email, rolesStr))
+          }
+        }
+      },
+      (get & path("track-user")) {
+        headerValueByName("X-Auth-Email") { email =>
+          optionalHeaderValueByName("X-Auth-Username") { usernameOption =>
+            userService.upsertUser(
+              uk.gov.homeoffice.drt.db.User(
+                id = usernameOption.getOrElse(email),
+                username = usernameOption.getOrElse(email),
+                email = email,
+                drop_in_notification_at = None,
+                latest_login = new Timestamp(new Date().getTime),
+                inactive_email_sent = None,
+                revoked_access = None,
+                created_at = Some(new Timestamp(new Date().getTime))), Some("userTracking"))
+            complete(StatusCodes.OK)
+          }
+        }
+      },
+      (get & path("config")) {
+        headerValueByName("X-Auth-Roles") { _ =>
+          complete(clientConfig)
+        }
+      },
+      (post & path("health-check-pauses")) {
+        authByRole(HealthChecksEdit) {
+          entity(as[ScheduledPause]) { scheduledPause =>
+            log.info(s"Received health check pause to save")
+            handleFutureOperation(scheduledPausePersistence.insert(scheduledPause), "Failed to save health check pause")
+          }
+        }
+      },
+      (get & path("health-check-pauses")) {
+        authByRole(HealthChecksEdit) {
+          complete(scheduledPausePersistence.get(Option(SDate.now().millisSinceEpoch)))
+        }
+      },
+      (delete & path("health-check-pauses" / Segment / Segment)) { (from, to) =>
+        val fromMillis = from.toLong
+        val toMillis = to.toLong
+        authByRole(HealthChecksEdit) {
+          log.info(s"Received health check pause to delete")
+          handleFutureOperation(scheduledPausePersistence.delete(fromMillis, toMillis), "Failed to delete health check pause")
+        }
+      },
+      (post & path("alerts")) {
+        authByRole(CreateAlerts) {
           headerValueByName("X-Auth-Roles") { rolesStr =>
             headerValueByName("X-Auth-Email") { email =>
-              complete(User.fromRoles(email, rolesStr))
-            }
-          }
-        },
-        (get & path("track-user")) {
-          headerValueByName("X-Auth-Email") { email =>
-            optionalHeaderValueByName("X-Auth-Username") { usernameOption =>
-              userService.upsertUser(
-                uk.gov.homeoffice.drt.db.User(
-                  id = usernameOption.getOrElse(email),
-                  username = usernameOption.getOrElse(email),
-                  email = email,
-                  drop_in_notification_at = None,
-                  latest_login = new Timestamp(new Date().getTime),
-                  inactive_email_sent = None,
-                  revoked_access = None,
-                  created_at = Some(new Timestamp(new Date().getTime))), Some("userTracking"))
-              complete(StatusCodes.OK)
-            }
-          }
-        },
-        (get & path("config")) {
-          headerValueByName("X-Auth-Roles") { _ =>
-            complete(clientConfig)
-          }
-        },
-        (post & path("health-check-pauses")) {
-          authByRole(HealthChecksEdit) {
-            entity(as[ScheduledPause]) { scheduledPause =>
-              log.info(s"Received health check pause to save")
-              handleFutureOperation(scheduledPausePersistence.insert(scheduledPause), "Failed to save health check pause")
-            }
-          }
-        },
-        (get & path("health-check-pauses")) {
-          authByRole(HealthChecksEdit) {
-            complete(scheduledPausePersistence.get(Option(SDate.now().millisSinceEpoch)))
-          }
-        },
-        (delete & path("health-check-pauses" / Segment / Segment)) { (from, to) =>
-          val fromMillis = from.toLong
-          val toMillis = to.toLong
-          authByRole(HealthChecksEdit) {
-            log.info(s"Received health check pause to delete")
-            handleFutureOperation(scheduledPausePersistence.delete(fromMillis, toMillis), "Failed to delete health check pause")
-          }
-        },
-        (post & path("alerts")) {
-          authByRole(CreateAlerts) {
-            headerValueByName("X-Auth-Roles") { rolesStr =>
-              headerValueByName("X-Auth-Email") { email =>
-                entity(as[MultiPortAlert]) { multiPortAlert =>
-                  val user = User.fromRoles(email, rolesStr)
-                  val allPorts = PortRegion.ports.map(_.iata)
-                  val futureResponses = MultiPortAlertClient.saveAlertsForPorts(allPorts, multiPortAlert, user)
-                  complete(Future.sequence(futureResponses).map(_ => StatusCodes.Created))
-                }
-              }
-            }
-          }
-        },
-        (get & path("alerts")) {
-          authByRole(CreateAlerts) {
-            headerValueByName("X-Auth-Roles") { rolesStr =>
-              headerValueByName("X-Auth-Email") { email =>
+              entity(as[MultiPortAlert]) { multiPortAlert =>
                 val user = User.fromRoles(email, rolesStr)
-
-                val futurePortAlerts: Seq[Future[PortAlerts]] = user.accessiblePorts
-                  .map { portCode =>
-                    DashboardClient.getWithRoles(s"${Dashboard.drtInternalUriForPortCode(PortCode(portCode))}/alerts/0", user.roles)
-                      .flatMap { res =>
-                        Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
-                          .to[List[Alert]]
-                          .map(alerts => PortAlerts(portCode, alerts))
-                          .recover {
-                            case e: Throwable =>
-                              log.error(s"Failed to unmarshall json alerts for $portCode", e)
-                              PortAlerts(portCode, List())
-                          }
-                      }
-                      .recover {
-                        case t =>
-                          log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtInternalUriForPortCode(PortCode(portCode))}/alerts/0", t)
-                          PortAlerts(portCode, List())
-                      }
-                  }
-                  .toList
-
-                val eventualValue = Future.sequence(futurePortAlerts).map(_.toJson)
-
-                complete(eventualValue)
-              }
-            }
-          }
-        },
-        (delete & path("alerts" / Segment)) { port =>
-          authByRole(CreateAlerts) {
-            headerValueByName("X-Auth-Roles") { rolesStr =>
-              headerValueByName("X-Auth-Email") { email =>
-                val user = User.fromRoles(email, rolesStr)
-                val deleteEndpoint = s"${Dashboard.drtInternalUriForPortCode(PortCode(port))}/alerts"
-                complete(DashboardClient.deleteWithRoles(deleteEndpoint, user.roles).map { res =>
-                  res.status
-                })
+                val allPorts = PortRegion.ports.map(_.iata)
+                val futureResponses = MultiPortAlertClient.saveAlertsForPorts(allPorts, multiPortAlert, user)
+                complete(Future.sequence(futureResponses).map(_ => StatusCodes.Created))
               }
             }
           }
         }
-      )
-    }
+      },
+      (get & path("alerts")) {
+        authByRole(CreateAlerts) {
+          headerValueByName("X-Auth-Roles") { rolesStr =>
+            headerValueByName("X-Auth-Email") { email =>
+              val user = User.fromRoles(email, rolesStr)
+
+              val futurePortAlerts: Seq[Future[PortAlerts]] = user.accessiblePorts
+                .map { portCode =>
+                  DashboardClient.getWithRoles(s"${Dashboard.drtInternalUriForPortCode(PortCode(portCode))}/alerts/0", user.roles)
+                    .flatMap { res =>
+                      Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
+                        .to[List[Alert]]
+                        .map(alerts => PortAlerts(portCode, alerts))
+                        .recover {
+                          case e: Throwable =>
+                            log.error(s"Failed to unmarshall json alerts for $portCode", e)
+                            PortAlerts(portCode, List())
+                        }
+                    }
+                    .recover {
+                      case t =>
+                        log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtInternalUriForPortCode(PortCode(portCode))}/alerts/0", t)
+                        PortAlerts(portCode, List())
+                    }
+                }
+                .toList
+
+              val eventualValue = Future.sequence(futurePortAlerts).map(_.toJson)
+
+              complete(eventualValue)
+            }
+          }
+        }
+      },
+      (delete & path("alerts" / Segment)) { port =>
+        authByRole(CreateAlerts) {
+          headerValueByName("X-Auth-Roles") { rolesStr =>
+            headerValueByName("X-Auth-Email") { email =>
+              val user = User.fromRoles(email, rolesStr)
+              val deleteEndpoint = s"${Dashboard.drtInternalUriForPortCode(PortCode(port))}/alerts"
+              complete(DashboardClient.deleteWithRoles(deleteEndpoint, user.roles).map { res =>
+                res.status
+              })
+            }
+          }
+        }
+      }
+    )
 
   private def handleFutureOperation(eventual: Future[_], errorMsg: String)
                                    (implicit ec: ExecutionContext): Route =

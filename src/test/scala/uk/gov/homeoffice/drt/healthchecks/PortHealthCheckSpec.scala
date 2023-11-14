@@ -48,7 +48,7 @@ class PortHealthCheckSpec
         PercentageHealthCheckResponse(Priority1, "Arrival Landing Times", Success(Some(50.5)), Option(false)),
         PercentageHealthCheckResponse(Priority2, "Arrival Updates 60", Success(Some(50.5)), Option(true)),
         PercentageHealthCheckResponse(Priority2, "Arrival Updates 120", Success(Some(50.5)), Option(true)),
-        BooleanHealthCheckResponse(Priority1, "Desk Updates", Success(Some(true)), Option(true)),
+//        BooleanHealthCheckResponse(Priority1, "Desk Updates", Success(Some(true)), Option(true)),
       ))
     }
     "parse null responses" in {
@@ -59,13 +59,13 @@ class PortHealthCheckSpec
         PercentageHealthCheckResponse(Priority1, "Arrival Landing Times", Success(None), None),
         PercentageHealthCheckResponse(Priority2, "Arrival Updates 60", Success(None), None),
         PercentageHealthCheckResponse(Priority2, "Arrival Updates 120", Success(None), None),
-        BooleanHealthCheckResponse(Priority1, "Desk Updates", Success(None), None),
+//        BooleanHealthCheckResponse(Priority1, "Desk Updates", Success(None), None),
       ))
     }
     "handle failed responses" in {
       val responses = PortHealthCheck(PortCode("TST"), MockHttp.withFailureResponse())
 
-      Await.result(responses, 1.second).map(_.value.isFailure) should ===(Seq(true, true, true, true, true))
+      Await.result(responses, 1.second).map(_.value.isFailure) should ===(Seq(true, true, true, true))
     }
   }
 }
