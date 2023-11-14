@@ -9,7 +9,7 @@ import uk.gov.homeoffice.drt.Urls
 import uk.gov.homeoffice.drt.authentication.User
 
 
-case class IndexRoute(urls: Urls, indexResource: Route, directoryResource: Route) {
+case class IndexRoute(urls: Urls, indexResource: Route) {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
   val route: Route =

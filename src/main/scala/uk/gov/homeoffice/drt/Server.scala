@@ -104,11 +104,7 @@ object Server {
 
       implicit val db: AppDatabase = ProdDatabase
 
-      val indexRoutes = IndexRoute(
-        urls,
-        indexResource = getFromResource("frontend/index.html"),
-        directoryResource = getFromResourceDirectory("frontend"),
-      ).route
+      val indexRoutes = IndexRoute(urls, indexResource = getFromResource("frontend/index.html")).route
 
       val routes: Route = concat(
         indexRoutes,
