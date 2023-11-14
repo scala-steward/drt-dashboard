@@ -49,6 +49,22 @@ steps:
     depends_on:
       - Copy front end to resources
 
+  - name: Build docker image
+    pull: if-not-exists
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.0.0
+    commands:
+      - /root/entrypoint.sh
+      - sbt docker:stage
+    environment:
+      ARTIFACTORY_PASSWORD:
+        from_secret: ARTIFACTORY_PASSWORD
+      ARTIFACTORY_USERNAME: drt-artifactory-robot
+    when:
+      event:
+        - push
+    depends_on:
+      - Test back end
+
   - name: analysis
     pull: if-not-exists
     image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.0.0
@@ -82,22 +98,6 @@ steps:
         - push
     depends_on:
       - analysis
-
-  - name: Build docker image
-    pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.0.0
-    commands:
-      - /root/entrypoint.sh
-      - sbt docker:stage
-    environment:
-      ARTIFACTORY_PASSWORD:
-        from_secret: ARTIFACTORY_PASSWORD
-      ARTIFACTORY_USERNAME: drt-artifactory-robot
-    when:
-      event:
-        - push
-    depends_on:
-      - Test back end
 
   - name: publish
     image: plugins/ecr
