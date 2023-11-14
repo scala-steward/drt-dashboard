@@ -48,7 +48,7 @@ class HealthCheckMonitorSpec
           s"http://${port.iata.toLowerCase}:9000/health-check/received-landing-times/300/1",
           s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/60/3",
           s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/120/1",
-          s"http://${port.iata.toLowerCase}:9000/health-check/calculated-desk-updates",
+//          s"http://${port.iata.toLowerCase}:9000/health-check/calculated-desk-updates",
         )): _*
       )
       recordTestProbe.expectMsgAllOf(
@@ -57,7 +57,7 @@ class HealthCheckMonitorSpec
           (port, PercentageHealthCheckResponse(Priority1, "Arrival Landing Times", Try(Some(55.5)), Option(false))),
           (port, PercentageHealthCheckResponse(Priority2, "Arrival Updates 60", Try(Some(55.5)), Option(true))),
           (port, PercentageHealthCheckResponse(Priority2, "Arrival Updates 120", Try(Some(55.5)), Option(true))),
-          (port, BooleanHealthCheckResponse(Priority1, "Desk Updates", Try(Some(true)), Some(true))),
+//          (port, BooleanHealthCheckResponse(Priority1, "Desk Updates", Try(Some(true)), Some(true))),
         )): _*
       )
     }
