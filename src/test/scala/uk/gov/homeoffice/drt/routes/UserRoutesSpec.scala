@@ -109,7 +109,7 @@ class UserRoutesSpec extends Specification
       val userService = UserService(UserDao(TestDatabase.db))
       val userRequestService: UserRequestService = UserRequestService(new MockUserAccessRequestDao())
       Await.result(insertUser(userService), 5.seconds)
-      Get("/user/all") ~>
+      Get("/api/users/all") ~>
         RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
         RawHeader("X-Auth-Email", "my@email.com") ~> userRoutes(userService, userRequestService) ~> check {
         val jsonUsers = responseAs[String].parseJson.asInstanceOf[JsArray].elements
@@ -120,7 +120,7 @@ class UserRoutesSpec extends Specification
     "Saves user access request" >> {
       val userService = UserService(UserDao(TestDatabase.db))
       val userRequestService: UserRequestService = UserRequestService(new MockUserAccessRequestDao())
-      Post("/user/access-request", accessRequest.toJson) ~>
+      Post("/api/users/access-request", accessRequest.toJson) ~>
         RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
         RawHeader("X-Auth-Email", "my@email.com") ~> userRoutes(userService, userRequestService) ~> check {
         responseAs[String] shouldEqual "OK"
@@ -133,7 +133,7 @@ class UserRoutesSpec extends Specification
       val accessRequestToSave = accessRequest.copy(lineManager = "LineManager1")
       val currentTime = new Timestamp(DateTime.now().getMillis)
       userRequestService.saveUserRequest("my@email.com", accessRequestToSave, currentTime)
-      Get("/user/access-request?status=\"Requested\"") ~>
+      Get("/api/users/access-request?status=\"Requested\"") ~>
         RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
         RawHeader("X-Auth-Email", "my@email.com") ~> userRoutes(userService, userRequestService) ~> check {
         responseAs[JsValue] shouldEqual Seq(expectedUserAccess(accessRequestToSave, currentTime)).toJson

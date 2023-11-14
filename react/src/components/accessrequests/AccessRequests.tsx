@@ -134,10 +134,10 @@ export default function AccessRequests() {
                                            status={""}/> : <span/>
       }
 
-      {selectedRowIds.length > 0 && <Stack gap={1} direction={'row'} sx={{my: 2}}>
-          <Button variant="outlined" onClick={approveSelectedUserRequests}>Approve</Button>
-          <Button variant="outlined" onClick={dismissSelectedAccessRequests}>Dismiss</Button>
-      </Stack>}
+      <Stack gap={1} direction={'row'} sx={{my: 2}}>
+          <Button variant="outlined" disable={selectedRowIds.length === 0} onClick={approveSelectedUserRequests}>Approve</Button>
+          <Button variant="outlined" disable={selectedRowIds.length === 0} onClick={dismissSelectedAccessRequests}>Dismiss</Button>
+      </Stack>
     </Box>
   }
 

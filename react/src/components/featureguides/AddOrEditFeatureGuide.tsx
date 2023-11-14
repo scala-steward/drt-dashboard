@@ -9,6 +9,7 @@ import Typography from "@mui/material/Typography"
 import {enqueueSnackbar} from "notistack"
 import {FeatureGuide} from "./FeatureGuidesList"
 import TextField from "@mui/material/TextField"
+import ApiClient from "../../services/ApiClient";
 
 export const AddOrEditFeatureGuide = () => {
   const navigate = useNavigate()
@@ -24,7 +25,7 @@ export const AddOrEditFeatureGuide = () => {
 
   if (guideId) {
     useEffect(() => {
-      const fetch = () => axios.get(`/api/feature-guides/${guideId}`)
+      const fetch = () => axios.get(`${ApiClient.featureGuidesEndpoint}/${guideId}`)
         .then(response => {
           if (response.status === 200) {
             const guide = response.data as FeatureGuide
@@ -53,7 +54,7 @@ export const AddOrEditFeatureGuide = () => {
     }
   }
 
-  const videoUrl = video ? URL.createObjectURL(video) : "/api/feature-guides/get-feature-videos/" + fileName
+  const videoUrl = video ? URL.createObjectURL(video) : `${ApiClient.featureGuidesVideosEndpoint}/${fileName}`
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -65,8 +66,8 @@ export const AddOrEditFeatureGuide = () => {
     formData.append('title', title)
     formData.append('markdownContent', markdownContent)
     const doAction = guideId ?
-      axios.put(`/api/feature-guides/${guideId}`, formData) :
-      axios.post('/api/feature-guides', formData)
+      axios.put(`${ApiClient.featureGuidesEndpoint}/${guideId}`, formData) :
+      axios.post(ApiClient.featureGuidesEndpoint, formData)
 
     doAction
       .then(response => {
