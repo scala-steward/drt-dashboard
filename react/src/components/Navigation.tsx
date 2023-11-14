@@ -60,7 +60,9 @@ export default function Navigation(props: IProps) {
             </MenuItem>
           }
         })}
-        <MuiLink href={props.logoutLink}></MuiLink>
+        <MenuItem onClick={handleClose} key={'logout'}>
+          <MuiLink href={props.logoutLink}>Log out</MuiLink>
+        </MenuItem>
       </Menu>
     </Box>
   );
