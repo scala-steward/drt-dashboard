@@ -85,6 +85,7 @@ steps:
         - push
     depends_on:
       - Build docker image
+      - Test back end
 
   - name: sonar-scanner
     pull: if-not-exists
