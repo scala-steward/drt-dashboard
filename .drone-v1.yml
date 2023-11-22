@@ -71,10 +71,11 @@ steps:
     commands:
       - /root/entrypoint.sh
       - sbt -ivy ./.ivy2 dependencyCheck
-      - sbt -ivy ./.ivy2 -mem 4096 -J-XX:+UseG1GC clean coverage test coverageReport
+      - sbt -ivy ./.ivy2 -mem 4096 -J-XX:+UseG1GC coverage test coverageReport
       - sbt scalastyle | true
       - sbt scapegoat | true
     environment:
+      NVD_BASE_URL: http://nvdmirror:8008
       ARTIFACTORY_PASSWORD:
         from_secret: ARTIFACTORY_PASSWORD
       ARTIFACTORY_USERNAME: drt-artifactory-robot
@@ -140,4 +141,9 @@ steps:
       - publish
       - Test back end
 
+services:
+  - name: nvdmirror
+    image: sspringett/nvdmirror
+    ports:
+      - 8008
 ...
