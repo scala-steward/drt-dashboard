@@ -25,7 +25,7 @@ object S3Service {
 
     val multipartUploader = ProdS3MultipartUploader(s3Client)
     val uploader = S3Uploader(multipartUploader, serverConfig.drtS3BucketName, Option(folderPrefix))
-    val downloader = S3Downloader(s3Client, serverConfig.drtS3BucketName)
+    val downloader = S3Downloader(s3Client, serverConfig.drtS3BucketName, Option(folderPrefix))
     (uploader, downloader)
   }
 

@@ -10,6 +10,7 @@ import uk.gov.homeoffice.drt.authentication.KeyCloakUser
 import uk.gov.homeoffice.drt.db.{ProdDatabase, User, UserDao}
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuthTokenService.GetToken
 import uk.gov.homeoffice.drt.keycloak.{KeyCloakAuthToken, KeyCloakAuthTokenService, KeycloakService}
+import uk.gov.homeoffice.drt.notifications.templates.AccessRequestTemplates.{inactiveUserNotificationTemplateId, revokeAccessTemplateId}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.services.UserService
 
@@ -42,7 +43,7 @@ object UserTracking {
         notifications,
         userService,
         timers, timerInitialDelay,
-        serverConfig.scheduleFrequency.minutes,
+        serverConfig.dormantUsersCheckFrequency.minutes,
         serverConfig.inactivityDays,
         serverConfig.deactivateAfterWarningDays,
         maxSize, context).userBehaviour)
@@ -50,15 +51,15 @@ object UserTracking {
 }
 
 class UserTracking(serverConfig: ServerConfig,
-                   notifications: EmailNotifications,
-                   userService: UserService,
-                   timers: TimerScheduler[Command],
-                   timerInitialDelay: FiniteDuration,
-                   timerInterval: FiniteDuration,
-                   numberOfInactivityDays: Int,
-                   deactivateAfterWarningDays: Int,
-                   maxSize: Int,
-                   context: ActorContext[Command]) {
+  notifications: EmailNotifications,
+  userService: UserService,
+  timers: TimerScheduler[Command],
+  timerInitialDelay: FiniteDuration,
+  timerInterval: FiniteDuration,
+  numberOfInactivityDays: Int,
+  deactivateAfterWarningDays: Int,
+  maxSize: Int,
+  context: ActorContext[Command]) {
   private val logger: Logger = LoggerFactory.getLogger(getClass)
 
   import UserTracking._
@@ -82,13 +83,13 @@ class UserTracking(serverConfig: ServerConfig,
                 user.email,
                 serverConfig.rootDomain,
                 serverConfig.teamEmail,
-                notifications.inactiveUserNotificationTemplateId,
+                inactiveUserNotificationTemplateId,
                 "inactive user notification")
               logger.info(s"User with email ${user.email} notified due to inactivity")
             } else {
               logger.info(s"No email for $user to notify")
             }
-            userService.upsertUser(user.copy(inactive_email_sent = Some(new Timestamp(new Date().getTime))))
+            userService.upsertUser(user.copy(inactive_email_sent = Some(new Timestamp(new Date().getTime))), Some("inactivity"))
           })
         Behaviors.same
 
@@ -115,7 +116,7 @@ class UserTracking(serverConfig: ServerConfig,
                       userFromKeycloak.email,
                       serverConfig.rootDomain,
                       serverConfig.teamEmail,
-                      notifications.revokeAccessTemplateId,
+                      revokeAccessTemplateId,
                       "revoked DRT Access")
                     logger.info(s"User with email ${userToRevoke.email} access revoked due to inactivity")
                   }
@@ -143,9 +144,9 @@ class UserTracking(serverConfig: ServerConfig,
   }
 
   def removeUser(keycloakService: KeycloakService, uId: KeyCloakUser, utr: User)
-                (implicit ec: ExecutionContext): Future[Int] = {
+    (implicit ec: ExecutionContext): Future[Int] = {
     keycloakService.removeUser(uId.id)
-    userService.upsertUser(utr.copy(revoked_access = Some(new Timestamp(new Date().getTime))))
+    userService.upsertUser(utr.copy(revoked_access = Some(new Timestamp(new Date().getTime))), Some("revoked"))
   }
 }
 

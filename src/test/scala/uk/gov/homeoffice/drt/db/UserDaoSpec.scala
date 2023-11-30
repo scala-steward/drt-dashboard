@@ -26,7 +26,10 @@ class UserDaoSpec extends Specification with BeforeEach {
     email = "user1@test.com",
     latest_login = new Timestamp(Instant.now().toEpochMilli),
     inactive_email_sent = None,
-    revoked_access = None)
+    revoked_access = None,
+    drop_in_notification_at = None,
+    created_at = None
+  )
 
   val userActive2: User = User(
     id = "user2",
@@ -34,7 +37,9 @@ class UserDaoSpec extends Specification with BeforeEach {
     email = "user2@test.com",
     latest_login = new Timestamp(Instant.now().toEpochMilli),
     inactive_email_sent = None,
-    revoked_access = None)
+    revoked_access = None,
+    drop_in_notification_at = None,
+    created_at = None)
 
   val userInactiveMoreThan60days: User = User(
     id = "user3",
@@ -42,7 +47,9 @@ class UserDaoSpec extends Specification with BeforeEach {
     email = "user3@test.com",
     latest_login = new Timestamp(Instant.now().minusSeconds(61 * secondsInADay).toEpochMilli),
     inactive_email_sent = None,
-    revoked_access = None)
+    revoked_access = None,
+    drop_in_notification_at = None,
+    created_at = None)
 
   val userInactiveMoreThan67days: User = User(
     id = "user4",
@@ -50,7 +57,9 @@ class UserDaoSpec extends Specification with BeforeEach {
     email = "user4@test.com",
     latest_login = new Timestamp(Instant.now().minusSeconds(68 * secondsInADay).toEpochMilli),
     inactive_email_sent = Some(new Timestamp(Instant.now().minusSeconds(8 * secondsInADay).toEpochMilli)),
-    revoked_access = None)
+    revoked_access = None,
+    drop_in_notification_at = None,
+    created_at = None)
 
   val userWithNoEmail: User = User(
     id = "user5",
@@ -58,7 +67,9 @@ class UserDaoSpec extends Specification with BeforeEach {
     email = "",
     latest_login = new Timestamp(Instant.now().toEpochMilli),
     inactive_email_sent = None,
-    revoked_access = None)
+    revoked_access = None,
+    drop_in_notification_at = None,
+    created_at = None)
 
   def deleteUserTableData(db: Database, userTable: TableQuery[UserTable])(implicit executionContext: ExecutionContext): Int = {
     Await.result(db.run(userTable.delete), 1.seconds)
@@ -66,11 +77,11 @@ class UserDaoSpec extends Specification with BeforeEach {
 
   "select all" should "give all users" >> {
     val userList = List(userActive1, userActive2, userInactiveMoreThan60days, userInactiveMoreThan67days, userWithNoEmail)
-    userDao.insertOrUpdate(userActive1)
-    userDao.insertOrUpdate(userActive2)
-    userDao.insertOrUpdate(userInactiveMoreThan60days)
-    userDao.insertOrUpdate(userInactiveMoreThan67days)
-    Await.result(userDao.insertOrUpdate(userWithNoEmail), 1.seconds)
+    userDao.upsertUser(userActive1, Some("userTracking"))
+    userDao.upsertUser(userActive2, Some("userTracking"))
+    userDao.upsertUser(userInactiveMoreThan60days, Some("userTracking"))
+    userDao.upsertUser(userInactiveMoreThan67days, Some("userTracking"))
+    Await.result(userDao.upsertUser(userWithNoEmail, Some("userTracking")), 1.seconds)
 
     val allUser = Await.result(userDao.selectAll(), 1.seconds)
     allUser.toSet === userList.toSet
@@ -78,11 +89,11 @@ class UserDaoSpec extends Specification with BeforeEach {
 
   "select inactive user" should "give users who are inactive more than 60 days" >> {
     val expectedUsers = List(userInactiveMoreThan60days)
-    userDao.insertOrUpdate(userActive1)
-    userDao.insertOrUpdate(userActive2)
-    userDao.insertOrUpdate(userInactiveMoreThan60days)
-    userDao.insertOrUpdate(userInactiveMoreThan67days)
-    Await.result(userDao.insertOrUpdate(userWithNoEmail), 1.seconds)
+    userDao.upsertUser(userActive1, Some("userTracking"))
+    userDao.upsertUser(userActive2, Some("userTracking"))
+    userDao.upsertUser(userInactiveMoreThan60days, Some("userTracking"))
+    userDao.upsertUser(userInactiveMoreThan67days, Some("userTracking"))
+    Await.result(userDao.upsertUser(userWithNoEmail, Some("userTracking")), 1.seconds)
 
     val inactiveUsers = Await.result(userDao.selectInactiveUsers(numberOfInactivityDays), 1.seconds)
     inactiveUsers mustEqual expectedUsers
@@ -90,11 +101,11 @@ class UserDaoSpec extends Specification with BeforeEach {
 
   "select revoke access users" should "give users who are notified more that 7 days back about 60 days inactivity" >> {
     val expectedUsers = List(userInactiveMoreThan67days)
-    userDao.insertOrUpdate(userActive1)
-    userDao.insertOrUpdate(userActive2)
-    userDao.insertOrUpdate(userInactiveMoreThan60days)
-    userDao.insertOrUpdate(userInactiveMoreThan67days)
-    Await.result(userDao.insertOrUpdate(userWithNoEmail), 1.seconds)
+    userDao.upsertUser(userActive1,Some("userTracking"))
+    userDao.upsertUser(userActive2,Some("userTracking"))
+    userDao.upsertUser(userInactiveMoreThan60days,Some("userTracking"))
+    userDao.upsertUser(userInactiveMoreThan67days,Some("userTracking"))
+    Await.result(userDao.upsertUser(userWithNoEmail,Some("userTracking")), 1.seconds)
 
     val usersToRevokeAccess = Await.result(userDao.selectUsersToRevokeAccess(numberOfInactivityDays, deactivateAfterWarningDays), 1.seconds)
 
@@ -103,17 +114,17 @@ class UserDaoSpec extends Specification with BeforeEach {
 
   "selected user" should "notified depending upon activity of user updated in user tracking" >> {
     //User activity
-    userDao.insertOrUpdate(userActive1.copy(latest_login = new Timestamp(Instant.now().minusSeconds(59 * secondsInADay).toEpochMilli)))
+    userDao.upsertUser(userActive1.copy(latest_login = new Timestamp(Instant.now().minusSeconds(59 * secondsInADay).toEpochMilli)),Some("userTracking"))
     val noInactiveUser = Await.result(userDao.selectInactiveUsers(numberOfInactivityDays), 1.seconds)
     //No user activity in 61 days
     val inActiveUser = userActive1.copy(latest_login = new Timestamp(Instant.now().minusSeconds(61 * secondsInADay).toEpochMilli))
-    userDao.insertOrUpdate(inActiveUser)
+    userDao.upsertUser(inActiveUser,Some("userTracking"))
     val oneInActiveUser = Await.result(userDao.selectInactiveUsers(numberOfInactivityDays), 1.seconds)
     val noUserToRevoke = Await.result(userDao.selectUsersToRevokeAccess(numberOfInactivityDays, deactivateAfterWarningDays), 1.seconds)
     //No user activity in 68 days
     val revokedUser = inActiveUser.copy(latest_login = new Timestamp(Instant.now().minusSeconds(68 * secondsInADay).toEpochMilli),
       inactive_email_sent = Some(new Timestamp(Instant.now().minusSeconds(8 * secondsInADay).toEpochMilli)))
-    userDao.insertOrUpdate(revokedUser)
+    userDao.upsertUser(revokedUser,Some("userTracking"))
     val oneUserToRevoke = Await.result(userDao.selectUsersToRevokeAccess(numberOfInactivityDays, deactivateAfterWarningDays), 1.seconds)
 
     oneInActiveUser.head mustEqual (inActiveUser)
