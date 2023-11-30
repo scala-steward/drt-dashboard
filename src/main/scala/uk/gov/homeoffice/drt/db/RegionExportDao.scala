@@ -10,12 +10,6 @@ import uk.gov.homeoffice.drt.time.{LocalDate, SDate}
 import java.sql.Timestamp
 import scala.concurrent.ExecutionContext
 
-object Db {
-  val slickProfile = if (ConfigFactory.load().getString("env") != "test")
-    slick.jdbc.PostgresProfile
-  else
-    slick.jdbc.H2Profile
-}
 
 import Db.slickProfile.api._
 

@@ -10,7 +10,7 @@ platform:
 steps:
   - name: Build front end
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:latest
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.2.0-beta1
     environment:
       CI: false
     commands:
@@ -49,38 +49,6 @@ steps:
     depends_on:
       - Copy front end to resources
 
-  - name: analysis
-    pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.0.0
-    commands:
-      - /root/entrypoint.sh
-      - sbt -ivy ./.ivy2 dependencyCheck
-      - sbt -ivy ./.ivy2 -mem 4096 -J-XX:+UseG1GC clean coverage test coverageReport
-      - sbt scalastyle | true
-      - sbt scapegoat | true
-    environment:
-      ARTIFACTORY_PASSWORD:
-        from_secret: ARTIFACTORY_PASSWORD
-      ARTIFACTORY_USERNAME: drt-artifactory-robot
-      ENV_LOG_LEVEL: ERROR
-    when:
-      branch: leader
-      event:
-        - push
-
-  - name: sonar-scanner
-    pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/sonar-scanner:v4.6
-    commands:
-      - sonar-scanner -Dsonar.projectVersion=B${DRONE_BUILD_NUMBER}
-    environment:
-      DRONE_BUILD_NUMBER: ${DRONE_BUILD_NUMBER}
-    when:
-      event:
-        - push
-    depends_on:
-      - analysis
-
   - name: Build docker image
     pull: if-not-exists
     image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.0.0
@@ -95,7 +63,43 @@ steps:
       event:
         - push
     depends_on:
-      - Copy front end to resources
+      - Test back end
+
+  - name: analysis
+    pull: if-not-exists
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.0.0
+    commands:
+      - /root/entrypoint.sh
+      - sbt -ivy ./.ivy2 dependencyCheck
+      - sbt -ivy ./.ivy2 -mem 4096 -J-XX:+UseG1GC coverage test coverageReport
+      - sbt scalastyle | true
+      - sbt scapegoat | true
+    environment:
+      NVD_BASE_URL: http://nvdmirror:8008
+      ARTIFACTORY_PASSWORD:
+        from_secret: ARTIFACTORY_PASSWORD
+      ARTIFACTORY_USERNAME: drt-artifactory-robot
+      ENV_LOG_LEVEL: ERROR
+    when:
+      branch: leader
+      event:
+        - push
+    depends_on:
+      - Build docker image
+      - Test back end
+
+  - name: sonar-scanner
+    pull: if-not-exists
+    image: quay.io/ukhomeofficedigital/sonar-scanner:v4.6
+    commands:
+      - sonar-scanner -Dsonar.projectVersion=B${DRONE_BUILD_NUMBER}
+    environment:
+      DRONE_BUILD_NUMBER: ${DRONE_BUILD_NUMBER}
+    when:
+      event:
+        - push
+    depends_on:
+      - analysis
 
   - name: publish
     image: plugins/ecr
@@ -135,6 +139,11 @@ steps:
         - push
     depends_on:
       - publish
-#      - Test back end
+      - Test back end
 
+services:
+  - name: nvdmirror
+    image: sspringett/nvdmirror
+    ports:
+      - 8008
 ...

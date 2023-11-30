@@ -8,41 +8,40 @@ import akka.http.scaladsl.server.Route
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 import spray.json.enrichAny
+import uk.gov.homeoffice.drt.ClientConfig
 import uk.gov.homeoffice.drt.auth.Roles.ManageUsers
 import uk.gov.homeoffice.drt.authentication._
-import uk.gov.homeoffice.drt.db.{UserAccessRequestJsonSupport, UserJsonSupport}
+import uk.gov.homeoffice.drt.db.{User, UserAccessRequestJsonSupport, UserJsonSupport}
 import uk.gov.homeoffice.drt.http.ProdSendAndReceive
 import uk.gov.homeoffice.drt.keycloak.{KeycloakClient, KeycloakService}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.routes.ApiRoutes.{authByRole, clientUserAccessDataJsonSupportDataFormatParser}
 import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
-import uk.gov.homeoffice.drt.{ClientConfig, JsonSupport}
 
 import java.sql.Timestamp
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
-object UserRoutes extends JsonSupport
-  with UserAccessRequestJsonSupport
+object UserRoutes extends UserAccessRequestJsonSupport
   with UserJsonSupport
   with AccessRequestJsonSupport
   with KeyCloakUserJsonSupport {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def apply(
-             prefix: String,
-             clientConfig: ClientConfig,
-             userService: UserService,
-             userRequestService: UserRequestService,
-             notifications: EmailNotifications,
-             keyClockUrl: String)(implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route = {
+  def apply(clientConfig: ClientConfig,
+            userService: UserService,
+            userRequestService: UserRequestService,
+            notifications: EmailNotifications,
+            keyClockUrl: String,
+           )
+           (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route = {
 
     def getKeyCloakService(accessToken: String): KeycloakService = {
       val keyClockClient = new KeycloakClient(accessToken, keyClockUrl) with ProdSendAndReceive
-      new KeycloakService(keyClockClient)
+      KeycloakService(keyClockClient)
     }
 
-    pathPrefix(prefix) {
+    pathPrefix("users") {
       concat(
         (post & path("access-request")) {
           headerValueByName("X-Auth-Email") { userEmail =>
@@ -104,14 +103,17 @@ object UserRoutes extends JsonSupport
         },
         (post & path("accept-access-request" / Segment)) { id =>
           authByRole(ManageUsers) {
-            headerValueByName("X-Auth-Roles") { rolesStr =>
-              headerValueByName("X-Auth-Email") { email =>
+            headerValueByName("X-Auth-Roles") { _ =>
+              headerValueByName("X-Auth-Email") { _ =>
                 headerValueByName("X-Auth-Token") { xAuthToken =>
                   entity(as[ClientUserRequestedAccessData]) { userRequestedAccessData =>
                     val keycloakService = getKeyCloakService(xAuthToken)
                     if (userRequestedAccessData.portsRequested.nonEmpty || userRequestedAccessData.regionsRequested.nonEmpty) {
                       if (userRequestedAccessData.allPorts) {
                         keycloakService.addUserToGroup(id, "All Port Access")
+                        if (userRequestedAccessData.accountType == "rccu") {
+                          keycloakService.addUserToGroup(id, "All RCC Access")
+                        }
                       } else {
                         Future.sequence(userRequestedAccessData.getListOfPortOrRegion.map { port =>
                           keycloakService.addUserToGroup(id, port)
@@ -123,6 +125,15 @@ object UserRoutes extends JsonSupport
                       }
                       userRequestService.updateUserRequest(userRequestedAccessData, "Approved")
                       notifications.sendAccessGranted(userRequestedAccessData, clientConfig.domain, clientConfig.teamEmail)
+                      userService.upsertUser(
+                        User(id = userRequestedAccessData.email,
+                          username = userRequestedAccessData.email,
+                          email = userRequestedAccessData.email,
+                          latest_login = new Timestamp(DateTime.now().getMillis),
+                          inactive_email_sent = None,
+                          revoked_access = None,
+                          drop_in_notification_at = None,
+                          created_at = Some(new Timestamp(DateTime.now().getMillis))), Some("Approved"))
                       complete(s"User ${userRequestedAccessData.email} update port ${userRequestedAccessData.portOrRegionText}")
                     } else {
                       complete("No port or region requested")

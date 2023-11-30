@@ -4,34 +4,37 @@ import akka.Done
 import akka.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
+import akka.http.scaladsl.model.StatusCodes.{InternalServerError, NotFound}
 import akka.http.scaladsl.model.headers.ContentDispositionTypes.attachment
 import akka.http.scaladsl.model.headers.`Content-Disposition`
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.{Route, StandardRoute, ValidationRejection}
+import akka.http.scaladsl.server.{Route, StandardRoute}
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Source}
 import akka.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
-import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
-import uk.gov.homeoffice.drt.db.ProdDatabase.db
-import uk.gov.homeoffice.drt.db.RegionExportQueries
-import uk.gov.homeoffice.drt.json.RegionExportJsonFormats._
-import uk.gov.homeoffice.drt.models.RegionExport
-import uk.gov.homeoffice.drt.ports.PortRegion
+import uk.gov.homeoffice.drt.exports.{ExportPort, ExportType}
+import uk.gov.homeoffice.drt.json.ExportJsonFormats.exportRequestJsonFormat
+import uk.gov.homeoffice.drt.models.Export
+import uk.gov.homeoffice.drt.notifications.EmailClient
+import uk.gov.homeoffice.drt.notifications.templates.DownloadManagerTemplates
+import uk.gov.homeoffice.drt.persistence.ExportPersistence
+import uk.gov.homeoffice.drt.ports.PortCode
+import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.rccu.ExportCsvService
 import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike}
 
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 
 object ExportRoutes {
   private val log = LoggerFactory.getLogger(getClass)
 
-  case class RegionExportRequest(region: String, startDate: LocalDate, endDate: LocalDate)
+  case class ExportRequest(exportType: ExportType, ports: Seq[ExportPort], startDate: LocalDate, endDate: LocalDate)
 
   implicit val csvStreaming: CsvEntityStreamingSupport = EntityStreamingSupport.csv().withFramingRenderer(Flow[ByteString])
   implicit val csvMarshaller: ToEntityMarshaller[ByteString] =
@@ -42,29 +45,43 @@ object ExportRoutes {
   def apply(httpClient: HttpClient,
             upload: (String, Source[ByteString, Any]) => Future[Done],
             download: String => Future[Source[ByteString, _]],
+            exportPersistence: ExportPersistence,
             now: () => SDateLike,
+            emailClient: EmailClient,
+            rootUrl: String,
+            teamEmail: String,
            )
-           (implicit ec: ExecutionContextExecutor, mat: Materializer): Route = {
+           (implicit ec: ExecutionContext, mat: Materializer): Route = {
     lazy val exportCsvService = ExportCsvService(httpClient)
     headerValueByName("X-Auth-Email") { email =>
       pathPrefix("export")(
         concat(
           post(
-            entity(as[RegionExportRequest]) { exportRequest =>
-              handleRegionExport(upload, exportCsvService, email, exportRequest, now)
+            entity(as[ExportRequest]) { exportRequest =>
+              handleExport(upload, exportPersistence, exportCsvService, email, exportRequest, now, emailClient, rootUrl, teamEmail)
             }
           ),
           get {
             concat(
-              path(Segment) { region =>
-                complete(db.run(RegionExportQueries.getAll(email, region)))
+              pathEnd {
+                import uk.gov.homeoffice.drt.json.ExportJsonFormats._
+                complete(exportPersistence.getAll(email))
               },
-              path(Segment / Segment) { case (region, createdAt) =>
-                onComplete(getExportRoute(email, region, createdAt, exportCsvService, download)) {
+              path("status" / Segment) { createdAt =>
+                onComplete(exportPersistence.get(email, createdAt.toLong)) {
+                  case Success(Some(export)) => complete(s"""{"status": "${export.status}"}""")
+                  case Success(None) => complete(NotFound)
+                  case Failure(e) =>
+                    log.error("Failed to get export", e)
+                    complete(InternalServerError)
+                }
+              },
+              path(Segment) { createdAt =>
+                onComplete(getExportRoute(email, createdAt, exportCsvService, download, exportPersistence)) {
                   case Success(route) => route
                   case Failure(e) =>
-                    log.error("Failed to get region export", e)
-                    complete("Failed to get region export")
+                    log.error("Failed to get export", e)
+                    complete("Failed to get export")
                 }
               }
             )
@@ -74,16 +91,21 @@ object ExportRoutes {
     }
   }
 
-  private def getExportRoute(email: String, region: String, createdAt: String, exportCsvService: ExportCsvService, downloader: String => Future[Source[ByteString, _]])
-                            (implicit ec: ExecutionContextExecutor): Future[Route] = {
-    log.info(s"Getting region export for $email / $region / $createdAt")
+  private def getExportRoute(email: String,
+                             createdAt: String,
+                             exportCsvService: ExportCsvService,
+                             downloader: String => Future[Source[ByteString, _]],
+                             exportPersistence: ExportPersistence,
+                            )
+                            (implicit ec: ExecutionContext): Future[Route] = {
+    log.info(s"Getting export for $email/ $createdAt")
 
-    db.run(RegionExportQueries.get(email, region, createdAt.toLong))
+    exportPersistence.get(email, createdAt.toLong)
       .flatMap {
-        case Some(regionExport) =>
-          val startDateString = regionExport.startDate.toString()
-          val endDateString = regionExport.endDate.toString()
-          val fileName = s"exports/${exportCsvService.makeFileName(startDateString, endDateString, regionExport.region, regionExport.createdAt)}"
+        case Some(export) =>
+          val startDateString = export.startDate.toString()
+          val endDateString = export.endDate.toString()
+          val fileName = exportCsvService.makeFileName(startDateString, endDateString, export.createdAt)
           log.info(s"Downloading $fileName")
           downloader(fileName).map { stream =>
             respondWithHeader(`Content-Disposition`(attachment, Map("filename" -> fileName))) {
@@ -91,72 +113,81 @@ object ExportRoutes {
             }
           }
         case None =>
-          Future.successful(complete("Region export not found"))
+          Future.successful(complete("Export not found"))
       }
   }
 
-  private def handleRegionExport(upload: (String, Source[ByteString, Any]) => Future[Done],
-                                 exportCsvService: => ExportCsvService,
-                                 email: String,
-                                 exportRequest: RegionExportRequest,
-                                 now: () => SDateLike,
-                                )
-                                (implicit ec: ExecutionContextExecutor, mat: Materializer): StandardRoute = {
+  private def handleExport(upload: (String, Source[ByteString, Any]) => Future[Done],
+                           exportPersistence: ExportPersistence,
+                           exportCsvService: ExportCsvService,
+                           email: String,
+                           exportRequest: ExportRequest,
+                           now: () => SDateLike,
+                           emailClient: EmailClient,
+                           rootDomain: String,
+                           teamEmail: String,
+                          )
+                          (implicit ec: ExecutionContext, mat: Materializer): StandardRoute = {
     val startDateString = exportRequest.startDate.toString()
     val endDateString = exportRequest.endDate.toString()
     val creationDate = now()
-    val fileName = exportCsvService.makeFileName(startDateString, endDateString, exportRequest.region, creationDate)
-    exportCsvService.getPortRegion(exportRequest.region).map { portRegion: PortRegion =>
-      val regionExport = RegionExport(email, portRegion.name, exportRequest.startDate, exportRequest.endDate, "preparing", creationDate)
-      db.run(RegionExportQueries.insert(regionExport))
-        .map(_ => log.info("Region export inserted"))
-        .recover { case e => log.error("Failed to insert region export", e) }
+    val fileName = exportCsvService.makeFileName(startDateString, endDateString, creationDate)
 
-      val stream = Source(portRegion.ports.toList.sortBy(_.iata))
-        .map { port =>
-          AirportConfigs.confByPort.get(port).map(config => (port.iata, config.terminals))
-        }
-        .mapConcat {
-          case Some((portStr, terminals)) => terminals.map(t => (portStr, t))
-        }
-        .mapAsync(1) {
-          case (port, terminal) =>
-            exportCsvService
-              .getPortResponseForTerminal(startDateString, endDateString, portRegion.name, port, terminal.toString)
-              .recover { e =>
-                log.error(s"Failed to get port response for $port $terminal", e)
+    val export = Export(email, exportRequest.ports.map(ep => ep.terminals.map(t => s"${ep.port}-$t").mkString("_")).mkString("__"), exportRequest.startDate, exportRequest.endDate, "preparing", creationDate)
+    exportPersistence.insert(export)
+      .map(_ => log.info("Export inserted"))
+      .recover { case e => log.error("Failed to insert export", e) }
 
-                updateExportStatus(regionExport, "failed")
-
-                throw new Exception("Failed to get port response")
-              }
-        }
-        .prepend(Source.single(ByteString(ArrivalExportHeadings.regionalExportHeadings)))
-
-      upload(fileName, stream).onComplete {
-        case Success(_) =>
-          updateExportStatus(regionExport, "complete")
-          log.info("Export complete")
-        case Failure(exception) =>
-          updateExportStatus(regionExport, "failed")
-          log.error("Failed to create export", exception)
+    val stream = Source(exportRequest.ports.toList.sortBy(_.port))
+      .mapConcat { exportPort =>
+        AirportConfigs.confByPort.get(PortCode(exportPort.port)).map(config => (exportPort, config.terminals))
+        exportPort.terminals.map(t => (PortCode(exportPort.port), Terminal(t)))
       }
-      complete("ok")
-    }.getOrElse(reject(ValidationRejection("Region not found.")))
+      .mapAsync(1) {
+        case (port, terminal) =>
+          exportCsvService
+            .getPortResponseForTerminal(exportRequest.exportType, exportRequest.startDate, exportRequest.endDate, port, terminal)
+            .recover { e =>
+              log.error(s"Failed to get port response for $port $terminal", e)
+
+              handleReportFailure(emailClient, export, teamEmail, exportPersistence)
+
+              throw new Exception("Failed to get port response")
+            }
+      }
+      .prepend(Source.single(ByteString(exportRequest.exportType.headerRow + "\n")))
+
+    upload(fileName, stream).onComplete {
+      case Success(_) =>
+        handleReportReady(emailClient, rootDomain, export, exportPersistence)
+        log.info(s"Export complete: $fileName")
+      case Failure(exception) =>
+        handleReportFailure(emailClient, export, teamEmail, exportPersistence)
+        log.error("Failed to create export", exception)
+    }
+    complete(s"""{"status": "${export.status}", "createdAt": ${export.createdAt.millisSinceEpoch}}""")
   }
 
-  private def updateExportStatus(regionExport: RegionExport, status: String)
-                                (implicit ec: ExecutionContext): Future[Boolean] = {
-    val updatedRegionExport = regionExport.copy(status = status)
-    db.run(RegionExportQueries.update(updatedRegionExport))
-      .map { _ =>
-        log.info("Region export updated")
-        true
-      }
-      .recover {
-        case e =>
-          log.error("Failed to update region export", e)
-          false
-      }
+  private def handleReportReady(emailClient: EmailClient,
+                                rootDomain: String,
+                                export: Export,
+                                exportPersistence: ExportPersistence,
+                               ): Unit = {
+    exportPersistence.update(export.copy(status = "complete"))
+    val link = s"$rootDomain/export/${export.createdAt.millisSinceEpoch}"
+    val emailSuccess = emailClient.send(DownloadManagerTemplates.reportReadyTemplateId, export.email, Map("download_link" -> link))
+
+    if (!emailSuccess) log.error("Failed to send email")
+  }
+
+  private def handleReportFailure(emailClient: EmailClient,
+                                  export: Export,
+                                  teamEmail: String,
+                                  exportPersistence: ExportPersistence,
+                                 ): Unit = {
+    exportPersistence.update(export.copy(status = "failed"))
+    val emailSuccess = emailClient.send(DownloadManagerTemplates.reportFailedTemplateId, export.email, Map("support_email" -> teamEmail))
+
+    if (!emailSuccess) log.error("Failed to send email")
   }
 }

@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.drt.db
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 class MockUserAccessRequestDao extends IUserAccessRequestDao {
   var userAccessRequestList = Seq.empty[UserAccessRequest]
@@ -13,4 +13,6 @@ class MockUserAccessRequestDao extends IUserAccessRequestDao {
   override def selectAll()(implicit executionContext: ExecutionContext): Future[Seq[UserAccessRequest]] = Future.successful(userAccessRequestList)
 
   override def selectForStatus(status: String): Future[Seq[UserAccessRequest]] = Future.successful(userAccessRequestList)
+
+  override def selectByEmail(email: String): Future[Seq[UserAccessRequest]] = Future.successful(userAccessRequestList)
 }

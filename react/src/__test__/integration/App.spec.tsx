@@ -3,7 +3,7 @@ import {rest} from 'msw'
 import {setupServer} from 'msw/node'
 import {render, screen, waitFor} from '@testing-library/react';
 import ApiClient from "../../services/ApiClient";
-import App from "../../App";
+import {App} from "../../App";
 
 
 function newServer(userPorts: string[], allPorts: string[]) {
@@ -22,7 +22,7 @@ describe('<AccessRequestForm />', () => {
     const server = newServer([], ['lhr', 'bhx'])
     server.listen();
 
-    render(<App />);
+    render(<App/>);
 
     await waitFor(() => {
       expect(screen.getByText('Please select the ports you require access to'));
@@ -37,7 +37,7 @@ describe('<AccessRequestForm />', () => {
     const server = newServer(['lhr', 'bhx'], ['lhr', 'bhx'])
     server.listen();
 
-    render(<App />);
+    render(<App/>);
 
     await waitFor(() => {
       expect(screen.getByText('Select your destination'));

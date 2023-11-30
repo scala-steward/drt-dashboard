@@ -3,7 +3,7 @@ import {render, screen, waitFor} from '@testing-library/react';
 import {setupServer} from "msw/node";
 import {rest} from "msw";
 import ApiClient from "../../services/ApiClient";
-import App from "../../App";
+import {App} from "../../App";
 import {BrowserRouter} from "react-router-dom";
 
 

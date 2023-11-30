@@ -1,8 +1,8 @@
 package uk.gov.homeoffice.drt.json
 
-import spray.json.{DefaultJsonProtocol, JsNumber, JsObject, JsString, JsValue, RootJsonFormat, enrichAny}
+import spray.json.{DefaultJsonProtocol, JsNumber, JsString, JsValue, RootJsonFormat, enrichAny}
 import uk.gov.homeoffice.drt.models.RegionExport
-import uk.gov.homeoffice.drt.routes.ExportRoutes.RegionExportRequest
+import uk.gov.homeoffice.drt.routes.LegacyExportRoutes.RegionExportRequest
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
 
 object RegionExportJsonFormats extends DefaultJsonProtocol {

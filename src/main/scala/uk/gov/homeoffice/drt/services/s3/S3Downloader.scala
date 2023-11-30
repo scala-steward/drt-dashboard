@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.drt.services.s3
 
+import akka.stream.IOResult
 import akka.stream.scaladsl.{Source, StreamConverters}
 import akka.util.ByteString
 import software.amazon.awssdk.core.async.AsyncResponseTransformer
@@ -9,13 +10,14 @@ import software.amazon.awssdk.services.s3.model.{GetObjectRequest, GetObjectResp
 import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.FutureConverters.CompletionStageOps
 
-case class S3Downloader(s3Client: S3AsyncClient, bucketName: String)
+case class S3Downloader(s3Client: S3AsyncClient, bucketName: String, prefix: Option[String])
                        (implicit ec: ExecutionContext) {
-  val download: String => Future[Source[ByteString, _]] =
+  val download: String => Future[Source[ByteString, Future[IOResult]]] =
     objectKey => {
+      val fullObjectKey = prefix.map(p => s"$p/$objectKey").getOrElse(objectKey)
       val request = GetObjectRequest.builder()
         .bucket(bucketName)
-        .key(objectKey)
+        .key(fullObjectKey)
         .build()
 
       s3Client

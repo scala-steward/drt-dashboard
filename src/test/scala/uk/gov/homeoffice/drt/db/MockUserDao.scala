@@ -8,8 +8,8 @@ class MockUserDao extends IUserDao {
   var userList = Seq.empty[User]
   val secondsInADay = 60 * 60 * 24
 
-  override def insertOrUpdate(userData: User): Future[Int] = {
-    userList = userList :+ userData
+  def upsertUser(user: User, purpose: Option[String])(implicit ec: ExecutionContext): Future[Int] = {
+    userList = userList :+ user
     Future.successful(userList.size)
   }
 
@@ -27,4 +27,6 @@ class MockUserDao extends IUserDao {
   override def selectAll()(implicit executionContext: ExecutionContext): Future[Seq[User]] = {
     Future.successful(userList)
   }
+
+  override def getUsersWithoutDropInNotification()(implicit executionContext: ExecutionContext): Future[Seq[User]] = Future.successful(userList)
 }

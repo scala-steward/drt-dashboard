@@ -1,45 +1,83 @@
 package uk.gov.homeoffice.drt.routes
 
 import akka.actor.testkit.typed.scaladsl.TestProbe
-import akka.actor.typed.ActorSystem
+import akka.actor.typed.{ActorRef, ActorSystem}
 import akka.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
-import akka.http.scaladsl.model._
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import akka.{Done, NotUsed}
+import org.scalatest.BeforeAndAfter
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import slick.dbio.DBIO
+import slick.jdbc.JdbcBackend.Database
+import slick.jdbc.PostgresProfile.api._
+import uk.gov.homeoffice.drt.MockHttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
-import uk.gov.homeoffice.drt.routes.ExportRoutes.RegionExportRequest
+import uk.gov.homeoffice.drt.db.{AppDatabase, TestDatabase}
+import uk.gov.homeoffice.drt.exports.{Arrivals, ExportPort}
+import uk.gov.homeoffice.drt.json.ExportJsonFormats.exportRequestJsonFormat
+import uk.gov.homeoffice.drt.models.Export
+import uk.gov.homeoffice.drt.notifications.EmailClient
+import uk.gov.homeoffice.drt.persistence.ExportPersistence
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
 
-import scala.concurrent.{ExecutionContextExecutor, Future}
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 
-class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest {
+case class MockEmailClient(probeRef: ActorRef[(String, String, Map[String, Any])]) extends EmailClient {
+  override def send(templateId: String, emailAddress: String, personalisation: Map[String, Any]): Boolean = {
+    probeRef ! (templateId, emailAddress, personalisation)
+    true
+  }
+}
+
+case class MockExportPersistence(maybeExport: Option[Export]) extends ExportPersistence {
+  override def insert(export: Export): Future[Int] = {
+    Future.successful(1)
+  }
+
+  override def update(export: Export): Future[Int] = {
+    Future.successful(1)
+  }
+
+  override def get(email: String, createdAt: Long): Future[Option[Export]] =
+    Future.successful(maybeExport)
+
+  override def getAll(email: String): Future[Seq[Export]] =
+    Future.successful(maybeExport.toSeq)
+}
+
+class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest with BeforeAndAfter {
   implicit val typedSystem: ActorSystem[Nothing] = ActorSystem.wrap(system)
   implicit val mat: Materializer = Materializer(system)
   implicit val ec: ExecutionContextExecutor = mat.executionContext
 
   implicit val csvStreaming: CsvEntityStreamingSupport = EntityStreamingSupport.csv()
 
+  lazy val db: Database = Database.forConfig("h2-db")
+
+  before {
+    val schema = TestDatabase.exportTable.schema
+    Await.ready(db.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
+  }
+
   val csv: String =
-    """IATA,ICAO,Origin,Gate/Stand,Status,Scheduled,Predicted Arrival,Est Arrival,Act Arrival,Est Chox,Act Chox,Minutes off scheduled,Est PCP,Total Pax,PCP Pax,Invalid API,API e-Gates,API EEA,API Non-EEA,API Fast Track,Historical e-Gates,Historical EEA,Historical Non-EEA,Historical Fast Track,Terminal Average e-Gates,Terminal Average EEA,Terminal Average Non-EEA,Terminal Average Fast Track
-      |flight1,information,row
+    """flight1,information,row
       |flight2,information,row
       |""".stripMargin
 
-  def httpResponse(content: String): HttpResponse = HttpResponse(StatusCodes.OK, entity = HttpEntity(ContentTypes.`text/csv(UTF-8)`, Source(Seq(ByteString(content)))))
-
-  val mockHttpClient: MockHttpClient = MockHttpClient(httpResponse(csv))
+  val mockHttpClient: MockHttpClient = MockHttpClient(() => csv)
+  val emailProbe: TestProbe[(String, String, Map[String, Any])] = TestProbe[(String, String, Map[String, Any])]()
   val uploadProbe: TestProbe[(String, String)] = TestProbe[(String, String)]()
   val downloadProbe: TestProbe[String] = TestProbe[String]()
   val mockUploader: (String, Source[ByteString, Any]) => Future[Done.type] = (objectKey: String, data: Source[ByteString, Any]) =>
     data
-      .runReduce[ByteString](_ ++ ByteString("\n") ++ _).map { bytes =>
+      .runReduce[ByteString](_ ++ _).map { bytes =>
       uploadProbe.ref ! (objectKey, bytes.utf8String)
       Done
     }
@@ -48,80 +86,46 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
     Future.successful(Source(Seq(ByteString("1"), ByteString("2"), ByteString("3"))))
   }
   val now: SDateLike = SDate("2022-08-02T00:00:00")
-  val nowYYYYMMDDHHmmss = "20220802000000"
+  val nowYYYYMMDDHHmmss = "20220802000000.000"
   val nowProvider: () => SDateLike = () => now
 
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-  import uk.gov.homeoffice.drt.json.RegionExportJsonFormats._
+
+  implicit val testDb: AppDatabase = TestDatabase
 
   "Request heathrow arrival export" should {
-    "collate all terminal arrivals" in {
-      val request = RegionExportRequest("Heathrow", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
-      Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
-        uploadProbe.expectMessage((s"Heathrow-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData.trim))
-        responseAs[String] should ===("ok")
-      }
+    "collate all requested terminal arrivals" in {
+      val exportPorts = Seq(ExportPort("lhr", Seq("t2", "t5")))
+      val request = ExportRoutes.ExportRequest(Arrivals, exportPorts, LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
+      Post("/export", request) ~>
+        RawHeader("X-Auth-Email", "someone@somewhere.com") ~>
+        ExportRoutes(mockHttpClient, mockUploader, mockDownloader, MockExportPersistence(None), nowProvider, MockEmailClient(emailProbe.ref), "https://test.com", "team-email@zyx.com") ~>
+        check {
+          uploadProbe.expectMessage((s"$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
+          emailProbe.expectMessage(("620271a3-888f-4d60-9f2a-dc3702699ae2", "someone@somewhere.com", Map("download_link" -> s"https://test.com/export/${now.millisSinceEpoch}")))
+          responseAs[String] should ===(s"""{"status": "preparing", "createdAt": ${now.millisSinceEpoch}}""")
+        }
     }
   }
 
-  "Request north arrival export" should {
-    "collate all terminal arrivals" in {
-      val request = RegionExportRequest("North", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
-      Post("/export", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> ExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
-        uploadProbe.expectMessage((s"North-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", northRegionPortTerminalData.trim))
-        responseAs[String] should ===("ok")
-      }
+  "Export status request" should {
+    "return the export's status given the status exists" in {
+      val createdAt = SDate("2020-06-01T00:00")
+      val export = Export("email", "", LocalDate(2020, 6, 6), LocalDate(2020, 7, 6), "complete", createdAt)
+      Get(s"/export/status/${export.createdAt.millisSinceEpoch}") ~>
+        RawHeader("X-Auth-Email", "someone@somewhere.com") ~>
+        ExportRoutes(mockHttpClient, mockUploader, mockDownloader, MockExportPersistence(Option(export)), nowProvider, MockEmailClient(emailProbe.ref), "https://test.com", "team-email@zyx.com") ~>
+        check {
+          responseAs[String] should ===(s"""{"status": "${export.status}"}""")
+        }
     }
   }
 
   def heathrowRegionPortTerminalData: String =
     s"""${ArrivalExportHeadings.regionalExportHeadings}
-       |Heathrow,LHR,T2,flight1,information,row
-       |Heathrow,LHR,T2,flight2,information,row
-       |Heathrow,LHR,T3,flight1,information,row
-       |Heathrow,LHR,T3,flight2,information,row
-       |Heathrow,LHR,T4,flight1,information,row
-       |Heathrow,LHR,T4,flight2,information,row
-       |Heathrow,LHR,T5,flight1,information,row
-       |Heathrow,LHR,T5,flight2,information,row
+       |flight1,information,row
+       |flight2,information,row
+       |flight1,information,row
+       |flight2,information,row
        |""".stripMargin
-
-  def northRegionPortTerminalData: String =
-    s"""${ArrivalExportHeadings.regionalExportHeadings}
-       |North,ABZ,T1,flight1,information,row
-       |North,ABZ,T1,flight2,information,row
-       |North,BFS,T1,flight1,information,row
-       |North,BFS,T1,flight2,information,row
-       |North,BHD,T1,flight1,information,row
-       |North,BHD,T1,flight2,information,row
-       |North,DSA,T1,flight1,information,row
-       |North,DSA,T1,flight2,information,row
-       |North,EDI,A1,flight1,information,row
-       |North,EDI,A1,flight2,information,row
-       |North,EDI,A2,flight1,information,row
-       |North,EDI,A2,flight2,information,row
-       |North,GLA,T1,flight1,information,row
-       |North,GLA,T1,flight2,information,row
-       |North,HUY,T1,flight1,information,row
-       |North,HUY,T1,flight2,information,row
-       |North,INV,T1,flight1,information,row
-       |North,INV,T1,flight2,information,row
-       |North,LBA,T1,flight1,information,row
-       |North,LBA,T1,flight2,information,row
-       |North,LPL,T1,flight1,information,row
-       |North,LPL,T1,flight2,information,row
-       |North,MAN,T1,flight1,information,row
-       |North,MAN,T1,flight2,information,row
-       |North,MAN,T2,flight1,information,row
-       |North,MAN,T2,flight2,information,row
-       |North,MAN,T3,flight1,information,row
-       |North,MAN,T3,flight2,information,row
-       |North,MME,T1,flight1,information,row
-       |North,MME,T1,flight2,information,row
-       |North,NCL,T1,flight1,information,row
-       |North,NCL,T1,flight2,information,row
-       |North,PIK,T1,flight1,information,row
-       |North,PIK,T1,flight2,information,row
-       |""".stripMargin
-
 }
