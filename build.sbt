@@ -16,7 +16,7 @@ lazy val jacksonDatabindVersion = "2.15.3"
 lazy val notificationsJavaClientVersion = "4.1.0-RELEASE"
 lazy val scalaCsvVersion = "1.3.10"
 lazy val slickVersion = "3.4.1"
-lazy val awsJava2SdkVersion = "2.13.76"
+lazy val awsJava2SdkVersion = "2.16.104"
 lazy val postgresqlVersion = "42.7.0"
 lazy val mockitoVersion = "4.6.1"
 
