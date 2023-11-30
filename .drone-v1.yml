@@ -33,7 +33,7 @@ steps:
     depends_on:
       - Build front end
 
-  - name: Test back end
+  - name: Unit tests
     pull: if-not-exists
     image: quay.io/ukhomeofficedigital/scala-sbt:latest
     commands:
@@ -63,7 +63,7 @@ steps:
       event:
         - push
     depends_on:
-      - Test back end
+      - Unit tests
 
   - name: Publish app
     image: plugins/ecr
@@ -175,7 +175,7 @@ steps:
         - push
     depends_on:
       - Publish app
-      - Test back end
+      - Unit tests
 
 services:
   - name: NVD mirror service
