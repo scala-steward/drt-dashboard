@@ -2,6 +2,7 @@ package uk.gov.homeoffice.drt
 
 import org.joda.time.Interval
 import org.joda.time.format.PeriodFormatterBuilder
+import uk.gov.homeoffice.drt.ports.PortCode
 
 import scala.concurrent.duration.Duration
 
@@ -126,6 +127,6 @@ object Dashboard {
 
   def timeSince(millis: Long): Long = System.currentTimeMillis() - millis
 
-  def drtInternalUriForPortCode(portCode: String): String = s"http://${portCode.toLowerCase}:9000"
+  def drtInternalUriForPortCode(portCode: PortCode): String = s"http://${portCode.iata.toLowerCase}:9000"
 
 }

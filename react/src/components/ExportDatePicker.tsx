@@ -1,13 +1,13 @@
 import * as React from 'react';
-import TextField from '@mui/material/TextField';
-import {AdapterDateFns} from '@mui/x-date-pickers/AdapterDateFns';
 import {LocalizationProvider} from '@mui/x-date-pickers/LocalizationProvider';
 import {DatePicker} from '@mui/x-date-pickers/DatePicker';
 import Button from '@mui/material/Button';
-import format from 'date-fns/format';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import {Stack} from "@mui/material";
 import axios from "axios";
+import {AdapterMoment} from "@mui/x-date-pickers/AdapterMoment";
+import {Moment} from "moment";
+import ApiClient from "../services/ApiClient";
 
 interface IProps {
   region: string;
@@ -21,14 +21,14 @@ interface RegionExportRequest {
 }
 
 export default function ExportDatePicker(props: IProps) {
-  const [fromValue, setFromValue] = React.useState<Date | null>(null);
-  const [toValue, setToValue] = React.useState<Date | null>(null);
+  const [fromValue, setFromValue] = React.useState<Moment | null>(null);
+  const [toValue, setToValue] = React.useState<Moment | null>(null);
 
-  const formattedDate = (date: Date) => format(date as Date, "yyyy-MM-dd")
+  const formattedDate = (date: Moment) => date.format("DD-MM-yyyy")
 
   const requestExport = () => {
     fromValue && toValue && axios.post(
-      '/export',
+      ApiClient.exportRegionEndpoint,
       {
         region: props.region,
         startDate: formattedDate(fromValue),
@@ -38,26 +38,21 @@ export default function ExportDatePicker(props: IProps) {
     props.handleClose()
   }
 
-  return <LocalizationProvider dateAdapter={AdapterDateFns}>
-    <Stack spacing={2} sx={{marginTop: 2}}>
+  return <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale={'en-gb'}>
+    <Stack spacing={2} sx={{mt: 2}}>
       <DatePicker
         label="From Date"
         value={fromValue}
-        onChange={(newValue) => {
-          setFromValue(newValue);
-        }}
-        renderInput={(params) => <TextField {...params} />}
+        onChange={(newValue) => setFromValue(newValue)}
+        slotProps={{textField: {variant: 'outlined'}}}
       />
       <DatePicker
         label="To Date"
         value={toValue}
-        onChange={(newValue) => {
-          setToValue(newValue);
-        }}
-        renderInput={(params) => <TextField {...params} />}
+        onChange={(newValue) => setToValue(newValue)}
+        slotProps={{textField: {variant: 'outlined'}}}
       />
       <Button startIcon={<FileDownloadIcon/>}
-              target="_blank"
               disabled={!fromValue || !toValue}
               onClick={requestExport}
       >

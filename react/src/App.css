@@ -42,12 +42,6 @@ img {
   border: 0;
 }
 
-#global-header-logo img {
-  margin: 2px 1px 0 0;
-  vertical-align: bottom;
-  visibility: hidden;
-}
-
 #global-header .header-wrapper .header-global .header-logo {
   margin-top: 2px;
   float: left;
@@ -73,7 +67,6 @@ html {
   text-decoration: none;
   text-rendering: optimizeLegibility;
   border-bottom: 1px solid transparent;
-  background: url(images/gov.uk_logotype_crown.png) no-repeat;
   background-size: 36px 32px;
   background-position: 0 0;
 }
