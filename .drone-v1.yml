@@ -23,7 +23,7 @@ steps:
 
   - name: Copy front end to resources
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.0.0
+    image: quay.io/ukhomeofficedigital/scala-sbt:latest
     commands:
       - pwd && rm -rf ./src/main/resources/frontend
       - pwd && mv ./react/build ./src/main/resources/frontend
@@ -35,7 +35,7 @@ steps:
 
   - name: Test back end
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.0.0
+    image: quay.io/ukhomeofficedigital/scala-sbt:latest
     commands:
       - /root/entrypoint.sh
       - sbt -mem 2048 test
@@ -51,7 +51,7 @@ steps:
 
   - name: Build docker image
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.0.0
+    image: quay.io/ukhomeofficedigital/scala-sbt:latest
     commands:
       - /root/entrypoint.sh
       - sbt docker:stage
@@ -65,42 +65,7 @@ steps:
     depends_on:
       - Test back end
 
-  - name: analysis
-    pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.0.0
-    commands:
-      - /root/entrypoint.sh
-      - sbt -ivy ./.ivy2 -mem 4096 dependencyCheck
-      - sbt -ivy ./.ivy2 -mem 4096 coverage test coverageReport
-      - sbt scapegoat | true
-    environment:
-      NVD_BASE_URL: http://nvdmirror:8008
-      ARTIFACTORY_PASSWORD:
-        from_secret: ARTIFACTORY_PASSWORD
-      ARTIFACTORY_USERNAME: drt-artifactory-robot
-      ENV_LOG_LEVEL: ERROR
-    when:
-      branch: leader
-      event:
-        - push
-    depends_on:
-      - Build docker image
-      - Test back end
-
-  - name: sonar-scanner
-    pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/sonar-scanner:v4.6
-    commands:
-      - sonar-scanner -Dsonar.projectVersion=B${DRONE_BUILD_NUMBER}
-    environment:
-      DRONE_BUILD_NUMBER: ${DRONE_BUILD_NUMBER}
-    when:
-      event:
-        - push
-    depends_on:
-      - analysis
-
-  - name: publish
+  - name: Publish app
     image: plugins/ecr
     environment:
       AWS_REGION: eu-west-2
@@ -121,7 +86,79 @@ steps:
       - Build docker image
       - Copy front end to resources
 
-  - name: slack_notification
+  - name: Code coverage report
+    pull: if-not-exists
+    image: quay.io/ukhomeofficedigital/scala-sbt:latest
+    commands:
+      - /root/entrypoint.sh
+      - sbt -mem 4096 --error test coverage | true
+      - sbt coverageReport
+    environment:
+      ARTIFACTORY_PASSWORD:
+        from_secret: ARTIFACTORY_PASSWORD
+      ARTIFACTORY_USERNAME: drt-artifactory-robot
+      ENV_LOG_LEVEL: ERROR
+    when:
+      event:
+        - push
+    depends_on:
+      - Unit tests
+
+  - name: Scapegoat
+    pull: if-not-exists
+    image: quay.io/ukhomeofficedigital/scala-sbt:latest
+    commands:
+      - /root/entrypoint.sh
+      - sbt scapegoat | true
+    environment:
+      NVD_BASE_URL: http://nvdmirror:8008
+      ARTIFACTORY_PASSWORD:
+        from_secret: ARTIFACTORY_PASSWORD
+      ARTIFACTORY_USERNAME: drt-artifactory-robot
+      ENV_LOG_LEVEL: ERROR
+    when:
+      event:
+        - push
+    #      branch:
+    #        - master
+    depends_on:
+      - Code coverage report
+
+  - name: Dependency check
+    pull: if-not-exists
+    image: quay.io/ukhomeofficedigital/scala-sbt:latest
+    commands:
+      - /root/entrypoint.sh
+      - sbt -mem 4096 dependencyCheckAggregate
+    environment:
+      ARTIFACTORY_PASSWORD:
+        from_secret: ARTIFACTORY_PASSWORD
+      ARTIFACTORY_USERNAME: drt-artifactory-robot
+      ENV_LOG_LEVEL: ERROR
+    when:
+      event:
+        - push
+    #      branch:
+    #        - master
+    depends_on:
+      - Scapegoat
+
+  - name: Sonar scanner
+    pull: if-not-exists
+    image: quay.io/ukhomeofficedigital/sonar-scanner:v4.6
+    commands:
+      - sonar-scanner -Dsonar.projectVersion=B${DRONE_BUILD_NUMBER} -X
+    environment:
+      DRONE_BUILD_NUMBER: ${DRONE_BUILD_NUMBER}
+    when:
+      event:
+        - push
+    #      branch:
+    #        - master
+    depends_on:
+      - Dependency check
+
+  - name: Slack notification
     pull: if-not-exists
     image: plugins/slack
     settings:
@@ -137,11 +174,11 @@ steps:
       event:
         - push
     depends_on:
-      - publish
+      - Publish app
       - Test back end
 
 services:
-  - name: nvdmirror
+  - name: NVD mirror service
     image: sspringett/nvdmirror
     ports:
       - 8008
