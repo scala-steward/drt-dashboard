@@ -101,6 +101,8 @@ steps:
     when:
       event:
         - push
+      branch:
+        - leader
     depends_on:
       - Unit tests
 
@@ -120,7 +122,7 @@ steps:
       event:
         - push
       branch:
-        - master
+        - leader
     depends_on:
       - Code coverage report
 
@@ -140,7 +142,7 @@ steps:
       event:
         - push
       branch:
-        - master
+        - leader
     depends_on:
       - Scapegoat
 
@@ -155,7 +157,7 @@ steps:
       event:
         - push
       branch:
-        - master
+        - leader
     depends_on:
       - Dependency check
 
