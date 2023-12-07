@@ -21,7 +21,7 @@ class ExportCsvServiceSpec extends Specification {
 
   "Given port code LHR I get uri for csv export for the terminal" >> {
     val expectedUri = "http://lhr:9000/api/arrivals/2022-07-22/2022-07-24/T1"
-    val uri = exportCsvService(() => "").getUri(Arrivals, LocalDate(2022, 7, 22), LocalDate(2022, 7, 24), PortCode("LHR"), T1)
+    val uri = ExportCsvService.getUri(Arrivals, LocalDate(2022, 7, 22), LocalDate(2022, 7, 24), PortCode("LHR"), Option(T1))
     uri mustEqual expectedUri
   }
 }

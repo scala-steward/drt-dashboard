@@ -4,7 +4,7 @@ import akka.http.scaladsl.model.StatusCodes.OK
 import akka.stream.Materializer
 import akka.util.ByteString
 import org.slf4j.{Logger, LoggerFactory}
-import uk.gov.homeoffice.drt.exports.ExportType
+import uk.gov.homeoffice.drt.exports.{DailyExportType, ExportType}
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike}
@@ -12,16 +12,26 @@ import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
 
 import scala.concurrent.{ExecutionContext, Future}
 
+object ExportCsvService {
+  def getUri(exportType: ExportType, start: LocalDate, end: LocalDate, portCode: PortCode, maybeTerminal: Option[Terminal]): String = {
+    val dailyString = exportType match {
+      case _: DailyExportType => "?daily-breakdown"
+      case _ => ""
+    }
+    val terminalString = maybeTerminal match {
+      case Some(terminal) => s"/$terminal"
+      case None => ""
+    }
+    s"${Dashboard.drtInternalUriForPortCode(portCode)}/api/${exportType.routePrefix}/$start/$end$terminalString$dailyString"
+  }
+}
+
 case class ExportCsvService(httpClient: HttpClient) {
 
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def getUri(exportType: ExportType, start: LocalDate, end: LocalDate, portCode: PortCode, terminal: Terminal): String =
-    s"${Dashboard.drtInternalUriForPortCode(portCode)}/api/${exportType.routePrefix}/$start/$end/$terminal"
-
-  def getPortResponseForTerminal(exportType: ExportType, start: LocalDate, end: LocalDate, portCode: PortCode, terminal: Terminal)
+  def getPortResponseForTerminal(uri: String, portCode: PortCode)
                                 (implicit executionContext: ExecutionContext, mat: Materializer): Future[ByteString] = {
-    val uri = getUri(exportType, start, end, portCode, terminal)
     val httpRequest = httpClient.createPortArrivalImportRequest(uri, portCode)
     httpClient
       .send(httpRequest)

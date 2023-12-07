@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.json
 
 import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat, enrichAny}
-import uk.gov.homeoffice.drt.exports.{ExportPort, ExportType, ExportTypes}
+import uk.gov.homeoffice.drt.exports.{Arrivals, ExportPort, ExportType, ExportTypes, PortPassengers, PortPassengersDaily, TerminalPassengers, TerminalPassengersDaily}
 import uk.gov.homeoffice.drt.json.LocalDateJsonFormats.LocalDateJsonFormat
 import uk.gov.homeoffice.drt.json.SDateLikeJsonFormats.SDateLikeJsonFormat
 import uk.gov.homeoffice.drt.models.Export
@@ -14,7 +14,13 @@ object ExportJsonFormats extends DefaultJsonProtocol {
       case JsString(exportTypeString) => ExportTypes.parse(exportTypeString)
     }
 
-    override def write(obj: ExportType): JsValue = obj.routePrefix.toJson
+    override def write(obj: ExportType): JsValue = obj match {
+      case Arrivals => JsString("arrivals")
+      case PortPassengers => JsString("passengers-port")
+      case TerminalPassengers => JsString("passengers-terminal")
+      case PortPassengersDaily => JsString("passengers-port-daily")
+      case TerminalPassengersDaily => JsString("passengers-terminal-daily")
+    }
   }
 
   implicit val exportPortJsonFormat: RootJsonFormat[ExportPort] = jsonFormat2(ExportPort.apply)

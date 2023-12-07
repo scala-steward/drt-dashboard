@@ -15,7 +15,7 @@ import akka.stream.scaladsl.{Flow, Source}
 import akka.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
-import uk.gov.homeoffice.drt.exports.{ExportPort, ExportType}
+import uk.gov.homeoffice.drt.exports.{ExportPort, ExportType, TerminalExportType}
 import uk.gov.homeoffice.drt.json.ExportJsonFormats.exportRequestJsonFormat
 import uk.gov.homeoffice.drt.models.Export
 import uk.gov.homeoffice.drt.notifications.EmailClient
@@ -25,6 +25,7 @@ import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.rccu.ExportCsvService
+import uk.gov.homeoffice.drt.rccu.ExportCsvService.getUri
 import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -140,15 +141,25 @@ object ExportRoutes {
 
     val stream = Source(exportRequest.ports.toList.sortBy(_.port))
       .mapConcat { exportPort =>
-        AirportConfigs.confByPort.get(PortCode(exportPort.port)).map(config => (exportPort, config.terminals))
-        exportPort.terminals.map(t => (PortCode(exportPort.port), Terminal(t)))
+        val portCode = PortCode(exportPort.port)
+        AirportConfigs.confByPort.get(portCode).map(config => (exportPort, config.terminals))
+        exportRequest.exportType match {
+          case _: TerminalExportType =>
+            exportPort.terminals.map { t =>
+              val uri = getUri(exportRequest.exportType, exportRequest.startDate, exportRequest.endDate, portCode, Option(Terminal(t)))
+              (uri, portCode)
+            }
+          case _ =>
+            val uri = getUri(exportRequest.exportType, exportRequest.startDate, exportRequest.endDate, portCode, None)
+            Seq((uri, portCode))
+        }
       }
       .mapAsync(1) {
-        case (port, terminal) =>
+        case (uri, portCode) =>
           exportCsvService
-            .getPortResponseForTerminal(exportRequest.exportType, exportRequest.startDate, exportRequest.endDate, port, terminal)
+            .getPortResponseForTerminal(uri, portCode)
             .recover { e =>
-              log.error(s"Failed to get port response for $port $terminal", e)
+              log.error(s"Failed to get response from $uri", e)
 
               handleReportFailure(emailClient, export, teamEmail, exportPersistence)
 
