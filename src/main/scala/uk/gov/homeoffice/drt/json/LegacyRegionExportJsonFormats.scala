@@ -2,14 +2,16 @@ package uk.gov.homeoffice.drt.json
 
 import spray.json.{DefaultJsonProtocol, JsNumber, JsString, JsValue, RootJsonFormat, enrichAny}
 import uk.gov.homeoffice.drt.models.RegionExport
-import uk.gov.homeoffice.drt.routes.LegacyExportRoutes.RegionExportRequest
+import uk.gov.homeoffice.drt.routes.LegacyExportRoutes.LegacyRegionExportRequest
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
 
-object RegionExportJsonFormats extends DefaultJsonProtocol {
+object LegacyRegionExportJsonFormats extends DefaultJsonProtocol {
 
   implicit object LocalDateJsonFormat extends RootJsonFormat[LocalDate] {
     override def read(json: JsValue): LocalDate = json match {
-      case JsString(s) => SDate(s).toLocalDate
+      case JsString(s) => s.split("-") match {
+        case Array(day, month, year) => LocalDate(year.toInt, month.toInt, day.toInt)
+      }
     }
 
     override def write(obj: LocalDate): JsValue = JsString(obj.toString)
@@ -23,6 +25,6 @@ object RegionExportJsonFormats extends DefaultJsonProtocol {
     override def write(obj: SDateLike): JsValue = obj.millisSinceEpoch.toJson
   }
 
-  implicit val regionExportRequestJsonFormat: RootJsonFormat[RegionExportRequest] = jsonFormat3(RegionExportRequest.apply)
+  implicit val regionExportRequestJsonFormat: RootJsonFormat[LegacyRegionExportRequest] = jsonFormat3(LegacyRegionExportRequest.apply)
   implicit val regionExportJsonFormat: RootJsonFormat[RegionExport] = jsonFormat6(RegionExport.apply)
 }

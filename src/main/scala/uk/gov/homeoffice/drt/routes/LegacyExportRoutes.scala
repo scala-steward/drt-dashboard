@@ -15,8 +15,8 @@ import akka.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
+import uk.gov.homeoffice.drt.json.LegacyRegionExportJsonFormats._
 import uk.gov.homeoffice.drt.db.{AppDatabase, RegionExportQueries}
-import uk.gov.homeoffice.drt.json.RegionExportJsonFormats._
 import uk.gov.homeoffice.drt.models.RegionExport
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
@@ -30,7 +30,7 @@ import scala.util.{Failure, Success}
 object LegacyExportRoutes {
   private val log = LoggerFactory.getLogger(getClass)
 
-  case class RegionExportRequest(region: String, startDate: LocalDate, endDate: LocalDate)
+  case class LegacyRegionExportRequest(region: String, startDate: LocalDate, endDate: LocalDate)
 
   implicit val csvStreaming: CsvEntityStreamingSupport = EntityStreamingSupport.csv().withFramingRenderer(Flow[ByteString])
   implicit val csvMarshaller: ToEntityMarshaller[ByteString] =
@@ -48,10 +48,10 @@ object LegacyExportRoutes {
     headerValueByName("X-Auth-Email") { email =>
       pathPrefix("export-region")(
         concat(
-          post(
-            entity(as[RegionExportRequest]) { exportRequest =>
+          pathEnd(
+            post(entity(as[LegacyRegionExportRequest]) { exportRequest =>
               handleRegionExport(upload, exportCsvService, email, exportRequest, now)
-            }
+            })
           ),
           get {
             concat(
@@ -102,7 +102,7 @@ object LegacyExportRoutes {
   private def handleRegionExport(upload: (String, Source[ByteString, Any]) => Future[Done],
                                  exportCsvService: => LegacyExportCsvService,
                                  email: String,
-                                 exportRequest: RegionExportRequest,
+                                 exportRequest: LegacyRegionExportRequest,
                                  now: () => SDateLike,
                                 )
                                 (implicit ec: ExecutionContextExecutor, mat: Materializer, database: AppDatabase): StandardRoute = {

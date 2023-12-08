@@ -57,10 +57,10 @@ object ExportRoutes {
     headerValueByName("X-Auth-Email") { email =>
       pathPrefix("export")(
         concat(
-          post(
-            entity(as[ExportRequest]) { exportRequest =>
+          pathEnd(
+            post(entity(as[ExportRequest]) { exportRequest =>
               handleExport(upload, exportPersistence, exportCsvService, email, exportRequest, now, emailClient, rootUrl, teamEmail)
-            }
+            })
           ),
           get {
             concat(
