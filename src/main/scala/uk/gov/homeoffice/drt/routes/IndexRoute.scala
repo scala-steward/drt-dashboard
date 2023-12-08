@@ -38,6 +38,7 @@ case class IndexRoute(urls: Urls, indexResource: Route) {
       pathPrefix("region")(indexRouteDirectives),
       pathPrefix("feature-guides")(indexRouteDirectives),
       pathPrefix("drop-in-sessions")(indexRouteDirectives),
+      pathPrefix("feedback")(indexRouteDirectives),
       pathPrefix("health-checks")(indexRouteDirectives),
     )
 
