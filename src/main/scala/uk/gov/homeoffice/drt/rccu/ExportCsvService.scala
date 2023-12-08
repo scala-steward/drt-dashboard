@@ -14,15 +14,15 @@ import scala.concurrent.{ExecutionContext, Future}
 
 object ExportCsvService {
   def getUri(exportType: ExportType, start: LocalDate, end: LocalDate, portCode: PortCode, maybeTerminal: Option[Terminal]): String = {
-    val dailyString = exportType match {
-      case _: DailyExportType => "?daily-breakdown"
+    val isDailyBreakdown = exportType match {
+      case _: DailyExportType => "?daily-breakdown=true"
       case _ => ""
     }
-    val terminalString = maybeTerminal match {
+    val terminalName = maybeTerminal match {
       case Some(terminal) => s"/$terminal"
       case None => ""
     }
-    s"${Dashboard.drtInternalUriForPortCode(portCode)}/api/${exportType.routePrefix}/$start/$end$terminalString$dailyString"
+    s"${Dashboard.drtInternalUriForPortCode(portCode)}/api/${exportType.routePrefix}/$start/$end$terminalName$isDailyBreakdown"
   }
 }
 

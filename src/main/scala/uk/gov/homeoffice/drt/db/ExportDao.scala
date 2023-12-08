@@ -34,12 +34,14 @@ object ExportQueries {
   val regionExports: TableQuery[ExportTable] = TableQuery[ExportTable]
 
   def get(email: String, createdAt: Long)
-         (implicit ec: ExecutionContext): DBIOAction[Option[Export], NoStream, Effect.Read] =
+         (implicit ec: ExecutionContext): DBIOAction[Option[Export], NoStream, Effect.Read] = {
+    val createdAtTs = new Timestamp(createdAt)
     regionExports
       .filter(_.email === email)
-      .filter(_.createdAt === new Timestamp(createdAt))
+      .filter(_.createdAt === createdAtTs)
       .result
       .map(_.headOption.map(x => exportFromRow(x)))
+  }
 
   def getAll(email: String)
             (implicit ec: ExecutionContext): DBIOAction[Seq[Export], NoStream, Effect.Read] =

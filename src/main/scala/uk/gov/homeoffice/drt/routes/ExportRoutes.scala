@@ -15,7 +15,7 @@ import akka.stream.scaladsl.{Flow, Source}
 import akka.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
-import uk.gov.homeoffice.drt.exports.{ExportPort, ExportType, TerminalExportType}
+import uk.gov.homeoffice.drt.exports.{ExportPort, ExportType, PortExportType}
 import uk.gov.homeoffice.drt.json.ExportJsonFormats.exportRequestJsonFormat
 import uk.gov.homeoffice.drt.models.Export
 import uk.gov.homeoffice.drt.notifications.EmailClient
@@ -144,14 +144,14 @@ object ExportRoutes {
         val portCode = PortCode(exportPort.port)
         AirportConfigs.confByPort.get(portCode).map(config => (exportPort, config.terminals))
         exportRequest.exportType match {
-          case _: TerminalExportType =>
+          case _: PortExportType =>
+            val uri = getUri(exportRequest.exportType, exportRequest.startDate, exportRequest.endDate, portCode, None)
+            Seq((uri, portCode))
+          case _ =>
             exportPort.terminals.map { t =>
               val uri = getUri(exportRequest.exportType, exportRequest.startDate, exportRequest.endDate, portCode, Option(Terminal(t)))
               (uri, portCode)
             }
-          case _ =>
-            val uri = getUri(exportRequest.exportType, exportRequest.startDate, exportRequest.endDate, portCode, None)
-            Seq((uri, portCode))
         }
       }
       .mapAsync(1) {
