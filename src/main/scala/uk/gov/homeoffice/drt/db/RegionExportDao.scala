@@ -39,8 +39,8 @@ object RegionExportQueries {
   def get(email: String, region: String, createdAt: Long)
          (implicit ec: ExecutionContext): DBIOAction[Option[RegionExport], NoStream, Effect.Read] =
     regionExports
-      .filter(_.email === email)
-      .filter(_.region === region)
+      .filter(_.email.toLowerCase === email.toLowerCase)
+      .filter(_.region.toLowerCase === region.toLowerCase)
       .filter(_.createdAt === new Timestamp(createdAt))
       .result
       .map(_.headOption.map(x => regionExportFromRow(x)))
@@ -48,14 +48,14 @@ object RegionExportQueries {
   def getAll(email: String, region: String)
             (implicit ec: ExecutionContext): DBIOAction[Seq[RegionExport], NoStream, Effect.Read] =
     regionExports
-      .filter(_.email === email)
-      .filter(_.region === region)
+      .filter(_.email.toLowerCase === email.toLowerCase)
+      .filter(_.region.toLowerCase === region.toLowerCase)
       .result
       .map(_.map(regionExportFromRow))
 
   def insert(regionExport: RegionExport): DBIOAction[Int, NoStream, Effect.Write] = {
     val (startDate: String, endDate: String, createdAt: Timestamp) = dates(regionExport)
-    regionExports += (regionExport.email, regionExport.region, startDate, endDate, regionExport.status, createdAt)
+    regionExports += (regionExport.email.toLowerCase, regionExport.region.toLowerCase, startDate, endDate, regionExport.status, createdAt)
   }
 
   def update(regionExport: RegionExport): FixedSqlAction[Int, NoStream, Effect.Write] = {
@@ -67,7 +67,9 @@ object RegionExportQueries {
   }
 
   private def matches(regionExport: RegionExport, export: RegionExportTable): Rep[Boolean] = {
-    export.email === regionExport.email && export.region === regionExport.region && export.createdAt === new Timestamp(regionExport.createdAt.millisSinceEpoch)
+    export.email.toLowerCase === regionExport.email.toLowerCase &&
+      export.region.toLowerCase === regionExport.region.toLowerCase &&
+      export.createdAt === new Timestamp(regionExport.createdAt.millisSinceEpoch)
   }
 
   private def regionExportFromRow(row: (String, String, String, String, String, Timestamp)): RegionExport = {
