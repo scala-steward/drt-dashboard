@@ -55,7 +55,7 @@ object RegionExportQueries {
 
   def insert(regionExport: RegionExport): DBIOAction[Int, NoStream, Effect.Write] = {
     val (startDate: String, endDate: String, createdAt: Timestamp) = dates(regionExport)
-    regionExports += (regionExport.email.toLowerCase, regionExport.region.toLowerCase, startDate, endDate, regionExport.status, createdAt)
+    regionExports += (regionExport.email, regionExport.region, startDate, endDate, regionExport.status, createdAt)
   }
 
   def update(regionExport: RegionExport): FixedSqlAction[Int, NoStream, Effect.Write] = {

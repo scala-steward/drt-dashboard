@@ -22,7 +22,7 @@ export const deleteHealthCheckPause = (request: RequestDeleteHealthCheckPauses) 
     .delete(`${ApiClient.healthCheckPauses}/${request.startsAt}/${request.endsAt}`)
     .then(() => request.onSuccess())
     .catch(reason => {
-      console.log('Failed to delete red list updates: ' + reason)
+      console.log('Failed to delete health check updates: ' + reason)
       request.onFailure()
     })
 }
@@ -32,7 +32,7 @@ export const saveHealthCheckPauses = (request: RequestSetHealthCheckPauses) => {
     .post(ApiClient.healthCheckPauses, request.pause)
     .then(() => request.onSuccess())
     .catch(reason => {
-      console.log('Failed to save red list updates: ' + reason)
+      console.log('Failed to save health check updates: ' + reason)
       request.onFailure()
     })
 }
