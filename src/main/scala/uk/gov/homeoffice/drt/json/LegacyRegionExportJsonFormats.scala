@@ -10,7 +10,7 @@ object LegacyRegionExportJsonFormats extends DefaultJsonProtocol {
   implicit object LocalDateJsonFormat extends RootJsonFormat[LocalDate] {
     override def read(json: JsValue): LocalDate = json match {
       case JsString(s) => s.split("-") match {
-        case Array(day, month, year) => LocalDate(year.toInt, month.toInt, day.toInt)
+        case Array(year, month, day) => LocalDate(year.toInt, month.toInt, day.toInt)
       }
     }
 
