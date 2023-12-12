@@ -24,7 +24,7 @@ export default function ExportDatePicker(props: IProps) {
   const [fromValue, setFromValue] = React.useState<Moment | null>(null);
   const [toValue, setToValue] = React.useState<Moment | null>(null);
 
-  const formattedDate = (date: Moment) => date.format("DD-MM-yyyy")
+  const formattedDate = (date: Moment) => date.format("yyyy-MM-DD")
 
   const requestExport = () => {
     fromValue && toValue && axios.post(

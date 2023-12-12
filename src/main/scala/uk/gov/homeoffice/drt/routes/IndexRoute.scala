@@ -29,7 +29,7 @@ case class IndexRoute(urls: Urls, indexResource: Route) {
               RawHeader("Expires", "0"),
             ))(indexRouteDirectives)
           },
-          getFromResourceDirectory("frontend")
+//          getFromResourceDirectory("frontend")
         )
       },
       pathPrefix("access-requests")(indexRouteDirectives),

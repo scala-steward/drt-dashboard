@@ -16,7 +16,7 @@ case class LegacyExportCsvService(httpClient: HttpClient) {
 
   private val drtExportCsvRoutePath = "export/arrivals"
 
-  def getPortRegion(region: String): Option[PortRegion] = PortRegion.regions.find(_.name == region)
+  def getPortRegion(region: String): Option[PortRegion] = PortRegion.regions.find(_.name.toLowerCase == region.toLowerCase)
 
   def getUri(portCode: String, start: String, end: String, terminal: String): String =
     s"${Dashboard.drtInternalUriForPortCode(PortCode(portCode))}/$drtExportCsvRoutePath/$start/$end/$terminal"
@@ -60,6 +60,6 @@ case class LegacyExportCsvService(httpClient: HttpClient) {
 
     val timestamp = f"${createdAt.getFullYear}${createdAt.getMonth}%02d${createdAt.getDate}%02d${createdAt.getHours}%02d${createdAt.getMinutes}%02d${createdAt.getSeconds}%02d"
 
-    s"$portRegion-$timestamp-$start$endDate.csv"
+    s"$portRegion-$timestamp-$start$endDate.csv".toLowerCase
   }
 }

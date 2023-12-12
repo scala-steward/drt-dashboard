@@ -4,6 +4,7 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.wordspec.AnyWordSpec
 import slick.jdbc.H2Profile.api._
+import slick.jdbc.JdbcBackend.Database
 import uk.gov.homeoffice.drt.models.RegionExport
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate}
 
@@ -13,10 +14,11 @@ import scala.concurrent.{Await, ExecutionContextExecutor}
 class RegionExportTableTest extends AnyWordSpec with BeforeAndAfter {
   implicit val ec: ExecutionContextExecutor = scala.concurrent.ExecutionContext.global
 
-  val db = TestDatabase.db
+  lazy val db: Database = Database.forConfig("h2-db")
 
   before {
-    Await.ready(db.run(DBIO.seq(RegionExportQueries.regionExports.schema.dropIfExists, RegionExportQueries.regionExports.schema.create)), 1.second)
+    val schema = RegionExportQueries.regionExports.schema
+    Await.ready(db.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
   }
 
   val regionExportUser1North = RegionExport("user1-email@somewhere.com", "North", LocalDate(2020, 1, 1), LocalDate(2020, 1, 2), "pending", SDate(1L))

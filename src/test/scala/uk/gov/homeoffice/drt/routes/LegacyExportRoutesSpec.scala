@@ -17,7 +17,7 @@ import slick.jdbc.JdbcBackend.Database
 import uk.gov.homeoffice.drt.MockHttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
 import uk.gov.homeoffice.drt.db.{AppDatabase, TestDatabase}
-import uk.gov.homeoffice.drt.routes.LegacyExportRoutes.RegionExportRequest
+import uk.gov.homeoffice.drt.routes.LegacyExportRoutes.LegacyRegionExportRequest
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
 
 import scala.concurrent.duration.DurationInt
@@ -63,14 +63,14 @@ class LegacyExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRou
   val nowProvider: () => SDateLike = () => now
 
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-  import uk.gov.homeoffice.drt.json.RegionExportJsonFormats._
+  import uk.gov.homeoffice.drt.json.LegacyRegionExportJsonFormats._
   implicit val testDb: AppDatabase = TestDatabase
 
   "Request heathrow arrival export" should {
     "collate all terminal arrivals" in {
-      val request = RegionExportRequest("Heathrow", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
+      val request = LegacyRegionExportRequest("Heathrow", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
       Post("/export-region", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> LegacyExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
-        uploadProbe.expectMessage((s"Heathrow-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
+        uploadProbe.expectMessage((s"heathrow-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
         responseAs[String] should ===("ok")
       }
     }
@@ -78,9 +78,9 @@ class LegacyExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRou
 
   "Request north arrival export" should {
     "collate all terminal arrivals" in {
-      val request = RegionExportRequest("North", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
+      val request = LegacyRegionExportRequest("North", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
       Post("/export-region", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> LegacyExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
-        uploadProbe.expectMessage((s"North-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", northRegionPortTerminalData))
+        uploadProbe.expectMessage((s"north-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", northRegionPortTerminalData))
         responseAs[String] should ===("ok")
       }
     }

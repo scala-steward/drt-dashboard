@@ -10,7 +10,7 @@ export const fetchAlerts = (onSuccess: (r: PortAlerts[]) => void) => {
       onSuccess(res.data as PortAlerts[]);
     })
     .catch(reason => {
-      console.log('Failed to get red list updates: ' + reason)
+      console.log('Failed to get alert updates: ' + reason)
       setTimeout(() => fetchAlerts(onSuccess), 5000)
     })
 }
@@ -25,7 +25,7 @@ export const deleteAlertsForPort = (request: DeleteAlertsRequest) => {
     .delete(ApiClient.alertsEndPoint + '/' + request.portCode.toLowerCase())
     .then(() => request.onSuccess())
     .catch(reason => {
-      console.log('Failed to get red list updates: ' + reason)
+      console.log('Failed to get alert updates: ' + reason)
       setTimeout(() => deleteAlertsForPort({
         portCode: request.portCode,
         onSuccess: request.onSuccess
