@@ -31,6 +31,8 @@ export default class ApiClient implements IApiClient {
 
   public static exportRegionEndpoint = "/api/export-region"
 
+  public static feedBacksEndpoint = "/api/feedback";
+
 
   public fetchData(userEndPoint: string, handleResponse: (r: AxiosResponse) => void) {
     axios

@@ -18,7 +18,7 @@ import uk.gov.homeoffice.drt.healthchecks._
 import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications}
 import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealthCheckPausePersistenceImpl}
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
-import uk.gov.homeoffice.drt.routes._
+import uk.gov.homeoffice.drt.routes.{FeedbackRoutes, _}
 import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
 import uk.gov.homeoffice.drt.time.SDate
@@ -96,7 +96,7 @@ object Server {
       val userService = UserService(UserDao(ProdDatabase.db))
       val dropInDao = DropInDao(ProdDatabase.db)
       val dropInRegistrationDao = DropInRegistrationDao(ProdDatabase.db)
-
+      val userFeedbackDao = UserFeedbackDao(ProdDatabase.db)
       val featureGuideService = FeatureGuideService(FeatureGuideDao(ProdDatabase.db), FeatureGuideViewDao(ProdDatabase.db))
 
       val (exportUploader, exportDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.exportsFolderPrefix)
@@ -118,7 +118,9 @@ object Server {
             FeatureGuideRoutes(featureGuideService, featureUploader, featureDownloader),
             ApiRoutes(serverConfig.clientConfig, userService, ScheduledHealthCheckPausePersistenceImpl(db, now)),
             DropInSessionsRoute(dropInDao),
-            DropInRegisterRoutes(dropInRegistrationDao)
+            DropInRegisterRoutes(dropInRegistrationDao),
+            FeedbackRoutes(userFeedbackDao),
+
           )
         }
       )

@@ -2,9 +2,9 @@ package uk.gov.homeoffice.drt.notifications
 
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.authentication.{AccessRequest, ClientUserRequestedAccessData}
-import uk.gov.homeoffice.drt.notifications.templates.AccessRequestTemplates.{accessGrantedTemplateId, lineManagerNotificationTemplateId, requestTemplateId}
+import uk.gov.homeoffice.drt.db.{DropInDao, DropInRow, UserAccessRequest}
+import uk.gov.homeoffice.drt.notifications.templates.AccessRequestTemplates.{lineManagerNotificationTemplateId, requestTemplateId}
 import uk.gov.service.notify.{NotificationClientApi, SendEmailResponse}
-import uk.gov.homeoffice.drt.db.{DropInDao, DropInRow, User, UserAccessRequest}
 
 import java.util
 import scala.jdk.CollectionConverters.MapHasAsJava
@@ -38,18 +38,7 @@ case class EmailNotifications(accessRequestEmails: List[String], client: Notific
       s"https://${curad.portsRequested.trim.toLowerCase()}.$domain/"
   }
 
-  def getDropInLink(curad: ClientUserRequestedAccessData, domain: String): String = {
-    s"https://${getLink(curad, domain)}/#trainingHub/dropInBooking"
-  }
-
-  def getDropInLinkByUserAccessRequest(userAccessRequest: UserAccessRequest, domain: String): String = {
-    val domainUrl = if (userAccessRequest.allPorts || userAccessRequest.regionsRequested.length > 4 || userAccessRequest.portsRequested.length > 4)
-      s"$domain"
-    else
-      s"${userAccessRequest.portsRequested.trim.toLowerCase()}.$domain"
-
-    s"https://$domainUrl/#trainingHub/dropInBooking"
-  }
+  val getDropInBookingUrlForAPort: (String, String) => String = (portsString, domain) => s"https://${portsString.split(",").toList.headOption.map(_.toLowerCase()).getOrElse("lhr")}.$domain/#trainingHub/dropInBooking"
 
   def sendDropInReminderEmail(email: String, dropIn: DropInRow, teamEmail: String) = {
     import DropInDao._
@@ -77,7 +66,7 @@ case class EmailNotifications(accessRequestEmails: List[String], client: Notific
       val personalisation: util.Map[String, String] =
         Map(
           "requesterUsername" -> getFirstName(userAccessRequest.email),
-          "dropInLink" -> getDropInLinkByUserAccessRequest(userAccessRequest, domain),
+          "dropInLink" -> getDropInBookingUrlForAPort(userAccessRequest.portsRequested, domain),
           "teamEmail" -> teamEmail
         ).asJava
       Try(client.sendEmail(
@@ -98,7 +87,7 @@ case class EmailNotifications(accessRequestEmails: List[String], client: Notific
       Map(
         "requesterUsername" -> getFirstName(clientUserRequestedAccessData.email),
         "link" -> getLink(clientUserRequestedAccessData, domain),
-        "dropInLink" -> getDropInLink(clientUserRequestedAccessData, domain),
+        "dropInLink" -> getDropInBookingUrlForAPort(clientUserRequestedAccessData.portsRequested, domain),
         "teamEmail" -> teamEmail
       ).asJava
     Try(client.sendEmail(

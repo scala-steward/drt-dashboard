@@ -32,6 +32,7 @@ export default function Navigation(props: IProps) {
     {label: 'Drop-in sessions', link: '/drop-in-sessions', roles: ['manage-users']},
     {label: 'Feature guides', link: '/feature-guides', roles: ['manage-users']},
     {label: 'Health checks', link: '/health-checks', roles: ['health-checks:edit']},
+    {label: 'Feedback', link: '/user-feedback', roles: ['manage-users']},
     {label: 'Users', link: '/users', roles: ['manage-users']},
   ]
 

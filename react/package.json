@@ -37,7 +37,8 @@
     "redux": "^4.2.1",
     "typed-react-markdown": "^0.1.0",
     "typescript": "^5.2.2",
-    "validator": "^13.7.0"
+    "validator": "^13.7.0",
+    "formik": "^2.4.5"
   },
   "scripts": {
     "start": "react-scripts start",
