@@ -13,7 +13,8 @@ import spray.json._
 import uk.gov.homeoffice.drt.auth.Roles.{BorderForceStaff, LHR}
 import uk.gov.homeoffice.drt.db.MockUserDao
 import uk.gov.homeoffice.drt.persistence.MockScheduledHealthCheckPausePersistence
-import uk.gov.homeoffice.drt.ports.PortRegion
+import uk.gov.homeoffice.drt.ports.Terminals.T1
+import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.services.UserService
 import uk.gov.homeoffice.drt.{ClientConfig, ClientConfigJsonFormats, MockHttpClient}
 
@@ -30,7 +31,7 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest with ClientConfig
   private val config: Config = ConfigFactory.load()
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
 
-  val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), "somedomain.com", "test@test.com")
+  val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), Map(PortCode("NCL") -> Seq(T1)), "somedomain.com", "test@test.com")
   val userService: UserService = UserService(new MockUserDao)
   val routes: Route = ApiRoutes(clientConfig, userService, MockScheduledHealthCheckPausePersistence)
 

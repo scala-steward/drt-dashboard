@@ -19,8 +19,6 @@ object DrtDashboardApp extends App {
   }
 
   private val portTerminals = AirportConfigs.confByPort.view.filterKeys(enabledPorts.contains).mapValues(_.terminals.toSeq).toMap
-  println(s"Enabled ports: ${enabledPorts.map(_.iata).mkString(", ")}")
-  println(s"Enabled terminals: ${portTerminals.values.flatten.mkString(", ")}")
 
   val serverConfig = ServerConfig(
     host = config.getString("server.host"),
