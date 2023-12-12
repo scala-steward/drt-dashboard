@@ -102,7 +102,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
         ExportRoutes(mockHttpClient(arrivalsResponse), mockUploader, mockDownloader, MockExportPersistence(None), nowProvider, MockEmailClient(emailProbe.ref), "https://test.com", "team-email@zyx.com") ~>
         check {
           uploadProbe.expectMessage((s"$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
-          emailProbe.expectMessage(("620271a3-888f-4d60-9f2a-dc3702699ae2", "someone@somewhere.com", Map("download_link" -> s"https://test.com/export/${now.millisSinceEpoch}")))
+          emailProbe.expectMessage(("620271a3-888f-4d60-9f2a-dc3702699ae2", "someone@somewhere.com", Map("download_link" -> s"https://test.com/api/export/${now.millisSinceEpoch}")))
           responseAs[String] should ===(s"""{"status": "preparing", "createdAt": ${now.millisSinceEpoch}}""")
         }
     }

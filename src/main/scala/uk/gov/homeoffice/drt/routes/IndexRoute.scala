@@ -29,7 +29,6 @@ case class IndexRoute(urls: Urls, indexResource: Route) {
               RawHeader("Expires", "0"),
             ))(indexRouteDirectives)
           },
-//          getFromResourceDirectory("frontend")
         )
       },
       pathPrefix("access-requests")(indexRouteDirectives),
@@ -39,6 +38,7 @@ case class IndexRoute(urls: Urls, indexResource: Route) {
       pathPrefix("feature-guides")(indexRouteDirectives),
       pathPrefix("drop-in-sessions")(indexRouteDirectives),
       pathPrefix("feedback")(indexRouteDirectives),
+      pathPrefix("user-feedback")(indexRouteDirectives),
       pathPrefix("health-checks")(indexRouteDirectives),
     )
 

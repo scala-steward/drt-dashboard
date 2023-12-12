@@ -32,7 +32,7 @@ class FeedbackRoutesSpec extends Specification
 
   val testKit: ActorTestKit = ActorTestKit()
   implicit val sys: ActorSystem[Nothing] = testKit.system
-  implicit val mat = Materializer(sys.classicSystem)
+  implicit val mat: Materializer = Materializer(sys.classicSystem)
   val stringToLocalDateTime: String => Instant = dateString => Instant.parse(dateString)
 
   override def before = {

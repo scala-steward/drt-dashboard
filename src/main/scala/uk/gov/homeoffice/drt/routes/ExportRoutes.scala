@@ -185,7 +185,7 @@ object ExportRoutes {
                                 exportPersistence: ExportPersistence,
                                ): Unit = {
     exportPersistence.update(export.copy(status = "complete"))
-    val link = s"$rootDomain/export/${export.createdAt.millisSinceEpoch}"
+    val link = s"$rootDomain/api/export/${export.createdAt.millisSinceEpoch}"
     val emailSuccess = emailClient.send(DownloadManagerTemplates.reportReadyTemplateId, export.email, Map("download_link" -> link))
 
     if (!emailSuccess) log.error("Failed to send email")

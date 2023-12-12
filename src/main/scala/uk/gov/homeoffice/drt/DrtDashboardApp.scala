@@ -3,6 +3,7 @@ package uk.gov.homeoffice.drt
 import akka.actor.typed.ActorSystem
 import com.typesafe.config.ConfigFactory
 import uk.gov.homeoffice.drt.notifications.{EmailClientImpl, EmailNotifications}
+import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.schedule.{DropInNotification, DropInReminder, UserTracking}
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.service.notify.NotificationClient
@@ -12,10 +13,12 @@ import scala.concurrent.duration.DurationInt
 object DrtDashboardApp extends App {
   val config = ConfigFactory.load()
 
-  private val ports = config.getString("enabled-ports") match {
+  private val enabledPorts: Seq[PortCode] = config.getString("enabled-ports") match {
     case "" => PortRegion.regions.flatMap(_.ports).toSeq
-    case portList => portList.split(",").map(PortCode(_)).toSeq
+    case portList => portList.toUpperCase.split(",").map(PortCode(_)).toSeq
   }
+
+  private val portTerminals = AirportConfigs.confByPort.view.filterKeys(enabledPorts.contains).mapValues(_.terminals.toSeq).toMap
 
   val serverConfig = ServerConfig(
     host = config.getString("server.host"),
@@ -44,7 +47,7 @@ object DrtDashboardApp extends App {
     drtS3BucketName = config.getString("s3.bucket-name"),
     exportsFolderPrefix = config.getString("exports.s3-folder-prefix"),
     featureFolderPrefix = config.getString("feature-guides.s3-folder-prefix"),
-    portCodes = ports,
+    portTerminals = portTerminals,
     healthCheckTriggeredNotifyTemplateId = config.getString("health-checks.notify-templates.triggered"),
     healthCheckResolvedNotifyTemplateId = config.getString("health-checks.notify-templates.resolved"),
     healthCheckEmailRecipient = config.getString("health-checks.email-recipient"),
