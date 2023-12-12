@@ -17,6 +17,7 @@ import uk.gov.homeoffice.drt.db._
 import uk.gov.homeoffice.drt.healthchecks._
 import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications}
 import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealthCheckPausePersistenceImpl}
+import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes.{FeedbackRoutes, _}
 import uk.gov.homeoffice.drt.services.s3.S3Service
@@ -59,14 +60,14 @@ case class ServerConfig(host: String,
                         drtS3BucketName: String,
                         exportsFolderPrefix: String,
                         featureFolderPrefix: String,
-                        portCodes: Seq[PortCode],
+                        portTerminals: Map[PortCode, Seq[Terminal]],
                         healthCheckTriggeredNotifyTemplateId: String,
                         healthCheckResolvedNotifyTemplateId: String,
                         healthCheckEmailRecipient: String,
                         healthCheckFrequencyMinutes: Int,
                        ) {
-  val portIataCodes: Iterable[String] = portCodes.map(_.iata)
-  val clientConfig: ClientConfig = ClientConfig(portRegions, rootDomain, teamEmail)
+  val portIataCodes: Iterable[String] = portTerminals.keys.map(_.iata)
+  val clientConfig: ClientConfig = ClientConfig(portRegions, portTerminals, rootDomain, teamEmail)
   val keyClockConfig: KeyClockConfig = KeyClockConfig(keycloakUrl, keycloakTokenUrl, keycloakClientId, keycloakClientSecret)
 }
 
@@ -209,8 +210,8 @@ object Server {
     val recordResponse = (port: PortCode, response: HealthCheckResponse[_]) => {
       healthChecksActor.ask(replyTo => HealthChecksActor.PortHealthCheckResponse(port, response, replyTo))
     }
-    log.info(s"Starting health check monitor for ports ${serverConfig.portCodes.mkString(", ")}")
-    val monitor = HealthCheckMonitor(makeRequest, recordResponse, serverConfig.portCodes)
+    log.info(s"Starting health check monitor for ports ${serverConfig.portTerminals.keys.mkString(", ")}")
+    val monitor = HealthCheckMonitor(makeRequest, recordResponse, serverConfig.portTerminals.keys)
     val pausesProvider = CheckScheduledPauses.pausesProvider(ScheduledHealthCheckPausePersistenceImpl(db, () => SDate.now()))
     val pauseIsActive = CheckScheduledPauses.activePauseChecker(pausesProvider)
     object Check extends Runnable {

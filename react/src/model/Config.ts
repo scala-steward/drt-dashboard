@@ -7,6 +7,11 @@ export type LoadedConfig = {
   values: ConfigValues
 }
 
+export type Port = {
+  iata: string
+  terminals: string[]
+}
+
 export type PortRegion = {
   name: string
   ports: string[]
@@ -19,9 +24,10 @@ export class PortRegionHelper {
 }
 
 export type ConfigValues = {
-  portsByRegion: PortRegion[];
-  domain: string;
-  teamEmail: string;
+  portsByRegion: PortRegion[]
+  ports: Port[]
+  domain: string
+  teamEmail: string
 }
 
 export type Config = PendingConfig | LoadedConfig
