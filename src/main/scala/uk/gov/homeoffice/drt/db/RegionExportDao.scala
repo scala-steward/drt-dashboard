@@ -39,8 +39,8 @@ object RegionExportQueries {
   def get(email: String, region: String, createdAt: Long)
          (implicit ec: ExecutionContext): DBIOAction[Option[RegionExport], NoStream, Effect.Read] =
     regionExports
-      .filter(_.email.toLowerCase === email.toLowerCase)
-      .filter(_.region.toLowerCase === region.toLowerCase)
+      .filter(_.email === email)
+      .filter(_.region === region)
       .filter(_.createdAt === new Timestamp(createdAt))
       .result
       .map(_.headOption.map(x => regionExportFromRow(x)))
