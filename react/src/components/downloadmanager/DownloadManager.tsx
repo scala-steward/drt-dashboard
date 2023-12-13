@@ -33,7 +33,7 @@ interface DownloadManagerProps {
   downloadUrl: string;
   user: UserProfile;
   config: ConfigValues;
-  requestDownload: (ports: PortTerminal[], breakdown: string, startDate: Moment, endDate: Moment) => void;
+  requestDownload: (ports: PortTerminal[], exportType: string, startDate: Moment, endDate: Moment) => void;
   checkDownloadStatus: (createdAt: string) => void;
 }
 
@@ -45,7 +45,7 @@ const DownloadManager = ({status, createdAt, downloadUrl, requestDownload, user,
     start: moment().subtract(1, 'day'),
     end: moment(),
   });
-  const [breakdown, setBreakdown] = React.useState<string>('passengers-port');
+  const [exportType, setExportType] = React.useState<string>('passengers-port');
   const [daily, setDaily] = React.useState<boolean>(false);
 
   const isRccRegion = (regionName : string) => {
@@ -83,8 +83,8 @@ const DownloadManager = ({status, createdAt, downloadUrl, requestDownload, user,
     clearInterval(interval.current);
   }
 
-  const onBreakdownChange = (event: React.ChangeEvent<HTMLInputElement>, breakdown: string) => {
-    setBreakdown(breakdown);
+  const onexportTypeChange = (event: React.ChangeEvent<HTMLInputElement>, exportType: string) => {
+    setExportType(exportType);
   }
 
   const handlePortChange = (event: SelectChangeEvent<typeof selectedPorts>) => {
@@ -119,8 +119,8 @@ const DownloadManager = ({status, createdAt, downloadUrl, requestDownload, user,
     }
   }
 
-  const disablePassengerBreakdown = (): boolean =>  {
-    return (breakdown == 'flight') || (Math.abs(dates.start.diff(dates.end, 'days')) < 1)
+  const disablePassengerExportType = (): boolean =>  {
+    return (exportType == 'arrivals') || (Math.abs(dates.start.diff(dates.end, 'days')) < 1)
   }
 
   const handleSubmit = () :void => {
@@ -131,7 +131,13 @@ const DownloadManager = ({status, createdAt, downloadUrl, requestDownload, user,
         terminals: port.terminals
       }
     });
-    requestDownload(portsWithTerminals, breakdown, dates.start, dates.end);
+
+    let exportString = exportType
+    if (daily && exportString !== 'arrivals') {
+      exportString = `${exportString}-daily`
+    }
+
+    requestDownload(portsWithTerminals, exportString, dates.start, dates.end);
     setModalOpen(true);
   }
 
@@ -169,16 +175,16 @@ const DownloadManager = ({status, createdAt, downloadUrl, requestDownload, user,
               aria-labelledby="demo-radio-buttons-group-label"
               defaultValue="female"
               name="radio-buttons-group"
-              onChange={onBreakdownChange}
-              value={breakdown}
+              onChange={onexportTypeChange}
+              value={exportType}
             >
               <FormControlLabel value="passengers-port" control={<Radio />} label="By port" />
               <FormControlLabel value="passengers-terminal" control={<Radio />} label="By terminal" />
-              <FormControlLabel value="arrrivals" control={<Radio />} label="By flight" />
+              <FormControlLabel value="arrivals" control={<Radio />} label="By flight" />
             </RadioGroup>
           </FormControl>
           <FormControl>
-            <FormControlLabel control={<Checkbox disabled={disablePassengerBreakdown()} value={daily} onChange={()=> setDaily(!daily)} inputProps={{ 'aria-label': 'controlled' }} />} label={'Daily passenger breakdown'} />
+            <FormControlLabel control={<Checkbox disabled={disablePassengerExportType()} value={daily} onChange={()=> setDaily(!daily)} inputProps={{ 'aria-label': 'controlled' }} />} label={'Daily passenger breakdown'} />
           </FormControl>
         </Box>
         <Box>
@@ -208,8 +214,8 @@ const mapDispatch = (dispatch :MapDispatchToProps<any, DownloadManagerProps>) =>
     checkDownloadStatus: (createdAt: string) => {
       dispatch(checkDownloadStatus(createdAt));
     },
-    requestDownload: (ports: PortTerminal[], breakdown: string, startDate: Moment, endDate: Moment) => {
-      dispatch(requestDownload(ports, breakdown, startDate.toISOString(), endDate.toISOString()))
+    requestDownload: (ports: PortTerminal[], exportType: string, startDate: Moment, endDate: Moment) => {
+      dispatch(requestDownload(ports, exportType, startDate.toISOString(), endDate.toISOString()))
     },
   };
 };

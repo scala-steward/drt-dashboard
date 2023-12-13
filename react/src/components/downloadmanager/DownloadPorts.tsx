@@ -40,6 +40,7 @@ export default function DownloadPorts({ handlePortChange, handlePortCheckboxChan
   const theme = useTheme();
 
   const allUserPorts :string[] = portsByRegion.map((region) => [...region.ports]).flat();
+  portsByRegion.forEach((region) => region.ports.sort());
 
   const renderPortColumn = (airport: string) => {
     return (
@@ -70,11 +71,11 @@ export default function DownloadPorts({ handlePortChange, handlePortCheckboxChan
           >
             { allUserPorts.map((port) => 
               <MenuItem
-                key={port}
-                value={port}
-                style={getStyles(port, selectedPorts, theme)}
+                key={port.name}
+                value={port.name}
+                style={getStyles(port.name, selectedPorts, theme)}
               >
-                {port}
+                {port.name}
               </MenuItem> )}
           </Select>
         </FormControl>

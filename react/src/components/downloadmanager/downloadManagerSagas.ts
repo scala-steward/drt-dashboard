@@ -6,7 +6,7 @@ import axios from 'axios';
 export type RequestDownloadActionType = {
   type: "REQUEST_DOWNLOAD",
   ports: PortTerminal[],
-  breakdown: string,
+  exportType: string,
   startDate: string,
   endDate: string,
 };
@@ -22,11 +22,11 @@ type RequestDownloadPayload = {
   endDate: string,
 };
 
-export const requestDownload = (ports: PortTerminal[], breakdown: string, startDate: string, endDate: string) :RequestDownloadActionType => {
+export const requestDownload = (ports: PortTerminal[], exportType: string, startDate: string, endDate: string) :RequestDownloadActionType => {
   return {
     "type": "REQUEST_DOWNLOAD",
     ports,
-    breakdown,
+    exportType,
     startDate,
     endDate
   };
@@ -38,7 +38,7 @@ function* handleRequestDownload(action: RequestDownloadActionType) {
 
     const payload : RequestDownloadPayload = {
       ports: action.ports,
-      exportType: 'arrivals',
+      exportType: action.exportType,
       startDate: action.startDate,
       endDate: action.endDate
     }
