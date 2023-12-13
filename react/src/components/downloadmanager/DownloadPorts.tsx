@@ -71,11 +71,11 @@ export default function DownloadPorts({ handlePortChange, handlePortCheckboxChan
           >
             { allUserPorts.map((port) => 
               <MenuItem
-                key={port.name}
-                value={port.name}
-                style={getStyles(port.name, selectedPorts, theme)}
+                key={port}
+                value={port}
+                style={getStyles(port, selectedPorts, theme)}
               >
-                {port.name}
+                {port}
               </MenuItem> )}
           </Select>
         </FormControl>
