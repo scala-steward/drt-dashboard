@@ -126,9 +126,9 @@ export default function AccessRequests() {
           }
         }}
       />
-      {(openModal) ? <AccessRequestDetails openModal={openModal}
+      {(openModal && rowDetails) ? <AccessRequestDetails openModal={openModal}
                                            setOpenModal={setOpenModal}
-                                           rowDetails={rowDetails}
+                                           accessRequest={rowDetails}
                                            receivedUserDetails={receivedUserDetails}
                                            setReceivedUserDetails={setReceivedUserDetails}
                                            status={""}/> : <span/>

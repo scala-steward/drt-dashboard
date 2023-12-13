@@ -15,10 +15,10 @@ interface IProps {
 }
 
 export default function AccessRequestStatusList(props: IProps) {
-  const [userRequestList, setUserRequestList] = React.useState([] as UserRequestedAccessData[]);
-  const [rowsData, setRowsData] = React.useState([] as GridRowModel[]);
-  const [rowDetails, setRowDetails] = React.useState({} as UserRequestedAccessData | undefined)
-  const [openModal, setOpenModal] = React.useState(false)
+  const [userRequestList, setUserRequestList] = React.useState<UserRequestedAccessData[]>([]);
+  const [rowsData, setRowsData] = React.useState<GridRowModel[]>([]);
+  const [accessRequest, setAccessRequest] = React.useState<UserRequestedAccessData | undefined>(undefined)
+  const [openModal, setOpenModal] = React.useState<boolean>(false)
 
   const updateAccessRequestData = (response: AxiosResponse) => {
     setUserRequestList(response.data as UserRequestedAccessData[])
@@ -44,7 +44,7 @@ export default function AccessRequestStatusList(props: IProps) {
   }
 
   const rowClickOpen = (userData: UserRequestedAccessData | undefined) => {
-    setRowDetails(userData)
+    setAccessRequest(userData)
     setOpenModal(true)
   }
 
@@ -62,12 +62,12 @@ export default function AccessRequestStatusList(props: IProps) {
         }}
       />
       {
-        (openModal) ?
+        (openModal && accessRequest) ?
           <AccessRequestDetails openModal={openModal}
                                 setOpenModal={setOpenModal}
                                 receivedUserDetails={props.accessRequestListRequested}
                                 setReceivedUserDetails={props.setAccessRequestListRequested}
-                                rowDetails={rowDetails}
+                                accessRequest={accessRequest}
                                 status={props.statusView}/> :
           <span/>
       }
