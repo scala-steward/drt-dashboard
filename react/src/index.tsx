@@ -8,23 +8,29 @@ import {StyledEngineProvider} from '@mui/material/styles';
 import {createRoot} from 'react-dom/client';
 import 'moment/locale/en-gb';
 import {LocalizationProvider} from "@mui/x-date-pickers/LocalizationProvider";
+import store from './store/redux';
+import { Provider } from 'react-redux';
 
 const container = document.getElementById('root');
 const root = createRoot(container!);
 
+console.log(store);
+
 root.render(
   <React.StrictMode>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
-    <StyledEngineProvider injectFirst>
-      <BrowserRouter>
-        <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale={'en-gb'}>
-            <StyledEngineProvider injectFirst>
-                <App/>
-            </StyledEngineProvider>
-        </LocalizationProvider>
-      </BrowserRouter>
-    </StyledEngineProvider>
+    <Provider store={store}>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
+      <StyledEngineProvider injectFirst>
+        <BrowserRouter>
+          <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale={'en-gb'}>
+              <StyledEngineProvider injectFirst>
+                    <App/>
+              </StyledEngineProvider>
+          </LocalizationProvider>
+        </BrowserRouter>
+      </StyledEngineProvider>
+    </Provider>
   </React.StrictMode>
 );
 
