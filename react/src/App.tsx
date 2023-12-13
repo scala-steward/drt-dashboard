@@ -24,6 +24,7 @@ import {FeatureGuidesList} from "./components/featureguides/FeatureGuidesList";
 import {AddOrEditFeatureGuide} from "./components/featureguides/AddOrEditFeatureGuide";
 import {FeedbackForms} from "./components/feedback/FeedbackForms";
 import {FeedbackList} from "./components/feedback/FeedbackList";
+import DownloadManager from './components/downloadmanager/DownloadManager';
 
 const StyledDiv = styled('div')(() => ({
   textAlign: 'center',
@@ -96,6 +97,7 @@ export const App = () => {
           <Route path={"/"} element={<Home config={config.values} user={user.profile}/>}/>
           <Route path={"/access-requests"} element={<AccessRequests/>}/>
           <Route path={"/users"} element={<UsersList/>}/>
+          <Route path={"/download"} element={<DownloadManager config={config.values} user={user.profile} />} />
           <Route path={"/alerts"} element={<Alerts regions={config.values.portsByRegion} user={user.profile}/>}/>
           <Route path={"/region/:regionName"} element={<RegionPage user={user.profile} config={config.values}/>}/>
           <Route path={"/feature-guides"}>
