@@ -59,7 +59,7 @@ object ExportRoutes {
         concat(
           pathEnd(
             post(entity(as[ExportRequest]) { exportRequest =>
-              handleExport(upload, exportPersistence, exportCsvService, email, exportRequest, now, emailClient, rootUrl, teamEmail)
+              handleExport(upload, exportPersistence, exportCsvService, email, exportRequest, now, emailClient, rootUrl, teamEmail, rootUrl)
             })
           ),
           get {
@@ -70,7 +70,8 @@ object ExportRoutes {
               },
               path("status" / Segment) { createdAt =>
                 onComplete(exportPersistence.get(email, createdAt.toLong)) {
-                  case Success(Some(export)) => complete(s"""{"status": "${export.status}"}""")
+                  case Success(Some(export)) =>
+                    complete(s"""{"status": "${export.status}"}""")
                   case Success(None) => complete(NotFound)
                   case Failure(e) =>
                     log.error("Failed to get export", e)
@@ -127,6 +128,7 @@ object ExportRoutes {
                            emailClient: EmailClient,
                            rootDomain: String,
                            teamEmail: String,
+                           rootUrl: String,
                           )
                           (implicit ec: ExecutionContext, mat: Materializer): StandardRoute = {
     val startDateString = exportRequest.startDate.toString()
@@ -176,7 +178,7 @@ object ExportRoutes {
         handleReportFailure(emailClient, export, teamEmail, exportPersistence)
         log.error("Failed to create export", exception)
     }
-    complete(s"""{"status": "${export.status}", "createdAt": ${export.createdAt.millisSinceEpoch}}""")
+    complete(s"""{"status": "${export.status}", "createdAt": ${export.createdAt.millisSinceEpoch}, "downloadLink": "${downloadUrl(rootUrl, export)}"}""")
   }
 
   private def handleReportReady(emailClient: EmailClient,
@@ -185,10 +187,14 @@ object ExportRoutes {
                                 exportPersistence: ExportPersistence,
                                ): Unit = {
     exportPersistence.update(export.copy(status = "complete"))
-    val link = s"$rootDomain/api/export/${export.createdAt.millisSinceEpoch}"
+    val link = downloadUrl(rootDomain, export)
     val emailSuccess = emailClient.send(DownloadManagerTemplates.reportReadyTemplateId, export.email, Map("download_link" -> link))
 
     if (!emailSuccess) log.error("Failed to send email")
+  }
+
+  private def downloadUrl(rootDomain: String, export: Export) = {
+    s"$rootDomain/api/export/${export.createdAt.millisSinceEpoch}"
   }
 
   private def handleReportFailure(emailClient: EmailClient,

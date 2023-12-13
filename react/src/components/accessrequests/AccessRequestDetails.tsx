@@ -14,6 +14,7 @@ import axios from "axios";
 import ApiClient from "../../services/ApiClient";
 import ConfirmAccessRequest from "./ConfirmAccessRequest";
 import {KeyCloakUser} from './AccessRequestCommon';
+import moment from "moment-timezone";
 
 export interface UserRequestedAccessData {
   agreeDeclaration: boolean;
@@ -45,7 +46,7 @@ const style = {
 interface IProps {
   openModal: boolean;
   setOpenModal: ((value: (((prevState: boolean) => boolean) | boolean)) => void);
-  rowDetails: UserRequestedAccessData | undefined
+  accessRequest: UserRequestedAccessData
   status: string;
   receivedUserDetails: boolean
   setReceivedUserDetails: ((value: (((prevState: boolean) => boolean) | boolean)) => void);
@@ -68,20 +69,20 @@ export default function AccessRequestDetails(props: IProps) {
 
   const keyCloakUserDetails = () => {
     setMessage("Granted")
-    axios.get(ApiClient.userDetailsEndpoint + '/' + props.rowDetails?.email)
+    axios.get(ApiClient.userDetailsEndpoint + '/' + props.accessRequest.email)
       .then(response => updateState(response.data as KeyCloakUser))
   }
 
   const revertAccessRequest = () => {
     setMessage("Revert")
-    axios.post(ApiClient.updateUserRequestEndpoint + "/" + "Requested", props.rowDetails)
+    axios.post(ApiClient.updateUserRequestEndpoint + "/" + "Requested", props.accessRequest)
       .then(() => setRequestPosted(true))
       .then(() => setReceivedUserDetails(false))
   }
 
   React.useEffect(() => {
     if (receivedUserDetails && (user.id)) {
-      axios.post(ApiClient.addUserToGroupEndpoint + '/' + user.id, props.rowDetails)
+      axios.post(ApiClient.addUserToGroupEndpoint + '/' + user.id, props.accessRequest)
         .then(() => setRequestPosted(true))
         .then(() => setReceivedUserDetails(false))
     }
@@ -115,62 +116,62 @@ export default function AccessRequestDetails(props: IProps) {
             <Typography align="center" id="modal-modal-title" variant="h6" component="h2">
               User Request Details
             </Typography>
-            <TableContainer component={Paper}>
+            <TableContainer component={Paper} sx={{
+              maxHeight: 500,
+              overflowX: 'hidden',
+              overflowY: 'auto',
+            }}>
               <Table sx={{minWidth: 500}} size="small" aria-label="a dense table">
                 <TableBody>
                   <TableRow>
                     <TableCell>Email</TableCell>
                     <TableCell>
-                      <a href={"mailto:" + props.rowDetails?.email + "?Subject=DRT%20access%20request"}
-                         target="_blank">{props.rowDetails?.email}</a>
+                      <a href={"mailto:" + props.accessRequest.email + "?Subject=DRT%20access%20request"}
+                         target="_blank">{props.accessRequest.email}</a>
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell>Line Manager</TableCell>
                     <TableCell>
-                      <a href={"mailto:" + props.rowDetails?.lineManager + "?Subject=DRT%20access%20request"}
-                         target="_blank">{props.rowDetails?.lineManager}</a>
+                      <a href={"mailto:" + props.accessRequest.lineManager + "?Subject=DRT%20access%20request"}
+                         target="_blank">{props.accessRequest.lineManager}</a>
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell>All ports requested</TableCell>
-                    <TableCell>{String(props.rowDetails?.allPorts)}</TableCell>
+                    <TableCell>Requested at</TableCell>
+                    <TableCell>{moment(props.accessRequest.requestTime).format("HH:mm, Do MMM YYYY")}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell>Time Requested</TableCell>
-                    <TableCell>{props.rowDetails?.requestTime}</TableCell>
+                    <TableCell>Account type</TableCell>
+                    <TableCell>{props.accessRequest.accountType}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell>Ports Request</TableCell>
-                    <TableCell>{props.rowDetails?.portsRequested}</TableCell>
+                    <TableCell>Ports</TableCell>
+                    <TableCell>{props.accessRequest.allPorts ? 'All ports' : props.accessRequest.portsRequested}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell>Regions Request</TableCell>
-                    <TableCell>{props.rowDetails?.regionsRequested}</TableCell>
+                    <TableCell>Regions</TableCell>
+                    <TableCell>{props.accessRequest.regionsRequested}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell>Staffing Requested</TableCell>
-                    <TableCell>{String(props.rowDetails?.staffEditing)}</TableCell>
+                    <TableCell>Staffing editing?</TableCell>
+                    <TableCell>{props.accessRequest.staffEditing ? 'Yes' : 'No'}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell>Ports / Region Request reason</TableCell>
-                    <TableCell>{props.rowDetails?.portOrRegionText}</TableCell>
+                    <TableCell>Reason for ports/regions</TableCell>
+                    <TableCell sx={{whiteSpace: 'pre-line'}}>{props.accessRequest.portOrRegionText}</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell>Staffing Reason</TableCell>
-                    <TableCell>{props.rowDetails?.staffText}</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Rcc request</TableCell>
-                    <TableCell>{props.rowDetails?.accountType}</TableCell>
+                    <TableCell>Reason for staff editing</TableCell>
+                    <TableCell sx={{whiteSpace: 'pre-line'}}>{props.accessRequest.staffText}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell>Request Status</TableCell>
-                    <TableCell>{props.rowDetails?.status}</TableCell>
+                    <TableCell>{props.accessRequest.status}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell>Agree Declaration</TableCell>
-                    <TableCell>{String(props.rowDetails?.agreeDeclaration)}</TableCell>
+                    <TableCell>{props.accessRequest.agreeDeclaration ? 'Yes' : 'No'}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
@@ -198,7 +199,7 @@ export default function AccessRequestDetails(props: IProps) {
                             setReceivedUserDetails={props.setReceivedUserDetails}
                             openModel={props.openModal}
                             setOpenModel={props.setOpenModal}
-                            emails={[props.rowDetails?.email ?? user.email]}/> : viewUserDetailTable()
+                            emails={[props.accessRequest.email ?? user.email]}/> : viewUserDetailTable()
   }
 
   return (
