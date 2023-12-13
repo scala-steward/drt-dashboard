@@ -1,19 +1,26 @@
 import * as React from 'react';
-import { connect, MapDispatchToProps } from 'react-redux';
-import {Box, RadioGroup, Radio, Checkbox, FormControlLabel, FormControl, Button, SelectChangeEvent } from "@mui/material";
+import {connect, MapDispatchToProps} from 'react-redux';
+import {
+  Box,
+  Button,
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  SelectChangeEvent
+} from "@mui/material";
 
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import moment, { Moment } from 'moment';
+import {DatePicker} from '@mui/x-date-pickers/DatePicker';
+import moment, {Moment} from 'moment';
 import DownloadPorts from './DownloadPorts';
 import DownloadModal from './DownloadModal';
 
-import { requestDownload, checkDownloadStatus } from './downloadManagerSagas';
-import { RootState } from '../../store/redux';
+import {checkDownloadStatus, PortTerminal, requestDownload} from './downloadManagerSagas';
+import {RootState} from '../../store/redux';
 import {UserProfile} from "../../model/User";
-import {ConfigValues} from "../../model/Config";
-import { PortRegion } from '../../model/Config';
-import { PortTerminal } from './downloadManagerSagas';
-import { create } from 'lodash';
+import {ConfigValues, PortRegion} from "../../model/Config";
+import {create} from 'lodash';
 
 interface DownloadDates {
   start: Moment;
@@ -23,6 +30,7 @@ interface DownloadDates {
 interface DownloadManagerProps {
   status: string;
   createdAt: string;
+  downloadUrl: string;
   user: UserProfile;
   config: ConfigValues;
   requestDownload: (ports: PortTerminal[], breakdown: string, startDate: Moment, endDate: Moment) => void;
@@ -30,7 +38,7 @@ interface DownloadManagerProps {
 }
 
 
-const DownloadManager = ({status, createdAt, requestDownload, user, config, checkDownloadStatus}: DownloadManagerProps) => {
+const DownloadManager = ({status, createdAt, downloadUrl, requestDownload, user, config, checkDownloadStatus}: DownloadManagerProps) => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
   const [selectedPorts, setSelectedPorts] = React.useState<string[]>([]);
   const [dates, setDate] = React.useState<DownloadDates>({
@@ -176,12 +184,12 @@ const DownloadManager = ({status, createdAt, requestDownload, user, config, chec
         <Box>
         </Box>
 
-        
+
         <Box sx={{marginTop: '1em'}}>
           <Button disabled={canRequestReport()} onClick={() => handleSubmit()} color='primary' variant='contained'>Create Report</Button>
         </Box>
 
-        <DownloadModal status={status} createdAt={createdAt} isModalOpen={modalOpen} handleModalClose={handleModalClose} />
+        <DownloadModal status={status} downloadUrl={downloadUrl} isModalOpen={modalOpen} handleModalClose={handleModalClose} />
       </Box>
     </Box>
   )
@@ -191,6 +199,7 @@ const mapState = (state: RootState) => {
   return {
     status: state.downloadManager?.status,
     createdAt: state.downloadManager?.createdAt,
+    downloadUrl: state.downloadManager?.downloadLink,
   };
 }
 
