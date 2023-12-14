@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.json
 
-import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat, enrichAny}
-import uk.gov.homeoffice.drt.exports.{Arrivals, ExportPort, ExportType, ExportTypes, PortPassengers, PortPassengersDaily, TerminalPassengers, TerminalPassengersDaily}
+import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat}
+import uk.gov.homeoffice.drt.exports._
 import uk.gov.homeoffice.drt.json.LocalDateJsonFormats.LocalDateJsonFormat
 import uk.gov.homeoffice.drt.json.SDateLikeJsonFormats.SDateLikeJsonFormat
 import uk.gov.homeoffice.drt.models.Export
