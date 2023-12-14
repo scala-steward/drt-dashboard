@@ -34,8 +34,6 @@ export const requestDownload = (ports: PortTerminal[], exportType: string, start
 
 function* handleRequestDownload(action: RequestDownloadActionType) {
   try {
-    yield put(setStatus('requested'))
-
     const payload : RequestDownloadPayload = {
       ports: action.ports,
       exportType: action.exportType,
@@ -85,9 +83,7 @@ function* handleCheckDownloadStatus(action: CheckDownloadStatusType) {
       }
     }
     const response: Response = yield call (axios.get, `${ApiClient.exportStatusEndpoint}/${action.createdAt}`)
-    if (response.data.status === 'complete') {
-      yield put(setStatus(response.data.status))
-    }
+    yield put(setStatus(response.data.status))
   } catch (e) {
     console.log(e)
   }

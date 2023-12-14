@@ -20,7 +20,6 @@ import {checkDownloadStatus, PortTerminal, requestDownload} from './downloadMana
 import {RootState} from '../../store/redux';
 import {UserProfile} from "../../model/User";
 import {ConfigValues, PortRegion} from "../../model/Config";
-import {create} from 'lodash';
 
 interface DownloadDates {
   start: Moment;
@@ -55,7 +54,6 @@ const DownloadManager = ({status, createdAt, downloadUrl, requestDownload, user,
   let interval: {current: ReturnType<typeof setInterval> | null | any} = React.useRef(null);
 
   React.useEffect(() => {
-    console.log(create, status);
     if (createdAt && status === 'preparing') {
       interval.current = setInterval(()=>{
         checkDownloadStatus(createdAt);
@@ -215,7 +213,7 @@ const mapDispatch = (dispatch :MapDispatchToProps<any, DownloadManagerProps>) =>
       dispatch(checkDownloadStatus(createdAt));
     },
     requestDownload: (ports: PortTerminal[], exportType: string, startDate: Moment, endDate: Moment) => {
-      dispatch(requestDownload(ports, exportType, startDate.toISOString(), endDate.toISOString()))
+      dispatch(requestDownload(ports, exportType, startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD')))
     },
   };
 };
