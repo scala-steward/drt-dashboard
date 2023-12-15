@@ -53,7 +53,7 @@ export default function ArrivalExport(props: IProps) {
   const handleClose = () => setOpen(false);
 
   return <>
-    <Button startIcon={<FileDownloadIcon/>} onClick={handleOpen}>
+    <Button sx={{maxWidth: "300px"}} startIcon={<FileDownloadIcon/>} onClick={handleOpen}>
       {props.region} region Export
     </Button>
     <DialogStyled

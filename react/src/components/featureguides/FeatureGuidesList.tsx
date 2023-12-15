@@ -110,7 +110,7 @@ export const FeatureGuidesList = () => {
       </Link>
       <Typography color="text.primary">Feature guides</Typography>
     </Breadcrumbs>
-    <Link to={'/feature-guides/edit'}><Button variant={'outlined'}>New guide</Button></Link>
+    <Link to={'/feature-guides/edit'}><Button sx={{fontWeight:'bold'}} variant={'outlined'}>New guide</Button></Link>
     {loading ?
       <Loading/> :
       failed ? <Typography variant={'body1'}>Failed to load features. Try refreshing the page</Typography> :

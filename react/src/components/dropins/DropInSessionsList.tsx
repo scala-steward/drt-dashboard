@@ -193,7 +193,8 @@ export function DropInSessionsList() {
       <Typography color="text.primary">Drop-in sessions</Typography>
     </Breadcrumbs>
     <Stack direction={'row'} justifyContent={'space-between'}>
-      <Link to={'/drop-in-sessions/edit'}><Button variant={'outlined'}>New drop in session</Button></Link>
+      <Link to={'/drop-in-sessions/edit'}><Button sx={{fontWeight: 'bold', maxWidth: '250px'}} variant={'outlined'}>New
+        drop in session</Button></Link>
       <FormControlLabel
         label={'Show all'}
         control={<Checkbox checked={showAll} onChange={() => setShowAll(!showAll)} color="primary"/>}

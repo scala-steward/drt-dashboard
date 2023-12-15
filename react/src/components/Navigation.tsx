@@ -1,13 +1,7 @@
 import {Box, Button, Menu, MenuItem, Link as MuiLink} from "@mui/material";
-import {styled} from '@mui/material/styles';
 import React from "react";
 import {Link} from "react-router-dom";
 import {UserProfile} from "../model/User";
-
-const TriggerButton = styled(Button)(({theme}) => ({
-  marginTop: theme.spacing(-1),
-  padding: theme.spacing(0),
-}));
 
 interface IProps {
   logoutLink: string,
@@ -39,15 +33,8 @@ export default function Navigation(props: IProps) {
 
   return (
     <Box>
-      <TriggerButton
-        aria-controls="navigation"
-        aria-haspopup="true"
-        variant={"contained"}
-        onClick={handleClick}
-        sx={{marginTop: '0px'}}
-      >
-        Menu
-      </TriggerButton>
+      <Button sx={{"aria-controls": "navigation", marginTop: "-7px", "padding": "0px 15px" , fontWeight:"Bold"}} variant={"contained"}
+              onClick={handleClick}> Menu </Button>
       <Menu
         id="navigation"
         anchorEl={anchorEl}

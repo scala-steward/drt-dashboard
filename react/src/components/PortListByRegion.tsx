@@ -24,9 +24,9 @@ export const PortListByRegion = (props: { user: UserProfile, regions: PortRegion
         key={region.name}
       >
         {props.user.roles.includes("rcc:" + region.name.toLowerCase()) ?
-          <Button style={{fontSize: '18px'}}
+          <Button style={{fontSize: '18px',fontWeight:'bold'}}
                   href={`/region/${region.name.toLowerCase()}`}>{region.name}</Button> :
-          <Button style={{fontSize: '18px', color: 'black'}} disabled={true}>{region.name}</Button>
+          <Button style={{fontSize: '18px', color: 'black',fontWeight:'bold'}} disabled={true}>{region.name}</Button>
         }
         <List>
           {sortedPorts.map((portCode) => {

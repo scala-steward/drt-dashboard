@@ -7,7 +7,7 @@ import Loading from "../Loading";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import {Breadcrumbs, Stack,Link as MuiLink} from "@mui/material";
+import {Breadcrumbs, Stack, Link as MuiLink} from "@mui/material";
 import {Link} from "react-router-dom";
 import ApiClient from "../../services/ApiClient";
 
@@ -78,6 +78,7 @@ export function FeedbackList() {
     </Breadcrumbs>
     <Stack direction={'row'} justifyContent={'space-between'}>
       <Button
+        sx={{maxWidth: '350px'}}
         startIcon={<FileDownloadIcon/>}
         component={MuiLink}
         href={`${ApiClient.feedBacksEndpoint}/export`}
