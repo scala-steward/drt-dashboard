@@ -9,6 +9,7 @@ interface Region {
 }
 
 interface DownloadPortsProps {
+  error: boolean,
   handlePortChange: (event: SelectChangeEvent<string[]>) => void,
   handlePortCheckboxChange: (event: React.ChangeEvent<HTMLInputElement>) => void,
   handlePortCheckboxGroupChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -36,7 +37,7 @@ function getStyles(port: string, selectedPorts: readonly string[], theme: Theme)
   };
 }
 
-export default function DownloadPorts({ handlePortChange, handlePortCheckboxChange, handlePortCheckboxGroupChange, portsByRegion, selectedPorts  }: DownloadPortsProps) {
+export default function DownloadPorts({error, handlePortChange, handlePortCheckboxChange, handlePortCheckboxGroupChange, portsByRegion, selectedPorts  }: DownloadPortsProps) {
   const theme = useTheme();
 
   const allUserPorts :string[] = portsByRegion.map((region) => [...region.ports]).flat();
@@ -54,6 +55,7 @@ export default function DownloadPorts({ handlePortChange, handlePortCheckboxChan
         <FormControl sx={{width: '100%', backgroundColor: '#fff', marginBottom: '1em' }}>
           <InputLabel id="elected-ports-label">Ports</InputLabel>
           <Select
+            error={error}
             labelId="selected-ports-label"
             id="selected-ports"
             multiple

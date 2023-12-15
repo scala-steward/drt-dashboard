@@ -1,6 +1,10 @@
 import { put, call, takeEvery } from 'redux-saga/effects'
-import {setStatus, setCreatedAt, setDownloadLink} from './downloadManagerState';
+import {setStatus, setCreatedAt, setDownloadLink, addErrors, clearErrors} from './downloadManagerState';
 import ApiClient from '../../services/ApiClient';
+import ValidationService from '../../services/ValidationService';
+
+import { downloadManagerFormValidation } from './downloadManagerValidations';
+
 import axios from 'axios';
 
 export type RequestDownloadActionType = {
@@ -34,6 +38,19 @@ export const requestDownload = (ports: PortTerminal[], exportType: string, start
 
 function* handleRequestDownload(action: RequestDownloadActionType) {
   try {
+    yield put(clearErrors())
+
+    const formErrors = ValidationService.validateForm(downloadManagerFormValidation, {
+      ports: action.ports,
+      startDate: action.startDate,
+      endDate: action.endDate
+    });
+
+    if (formErrors.length > 0) {
+      yield put(addErrors(formErrors))
+      throw(formErrors)
+    }
+
     const payload : RequestDownloadPayload = {
       ports: action.ports,
       exportType: action.exportType,
