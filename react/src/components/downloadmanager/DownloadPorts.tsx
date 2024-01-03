@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Theme, useTheme } from '@mui/material/styles';
 import {Box, Grid, FormControl, List, ListItem, Select, Chip, MenuItem, OutlinedInput, InputLabel, Accordion, AccordionSummary, AccordionDetails,FormControlLabel, Checkbox, SelectChangeEvent} from "@mui/material";
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Cancel } from '@mui/icons-material';
 
 interface Region {
   name: string;
@@ -13,6 +14,7 @@ interface DownloadPortsProps {
   handlePortChange: (event: SelectChangeEvent<string[]>) => void,
   handlePortCheckboxChange: (event: React.ChangeEvent<HTMLInputElement>) => void,
   handlePortCheckboxGroupChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  handleRemovePort: (port:string) => void;
   portsByRegion: Region[],
   selectedPorts: string[],
 }
@@ -37,7 +39,7 @@ function getStyles(port: string, selectedPorts: readonly string[], theme: Theme)
   };
 }
 
-export default function DownloadPorts({error, handlePortChange, handlePortCheckboxChange, handlePortCheckboxGroupChange, portsByRegion, selectedPorts  }: DownloadPortsProps) {
+export default function DownloadPorts({error, handlePortChange, handleRemovePort, handlePortCheckboxChange, handlePortCheckboxGroupChange, portsByRegion, selectedPorts  }: DownloadPortsProps) {
   const theme = useTheme();
 
   const allUserPorts :string[] = portsByRegion.map((region) => [...region.ports]).flat();
@@ -65,7 +67,17 @@ export default function DownloadPorts({error, handlePortChange, handlePortCheckb
             renderValue={(selected) => (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                 {selected.map((value) => (
-                  <Chip key={value} label={value} />
+                  <Chip 
+                    clickable
+                    deleteIcon={
+                      <Cancel
+                        onMouseDown={(event) => event.stopPropagation()}
+                      />
+                    }
+                    key={value} 
+                    label={value} 
+                    onDelete={() => handleRemovePort(value)}
+                     />
                 ))}
               </Box>
             )}

@@ -105,6 +105,10 @@ const DownloadManager = ({status, createdAt, downloadUrl, errors, requestDownloa
     setSelectedPorts(typeof value === 'string' ? value.split(',') : value);
   };
 
+  const handleRemovePort = (port: string) => {
+    setSelectedPorts(selectedPorts.filter(p => p !== port))
+  };
+
   const handlePortCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const {
       target: { name },
@@ -196,6 +200,7 @@ const DownloadManager = ({status, createdAt, downloadUrl, errors, requestDownloa
           handlePortChange={handlePortChange}
           handlePortCheckboxChange={handlePortCheckboxChange}
           handlePortCheckboxGroupChange={handlePortCheckboxGroupChange}
+          handleRemovePort={handleRemovePort}
           portsByRegion={userPortsByRegion}
           selectedPorts={selectedPorts}
           />
