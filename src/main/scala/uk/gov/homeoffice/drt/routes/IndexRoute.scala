@@ -41,6 +41,7 @@ case class IndexRoute(urls: Urls, indexResource: Route) {
       pathPrefix("user-feedback")(indexRouteDirectives),
       pathPrefix("health-checks")(indexRouteDirectives),
       pathPrefix("download")(indexRouteDirectives),
+      pathPrefix("export-config")(indexRouteDirectives),
     )
 
   def indexRouteDirectives: Route = {

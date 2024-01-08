@@ -65,6 +65,7 @@ case class ServerConfig(host: String,
                         healthCheckResolvedNotifyTemplateId: String,
                         healthCheckEmailRecipient: String,
                         healthCheckFrequencyMinutes: Int,
+                        enabledPorts: Seq[PortCode]
                        ) {
   val portIataCodes: Iterable[String] = portTerminals.keys.map(_.iata)
   val clientConfig: ClientConfig = ClientConfig(portRegions, portTerminals, rootDomain, teamEmail)
@@ -121,10 +122,10 @@ object Server {
             DropInSessionsRoute(dropInDao),
             DropInRegisterRoutes(dropInRegistrationDao),
             FeedbackRoutes(userFeedbackDao),
-
-          )
+            ExportConfigRoutes(ProdHttpClient, serverConfig.enabledPorts),
+            )
         }
-      )
+        )
 
       val serverBinding = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
 
@@ -192,7 +193,7 @@ object Server {
         "name" -> checkName,
         "level" -> priority.toString,
         "link" -> urls.urlForPort(portCode.toString())
-      ))
+        ))
     }
 
     val soundAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) =>

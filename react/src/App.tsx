@@ -25,6 +25,7 @@ import {AddOrEditFeatureGuide} from "./components/featureguides/AddOrEditFeature
 import {FeedbackForms} from "./components/feedback/FeedbackForms";
 import {FeedbackList} from "./components/feedback/FeedbackList";
 import DownloadManager from './components/downloadmanager/DownloadManager';
+import {ExportConfig} from "./components/ExportConfig";
 
 const StyledDiv = styled('div')(() => ({
   textAlign: 'center',
@@ -115,6 +116,7 @@ export const App = () => {
           <Route path={"/health-checks"} element={<HealthCheckEditor/>}/>
           <Route path={"/feedback/:feedbackType/:abVersion"} element={<FeedbackForms/>}/>
           <Route path={"/user-feedback"} element={<FeedbackList/>}/>
+          <Route path={"/export-config"} element={<ExportConfig/>}/>
         </Routes>
       </StyledContainer>
       <footer className="group js-footer" id="footer" role="contentinfo">

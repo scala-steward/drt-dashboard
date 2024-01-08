@@ -19,7 +19,7 @@ lazy val slickVersion = "3.4.1"
 lazy val awsJava2SdkVersion = "2.16.104"
 lazy val postgresqlVersion = "42.7.0"
 lazy val mockitoVersion = "4.6.1"
-
+lazy val poiScalaVersion ="0.24"
 lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
@@ -51,7 +51,7 @@ lazy val root = (project in file(".")).
       "com.github.tototoshi" %% "scala-csv" % scalaCsvVersion,
       "org.scalactic" %% "scalactic" % scalaTestVersion,
       "software.amazon.awssdk" % "s3" % awsJava2SdkVersion,
-
+      "info.folone" %% "poi-scala" % poiScalaVersion,
       "com.typesafe.slick" %% "slick" % slickVersion,
       "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
       "org.postgresql" % "postgresql" % postgresqlVersion,
