@@ -78,3 +78,4 @@ object ExportQueries {
     val createdAt = new Timestamp(regionExport.createdAt.millisSinceEpoch)
     (regionExport.startDate.toISOString, regionExport.endDate.toISOString, createdAt)
   }
+}

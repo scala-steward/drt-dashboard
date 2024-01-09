@@ -8,7 +8,6 @@ import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.Specs2RouteTest
 import akka.stream.Materializer
-import org.scalatest.Sequential
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeEach
@@ -16,7 +15,7 @@ import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile.api._
 import spray.json._
 import uk.gov.homeoffice.drt.auth.Roles.BorderForceStaff
-import uk.gov.homeoffice.drt.db.{TestDatabase, UserFeedbackDao, UserFeedbackRow}
+import uk.gov.homeoffice.drt.db.{TestDatabase, UserFeedbackQueries, UserFeedbackRow}
 
 import java.sql.Timestamp
 import java.time.Instant
@@ -35,10 +34,9 @@ class FeedbackRoutesSpec extends Specification
   implicit val mat: Materializer = Materializer(sys.classicSystem)
   val stringToLocalDateTime: String => Instant = dateString => Instant.parse(dateString)
 
-  override def before = {
+  override def before: Future[Unit] = {
     Await.ready(TestDatabase.db.run(DBIO.seq(TestDatabase.userFeedbackTable.schema.dropIfExists,
       TestDatabase.userFeedbackTable.schema.createIfNotExists)), 5.second)
-
   }
 
   def getUserFeedBackRow(email: String, feedbackData: FeedbackData, createdAt: Timestamp): UserFeedbackRow = {
@@ -53,14 +51,14 @@ class FeedbackRoutesSpec extends Specification
       abVersion = Option(feedbackData.aORbTest))
   }
 
-  def insertUserFeedback(userFeedbackRow: UserFeedbackRow, userFeedbackDao: UserFeedbackDao): Future[Int] = {
-    userFeedbackDao.insertOrUpdate(userFeedbackRow)
+  def insertUserFeedback(userFeedbackRow: UserFeedbackRow, UserFeedbackQueries: UserFeedbackQueries): Future[Int] = {
+    UserFeedbackQueries.insertOrUpdate(userFeedbackRow)
   }
 
-  def userFeedbackRoute(userFeedbackDao: UserFeedbackDao): Route = FeedbackRoutes(userFeedbackDao)
+  def userFeedbackRoute(UserFeedbackQueries: UserFeedbackQueries): Route = FeedbackRoutes(UserFeedbackQueries)
 
   "get list of user feedbacks" >> {
-    val userFeedbackDao: UserFeedbackDao = UserFeedbackDao(TestDatabase.db)
+    val userFeedbackQueries: UserFeedbackQueries = UserFeedbackQueries(TestDatabase.db)
     val feedbackData = FeedbackData(feedbackType = "banner",
       aORbTest = "A",
       question_1 = "test",
@@ -72,17 +70,17 @@ class FeedbackRoutesSpec extends Specification
     val userFeedbackRow = getUserFeedBackRow(email, feedbackData,
       new Timestamp(stringToLocalDateTime("2022-12-06T10:15:30.00Z").toEpochMilli))
 
-    Await.result(insertUserFeedback(userFeedbackRow, userFeedbackDao), 5.seconds)
+    Await.result(insertUserFeedback(userFeedbackRow, userFeedbackQueries), 5.seconds)
     Get("/feedback") ~>
       RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
-      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackDao) ~> check {
+      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackQueries) ~> check {
       val jsonUsers = responseAs[String].parseJson.asInstanceOf[JsArray].elements
       jsonUsers.contains(userFeedbackRow.toJson)
     }
   }
 
   "save user feedback Data" >> {
-    val userFeedbackDao: UserFeedbackDao = UserFeedbackDao(TestDatabase.db)
+    val userFeedbackQueries: UserFeedbackQueries = UserFeedbackQueries(TestDatabase.db)
     val feedbackData = FeedbackData(feedbackType = "banner",
       aORbTest = "A",
       question_1 = "test",
@@ -94,16 +92,16 @@ class FeedbackRoutesSpec extends Specification
 
     Post("/feedback", feedbackData.toJson) ~>
       RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
-      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackDao) ~> check {
+      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackQueries) ~> check {
       val responseResult = responseAs[String]
-      val dataResult = Await.result(userFeedbackDao.selectByEmail(email), 5.seconds)
+      val dataResult = Await.result(userFeedbackQueries.selectByEmail(email), 5.seconds)
       dataResult.size === 1 && responseResult.contains(s"Feedback from user $email is saved successfully")
 
     }
   }
 
   "export user feedback Data" >> {
-    val userFeedbackDao: UserFeedbackDao = UserFeedbackDao(TestDatabase.db)
+    val userFeedbackQueries: UserFeedbackQueries = UserFeedbackQueries(TestDatabase.db)
     val feedbackData = FeedbackData(feedbackType = "banner",
       aORbTest = "A",
       question_1 = "test",
@@ -116,15 +114,15 @@ class FeedbackRoutesSpec extends Specification
     val userFeedbackRow = getUserFeedBackRow(email, feedbackData,
       new Timestamp(stringToLocalDateTime("2022-12-06T10:15:30.00Z").toEpochMilli))
 
-    Await.result(insertUserFeedback(userFeedbackRow, userFeedbackDao), 5.seconds)
+    Await.result(insertUserFeedback(userFeedbackRow, userFeedbackQueries), 5.seconds)
 
-    val row = Await.result(userFeedbackDao.selectByEmail(email), 5.seconds)
+    val row = Await.result(userFeedbackQueries.selectByEmail(email), 5.seconds)
 
     row.size === 1
     //There is issue here that we are not able to get the row from response but only header
     Get("/feedback/export") ~>
       RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
-      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackDao) ~>
+      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackQueries) ~>
       check {
         status shouldBe StatusCodes.OK
         header[`Content-Disposition`] should not be None

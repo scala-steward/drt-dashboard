@@ -97,7 +97,7 @@ object Server {
       val userService = UserService(UserDao(ProdDatabase.db))
       val dropInDao = DropInDao(ProdDatabase.db)
       val dropInRegistrationDao = DropInRegistrationDao(ProdDatabase.db)
-      val userFeedbackDao = UserFeedbackDao(ProdDatabase.db)
+      val userFeedbackQueries = UserFeedbackQueries(ProdDatabase.db)
       val featureGuideService = FeatureGuideService(FeatureGuideDao(ProdDatabase.db), FeatureGuideViewDao(ProdDatabase.db))
 
       val (exportUploader, exportDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.exportsFolderPrefix)
@@ -120,7 +120,7 @@ object Server {
             ApiRoutes(serverConfig.clientConfig, userService, ScheduledHealthCheckPausePersistenceImpl(db, now)),
             DropInSessionsRoute(dropInDao),
             DropInRegisterRoutes(dropInRegistrationDao),
-            FeedbackRoutes(userFeedbackDao),
+            FeedbackRoutes(userFeedbackQueries),
 
           )
         }

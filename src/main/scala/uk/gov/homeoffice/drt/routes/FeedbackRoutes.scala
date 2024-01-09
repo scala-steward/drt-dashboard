@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import spray.json.{RootJsonFormat, enrichAny}
-import uk.gov.homeoffice.drt.db.{UserFeedbackDao, UserFeedbackRow}
+import uk.gov.homeoffice.drt.db.{UserFeedbackQueries, UserFeedbackRow}
 import uk.gov.homeoffice.drt.json.DefaultTimeJsonProtocol
 
 import java.sql.Timestamp
@@ -30,7 +30,7 @@ object FeedbackRoutes extends FeedbackJsonFormats with BaseRoute {
   private val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm:ss")
   private val formattedDate: Timestamp => String = timestamp => timestamp.toLocalDateTime.format(formatter)
 
-  def exportFeedback(feedbackDao: UserFeedbackDao): Route = path("export") {
+  def exportFeedback(feedbackDao: UserFeedbackQueries): Route = path("export") {
     get {
       val csvHeader: String = "Email,Created at,Feedback type,Bf role,Drt quality,Drt likes,Drt improvements,Participation interest,AB version"
 
@@ -60,14 +60,14 @@ object FeedbackRoutes extends FeedbackJsonFormats with BaseRoute {
     }
   }
 
-  def getFeedbacks(feedbackDao: UserFeedbackDao)(implicit ec: ExecutionContext): Route = get {
+  def getFeedbacks(feedbackDao: UserFeedbackQueries)(implicit ec: ExecutionContext): Route = get {
     val getFeedbacksResult =
       feedbackDao.selectAll().map(forms => complete(StatusCodes.OK, forms.toJson))
     routeResponse(getFeedbacksResult, "Getting feedbacks")
   }
 
 
-  def saveFeedback(feedbackDao: UserFeedbackDao)(implicit ec: ExecutionContext): Route =
+  def saveFeedback(feedbackDao: UserFeedbackQueries)(implicit ec: ExecutionContext): Route =
     headerValueByName("X-Auth-Email") { userEmail =>
       post {
         entity(as[FeedbackData]) { feedbackData =>
@@ -91,7 +91,7 @@ object FeedbackRoutes extends FeedbackJsonFormats with BaseRoute {
     }
 
 
-  def apply(feedbackDao: UserFeedbackDao)(implicit ec: ExecutionContext): Route =
+  def apply(feedbackDao: UserFeedbackQueries)(implicit ec: ExecutionContext): Route =
     pathPrefix("feedback") {
       concat(exportFeedback(feedbackDao), saveFeedback(feedbackDao), getFeedbacks(feedbackDao))
     }
