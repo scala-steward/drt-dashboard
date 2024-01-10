@@ -51,11 +51,11 @@ class FeedbackRoutesSpec extends Specification
       abVersion = Option(feedbackData.aORbTest))
   }
 
-  def insertUserFeedback(userFeedbackRow: UserFeedbackRow, UserFeedbackDao: UserFeedbackDao): Future[Int] = {
-    UserFeedbackDao.insertOrUpdate(userFeedbackRow)
+  def insertUserFeedback(userFeedbackRow: UserFeedbackRow, userFeedbackDao: UserFeedbackDao): Future[Int] = {
+    userFeedbackDao.insertOrUpdate(userFeedbackRow)
   }
 
-  def userFeedbackRoute(UserFeedbackDao: UserFeedbackDao): Route = FeedbackRoutes(UserFeedbackDao)
+  def userFeedbackRoute(userFeedbackDao: UserFeedbackDao): Route = FeedbackRoutes(userFeedbackDao)
 
   "get list of user feedbacks" >> {
     val userFeedbackDao: UserFeedbackDao = UserFeedbackDao(TestDatabase.db)
