@@ -15,7 +15,7 @@ import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile.api._
 import spray.json._
 import uk.gov.homeoffice.drt.auth.Roles.BorderForceStaff
-import uk.gov.homeoffice.drt.db.{TestDatabase, UserFeedbackQueries, UserFeedbackRow}
+import uk.gov.homeoffice.drt.db.{TestDatabase, UserFeedbackDao, UserFeedbackRow}
 
 import java.sql.Timestamp
 import java.time.Instant
@@ -51,14 +51,14 @@ class FeedbackRoutesSpec extends Specification
       abVersion = Option(feedbackData.aORbTest))
   }
 
-  def insertUserFeedback(userFeedbackRow: UserFeedbackRow, UserFeedbackQueries: UserFeedbackQueries): Future[Int] = {
-    UserFeedbackQueries.insertOrUpdate(userFeedbackRow)
+  def insertUserFeedback(userFeedbackRow: UserFeedbackRow, UserFeedbackDao: UserFeedbackDao): Future[Int] = {
+    UserFeedbackDao.insertOrUpdate(userFeedbackRow)
   }
 
-  def userFeedbackRoute(UserFeedbackQueries: UserFeedbackQueries): Route = FeedbackRoutes(UserFeedbackQueries)
+  def userFeedbackRoute(UserFeedbackDao: UserFeedbackDao): Route = FeedbackRoutes(UserFeedbackDao)
 
   "get list of user feedbacks" >> {
-    val userFeedbackQueries: UserFeedbackQueries = UserFeedbackQueries(TestDatabase.db)
+    val userFeedbackDao: UserFeedbackDao = UserFeedbackDao(TestDatabase.db)
     val feedbackData = FeedbackData(feedbackType = "banner",
       aORbTest = "A",
       question_1 = "test",
@@ -70,17 +70,17 @@ class FeedbackRoutesSpec extends Specification
     val userFeedbackRow = getUserFeedBackRow(email, feedbackData,
       new Timestamp(stringToLocalDateTime("2022-12-06T10:15:30.00Z").toEpochMilli))
 
-    Await.result(insertUserFeedback(userFeedbackRow, userFeedbackQueries), 5.seconds)
+    Await.result(insertUserFeedback(userFeedbackRow, userFeedbackDao), 5.seconds)
     Get("/feedback") ~>
       RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
-      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackQueries) ~> check {
+      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackDao) ~> check {
       val jsonUsers = responseAs[String].parseJson.asInstanceOf[JsArray].elements
       jsonUsers.contains(userFeedbackRow.toJson)
     }
   }
 
   "save user feedback Data" >> {
-    val userFeedbackQueries: UserFeedbackQueries = UserFeedbackQueries(TestDatabase.db)
+    val userFeedbackDao: UserFeedbackDao = UserFeedbackDao(TestDatabase.db)
     val feedbackData = FeedbackData(feedbackType = "banner",
       aORbTest = "A",
       question_1 = "test",
@@ -92,16 +92,16 @@ class FeedbackRoutesSpec extends Specification
 
     Post("/feedback", feedbackData.toJson) ~>
       RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
-      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackQueries) ~> check {
+      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackDao) ~> check {
       val responseResult = responseAs[String]
-      val dataResult = Await.result(userFeedbackQueries.selectByEmail(email), 5.seconds)
+      val dataResult = Await.result(userFeedbackDao.selectByEmail(email), 5.seconds)
       dataResult.size === 1 && responseResult.contains(s"Feedback from user $email is saved successfully")
 
     }
   }
 
   "export user feedback Data" >> {
-    val userFeedbackQueries: UserFeedbackQueries = UserFeedbackQueries(TestDatabase.db)
+    val userFeedbackDao: UserFeedbackDao = UserFeedbackDao(TestDatabase.db)
     val feedbackData = FeedbackData(feedbackType = "banner",
       aORbTest = "A",
       question_1 = "test",
@@ -114,15 +114,15 @@ class FeedbackRoutesSpec extends Specification
     val userFeedbackRow = getUserFeedBackRow(email, feedbackData,
       new Timestamp(stringToLocalDateTime("2022-12-06T10:15:30.00Z").toEpochMilli))
 
-    Await.result(insertUserFeedback(userFeedbackRow, userFeedbackQueries), 5.seconds)
+    Await.result(insertUserFeedback(userFeedbackRow, userFeedbackDao), 5.seconds)
 
-    val row = Await.result(userFeedbackQueries.selectByEmail(email), 5.seconds)
+    val row = Await.result(userFeedbackDao.selectByEmail(email), 5.seconds)
 
     row.size === 1
     //There is issue here that we are not able to get the row from response but only header
     Get("/feedback/export") ~>
       RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
-      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackQueries) ~>
+      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackDao) ~>
       check {
         status shouldBe StatusCodes.OK
         header[`Content-Disposition`] should not be None
