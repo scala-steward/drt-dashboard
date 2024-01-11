@@ -162,10 +162,7 @@ object ExportRoutes {
             .getPortResponseForTerminal(uri, portCode)
             .recover { e =>
               log.error(s"Failed to get response from $uri", e)
-
-              handleReportFailure(emailClient, export, teamEmail, exportPersistence)
-
-              throw new Exception("Failed to get port response")
+              throw new Exception("Failed to get port response", e)
             }
       }
       .prepend(Source.single(ByteString(exportRequest.exportType.headerRow + "\n")))

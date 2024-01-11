@@ -8,7 +8,6 @@ import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.testkit.Specs2RouteTest
 import akka.stream.Materializer
-import org.scalatest.Sequential
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeEach
@@ -35,10 +34,9 @@ class FeedbackRoutesSpec extends Specification
   implicit val mat: Materializer = Materializer(sys.classicSystem)
   val stringToLocalDateTime: String => Instant = dateString => Instant.parse(dateString)
 
-  override def before = {
+  override def before: Future[Unit] = {
     Await.ready(TestDatabase.db.run(DBIO.seq(TestDatabase.userFeedbackTable.schema.dropIfExists,
       TestDatabase.userFeedbackTable.schema.createIfNotExists)), 5.second)
-
   }
 
   def getUserFeedBackRow(email: String, feedbackData: FeedbackData, createdAt: Timestamp): UserFeedbackRow = {

@@ -21,26 +21,26 @@ case object PortPassengers extends ExportType with PortExportType {
   private val queueHeadings: String = Queues.queueOrder.map(q => displayName(q)).mkString(",")
 
   override val routePrefix: String = "passengers"
-  override val headerRow: String = s"Region,Port,Total passengers,PCP passengers,Transit passengers,$queueHeadings"
+  override val headerRow: String = s"Region,Port,PCP passengers,$queueHeadings"
 }
 
 case object TerminalPassengers extends ExportType {
   private val queueHeadings: String = Queues.queueOrder.map(q => displayName(q)).mkString(",")
 
   override val routePrefix: String = "passengers"
-  override val headerRow: String = s"Region,Port,Terminal,Total passengers,PCP passengers,Transit passengers,$queueHeadings"
+  override val headerRow: String = s"Region,Port,Terminal,PCP passengers,$queueHeadings"
 }
 
 case object PortPassengersDaily extends DailyExportType with PortExportType {
   private val queueHeadings: String = Queues.queueOrder.map(q => displayName(q)).mkString(",")
 
   override val routePrefix: String = "passengers"
-  override val headerRow: String = s"Date,Region,Port,Total passengers,PCP passengers,Transit passengers,$queueHeadings"
+  override val headerRow: String = s"Date,Region,Port,PCP passengers,$queueHeadings"
 }
 
 case object TerminalPassengersDaily extends DailyExportType {
   private val queueHeadings: String = Queues.queueOrder.map(q => displayName(q)).mkString(",")
 
   override val routePrefix: String = "passengers"
-  override val headerRow: String = s"Date,Region,Port,Terminal,Total passengers,PCP passengers,Transit passengers,$queueHeadings"
+  override val headerRow: String = s"Date,Region,Port,Terminal,PCP passengers,$queueHeadings"
 }
