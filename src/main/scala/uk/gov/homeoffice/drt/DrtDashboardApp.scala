@@ -2,7 +2,7 @@ package uk.gov.homeoffice.drt
 
 import akka.actor.typed.ActorSystem
 import com.typesafe.config.ConfigFactory
-import uk.gov.homeoffice.drt.notifications.{EmailClientImpl, EmailNotifications}
+import uk.gov.homeoffice.drt.notifications.{EmailClientImpl, EmailNotifications, SlackClientImpl}
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.schedule.{DropInNotification, DropInReminder, UserTracking}
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
@@ -53,15 +53,18 @@ object DrtDashboardApp extends App {
     healthCheckEmailRecipient = config.getString("health-checks.email-recipient"),
     healthCheckFrequencyMinutes = config.getInt("health-checks.frequency-minutes"),
     enabledPorts = enabledPorts,
-  )
+    slackUrl = config.getString("health-checks.slack.webhook-url")
+    )
 
   private val govNotifyClient = new NotificationClient(serverConfig.notifyServiceApiKey)
 
   val emailClient: EmailClientImpl = EmailClientImpl(govNotifyClient)
 
+  val slackClient = SlackClientImpl(ProdHttpClient, serverConfig.slackUrl)
+
   private val emailNotifications = EmailNotifications(serverConfig.accessRequestEmails, govNotifyClient)
 
-  val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig, emailNotifications, emailClient), "DrtDashboard")
+  val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig, emailNotifications, emailClient, slackClient), "DrtDashboard")
   if (serverConfig.userTrackingFeatureFlag) {
     ActorSystem(UserTracking(serverConfig, 1.minutes, 100, emailNotifications), "UserTrackingTimer")
   }

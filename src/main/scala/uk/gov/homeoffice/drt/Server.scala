@@ -15,7 +15,7 @@ import akka.util.Timeout
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.db._
 import uk.gov.homeoffice.drt.healthchecks._
-import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications}
+import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications, SlackClient}
 import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealthCheckPausePersistenceImpl}
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
@@ -65,7 +65,8 @@ case class ServerConfig(host: String,
                         healthCheckResolvedNotifyTemplateId: String,
                         healthCheckEmailRecipient: String,
                         healthCheckFrequencyMinutes: Int,
-                        enabledPorts: Seq[PortCode]
+                        enabledPorts: Seq[PortCode],
+                        slackUrl: String
                        ) {
   val portIataCodes: Iterable[String] = portTerminals.keys.map(_.iata)
   val clientConfig: ClientConfig = ClientConfig(portRegions, portTerminals, rootDomain, teamEmail)
@@ -86,6 +87,7 @@ object Server {
   def apply(serverConfig: ServerConfig,
             notifications: EmailNotifications,
             emailClient: EmailClient,
+            slackClient: SlackClient
            ): Behavior[Message] =
     Behaviors.setup { ctx: ActorContext[Message] =>
       implicit val system: ActorSystem[Nothing] = ctx.system
@@ -161,7 +163,7 @@ object Server {
 
             if (wasStopped) ctx.self ! Stop
 
-            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, emailClient, urls, db)
+            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, slackClient, emailClient, urls, db)
 
             running(binding, monitor)
 
@@ -175,6 +177,7 @@ object Server {
     }
 
   private def startHealthCheckMonitor(serverConfig: ServerConfig,
+                                      slackClient: SlackClient,
                                       emailClient: EmailClient,
                                       urls: Urls,
                                       db: AppDatabase,
@@ -187,6 +190,19 @@ object Server {
     implicit val timeout: Timeout = new Timeout(1.second)
     implicit val scheduler: Scheduler = system.scheduler
 
+    def sendSlackNotification(portCode: PortCode, checkName: String, priority: IncidentPriority, status: String): Unit = {
+      val port = portCode.toString.toUpperCase
+      val link = urls.urlForPort(port)
+      val message = {
+        s"""Health Check Alert - $status
+           |port: $port
+           |name: $checkName
+           |priority: ${priority.toString}
+           |link: $link""".stripMargin
+      }
+      slackClient.notify(message)
+    }
+
     def sendEmail(portCode: PortCode, checkName: String, priority: IncidentPriority, templateId: String): Unit = {
       emailClient.send(templateId, serverConfig.healthCheckEmailRecipient, Map(
         "port" -> portCode.toString.toUpperCase,
@@ -196,10 +212,15 @@ object Server {
         ))
     }
 
-    val soundAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) =>
+    val soundAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) => {
       sendEmail(portCode, checkName, priority, serverConfig.healthCheckTriggeredNotifyTemplateId)
-    val silenceAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) =>
+      sendSlackNotification(portCode, checkName, priority,"triggered")
+    }
+
+    val silenceAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) => {
       sendEmail(portCode, checkName, priority, serverConfig.healthCheckResolvedNotifyTemplateId)
+      sendSlackNotification(portCode, checkName, priority, "resolved")
+    }
 
     val healthChecksActor = system.systemActorOf(HealthChecksActor(Map.empty, soundAlarm, silenceAlarm, () => SDate.now().millisSinceEpoch, 3), "health-checks")
     val poolSettings = ConnectionPoolSettings(system)
