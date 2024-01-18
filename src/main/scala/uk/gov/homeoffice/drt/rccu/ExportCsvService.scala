@@ -1,8 +1,6 @@
 package uk.gov.homeoffice.drt.rccu
 
-import akka.http.scaladsl.model.{ContentType, HttpHeader, MediaTypes}
 import akka.http.scaladsl.model.StatusCodes.OK
-import akka.http.scaladsl.model.headers.{Accept, `Content-Type`}
 import akka.stream.Materializer
 import akka.util.ByteString
 import org.slf4j.{Logger, LoggerFactory}
