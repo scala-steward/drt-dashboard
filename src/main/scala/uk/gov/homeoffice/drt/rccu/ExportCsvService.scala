@@ -33,6 +33,7 @@ case class ExportCsvService(httpClient: HttpClient) {
   def getPortResponseForTerminal(uri: String, portCode: PortCode)
                                 (implicit executionContext: ExecutionContext, mat: Materializer): Future[ByteString] = {
     val httpRequest = httpClient.createPortArrivalImportRequest(uri, portCode)
+    
     httpClient
       .send(httpRequest)
       .flatMap { r =>
