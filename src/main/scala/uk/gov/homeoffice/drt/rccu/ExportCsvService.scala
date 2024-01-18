@@ -1,6 +1,8 @@
 package uk.gov.homeoffice.drt.rccu
 
+import akka.http.scaladsl.model.{ContentType, HttpHeader, MediaTypes}
 import akka.http.scaladsl.model.StatusCodes.OK
+import akka.http.scaladsl.model.headers.{Accept, `Content-Type`}
 import akka.stream.Materializer
 import akka.util.ByteString
 import org.slf4j.{Logger, LoggerFactory}
@@ -33,6 +35,7 @@ case class ExportCsvService(httpClient: HttpClient) {
   def getPortResponseForTerminal(uri: String, portCode: PortCode)
                                 (implicit executionContext: ExecutionContext, mat: Materializer): Future[ByteString] = {
     val httpRequest = httpClient.createPortArrivalImportRequest(uri, portCode)
+    httpRequest.addHeader(Accept(MediaTypes.`text/csv`))
     httpClient
       .send(httpRequest)
       .flatMap { r =>

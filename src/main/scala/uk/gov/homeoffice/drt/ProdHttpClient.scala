@@ -2,6 +2,7 @@ package uk.gov.homeoffice.drt
 
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
+import akka.http.scaladsl.model.headers.Accept
 import akka.stream.Materializer
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.DashboardClient._
@@ -16,10 +17,14 @@ trait HttpClient {
   def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContext, mat: Materializer): Future[HttpResponse]
 
   def createPortArrivalImportRequest(uri: String, portCode: PortCode): HttpRequest = {
-    val headersWithRoles = rolesToRoleHeader(List(
+    val roleHeaders = rolesToRoleHeader(List(
       Option(Roles.ArrivalsAndSplitsView), Option(Roles.ApiView), Roles.parse(portCode.iata)
     ).flatten)
-    HttpRequest(method = HttpMethods.GET, uri = uri, headers = headersWithRoles)
+    HttpRequest(
+      method = HttpMethods.GET,
+      uri = uri,
+      headers = roleHeaders :+ Accept(MediaTypes.`text/csv`)
+    )
   }
 }
 
