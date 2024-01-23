@@ -66,13 +66,13 @@ function* handleRequestDownload(action: RequestDownloadActionType) {
       }
     }
 
-    const response: Response = yield call (axios.post, ApiClient.exportEndpoint, payload)
+    const response: Response = yield call (axios.post, ApiClient.exportEndpoint, payload);
 
     yield put(setCreatedAt(response.data.createdAt))
     yield put(setStatus(response.data.status))
     yield put(setDownloadLink(response.data.downloadLink))
   } catch (e) {
-    console.log(e)
+    yield put(setStatus('failed'))
   }
 }
 

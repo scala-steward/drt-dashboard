@@ -59,6 +59,23 @@ const drtTheme = createTheme({
         }
       },
     },
+    MuiAccordion: {
+      styleOverrides: {
+        root: {
+          margin: '0 !important'
+        }
+      }
+    },
+    MuiAccordionSummary: {
+      styleOverrides: {
+        root: {
+          minHeight: 'unset !important',
+        },
+        content: {
+          margin: '12px 0 0 !important'
+        }
+      }
+    }
   },
 
 

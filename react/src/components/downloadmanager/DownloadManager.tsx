@@ -71,6 +71,8 @@ const DownloadManager = ({status, createdAt, downloadUrl, errors, requestDownloa
       interval.current = setInterval(()=>{
         checkDownloadStatus(createdAt);
       }, 2000);
+    } else if (status === 'failed') {
+      setModalOpen(true)
     }
     return () => {
       clearInterval(interval.current);
@@ -94,7 +96,7 @@ const DownloadManager = ({status, createdAt, downloadUrl, errors, requestDownloa
     setModalOpen(false)
   }
 
-  const onexportTypeChange = (event: React.ChangeEvent<HTMLInputElement>, exportType: string) => {
+  const handleExportTypeChange = (event: React.ChangeEvent<HTMLInputElement>, exportType: string) => {
     setExportType(exportType);
   }
 
@@ -212,7 +214,7 @@ const DownloadManager = ({status, createdAt, downloadUrl, errors, requestDownloa
               aria-labelledby="demo-radio-buttons-group-label"
               defaultValue="female"
               name="radio-buttons-group"
-              onChange={onexportTypeChange}
+              onChange={handleExportTypeChange}
               value={exportType}
             >
               <FormControlLabel value="passengers-port" control={<Radio />} label="By port" />

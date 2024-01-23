@@ -1,5 +1,6 @@
 import * as React from 'react';
-import {Button, CircularProgress, Dialog, DialogContent, DialogTitle, Typography} from "@mui/material";
+import {Button, CircularProgress, Dialog, DialogContent, DialogTitle, Typography, IconButton} from "@mui/material";
+import CloseIcon from '@mui/icons-material/Close';
 import Link from "@mui/material/Link";
 
 
@@ -36,6 +37,17 @@ const DownloadModal = ({status, downloadUrl, isModalOpen, handleModalClose}: Dow
             onClose={() => handleModalClose()}
           >
             <DialogTitle sx={{textAlign: 'center'}}>{ titleText }</DialogTitle>
+            <IconButton
+              aria-label="close"
+              onClick={handleModalClose}
+              sx={{
+                position: 'absolute',
+                right: 10,
+                top: 10,
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
             <DialogContent sx={{ display: 'flex', justifyContent: 'center', flexDirection: 'column', textAlign: 'center'}}>
               { status === 'preparing' && <CircularProgress sx={{margin: '0 auto 1em'}} /> }
               <Typography>{ paragraphText }</Typography>

@@ -41,6 +41,7 @@ function getStyles(port: string, selectedPorts: readonly string[], theme: Theme)
 
 export default function DownloadPorts({error, handlePortChange, handleRemovePort, handlePortCheckboxChange, handlePortCheckboxGroupChange, portsByRegion, selectedPorts  }: DownloadPortsProps) {
   const theme = useTheme();
+  const [expandedTab, setExpandedTab] = React.useState<string>('');
 
   const allUserPorts :string[] = portsByRegion.map((region) => [...region.ports]).flat();
   portsByRegion.forEach((region) => region.ports.sort());
@@ -49,6 +50,29 @@ export default function DownloadPorts({error, handlePortChange, handleRemovePort
     return (
       <ListItem key={airport}><FormControlLabel key={airport} control={<Checkbox name={airport} checked={selectedPorts.includes(airport)} onChange={handlePortCheckboxChange} inputProps={{ 'aria-label': 'controlled' }} />} label={airport} /></ListItem>
     )
+  }
+
+  const accordionChange = (event: React.SyntheticEvent, isClosed: boolean, regionName: string, regionPorts: string[]) => {
+    let target = (event.target as HTMLElement).tagName;
+
+    switch (target) {
+      case 'INPUT':
+        //clicked checkbox
+        if (selectedPorts.some(r=> regionPorts.includes(r))) {
+          //user is unchecking region
+          !isClosed && setExpandedTab('');
+        } else {
+          //user is checking region
+          isClosed && setExpandedTab(regionName);
+        }
+        break;
+      case 'DIV':
+        //click accordion
+        expandedTab === regionName ? setExpandedTab('') : setExpandedTab(regionName);
+        break;
+      default:
+        break;
+    }
   }
 
   return (
@@ -63,6 +87,7 @@ export default function DownloadPorts({error, handlePortChange, handleRemovePort
             multiple
             value={selectedPorts}
             onChange={handlePortChange}
+            sx={{fontSize: '22px'}}
             input={<OutlinedInput id="select-multiple-chip" label="Chip" />}
             renderValue={(selected) => (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
@@ -93,16 +118,22 @@ export default function DownloadPorts({error, handlePortChange, handleRemovePort
               </MenuItem> )}
           </Select>
         </FormControl>
+        <div>
         {
           portsByRegion.map((region: Region) => {
             return (
-            <Accordion key={region.name}>
+            <Accordion 
+              key={region.name} 
+              expanded={expandedTab === region.name} 
+              onChange={(event, isClosed) => accordionChange(event, isClosed, region.name, region.ports)}
+              >
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
                 aria-controls="panel1a-content"
                 id="panel1a-header"
+                sx={{margin: '12px 0 !important'}}
               >
-                  <FormControlLabel control={<Checkbox name={region.name} onChange={handlePortCheckboxGroupChange} inputProps={{ 'aria-label': 'controlled' }} />} label={region.name} />
+                  <FormControlLabel control={<Checkbox name={region.name} checked={selectedPorts.some(r=> region.ports.includes(r))} onChange={handlePortCheckboxGroupChange} inputProps={{ 'aria-label': 'controlled' }} />} label={region.name} />
                   <Chip sx={{marginLeft: '1em'}} label={`${region.ports.filter(port => selectedPorts.includes(port)).length} selected`} />
 
               </AccordionSummary>
@@ -134,6 +165,7 @@ export default function DownloadPorts({error, handlePortChange, handleRemovePort
             </Accordion>)
           })
         }
+        </div>
     </Box>
   )
 }
