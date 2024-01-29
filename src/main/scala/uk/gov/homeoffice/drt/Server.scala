@@ -114,6 +114,7 @@ object Server {
         indexRoutes,
         pathPrefix("api") {
           concat(
+            PassengerRoutes(ProdHttpClient),
             CiriumRoutes(serverConfig.ciriumDataUri),
             DrtRoutes(serverConfig.portIataCodes),
             LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
@@ -125,9 +126,9 @@ object Server {
             DropInRegisterRoutes(dropInRegistrationDao),
             FeedbackRoutes(userFeedbackDao),
             ExportConfigRoutes(ProdHttpClient, serverConfig.enabledPorts),
-            )
+          )
         }
-        )
+      )
 
       val serverBinding = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
 
@@ -209,12 +210,12 @@ object Server {
         "name" -> checkName,
         "level" -> priority.toString,
         "link" -> urls.urlForPort(portCode.toString())
-        ))
+      ))
     }
 
     val soundAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) => {
       sendEmail(portCode, checkName, priority, serverConfig.healthCheckTriggeredNotifyTemplateId)
-      sendSlackNotification(portCode, checkName, priority,"triggered")
+      sendSlackNotification(portCode, checkName, priority, "triggered")
     }
 
     val silenceAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) => {
