@@ -24,7 +24,7 @@ case class LegacyExportCsvService(httpClient: HttpClient) {
   def getPortResponseForTerminal(start: String, end: String, regionName: String, port: String, terminal: String)
                                 (implicit executionContext: ExecutionContextExecutor, mat: Materializer): Future[ByteString] = {
     val uri = getUri(port, start, end, terminal)
-    val httpRequest = httpClient.createPortArrivalImportRequest(uri, PortCode(port))
+    val httpRequest = httpClient.httpRequestForPortCsv(uri, PortCode(port))
     httpClient
       .send(httpRequest)
       .flatMap { r =>

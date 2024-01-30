@@ -47,6 +47,11 @@ object PassengerRoutes {
             HttpRequest(uri = url, headers = incomingHeaders)
           }
 
+          val contentType = request.headers.find(_.name() == "Accept").map {
+            case header if header.value() == "text/csv" => ContentTypes.`text/csv(UTF-8)`
+            case _ => ContentTypes.`application/json`
+          }.getOrElse(ContentTypes.`application/json`)
+
           val eventualResult = maybeRequest match {
             case Some(httpRequest) =>
               httpClient.send(httpRequest).flatMap { response =>
@@ -54,7 +59,7 @@ object PassengerRoutes {
                   case StatusCodes.OK =>
                     response.entity.dataBytes.runFold(ByteString.empty)(_ ++ _)
                       .map { body =>
-                        complete(HttpEntity(ContentTypes.`application/json`, body))
+                        complete(HttpEntity(contentType, body))
                       }
                       .recoverWith { t =>
                         log.error(s"Error while requesting passengers from ${httpRequest.uri}", t)
