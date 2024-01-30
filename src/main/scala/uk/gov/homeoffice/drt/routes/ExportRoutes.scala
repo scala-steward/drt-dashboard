@@ -159,7 +159,7 @@ object ExportRoutes {
       .mapAsync(1) {
         case (uri, portCode) =>
           exportCsvService
-            .getPortResponseForTerminal(uri, portCode)
+            .responseContentAsByteString(uri, portCode)
             .recover { e =>
               log.error(s"Failed to get response from $uri", e)
               throw new Exception("Failed to get port response", e)

@@ -30,10 +30,10 @@ case class ExportCsvService(httpClient: HttpClient) {
 
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def getPortResponseForTerminal(uri: String, portCode: PortCode)
-                                (implicit executionContext: ExecutionContext, mat: Materializer): Future[ByteString] = {
-    val httpRequest = httpClient.createPortArrivalImportRequest(uri, portCode)
-    
+  def responseContentAsByteString(uri: String, portCode: PortCode)
+                                 (implicit executionContext: ExecutionContext, mat: Materializer): Future[ByteString] = {
+    val httpRequest = httpClient.httpRequestForPortCsv(uri, portCode)
+
     httpClient
       .send(httpRequest)
       .flatMap { r =>

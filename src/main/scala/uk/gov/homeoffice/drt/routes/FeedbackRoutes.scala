@@ -68,8 +68,8 @@ object FeedbackRoutes extends FeedbackJsonFormats with BaseRoute {
 
 
   def saveFeedback(feedbackDao: UserFeedbackDao)(implicit ec: ExecutionContext): Route =
-    headerValueByName("X-Auth-Email") { userEmail =>
-      post {
+    post {
+      headerValueByName("X-Auth-Email") { userEmail =>
         entity(as[FeedbackData]) { feedbackData =>
           val currentTimestamp = new Timestamp(Instant.now().toEpochMilli)
           val saveFeedbackResult = feedbackDao.insertOrUpdate(

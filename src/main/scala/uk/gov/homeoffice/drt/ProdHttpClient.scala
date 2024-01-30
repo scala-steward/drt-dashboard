@@ -16,7 +16,7 @@ trait HttpClient {
 
   def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContext, mat: Materializer): Future[HttpResponse]
 
-  def createPortArrivalImportRequest(uri: String, portCode: PortCode): HttpRequest = {
+  def httpRequestForPortCsv(uri: String, portCode: PortCode): HttpRequest = {
     val roleHeaders = rolesToRoleHeader(List(
       Option(Roles.ArrivalsAndSplitsView), Option(Roles.ApiView), Roles.parse(portCode.iata)
     ).flatten)
