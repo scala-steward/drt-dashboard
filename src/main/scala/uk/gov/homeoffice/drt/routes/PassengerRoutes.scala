@@ -1,6 +1,5 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.http.scaladsl.model.StatusCodes.{BadRequest, InternalServerError}
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
@@ -8,7 +7,6 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.ByteString
 import org.slf4j.LoggerFactory
-import spray.json.enrichAny
 import uk.gov.homeoffice.drt.jsonformats.PassengersSummaryFormat.JsonFormat
 import uk.gov.homeoffice.drt.models.{PassengersSummaries, PassengersSummary}
 import uk.gov.homeoffice.drt.ports.PortCode
@@ -60,28 +58,25 @@ object PassengerRoutes {
             case _ => ContentTypes.`application/json`
           }.getOrElse(ContentTypes.`application/json`)
 
-          val eventualResult: Future[PassengersSummaries] = requestsToPassengerSummaries(httpClient)(requests)
+          val eventualContent = requestsToPassengerSummaries(httpClient, contentType, requests)
 
-          import uk.gov.homeoffice.drt.jsonformats.PassengersSummaryFormat._
-
-          onComplete(eventualResult) {
-            case Success(result) =>
-              val json = result.summaries.toJson
-              val print1 = json.compactPrint
-              complete(HttpEntity(contentType, print1))
+          onComplete(eventualContent) {
+            case Success(content) => complete(HttpEntity(contentType, content))
           }
         }
       }
     }
   }
 
-  def requestsToPassengerSummaries(httpClient: HttpClient)
-                                  (requests: Iterable[HttpRequest])
-                                  (implicit ec: ExecutionContext, mat: Materializer): Future[PassengersSummaries] = {
+  def requestsToPassengerSummaries(httpClient: HttpClient,
+                                   contentType: ContentType,
+                                   requests: Iterable[HttpRequest],
+                                  )
+                                  (implicit ec: ExecutionContext, mat: Materializer): Future[String] = {
     import spray.json.DefaultJsonProtocol._
     import spray.json._
 
-    Source(requests.toList)
+    val byteSteams = Source(requests.toList)
       .mapAsync(1)(httpClient.send(_))
       .flatMapConcat { response =>
         response.status match {
@@ -92,11 +87,20 @@ object PassengerRoutes {
             Source.empty[ByteString]
         }
       }
-      .fold(PassengersSummaries.empty) {
-        case (acc, dataBytes) =>
-          acc ++ dataBytes.utf8String.parseJson.convertTo[Seq[PassengersSummary]]
-      }
-      .runWith(Sink.head)
+    val stringStream = contentType match {
+      case ContentTypes.`text/csv(UTF-8)` =>
+        byteSteams
+          .map(_.utf8String)
+          .fold("")(_ + _)
+      case ContentTypes.`application/json` =>
+        byteSteams
+          .fold(PassengersSummaries.empty) {
+            case (acc, dataBytes) =>
+              acc ++ dataBytes.utf8String.parseJson.convertTo[Seq[PassengersSummary]]
+          }
+          .map(_.summaries.toJson.compactPrint)
+    }
+    stringStream.runWith(Sink.head)
   }
 
   private def endpointUrl(rootDomain: PortCode, start: LocalDate, end: LocalDate, maybeTerminal: Option[String], granularity: String): String = {
