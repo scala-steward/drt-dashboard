@@ -68,15 +68,15 @@ object PassengerRoutes {
     }
   }
 
-  def requestsToPassengerSummaries(httpClient: HttpClient,
-                                   contentType: ContentType,
-                                   requests: Iterable[HttpRequest],
+  private def requestsToPassengerSummaries(httpClient: HttpClient,
+                                           contentType: ContentType,
+                                           requests: Iterable[HttpRequest],
                                   )
-                                  (implicit ec: ExecutionContext, mat: Materializer): Future[String] = {
+                                          (implicit ec: ExecutionContext, mat: Materializer): Future[String] = {
     import spray.json.DefaultJsonProtocol._
     import spray.json._
 
-    val byteSteams = Source(requests.toList)
+    val byteStreams = Source(requests.toList)
       .mapAsync(1)(httpClient.send(_))
       .flatMapConcat { response =>
         response.status match {
@@ -89,14 +89,13 @@ object PassengerRoutes {
       }
     val stringStream = contentType match {
       case ContentTypes.`text/csv(UTF-8)` =>
-        byteSteams
+        byteStreams
           .map(_.utf8String)
           .fold("")(_ + _)
       case ContentTypes.`application/json` =>
-        byteSteams
+        byteStreams
           .fold(PassengersSummaries.empty) {
-            case (acc, dataBytes) =>
-              acc ++ dataBytes.utf8String.parseJson.convertTo[Seq[PassengersSummary]]
+            case (acc, dataBytes) => acc ++ dataBytes.utf8String.parseJson.convertTo[Seq[PassengersSummary]]
           }
           .map(_.summaries.toJson.compactPrint)
     }
