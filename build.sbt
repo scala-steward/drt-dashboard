@@ -1,6 +1,6 @@
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v711"
+lazy val drtLibVersion = "v755"
 lazy val drtCiriumVersion = "203"
 lazy val akkaHttpVersion = "10.5.3"
 lazy val akkaVersion = "2.8.5"
@@ -20,6 +20,7 @@ lazy val awsJava2SdkVersion = "2.21.40"
 lazy val postgresqlVersion = "42.7.0"
 lazy val mockitoVersion = "4.6.1"
 lazy val poiScalaVersion ="0.24"
+
 lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
@@ -63,7 +64,6 @@ lazy val root = (project in file(".")).
       "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
       "org.specs2" %% "specs2-core" % specs2Version % Test,
       "org.mockito" % "mockito-core" % mockitoVersion % Test,
-
 ),
 
     resolvers += "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/",
