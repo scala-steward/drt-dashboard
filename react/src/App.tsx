@@ -67,10 +67,7 @@ export const App = () => {
                     id="global-header-logo"
                     className="content"
                     sx={{display: 'flex', gap: 1, alignItems: 'center', justifyItems: 'center'}}>
-                <img
-                  src="/images/gov.uk_logotype_crown.png"
-                  width="36" height="32" alt=""/>
-                GOV.UK
+                <img src="/images/gov.uk-white.svg" width="150" height="35" alt="GOV.UK"/>
               </Link>
             </div>
           </div>
