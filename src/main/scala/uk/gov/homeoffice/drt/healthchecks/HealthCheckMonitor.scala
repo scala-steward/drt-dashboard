@@ -20,8 +20,11 @@ object HealthCheckMonitor {
            (implicit mat: Materializer, ec: ExecutionContext): () => Future[Done] =
     () => Source(ports.toList)
       .mapAsync(1) { port =>
-        log.info("checking port " + port)
-        PortHealthCheck(port, makeRequest).map(_.map(r => (port, r)))
+        log.info("Checking port " + port)
+        PortHealthCheck(port, makeRequest).map(_.map { r =>
+          log.info(s"HealthCheckMonitor got response for $port: ${r.name} -> ${r.isPass}")
+          (port, r)
+        })
       }
       .mapConcat(identity)
       .mapAsync(1) {
