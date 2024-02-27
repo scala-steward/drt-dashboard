@@ -194,32 +194,15 @@ object Server {
     def sendSlackNotification(portCode: PortCode, checkName: String, priority: IncidentPriority, status: String): Unit = {
       val port = portCode.toString.toUpperCase
       val link = urls.urlForPort(port)
-      val message = {
-        s"""Health Check Alert - $status
-           |port: $port
-           |name: $checkName
-           |priority: ${priority.toString}
-           |link: $link""".stripMargin
-      }
+      val message = s"$port $checkName (${priority.name}) $status - $link"
       slackClient.notify(message)
     }
 
-    def sendEmail(portCode: PortCode, checkName: String, priority: IncidentPriority, templateId: String): Unit = {
-      emailClient.send(templateId, serverConfig.healthCheckEmailRecipient, Map(
-        "port" -> portCode.toString.toUpperCase,
-        "name" -> checkName,
-        "level" -> priority.toString,
-        "link" -> urls.urlForPort(portCode.toString())
-      ))
-    }
-
     val soundAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) => {
-      sendEmail(portCode, checkName, priority, serverConfig.healthCheckTriggeredNotifyTemplateId)
       sendSlackNotification(portCode, checkName, priority, "triggered")
     }
 
     val silenceAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) => {
-      sendEmail(portCode, checkName, priority, serverConfig.healthCheckResolvedNotifyTemplateId)
       sendSlackNotification(portCode, checkName, priority, "resolved")
     }
 

@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.drt.healthchecks
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Try}
 
 trait HealthCheck[A] {
   val priority: IncidentPriority
@@ -75,8 +75,14 @@ case object DeskUpdatesHealthCheck extends BooleanHealthCheck {
   override val url: String = "/health-check/calculated-desk-updates"
 }
 
-trait IncidentPriority
+trait IncidentPriority {
+  val name: String
+}
 
-case object Priority1 extends IncidentPriority
+case object Priority1 extends IncidentPriority {
+  override val name: String = "P1"
+}
 
-case object Priority2 extends IncidentPriority
+case object Priority2 extends IncidentPriority {
+  override val name: String = "P2"
+}
