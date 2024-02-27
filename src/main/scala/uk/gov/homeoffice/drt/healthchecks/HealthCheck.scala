@@ -20,9 +20,9 @@ trait PercentageHealthCheck extends HealthCheck[Double] {
         case "null" => Try(None)
         case _ => Try(Option(str.toDouble))
       }
-      val isPass = value.toOption.flatten.map(pass)
+      val maybeIsPass = value.toOption.flatten.map(pass)
 
-      PercentageHealthCheckResponse(priority, name, value, isPass)
+      PercentageHealthCheckResponse(priority, name, value, maybeIsPass)
     }
 
   override def failure: HealthCheckResponse[Double] =

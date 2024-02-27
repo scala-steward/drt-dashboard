@@ -22,7 +22,7 @@ object HealthCheckMonitor {
       .mapAsync(1) { port =>
         log.info("Checking port " + port)
         PortHealthCheck(port, makeRequest).map(_.map { r =>
-          log.info(s"HealthCheckMonitor got response for $port: ${r.name} -> ${r.isPass}")
+          log.info(s"HealthCheckMonitor got response for $port: ${r.name} -> ${r.maybeIsPass}")
           (port, r)
         })
       }

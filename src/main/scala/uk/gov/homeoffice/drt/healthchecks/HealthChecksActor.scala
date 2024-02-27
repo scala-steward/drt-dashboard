@@ -48,8 +48,8 @@ object HealthChecksActor {
     state.updated(portCode, newPortResponses)
   }
 
-  def getHcResponses(portResponses: Map[String, SortedMap[Long, HealthCheckResponse[_]]],
-                     checkName: String): SortedMap[Long, HealthCheckResponse[_]] =
+  private def getHcResponses(portResponses: Map[String, SortedMap[Long, HealthCheckResponse[_]]],
+                             checkName: String): SortedMap[Long, HealthCheckResponse[_]] =
     portResponses.getOrElse(checkName, SortedMap.empty[Long, HealthCheckResponse[_]])
 
   def isHcAlarmActive(portChecks: Map[PortCode, Map[String, SortedMap[Long, HealthCheckResponse[_]]]],
@@ -59,6 +59,12 @@ object HealthChecksActor {
                      ): Boolean = {
     val portResponses = portChecks.getOrElse(portCode, Map.empty)
     val hcResponses = getHcResponses(portResponses, checkName)
-    hcResponses.view.values.count(r => r.value.isFailure || r.isPass.contains(false)) == alarmTriggerConsecutiveFailures
+
+    if (hcResponses.size >= alarmTriggerConsecutiveFailures)
+      hcResponses
+        .takeRight(alarmTriggerConsecutiveFailures).values
+        .forall(r => r.value.isFailure || r.maybeIsPass.contains(false))
+    else
+      false
   }
 }

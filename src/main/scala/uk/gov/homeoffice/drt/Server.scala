@@ -212,9 +212,9 @@ object Server {
       .withMaxRetries(0)
       .withMaxConnections(5)
     val makeRequest = (request: HttpRequest) => Http().singleRequest(request, settings = poolSettings)
-    val recordResponse = (port: PortCode, response: HealthCheckResponse[_]) => {
+    val recordResponse = (port: PortCode, response: HealthCheckResponse[_]) =>
       healthChecksActor.ask(replyTo => HealthChecksActor.PortHealthCheckResponse(port, response, replyTo))
-    }
+
     log.info(s"Starting health check monitor for ports ${serverConfig.portTerminals.keys.mkString(", ")}")
     val monitor = HealthCheckMonitor(makeRequest, recordResponse, serverConfig.portTerminals.keys)
     val pausesProvider = CheckScheduledPauses.pausesProvider(ScheduledHealthCheckPausePersistenceImpl(db, () => SDate.now()))

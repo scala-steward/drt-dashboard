@@ -43,22 +43,33 @@ class HealthChecksActorSpec
 
       val result = HealthChecksActor.updateState(emptyState, port, successResponse, "test", nowMillis)
 
-      result === Map(port -> Map("test" -> SortedMap(nowMillis -> successResponse)))
+      result should ===(Map(port -> Map("test" -> SortedMap(nowMillis -> successResponse))))
     }
   }
 
   "isHcAlarmActive" should {
     val alarmTriggerConsecutiveFailures = 3
-    s"return true if there are $alarmTriggerConsecutiveFailures failures" in {
+    s"return true if the last $alarmTriggerConsecutiveFailures are all failures" in {
       val port = PortCode("LHR")
       val failureResponse = BooleanHealthCheckResponse(Priority1, "test", Success(Option(false)), Option(false))
-      val failureState = Map(port -> Map("test" -> SortedMap(1L -> failureResponse, 2L -> failureResponse, 3L -> failureResponse)))
+      val successResponse = BooleanHealthCheckResponse(Priority1, "test", Success(Some(true)), Option(true))
+      val failureState = Map(port -> Map("test" -> SortedMap(1L -> successResponse, 2L -> successResponse, 3L -> failureResponse, 4L -> failureResponse, 5L -> failureResponse)))
 
       val result = HealthChecksActor.isHcAlarmActive(failureState, port, "test", alarmTriggerConsecutiveFailures)
 
-      result === true
+      result should ===(true)
     }
-    s"return false if there are less than $alarmTriggerConsecutiveFailures failures" in {
+    s"return false if the last $alarmTriggerConsecutiveFailures are not all failures" in {
+      val port = PortCode("LHR")
+      val failureResponse = BooleanHealthCheckResponse(Priority1, "test", Success(Option(false)), Option(false))
+      val successResponse = BooleanHealthCheckResponse(Priority1, "test", Success(Some(true)), Option(true))
+      val failureState = Map(port -> Map("test" -> SortedMap(1L -> failureResponse, 2L -> successResponse, 3L -> successResponse, 4L -> failureResponse, 5L -> failureResponse)))
+
+      val result = HealthChecksActor.isHcAlarmActive(failureState, port, "test", alarmTriggerConsecutiveFailures)
+
+      result should ===(false)
+    }
+    s"return false if there are fewer than $alarmTriggerConsecutiveFailures failures" in {
       val port = PortCode("LHR")
       val failureResponse = PercentageHealthCheckResponse(Priority1, "test", Success(Option(25.4)), Option(false))
       val successResponse = BooleanHealthCheckResponse(Priority1, "test", Success(Some(true)), Option(true))
@@ -66,7 +77,7 @@ class HealthChecksActorSpec
 
       val result = HealthChecksActor.isHcAlarmActive(failureState, port, "test", alarmTriggerConsecutiveFailures)
 
-      result === false
+      result should ===(false)
     }
   }
 
@@ -89,8 +100,8 @@ class HealthChecksActorSpec
       val response = actor.ask(replyTo => HealthChecksActor.PortHealthCheckResponse(port, failureResponse, replyTo))
       Await.result(response, 1.second) === AlarmActive
 
-      alarmSounded === true
-      alarmSilenced === false
+      alarmSounded should ===(true)
+      alarmSilenced should ===(false)
     }
 
     "update the state and silence the alarm" in {
@@ -112,8 +123,8 @@ class HealthChecksActorSpec
       val response = actor.ask(replyTo => HealthChecksActor.PortHealthCheckResponse(port, successResponse, replyTo))
       Await.result(response, 1.second) === AlarmInactive
 
-      alarmSounded === false
-      alarmSilenced === true
+      alarmSounded should ===(false)
+      alarmSilenced should ===(true)
     }
   }
 }
