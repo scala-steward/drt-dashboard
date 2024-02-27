@@ -164,7 +164,7 @@ object Server {
 
             if (wasStopped) ctx.self ! Stop
 
-            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, slackClient, emailClient, urls, db)
+            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, slackClient, urls, db)
 
             running(binding, monitor)
 
@@ -179,7 +179,6 @@ object Server {
 
   private def startHealthCheckMonitor(serverConfig: ServerConfig,
                                       slackClient: SlackClient,
-                                      emailClient: EmailClient,
                                       urls: Urls,
                                       db: AppDatabase,
                                      )
