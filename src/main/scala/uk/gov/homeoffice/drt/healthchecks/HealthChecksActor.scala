@@ -11,36 +11,50 @@ import scala.collection.immutable.SortedMap
 object HealthChecksActor {
   trait Command
 
-  case class PortHealthCheckResponse(portCode: PortCode, response: HealthCheckResponse[_], replyTo: ActorRef[AlarmState]) extends Command
+  case class PortHealthCheckResponse(portCode: PortCode,
+                                     response: HealthCheckResponse[_],
+                                     replyTo: ActorRef[AlarmState],
+                                    ) extends Command
 
-  def apply(portChecks: Map[PortCode, Map[String, SortedMap[Long, HealthCheckResponse[_]]]],
-            soundAlarm: (PortCode, String, IncidentPriority) => Unit,
+  def apply(soundAlarm: (PortCode, String, IncidentPriority) => Unit,
             silenceAlarm: (PortCode, String, IncidentPriority) => Unit,
             now: () => Long,
             alarmTriggerConsecutiveFailures: Int,
-           ): Behaviors.Receive[Command] =
-    Behaviors.receiveMessage {
-      case PortHealthCheckResponse(portCode, response, replyTo) =>
-        val checkName = response.name
+            retainMaxResponses: Int,
+            portChecks: Map[PortCode, Map[String, SortedMap[Long, HealthCheckResponse[_]]]]): Behaviors.Receive[Command] = {
 
-        val alarmPreviouslyActive = isHcAlarmActive(portChecks, portCode, checkName, alarmTriggerConsecutiveFailures)
-        val newPortChecks = updateState(portChecks, portCode, response, checkName, now())
-        val alarmNowActive = isHcAlarmActive(newPortChecks, portCode, checkName, alarmTriggerConsecutiveFailures)
+    def behaviour(checks: Map[PortCode, Map[String, SortedMap[Long, HealthCheckResponse[_]]]]): Behaviors.Receive[Command] =
+      Behaviors.receiveMessage {
+        case PortHealthCheckResponse(portCode, response, replyTo) =>
+          val checkName = response.name
 
-        if (!alarmNowActive && alarmPreviouslyActive)
-          silenceAlarm(portCode, checkName, response.priority)
-        if (alarmNowActive && !alarmPreviouslyActive)
-          soundAlarm(portCode, checkName, response.priority)
+          val alarmPreviouslyActive = isHcAlarmActive(checks, portCode, checkName, alarmTriggerConsecutiveFailures)
+          val newPortChecks = updateState(checks, portCode, response, checkName, now(), retainMaxResponses)
+          val alarmNowActive = isHcAlarmActive(newPortChecks, portCode, checkName, alarmTriggerConsecutiveFailures)
 
-        replyTo ! (if (alarmNowActive) AlarmActive else AlarmInactive)
+          if (!alarmNowActive && alarmPreviouslyActive)
+            silenceAlarm(portCode, checkName, response.priority)
+          if (alarmNowActive && !alarmPreviouslyActive)
+            soundAlarm(portCode, checkName, response.priority)
 
-        HealthChecksActor(newPortChecks, soundAlarm, silenceAlarm, now, alarmTriggerConsecutiveFailures)
-    }
+          replyTo ! (if (alarmNowActive) AlarmActive else AlarmInactive)
 
-  def updateState(state: Map[PortCode, Map[String, SortedMap[Long, HealthCheckResponse[_]]]], portCode: PortCode, response: HealthCheckResponse[_], checkName: String, now: Long): Map[PortCode, Map[String, SortedMap[Long, HealthCheckResponse[_]]]] = {
+          behaviour(newPortChecks)
+      }
+
+    behaviour(portChecks)
+  }
+
+  def updateState(state: Map[PortCode, Map[String, SortedMap[Long, HealthCheckResponse[_]]]],
+                  portCode: PortCode,
+                  response: HealthCheckResponse[_],
+                  checkName: String,
+                  now: Long,
+                  retainMaxResponses: Int,
+                 ): Map[PortCode, Map[String, SortedMap[Long, HealthCheckResponse[_]]]] = {
     val portResponses = state.getOrElse(portCode, Map.empty)
     val hcResponses = getHcResponses(portResponses, checkName)
-    val newHcResponses = if (hcResponses.size >= 3)
+    val newHcResponses = if (hcResponses.size >= retainMaxResponses)
       hcResponses.drop(1) + (now -> response)
     else
       hcResponses + (now -> response)

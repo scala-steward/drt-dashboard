@@ -205,7 +205,11 @@ object Server {
       sendSlackNotification(portCode, checkName, priority, "resolved")
     }
 
-    val healthChecksActor = system.systemActorOf(HealthChecksActor(Map.empty, soundAlarm, silenceAlarm, () => SDate.now().millisSinceEpoch, 3), "health-checks")
+    val alarmTriggerConsecutiveFailures = 3
+    val retainMaxResponses = 5
+
+    val behaviour = HealthChecksActor(soundAlarm, silenceAlarm, () => SDate.now().millisSinceEpoch, alarmTriggerConsecutiveFailures, retainMaxResponses, Map.empty)
+    val healthChecksActor = system.systemActorOf(behaviour, "health-checks")
     val poolSettings = ConnectionPoolSettings(system)
       .withMaxConnectionBackoff(5.seconds)
       .withBaseConnectionBackoff(1.second)
