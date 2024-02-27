@@ -28,6 +28,7 @@ export default function Navigation(props: IProps) {
     {label: 'Export Config', link: '/export-config', roles: ['manage-users']},
     {label: 'Feature guides', link: '/feature-guides', roles: ['manage-users']},
     {label: 'Health checks', link: '/health-checks', roles: ['health-checks:edit']},
+    {label: 'Health check pauses', link: '/health-check-pauses', roles: ['health-checks:edit']},
     {label: 'Feedback', link: '/user-feedback', roles: ['manage-users']},
     {label: 'Users', link: '/users', roles: ['manage-users']},
   ]

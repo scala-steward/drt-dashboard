@@ -48,9 +48,6 @@ object DrtDashboardApp extends App {
     exportsFolderPrefix = config.getString("exports.s3-folder-prefix"),
     featureFolderPrefix = config.getString("feature-guides.s3-folder-prefix"),
     portTerminals = portTerminals,
-    healthCheckTriggeredNotifyTemplateId = config.getString("health-checks.notify-templates.triggered"),
-    healthCheckResolvedNotifyTemplateId = config.getString("health-checks.notify-templates.resolved"),
-    healthCheckEmailRecipient = config.getString("health-checks.email-recipient"),
     healthCheckFrequencyMinutes = config.getInt("health-checks.frequency-minutes"),
     enabledPorts = enabledPorts,
     slackUrl = config.getString("health-checks.slack.webhook-url")

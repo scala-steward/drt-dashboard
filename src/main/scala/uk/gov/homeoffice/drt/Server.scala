@@ -1,9 +1,9 @@
 package uk.gov.homeoffice.drt
 
 import akka.actor.Cancellable
-import akka.actor.typed.scaladsl.AskPattern.Askable
+import akka.actor.typed.scaladsl.AskPattern.{Askable, schedulerFromActorSystem}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import akka.actor.typed.{ActorSystem, Behavior, PostStop, Scheduler}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior, PostStop, Scheduler}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.model.HttpRequest
@@ -26,7 +26,7 @@ import uk.gov.homeoffice.drt.time.SDate
 import uk.gov.homeoffice.drt.uploadTraining.FeatureGuideService
 
 import scala.concurrent.duration.DurationInt
-import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
 case class KeyClockConfig(url: String,
@@ -61,9 +61,6 @@ case class ServerConfig(host: String,
                         exportsFolderPrefix: String,
                         featureFolderPrefix: String,
                         portTerminals: Map[PortCode, Seq[Terminal]],
-                        healthCheckTriggeredNotifyTemplateId: String,
-                        healthCheckResolvedNotifyTemplateId: String,
-                        healthCheckEmailRecipient: String,
                         healthCheckFrequencyMinutes: Int,
                         enabledPorts: Seq[PortCode],
                         slackUrl: String
@@ -92,6 +89,7 @@ object Server {
     Behaviors.setup { ctx: ActorContext[Message] =>
       implicit val system: ActorSystem[Nothing] = ctx.system
       implicit val ec: ExecutionContextExecutor = system.executionContext
+      implicit val timeout: Timeout = new Timeout(1.second)
 
       val now = () => SDate.now()
 
@@ -110,6 +108,9 @@ object Server {
 
       val indexRoutes = IndexRoute(urls, indexResource = getFromResource("frontend/index.html")).route
 
+      val healthChecksActor = startHealthChecksActor(slackClient, urls)
+      val getAlarmStatuses: () => Future[Map[PortCode, Map[String, Boolean]]] = () => healthChecksActor.ask(replyTo => HealthChecksActor.GetAlarmStatuses(replyTo))
+
       val routes: Route = concat(
         indexRoutes,
         pathPrefix("api") {
@@ -122,6 +123,7 @@ object Server {
             UserRoutes(serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
             FeatureGuideRoutes(featureGuideService, featureUploader, featureDownloader),
             ApiRoutes(serverConfig.clientConfig, userService, ScheduledHealthCheckPausePersistenceImpl(db, now)),
+            HealthCheckRoutes(getAlarmStatuses),
             DropInSessionsRoute(dropInDao),
             DropInRegisterRoutes(dropInRegistrationDao),
             FeedbackRoutes(userFeedbackDao),
@@ -164,7 +166,7 @@ object Server {
 
             if (wasStopped) ctx.self ! Stop
 
-            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, slackClient, urls, db)
+            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, db, healthChecksActor)
 
             running(binding, monitor)
 
@@ -177,19 +179,10 @@ object Server {
       starting(wasStopped = false)
     }
 
-  private def startHealthCheckMonitor(serverConfig: ServerConfig,
-                                      slackClient: SlackClient,
-                                      urls: Urls,
-                                      db: AppDatabase,
-                                     )
-                                     (implicit
-                                      system: ActorSystem[Nothing],
-                                      ec: ExecutionContext,
-                                      mat: Materializer,
-                                     ): Cancellable = {
-    implicit val timeout: Timeout = new Timeout(1.second)
-    implicit val scheduler: Scheduler = system.scheduler
-
+  private def startHealthChecksActor(slackClient: SlackClient,
+                                     urls: Urls,
+                                    )
+                                    (implicit system: ActorSystem[Nothing], ec: ExecutionContext): ActorRef[HealthChecksActor.Command] = {
     def sendSlackNotification(portCode: PortCode, checkName: String, priority: IncidentPriority, status: String): Unit = {
       val port = portCode.toString.toUpperCase
       val link = urls.urlForPort(port)
@@ -209,7 +202,20 @@ object Server {
     val retainMaxResponses = 5
 
     val behaviour = HealthChecksActor(soundAlarm, silenceAlarm, () => SDate.now().millisSinceEpoch, alarmTriggerConsecutiveFailures, retainMaxResponses, Map.empty)
-    val healthChecksActor = system.systemActorOf(behaviour, "health-checks")
+    system.systemActorOf(behaviour, "health-checks")
+  }
+
+  private def startHealthCheckMonitor(serverConfig: ServerConfig,
+                                      db: AppDatabase,
+                                      healthChecksActor: ActorRef[HealthChecksActor.Command],
+                                     )
+                                     (implicit
+                                      system: ActorSystem[Nothing],
+                                      ec: ExecutionContext,
+                                      mat: Materializer,
+                                     ): Cancellable = {
+    implicit val timeout: Timeout = new Timeout(1.second)
+
     val poolSettings = ConnectionPoolSettings(system)
       .withMaxConnectionBackoff(5.seconds)
       .withBaseConnectionBackoff(1.second)
@@ -235,6 +241,6 @@ object Server {
         }
       }
     }
-    scheduler.scheduleWithFixedDelay(30.seconds, serverConfig.healthCheckFrequencyMinutes.minutes)(Check)
+    system.scheduler.scheduleWithFixedDelay(30.seconds, serverConfig.healthCheckFrequencyMinutes.minutes)(Check)
   }
 }

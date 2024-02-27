@@ -26,6 +26,7 @@ import {FeedbackForms} from "./components/feedback/FeedbackForms";
 import {FeedbackList} from "./components/feedback/FeedbackList";
 import DownloadManager from './components/downloadmanager/DownloadManager';
 import {ExportConfig} from "./components/ExportConfig";
+import {HealthChecks} from "./components/healthchecks/HealthChecks";
 
 const StyledDiv = styled('div')(() => ({
   textAlign: 'center',
@@ -110,7 +111,8 @@ export const App = () => {
             <Route path={"edit/:dropInId"} element={<AddOrEditDropInSession/>}/>
             <Route path={"list/registered-users/:dropInId"} element={<DropInSessionRegistrations/>}/>
           </Route>
-          <Route path={"/health-checks"} element={<HealthCheckEditor/>}/>
+          <Route path={"/health-checks"} element={<HealthChecks portsByRegion={config.values.portsByRegion}/>}/>
+          <Route path={"/health-check-pauses"} element={<HealthCheckEditor/>}/>
           <Route path={"/feedback/:feedbackType/:abVersion"} element={<FeedbackForms/>}/>
           <Route path={"/user-feedback"} element={<FeedbackList/>}/>
           <Route path={"/export-config"} element={<ExportConfig/>}/>

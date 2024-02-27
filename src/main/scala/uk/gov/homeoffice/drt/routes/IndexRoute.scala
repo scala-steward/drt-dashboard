@@ -40,6 +40,7 @@ case class IndexRoute(urls: Urls, indexResource: Route) {
       pathPrefix("feedback")(indexRouteDirectives),
       pathPrefix("user-feedback")(indexRouteDirectives),
       pathPrefix("health-checks")(indexRouteDirectives),
+      pathPrefix("health-check-pauses")(indexRouteDirectives),
       pathPrefix("download")(indexRouteDirectives),
       pathPrefix("export-config")(indexRouteDirectives),
     )

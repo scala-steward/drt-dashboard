@@ -11,6 +11,7 @@ export default class ApiClient implements IApiClient {
   public static configEndPoint = "/api/config"
   public static logoutEndPoint = "/oauth/logout"
   public static alertsEndPoint = "/api/alerts"
+  public static healthCheckAlarmStatuses = "/api/health-checks/alarm-statuses"
   public static healthCheckPauses = "/api/health-check-pauses"
 
   public static userDetailsEndpoint = "/api/users/user-details"
@@ -21,7 +22,6 @@ export default class ApiClient implements IApiClient {
 
   public static getDropInSessionEndpoint = "/api/drop-in-sessions"
   public static dropInSessionUpdatePublishedEndpoint = "/api/drop-in-sessions/update-published"
-  public static dropInSessionDeletePublishedEndpoint = "/api/drop-in-sessions"
   public static dropInSessionRegistrationsEndpoint = "/api/drop-in-register"
   public static dropInSessionRegistrationDeleteEndpoint = "/api/drop-in-register"
 
@@ -55,5 +55,4 @@ export default class ApiClient implements IApiClient {
   handleAjaxException(endPoint: string, throwable: any) {
     console.log('caught: ' + throwable)
   }
-
 }
