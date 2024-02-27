@@ -193,7 +193,7 @@ object Server {
     def sendSlackNotification(portCode: PortCode, checkName: String, priority: IncidentPriority, status: String): Unit = {
       val port = portCode.toString.toUpperCase
       val link = urls.urlForPort(port)
-      val message = s"$port $checkName (${priority.name}) $status - $link"
+      val message = s"$port ${priority.name} $status $checkName - $link"
       slackClient.notify(message)
     }
 
