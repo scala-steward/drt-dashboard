@@ -16,6 +16,8 @@ object HealthChecksActor {
                                      replyTo: ActorRef[AlarmState],
                                     ) extends Command
 
+  case class GetAlarmStatuses(replyTo: ActorRef[Map[PortCode, Map[String, Boolean]]]) extends Command
+
   def apply(soundAlarm: (PortCode, String, IncidentPriority) => Unit,
             silenceAlarm: (PortCode, String, IncidentPriority) => Unit,
             now: () => Long,
@@ -25,6 +27,14 @@ object HealthChecksActor {
 
     def behaviour(checks: Map[PortCode, Map[String, SortedMap[Long, HealthCheckResponse[_]]]]): Behaviors.Receive[Command] =
       Behaviors.receiveMessage {
+        case GetAlarmStatuses(replyTo) =>
+          replyTo ! checks.map {
+            case (portCode, portResponses) =>
+              portCode -> portResponses.map {
+                case (checkName, _) => checkName -> isHcAlarmActive(checks, portCode, checkName, alarmTriggerConsecutiveFailures)
+              }
+          }
+          Behaviors.same
         case PortHealthCheckResponse(portCode, response, replyTo) =>
           val checkName = response.name
 
