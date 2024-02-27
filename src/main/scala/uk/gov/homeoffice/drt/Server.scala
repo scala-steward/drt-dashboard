@@ -164,7 +164,7 @@ object Server {
 
             if (wasStopped) ctx.self ! Stop
 
-            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, slackClient, emailClient, urls, db)
+            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, slackClient, urls, db)
 
             running(binding, monitor)
 
@@ -179,7 +179,6 @@ object Server {
 
   private def startHealthCheckMonitor(serverConfig: ServerConfig,
                                       slackClient: SlackClient,
-                                      emailClient: EmailClient,
                                       urls: Urls,
                                       db: AppDatabase,
                                      )
@@ -194,45 +193,32 @@ object Server {
     def sendSlackNotification(portCode: PortCode, checkName: String, priority: IncidentPriority, status: String): Unit = {
       val port = portCode.toString.toUpperCase
       val link = urls.urlForPort(port)
-      val message = {
-        s"""Health Check Alert - $status
-           |port: $port
-           |name: $checkName
-           |priority: ${priority.toString}
-           |link: $link""".stripMargin
-      }
+      val message = s"$port ${priority.name} $status $checkName - $link"
       slackClient.notify(message)
     }
 
-    def sendEmail(portCode: PortCode, checkName: String, priority: IncidentPriority, templateId: String): Unit = {
-      emailClient.send(templateId, serverConfig.healthCheckEmailRecipient, Map(
-        "port" -> portCode.toString.toUpperCase,
-        "name" -> checkName,
-        "level" -> priority.toString,
-        "link" -> urls.urlForPort(portCode.toString())
-      ))
-    }
-
     val soundAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) => {
-      sendEmail(portCode, checkName, priority, serverConfig.healthCheckTriggeredNotifyTemplateId)
       sendSlackNotification(portCode, checkName, priority, "triggered")
     }
 
     val silenceAlarm = (portCode: PortCode, checkName: String, priority: IncidentPriority) => {
-      sendEmail(portCode, checkName, priority, serverConfig.healthCheckResolvedNotifyTemplateId)
       sendSlackNotification(portCode, checkName, priority, "resolved")
     }
 
-    val healthChecksActor = system.systemActorOf(HealthChecksActor(Map.empty, soundAlarm, silenceAlarm, () => SDate.now().millisSinceEpoch, 3), "health-checks")
+    val alarmTriggerConsecutiveFailures = 3
+    val retainMaxResponses = 5
+
+    val behaviour = HealthChecksActor(soundAlarm, silenceAlarm, () => SDate.now().millisSinceEpoch, alarmTriggerConsecutiveFailures, retainMaxResponses, Map.empty)
+    val healthChecksActor = system.systemActorOf(behaviour, "health-checks")
     val poolSettings = ConnectionPoolSettings(system)
       .withMaxConnectionBackoff(5.seconds)
       .withBaseConnectionBackoff(1.second)
       .withMaxRetries(0)
       .withMaxConnections(5)
     val makeRequest = (request: HttpRequest) => Http().singleRequest(request, settings = poolSettings)
-    val recordResponse = (port: PortCode, response: HealthCheckResponse[_]) => {
+    val recordResponse = (port: PortCode, response: HealthCheckResponse[_]) =>
       healthChecksActor.ask(replyTo => HealthChecksActor.PortHealthCheckResponse(port, response, replyTo))
-    }
+
     log.info(s"Starting health check monitor for ports ${serverConfig.portTerminals.keys.mkString(", ")}")
     val monitor = HealthCheckMonitor(makeRequest, recordResponse, serverConfig.portTerminals.keys)
     val pausesProvider = CheckScheduledPauses.pausesProvider(ScheduledHealthCheckPausePersistenceImpl(db, () => SDate.now()))

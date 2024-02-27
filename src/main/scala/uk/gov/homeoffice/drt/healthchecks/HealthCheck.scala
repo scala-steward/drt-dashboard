@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.drt.healthchecks
 
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Try}
 
 trait HealthCheck[A] {
   val priority: IncidentPriority
@@ -20,9 +20,9 @@ trait PercentageHealthCheck extends HealthCheck[Double] {
         case "null" => Try(None)
         case _ => Try(Option(str.toDouble))
       }
-      val isPass = value.toOption.flatten.map(pass)
+      val maybeIsPass = value.toOption.flatten.map(pass)
 
-      PercentageHealthCheckResponse(priority, name, value, isPass)
+      PercentageHealthCheckResponse(priority, name, value, maybeIsPass)
     }
 
   override def failure: HealthCheckResponse[Double] =
@@ -75,8 +75,14 @@ case object DeskUpdatesHealthCheck extends BooleanHealthCheck {
   override val url: String = "/health-check/calculated-desk-updates"
 }
 
-trait IncidentPriority
+trait IncidentPriority {
+  val name: String
+}
 
-case object Priority1 extends IncidentPriority
+case object Priority1 extends IncidentPriority {
+  override val name: String = "P1"
+}
 
-case object Priority2 extends IncidentPriority
+case object Priority2 extends IncidentPriority {
+  override val name: String = "P2"
+}

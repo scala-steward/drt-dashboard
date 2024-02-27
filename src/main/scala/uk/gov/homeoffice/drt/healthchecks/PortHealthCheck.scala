@@ -18,7 +18,6 @@ object PortHealthCheck {
     ArrivalLandingTimesHealthCheck(_ >= 70),
     ArrivalUpdates60HealthCheck(_ >= 25),
     ArrivalUpdates120HealthCheck(_ >= 5),
-//    DeskUpdatesHealthCheck,
   )
 
   def apply(port: PortCode, makeRequest: HttpRequest => Future[HttpResponse])
