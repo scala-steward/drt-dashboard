@@ -66,7 +66,7 @@ case class ArrivalUpdates60HealthCheck(pass: Double => Boolean) extends Percenta
 case class ArrivalUpdates120HealthCheck(pass: Double => Boolean) extends PercentageHealthCheck {
   override val priority: IncidentPriority = Priority2
   override val name: String = "Arrival Updates 120"
-  override val url: String = "/health-check/received-arrival-updates/120/1"
+  override val url: String = "/health-check/received-arrival-updates/120/2/120"
 }
 
 case object DeskUpdatesHealthCheck extends BooleanHealthCheck {
