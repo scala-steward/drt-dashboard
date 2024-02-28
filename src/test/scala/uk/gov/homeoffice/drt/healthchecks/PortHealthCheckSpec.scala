@@ -44,10 +44,10 @@ class PortHealthCheckSpec
       val responses = PortHealthCheck(PortCode("TST"), MockHttp.withResponse("50.5", "true"))
 
       Await.result(responses, 1.second) should ===(Seq(
-        PercentageHealthCheckResponse(Priority1, "API", Success(Some(50.5)), Option(false)),
-        PercentageHealthCheckResponse(Priority1, "Arrival Landing Times", Success(Some(50.5)), Option(false)),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates 60", Success(Some(50.5)), Option(true)),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates 120", Success(Some(50.5)), Option(true)),
+        PercentageHealthCheckResponse(Priority1, "API received - last 60 mins", Success(Some(50.5)), Option(false)),
+        PercentageHealthCheckResponse(Priority1, "Arrival Landing Times - last 5 hrs", Success(Some(50.5)), Option(false)),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 1hr", Success(Some(50.5)), Option(true)),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 2hrs", Success(Some(50.5)), Option(true)),
 //        BooleanHealthCheckResponse(Priority1, "Desk Updates", Success(Some(true)), Option(true)),
       ))
     }
@@ -55,10 +55,10 @@ class PortHealthCheckSpec
       val responses = PortHealthCheck(PortCode("TST"), MockHttp.withResponse("null", "null"))
 
       Await.result(responses, 1.second) should ===(Seq(
-        PercentageHealthCheckResponse(Priority1, "API", Success(None), None),
-        PercentageHealthCheckResponse(Priority1, "Arrival Landing Times", Success(None), None),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates 60", Success(None), None),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates 120", Success(None), None),
+        PercentageHealthCheckResponse(Priority1, "API received - last 60 mins", Success(None), None),
+        PercentageHealthCheckResponse(Priority1, "Arrival Landing Times - last 5 hrs", Success(None), None),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 1hr", Success(None), None),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 2hrs", Success(None), None),
 //        BooleanHealthCheckResponse(Priority1, "Desk Updates", Success(None), None),
       ))
     }

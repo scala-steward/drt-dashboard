@@ -46,17 +46,17 @@ class HealthCheckMonitorSpec
         ports.flatMap(port => Seq(
           s"http://${port.iata.toLowerCase}:9000/health-check/received-api/60/10",
           s"http://${port.iata.toLowerCase}:9000/health-check/received-landing-times/300/1",
-          s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/60/3",
+          s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/60/3/30",
           s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/120/2/120",
 //          s"http://${port.iata.toLowerCase}:9000/health-check/calculated-desk-updates",
         )): _*
       )
       recordTestProbe.expectMsgAllOf(
         ports.flatMap(port => Seq(
-          (port, PercentageHealthCheckResponse(Priority1, "API", Try(Some(55.5)), Option(false))),
-          (port, PercentageHealthCheckResponse(Priority1, "Arrival Landing Times", Try(Some(55.5)), Option(false))),
-          (port, PercentageHealthCheckResponse(Priority2, "Arrival Updates 60", Try(Some(55.5)), Option(true))),
-          (port, PercentageHealthCheckResponse(Priority2, "Arrival Updates 120", Try(Some(55.5)), Option(true))),
+          (port, PercentageHealthCheckResponse(Priority1, "API received - last 60 mins", Try(Some(55.5)), Option(false))),
+          (port, PercentageHealthCheckResponse(Priority1, "Arrival Landing Times - last 5 hrs", Try(Some(55.5)), Option(false))),
+          (port, PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 1hr", Try(Some(55.5)), Option(true))),
+          (port, PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 2hrs", Try(Some(55.5)), Option(true))),
 //          (port, BooleanHealthCheckResponse(Priority1, "Desk Updates", Try(Some(true)), Some(true))),
         )): _*
       )

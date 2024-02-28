@@ -47,25 +47,25 @@ trait BooleanHealthCheck extends HealthCheck[Boolean] {
 
 case class ApiHealthCheck(pass: Double => Boolean) extends PercentageHealthCheck {
   override val priority: IncidentPriority = Priority1
-  override val name: String = "API"
+  override val name: String = "API received - last 60 mins"
   override val url: String = "/health-check/received-api/60/10"
 }
 
 case class ArrivalLandingTimesHealthCheck(pass: Double => Boolean) extends PercentageHealthCheck {
   override val priority: IncidentPriority = Priority1
-  override val name: String = "Arrival Landing Times"
+  override val name: String = "Arrival Landing Times - last 5 hrs"
   override val url: String = "/health-check/received-landing-times/300/1"
 }
 
 case class ArrivalUpdates60HealthCheck(pass: Double => Boolean) extends PercentageHealthCheck {
   override val priority: IncidentPriority = Priority2
-  override val name: String = "Arrival Updates 60"
-  override val url: String = "/health-check/received-arrival-updates/60/3"
+  override val name: String = "Arrival Updates - next 1hr"
+  override val url: String = "/health-check/received-arrival-updates/60/3/30"
 }
 
 case class ArrivalUpdates120HealthCheck(pass: Double => Boolean) extends PercentageHealthCheck {
   override val priority: IncidentPriority = Priority2
-  override val name: String = "Arrival Updates 120"
+  override val name: String = "Arrival Updates - next 2hrs"
   override val url: String = "/health-check/received-arrival-updates/120/2/120"
 }
 
