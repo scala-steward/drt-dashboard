@@ -47,7 +47,7 @@ class HealthCheckMonitorSpec
           s"http://${port.iata.toLowerCase}:9000/health-check/received-api/60/10",
           s"http://${port.iata.toLowerCase}:9000/health-check/received-landing-times/300/1",
           s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/60/3",
-          s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/120/1",
+          s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/120/2/120",
 //          s"http://${port.iata.toLowerCase}:9000/health-check/calculated-desk-updates",
         )): _*
       )
