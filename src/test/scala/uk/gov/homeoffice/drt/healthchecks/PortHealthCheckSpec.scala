@@ -48,7 +48,6 @@ class PortHealthCheckSpec
         PercentageHealthCheckResponse(Priority1, "Arrival Landing Times - last 5 hrs", Success(Some(50.5)), Option(false)),
         PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 1hr", Success(Some(50.5)), Option(true)),
         PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 2hrs", Success(Some(50.5)), Option(true)),
-//        BooleanHealthCheckResponse(Priority1, "Desk Updates", Success(Some(true)), Option(true)),
       ))
     }
     "parse null responses" in {
@@ -59,7 +58,6 @@ class PortHealthCheckSpec
         PercentageHealthCheckResponse(Priority1, "Arrival Landing Times - last 5 hrs", Success(None), None),
         PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 1hr", Success(None), None),
         PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 2hrs", Success(None), None),
-//        BooleanHealthCheckResponse(Priority1, "Desk Updates", Success(None), None),
       ))
     }
     "handle failed responses" in {
