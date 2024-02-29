@@ -2,7 +2,7 @@ package uk.gov.homeoffice.drt
 
 import akka.actor.typed.ActorSystem
 import com.typesafe.config.ConfigFactory
-import uk.gov.homeoffice.drt.notifications.{EmailClientImpl, EmailNotifications, SlackClientImpl}
+import uk.gov.homeoffice.drt.notifications.{EmailClientImpl, EmailNotifications, NoopSlackClient, SlackClientImpl}
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.schedule.{DropInNotification, DropInReminder, UserTracking}
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
@@ -57,7 +57,9 @@ object DrtDashboardApp extends App {
 
   val emailClient: EmailClientImpl = EmailClientImpl(govNotifyClient)
 
-  val slackClient = SlackClientImpl(ProdHttpClient, serverConfig.slackUrl)
+  val slackClient = if (serverConfig.slackUrl.nonEmpty)
+    SlackClientImpl(ProdHttpClient, serverConfig.slackUrl)
+  else NoopSlackClient
 
   private val emailNotifications = EmailNotifications(serverConfig.accessRequestEmails, govNotifyClient)
 

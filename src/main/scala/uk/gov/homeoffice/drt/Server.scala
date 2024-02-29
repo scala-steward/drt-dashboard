@@ -3,7 +3,7 @@ package uk.gov.homeoffice.drt
 import akka.actor.Cancellable
 import akka.actor.typed.scaladsl.AskPattern.{Askable, schedulerFromActorSystem}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior, PostStop, Scheduler}
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior, PostStop}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
 import akka.http.scaladsl.model.HttpRequest
@@ -19,7 +19,7 @@ import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications, Sla
 import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealthCheckPausePersistenceImpl}
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
-import uk.gov.homeoffice.drt.routes.{FeedbackRoutes, _}
+import uk.gov.homeoffice.drt.routes._
 import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
 import uk.gov.homeoffice.drt.time.SDate
@@ -81,6 +81,13 @@ object Server {
 
   private case object Stop extends Message
 
+  val healthChecks: Seq[HealthCheck[_ >: Double with Boolean <: AnyVal] with Serializable] = Seq(
+    ApiHealthCheck(passThresholdPercentage = 70),
+    ArrivalLandingTimesHealthCheck(passThresholdPercentage = 70),
+    ArrivalUpdates60HealthCheck(passThresholdPercentage = 25),
+    ArrivalUpdates120HealthCheck(passThresholdPercentage = 5),
+  )
+
   def apply(serverConfig: ServerConfig,
             notifications: EmailNotifications,
             emailClient: EmailClient,
@@ -123,7 +130,7 @@ object Server {
             UserRoutes(serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
             FeatureGuideRoutes(featureGuideService, featureUploader, featureDownloader),
             ApiRoutes(serverConfig.clientConfig, userService, ScheduledHealthCheckPausePersistenceImpl(db, now)),
-            HealthCheckRoutes(getAlarmStatuses),
+            HealthCheckRoutes(getAlarmStatuses, healthChecks),
             DropInSessionsRoute(dropInDao),
             DropInRegisterRoutes(dropInRegistrationDao),
             FeedbackRoutes(userFeedbackDao),
@@ -226,7 +233,7 @@ object Server {
       healthChecksActor.ask(replyTo => HealthChecksActor.PortHealthCheckResponse(port, response, replyTo))
 
     log.info(s"Starting health check monitor for ports ${serverConfig.portTerminals.keys.mkString(", ")}")
-    val monitor = HealthCheckMonitor(makeRequest, recordResponse, serverConfig.portTerminals.keys)
+    val monitor = HealthCheckMonitor(makeRequest, recordResponse, serverConfig.portTerminals.keys, healthChecks)
     val pausesProvider = CheckScheduledPauses.pausesProvider(ScheduledHealthCheckPausePersistenceImpl(db, () => SDate.now()))
     val pauseIsActive = CheckScheduledPauses.activePauseChecker(pausesProvider)
     object Check extends Runnable {

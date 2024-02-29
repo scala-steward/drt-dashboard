@@ -13,17 +13,13 @@ import scala.concurrent.{ExecutionContext, Future}
 object PortHealthCheck {
   private val log = LoggerFactory.getLogger(getClass)
 
-  private val checks: Seq[HealthCheck[_ >: Double with Boolean <: AnyVal] with Serializable] = Seq(
-    ApiHealthCheck(_ >= 70),
-    ArrivalLandingTimesHealthCheck(_ >= 70),
-    ArrivalUpdates60HealthCheck(_ >= 25),
-    ArrivalUpdates120HealthCheck(_ >= 5),
-  )
-
-  def apply(port: PortCode, makeRequest: HttpRequest => Future[HttpResponse])
+  def apply(port: PortCode,
+            makeRequest: HttpRequest => Future[HttpResponse],
+            healthChecks: Seq[HealthCheck[_ >: Double with Boolean <: AnyVal] with Serializable]
+           )
            (implicit mat: Materializer, ec: ExecutionContext): Future[Seq[HealthCheckResponse[_ >: Double with Boolean <: AnyVal]]] = {
-    Source(checks)
-      .mapAsync(checks.size) { check =>
+    Source(healthChecks)
+      .mapAsync(healthChecks.size) { check =>
         val uri = Dashboard.drtInternalUriForPortCode(port) + check.url
         val request = HttpRequest(uri = uri)
         val startTime = System.currentTimeMillis()

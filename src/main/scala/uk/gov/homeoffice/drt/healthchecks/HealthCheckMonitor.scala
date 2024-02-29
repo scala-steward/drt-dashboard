@@ -15,13 +15,14 @@ object HealthCheckMonitor {
 
   def apply(makeRequest: HttpRequest => Future[HttpResponse],
             recordResponse: (PortCode, HealthCheckResponse[_]) => Future[AlarmState],
-            ports: Iterable[PortCode]
+            ports: Iterable[PortCode],
+            healthChecks: Seq[HealthCheck[_ >: Double with Boolean <: AnyVal] with Serializable],
            )
            (implicit mat: Materializer, ec: ExecutionContext): () => Future[Done] =
     () => Source(ports.toList)
       .mapAsync(1) { port =>
         log.info("Checking port " + port)
-        PortHealthCheck(port, makeRequest).map(_.map { r =>
+        PortHealthCheck(port, makeRequest, healthChecks).map(_.map { r =>
           log.info(s"HealthCheckMonitor got response for $port: ${r.name} -> ${r.maybeIsPass}")
           (port, r)
         })
