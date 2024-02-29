@@ -11,6 +11,10 @@ trait SlackClient {
   def notify(message: String)(implicit ec: ExecutionContext, mat: Materializer): Unit
 }
 
+object NoopSlackClient extends SlackClient {
+  def notify(message: String)(implicit ec: ExecutionContext, mat: Materializer): Unit = ()
+}
+
 case class SlackClientImpl(httpClient: HttpClient, webhookUrl: String) extends SlackClient {
   private val log = LoggerFactory.getLogger(getClass)
 

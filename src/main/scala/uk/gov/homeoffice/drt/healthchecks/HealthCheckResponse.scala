@@ -12,8 +12,10 @@ trait HealthCheckResponse[A] {
 case class PercentageHealthCheckResponse(priority: IncidentPriority,
                                          name: String,
                                          value: Try[Option[Double]],
-                                         maybeIsPass: Option[Boolean]) extends HealthCheckResponse[Double]
+                                         maybeIsPass: Option[Boolean],
+                                        ) extends HealthCheckResponse[Double]
 case class BooleanHealthCheckResponse(priority: IncidentPriority,
                                       name: String,
                                       value: Try[Option[Boolean]],
-                                      maybeIsPass: Option[Boolean]) extends HealthCheckResponse[Boolean]
+                                      maybeIsPass: Option[Boolean],
+                                     ) extends HealthCheckResponse[Boolean]
