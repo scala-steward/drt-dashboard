@@ -56,7 +56,7 @@ case class ArrivalUpdates60HealthCheck(passThresholdPercentage: Int) extends Per
   override val priority: IncidentPriority = Priority2
   override val name: String = "Arrival Updates - 1hr"
   override val description: String = s"$passThresholdPercentage% of flights expected to land in the next ${windowLength.toMinutes} minutes that have been updated in the past ${updateThresholdMinutes.toMinutes} minutes, when we have a minimum of $minimumFlights flights"
-  override val url: String = s"/health-check/received-arrival-updates/${windowLength.toMinutes}/$minimumFlights/${updateThresholdMinutes.toMinutes}}"
+  override val url: String = s"/health-check/received-arrival-updates/${windowLength.toMinutes}/$minimumFlights/${updateThresholdMinutes.toMinutes}"
 }
 
 case class ArrivalUpdates120HealthCheck(passThresholdPercentage: Int) extends PercentageHealthCheck {

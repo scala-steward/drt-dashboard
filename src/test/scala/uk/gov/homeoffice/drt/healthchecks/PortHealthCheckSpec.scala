@@ -40,28 +40,35 @@ class PortHealthCheckSpec
   }
 
   "PortHealthCheck" should {
+    val healthChecks: Seq[HealthCheck[_ >: Double with Boolean <: AnyVal] with Serializable] = Seq(
+      ApiHealthCheck(passThresholdPercentage = 70),
+      ArrivalLandingTimesHealthCheck(passThresholdPercentage = 70),
+      ArrivalUpdates60HealthCheck(passThresholdPercentage = 25),
+      ArrivalUpdates120HealthCheck(passThresholdPercentage = 5),
+    )
+
     "parse successful responses" in {
-      val responses = PortHealthCheck(PortCode("TST"), MockHttp.withResponse("50.5", "true"))
+      val responses = PortHealthCheck(PortCode("TST"), MockHttp.withResponse("50.5", "true"), healthChecks)
 
       Await.result(responses, 1.second) should ===(Seq(
-        PercentageHealthCheckResponse(Priority1, "API received - last 60 mins", Success(Some(50.5)), Option(false)),
-        PercentageHealthCheckResponse(Priority1, "Arrival Landing Times - last 5 hrs", Success(Some(50.5)), Option(false)),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 1hr", Success(Some(50.5)), Option(true)),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 2hrs", Success(Some(50.5)), Option(true)),
+        PercentageHealthCheckResponse(Priority1, "API received", Success(Some(50.5)), Option(false)),
+        PercentageHealthCheckResponse(Priority1, "Landing Times", Success(Some(50.5)), Option(false)),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates - 1hr", Success(Some(50.5)), Option(true)),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates - 2hrs", Success(Some(50.5)), Option(true)),
       ))
     }
     "parse null responses" in {
-      val responses = PortHealthCheck(PortCode("TST"), MockHttp.withResponse("null", "null"))
+      val responses = PortHealthCheck(PortCode("TST"), MockHttp.withResponse("null", "null"), healthChecks)
 
       Await.result(responses, 1.second) should ===(Seq(
-        PercentageHealthCheckResponse(Priority1, "API received - last 60 mins", Success(None), None),
-        PercentageHealthCheckResponse(Priority1, "Arrival Landing Times - last 5 hrs", Success(None), None),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 1hr", Success(None), None),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 2hrs", Success(None), None),
+        PercentageHealthCheckResponse(Priority1, "API received", Success(None), None),
+        PercentageHealthCheckResponse(Priority1, "Landing Times", Success(None), None),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates - 1hr", Success(None), None),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates - 2hrs", Success(None), None),
       ))
     }
     "handle failed responses" in {
-      val responses = PortHealthCheck(PortCode("TST"), MockHttp.withFailureResponse())
+      val responses = PortHealthCheck(PortCode("TST"), MockHttp.withFailureResponse(), healthChecks)
 
       Await.result(responses, 1.second).map(_.value.isFailure) should ===(Seq(true, true, true, true))
     }

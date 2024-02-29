@@ -26,6 +26,13 @@ class HealthCheckMonitorSpec
   implicit val ec: ExecutionContext = system.dispatcher
 
   "HealthCheckMonitor" should {
+    val healthChecks: Seq[HealthCheck[_ >: Double with Boolean <: AnyVal] with Serializable] = Seq(
+      ApiHealthCheck(passThresholdPercentage = 70),
+      ArrivalLandingTimesHealthCheck(passThresholdPercentage = 70),
+      ArrivalUpdates60HealthCheck(passThresholdPercentage = 25),
+      ArrivalUpdates120HealthCheck(passThresholdPercentage = 5),
+    )
+
     "call health check end points for all port and record the responses" in {
       val requestTestProbe = TestProbe("request")
       val recordTestProbe = TestProbe("record")
@@ -39,7 +46,7 @@ class HealthCheckMonitorSpec
         Future.successful(AlarmInactive)
       }
       val ports = List(PortCode("TST"), PortCode("TST2"))
-      val healthCheckMonitor = HealthCheckMonitor(makeRequest, recordResponse, ports)
+      val healthCheckMonitor = HealthCheckMonitor(makeRequest, recordResponse, ports, healthChecks)
       healthCheckMonitor()
 
       requestTestProbe.expectMsgAllOf(
@@ -47,15 +54,15 @@ class HealthCheckMonitorSpec
           s"http://${port.iata.toLowerCase}:9000/health-check/received-api/60/10",
           s"http://${port.iata.toLowerCase}:9000/health-check/received-landing-times/300/1",
           s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/60/3/30",
-          s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/120/2/120",
+          s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/120/2/360",
         )): _*
       )
       recordTestProbe.expectMsgAllOf(
         ports.flatMap(port => Seq(
-          (port, PercentageHealthCheckResponse(Priority1, "API received - last 60 mins", Try(Some(55.5)), Option(false))),
-          (port, PercentageHealthCheckResponse(Priority1, "Arrival Landing Times - last 5 hrs", Try(Some(55.5)), Option(false))),
-          (port, PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 1hr", Try(Some(55.5)), Option(true))),
-          (port, PercentageHealthCheckResponse(Priority2, "Arrival Updates - next 2hrs", Try(Some(55.5)), Option(true))),
+          (port, PercentageHealthCheckResponse(Priority1, "API received", Try(Some(55.5)), Option(false))),
+          (port, PercentageHealthCheckResponse(Priority1, "Landing Times", Try(Some(55.5)), Option(false))),
+          (port, PercentageHealthCheckResponse(Priority2, "Arrival Updates - 1hr", Try(Some(55.5)), Option(true))),
+          (port, PercentageHealthCheckResponse(Priority2, "Arrival Updates - 2hrs", Try(Some(55.5)), Option(true))),
         )): _*
       )
     }
