@@ -48,7 +48,7 @@ export const HealthChecks = (props: Props) => {
             </TableCell>
             {healthChecks.healthChecks.map((healthCheck, index) => {
               return <TableCell key={index} align="right">
-                <Tooltip title={healthCheck.description} arrow>
+                <Tooltip title={healthCheck.description} placement={'top'} arrow>
                   <Typography variant={'h5'}>{healthCheck.name}</Typography>
                 </Tooltip>
               </TableCell>
@@ -117,7 +117,7 @@ function Row(props: { region: string, regionPortAlarms: PortHealthCheckAlarms[],
             <Table aria-label="collapsible table">
               <TableBody>
                 {props.regionPortAlarms.map((portAlarms, index) => {
-                  return portAlarms ? <TableRow key={index}>
+                  return portAlarms ? <TableRow key={index} sx={{backgroundColor: '#fafafa'}}>
                       <TableCell><Typography variant={'body1'}>{portAlarms.port}</Typography></TableCell>
                       {portAlarms.alarms.map((alarm, index) => {
                         return <TableCell width={portCellWidth} key={index} align={'right'}>
