@@ -56,8 +56,8 @@ class HealthCheckMonitorSpec
         ports.flatMap(port => Seq(
           s"http://${port.iata.toLowerCase}:9000/health-check/received-api/2024-06-01T10:00:00Z/2024-06-01T13:00:00Z/4",
           s"http://${port.iata.toLowerCase}:9000/health-check/received-landing-times/2024-06-01T10:00:00Z/2024-06-01T11:40:00Z/3",
-          s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/2024-05-31T06:00:00Z/2024-06-04T00:00:00Z/3/30",
-          s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/2024-06-01T12:00:00Z/2024-06-06T12:00:00Z/3/360",
+          s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/2024-06-01T11:30:00Z/2024-06-01T13:00:00Z/3/30",
+          s"http://${port.iata.toLowerCase}:9000/health-check/received-arrival-updates/2024-06-01T12:00:00Z/2024-06-01T14:00:00Z/3/360",
         )): _*
       )
       recordTestProbe.expectMsgAllOf(
