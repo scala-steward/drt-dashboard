@@ -47,7 +47,7 @@ case class ArrivalLandingTimesHealthCheck(windowLength: FiniteDuration, buffer: 
   private val end = now().addMinutes(-buffer)
   override val priority: IncidentPriority = Priority1
   override val name: String = "Landing Times"
-  override val description: String = s"$passThresholdPercentage% of flights scheduled to land between ${start.prettyDateTime} and ${end.prettyDateTime} which have an actual landing time, when we have a minimum of $minimumFlights flights"
+  override val description: String = s"$passThresholdPercentage% of flights scheduled to land between ${start.toHoursAndMinutes} and ${end.toHoursAndMinutes} which have an actual landing time, when we have a minimum of $minimumFlights flights"
   override val url: String = s"/health-check/received-landing-times/${start.toISOString}/${end.toISOString}/$minimumFlights"
 }
 
@@ -56,7 +56,7 @@ case class ArrivalUpdatesHealthCheck(minutesBeforeNow: Int, minutesAfterNow: Int
   private val end = now().addMinutes(minutesAfterNow)
   override val priority: IncidentPriority = Priority2
   override val name: String = s"Arrival Updates - $postfix"
-  override val description: String = s"$passThresholdPercentage% of flights expected to land between ${start.prettyDateTime} and ${end.prettyDateTime} that have been updated in the past ${updateThreshold.toMinutes} minutes, when we have a minimum of $minimumFlights flights"
+  override val description: String = s"$passThresholdPercentage% of flights expected to land between ${start.toHoursAndMinutes} and ${end.toHoursAndMinutes} that have been updated in the past ${updateThreshold.toMinutes} minutes, when we have a minimum of $minimumFlights flights"
   override val url: String = s"/health-check/received-arrival-updates/${start.toISOString}/${end.toISOString}/$minimumFlights/${updateThreshold.toMinutes}"
 }
 
