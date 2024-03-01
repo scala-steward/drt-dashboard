@@ -26,7 +26,10 @@ export const useHealthCheckAlarms = (refreshedAt: number) => {
   useEffect(() => {
     const fetch = async () => axios
       .get(ApiClient.healthCheckAlarmStatuses)
-      .then(res => setHealthCheckAlarms(res.data as PortHealthCheckAlarms[]))
+      .then(res => {
+        setHealthCheckAlarms(res.data as PortHealthCheckAlarms[])
+        setFailed(false)
+      })
       .catch(err => {
         console.log('Failed to get health check alarm statuses: ' + err)
         setFailed(true)

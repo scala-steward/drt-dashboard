@@ -52,8 +52,8 @@ case class ArrivalLandingTimesHealthCheck(windowLength: FiniteDuration, buffer: 
 }
 
 case class ArrivalUpdatesHealthCheck(minutesBeforeNow: Int, minutesAfterNow: Int, updateThreshold: FiniteDuration, minimumFlights: Int, passThresholdPercentage: Int, now: () => SDateLike, postfix: String) extends PercentageHealthCheck {
-  private val start = now().addHours(-minutesBeforeNow)
-  private val end = now().addHours(minutesAfterNow)
+  private val start = now().addMinutes(-minutesBeforeNow)
+  private val end = now().addMinutes(minutesAfterNow)
   override val priority: IncidentPriority = Priority2
   override val name: String = s"Arrival Updates - $postfix"
   override val description: String = s"$passThresholdPercentage% of flights expected to land between ${start.prettyDateTime} and ${end.prettyDateTime} that have been updated in the past ${updateThreshold.toMinutes} minutes, when we have a minimum of $minimumFlights flights"
