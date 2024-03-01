@@ -1,5 +1,7 @@
 package uk.gov.homeoffice.drt.healthchecks
 
+import uk.gov.homeoffice.drt.time.SDateLike
+
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.util.{Failure, Try}
 
@@ -31,42 +33,31 @@ trait PercentageHealthCheck extends HealthCheck[Double] {
     PercentageHealthCheckResponse(priority, name, Failure(new Exception("Failed to parse response")), None)
 }
 
-case class ApiHealthCheck(passThresholdPercentage: Int) extends PercentageHealthCheck {
-  private val windowLength: FiniteDuration = 60.minutes
-  private val minimumFlights: Int = 10
+case class ApiHealthCheck(hoursBeforeNow: Int, hoursAfterNow: Int, minimumFlights: Int, passThresholdPercentage: Int, now: () => SDateLike) extends PercentageHealthCheck {
+  private val start = now().addHours(-hoursBeforeNow)
+  private val end = now().addHours(hoursAfterNow)
   override val priority: IncidentPriority = Priority1
   override val name: String = "API received"
-  override val description: String = s"""$passThresholdPercentage% of flights landed in the past ${windowLength.toMinutes} minutes which have API data, when we have a minimum of $minimumFlights flights"""
-  override val url: String = s"/health-check/received-api/${windowLength.toMinutes}/$minimumFlights"
+  override val description: String = s"""$passThresholdPercentage% of flights landing between ${start.prettyDateTime} and ${end.prettyDateTime} which have API data, when we have a minimum of $minimumFlights flights"""
+  override val url: String = s"/health-check/received-api/${start.toISOString}/${end.toISOString}/$minimumFlights"
 }
 
-case class ArrivalLandingTimesHealthCheck(passThresholdPercentage: Int) extends PercentageHealthCheck {
-  private val windowLength: FiniteDuration = 300.minutes
-  private val minimumFlights: Int = 1
+case class ArrivalLandingTimesHealthCheck(windowLength: FiniteDuration, buffer: Int, minimumFlights: Int, passThresholdPercentage: Int, now: () => SDateLike) extends PercentageHealthCheck {
+  private val start = now().addMinutes(-windowLength.toMinutes.toInt)
+  private val end = now().addMinutes(-buffer)
   override val priority: IncidentPriority = Priority1
   override val name: String = "Landing Times"
-  override val description: String = s"$passThresholdPercentage% of flights scheduled to land between ${windowLength.toMinutes} minutes ago and 15 minutes ago which have an actual landing time, when we have a minimum of $minimumFlights flights"
-  override val url: String = s"/health-check/received-landing-times/${windowLength.toMinutes}/$minimumFlights"
+  override val description: String = s"$passThresholdPercentage% of flights scheduled to land between ${start.toHoursAndMinutes} and ${end.toHoursAndMinutes} which have an actual landing time, when we have a minimum of $minimumFlights flights"
+  override val url: String = s"/health-check/received-landing-times/${start.toISOString}/${end.toISOString}/$minimumFlights"
 }
 
-case class ArrivalUpdates60HealthCheck(passThresholdPercentage: Int) extends PercentageHealthCheck {
-  private val windowLength: FiniteDuration = 60.minutes
-  private val minimumFlights: Int = 3
-  private val updateThresholdMinutes: FiniteDuration = 30.minutes
+case class ArrivalUpdatesHealthCheck(minutesBeforeNow: Int, minutesAfterNow: Int, updateThreshold: FiniteDuration, minimumFlights: Int, passThresholdPercentage: Int, now: () => SDateLike, postfix: String) extends PercentageHealthCheck {
+  private val start = now().addMinutes(-minutesBeforeNow)
+  private val end = now().addMinutes(minutesAfterNow)
   override val priority: IncidentPriority = Priority2
-  override val name: String = "Arrival Updates - 1hr"
-  override val description: String = s"$passThresholdPercentage% of flights expected to land in the next ${windowLength.toMinutes} minutes that have been updated in the past ${updateThresholdMinutes.toMinutes} minutes, when we have a minimum of $minimumFlights flights"
-  override val url: String = s"/health-check/received-arrival-updates/${windowLength.toMinutes}/$minimumFlights/${updateThresholdMinutes.toMinutes}"
-}
-
-case class ArrivalUpdates120HealthCheck(passThresholdPercentage: Int) extends PercentageHealthCheck {
-  private val windowLength: FiniteDuration = 120.minutes
-  private val minimumFlights: Int = 2
-  private val updateThresholdMinutes: FiniteDuration = 6.hours
-  override val priority: IncidentPriority = Priority2
-  override val name: String = "Arrival Updates - 2hrs"
-  override val description: String = s"$passThresholdPercentage% of flights expected to land in the next ${windowLength.toMinutes} minutes that have been updated in the past ${updateThresholdMinutes.toHours} hours, when we have a minimum of $minimumFlights flights"
-  override val url: String = s"/health-check/received-arrival-updates/${windowLength.toMinutes}/$minimumFlights/${updateThresholdMinutes.toMinutes}"
+  override val name: String = s"Arrival Updates - $postfix"
+  override val description: String = s"$passThresholdPercentage% of flights expected to land between ${start.toHoursAndMinutes} and ${end.toHoursAndMinutes} that have been updated in the past ${updateThreshold.toMinutes} minutes, when we have a minimum of $minimumFlights flights"
+  override val url: String = s"/health-check/received-arrival-updates/${start.toISOString}/${end.toISOString}/$minimumFlights/${updateThreshold.toMinutes}"
 }
 
 trait IncidentPriority {

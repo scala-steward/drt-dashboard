@@ -82,10 +82,10 @@ object Server {
   private case object Stop extends Message
 
   val healthChecks: Seq[HealthCheck[_ >: Double with Boolean <: AnyVal] with Serializable] = Seq(
-    ApiHealthCheck(passThresholdPercentage = 70),
-    ArrivalLandingTimesHealthCheck(passThresholdPercentage = 70),
-    ArrivalUpdates60HealthCheck(passThresholdPercentage = 25),
-    ArrivalUpdates120HealthCheck(passThresholdPercentage = 5),
+    ApiHealthCheck(hoursBeforeNow = 2, hoursAfterNow = 1, minimumFlights = 4, passThresholdPercentage = 50, SDate.now),
+    ArrivalLandingTimesHealthCheck(windowLength = 2.hours, buffer = 20, minimumFlights = 3, passThresholdPercentage = 50, SDate.now),
+    ArrivalUpdatesHealthCheck(minutesBeforeNow = 30, minutesAfterNow = 60, updateThreshold = 30.minutes, minimumFlights = 3, passThresholdPercentage = 25, SDate.now, "near"),
+    ArrivalUpdatesHealthCheck(minutesBeforeNow = 0, minutesAfterNow = 120, updateThreshold = 6.hours, minimumFlights = 3, passThresholdPercentage = 25, SDate.now, "far"),
   )
 
   def apply(serverConfig: ServerConfig,

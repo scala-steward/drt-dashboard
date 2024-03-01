@@ -8,6 +8,7 @@ import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
 import uk.gov.homeoffice.drt.ports.PortCode
+import uk.gov.homeoffice.drt.time.SDate
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContext, Future}
@@ -40,11 +41,12 @@ class PortHealthCheckSpec
   }
 
   "PortHealthCheck" should {
+    val now = () => SDate("2024-06-01T12:00")
     val healthChecks: Seq[HealthCheck[_ >: Double with Boolean <: AnyVal] with Serializable] = Seq(
-      ApiHealthCheck(passThresholdPercentage = 70),
-      ArrivalLandingTimesHealthCheck(passThresholdPercentage = 70),
-      ArrivalUpdates60HealthCheck(passThresholdPercentage = 25),
-      ArrivalUpdates120HealthCheck(passThresholdPercentage = 5),
+      ApiHealthCheck(hoursBeforeNow = 2, hoursAfterNow = 1, minimumFlights = 4, passThresholdPercentage = 70, now),
+      ArrivalLandingTimesHealthCheck(windowLength = 2.hours, buffer = 20, minimumFlights = 3, passThresholdPercentage = 70, now),
+      ArrivalUpdatesHealthCheck(minutesBeforeNow = 30, minutesAfterNow = 60, updateThreshold = 30.minutes, minimumFlights = 3, passThresholdPercentage = 25, now, "near"),
+      ArrivalUpdatesHealthCheck(minutesBeforeNow = 0, minutesAfterNow = 120, updateThreshold = 6.hours, minimumFlights = 3, passThresholdPercentage = 5, now, "far"),
     )
 
     "parse successful responses" in {
@@ -53,8 +55,8 @@ class PortHealthCheckSpec
       Await.result(responses, 1.second) should ===(Seq(
         PercentageHealthCheckResponse(Priority1, "API received", Success(Some(50.5)), Option(false)),
         PercentageHealthCheckResponse(Priority1, "Landing Times", Success(Some(50.5)), Option(false)),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates - 1hr", Success(Some(50.5)), Option(true)),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates - 2hrs", Success(Some(50.5)), Option(true)),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates - near", Success(Some(50.5)), Option(true)),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates - far", Success(Some(50.5)), Option(true)),
       ))
     }
     "parse null responses" in {
@@ -63,8 +65,8 @@ class PortHealthCheckSpec
       Await.result(responses, 1.second) should ===(Seq(
         PercentageHealthCheckResponse(Priority1, "API received", Success(None), None),
         PercentageHealthCheckResponse(Priority1, "Landing Times", Success(None), None),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates - 1hr", Success(None), None),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates - 2hrs", Success(None), None),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates - near", Success(None), None),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates - far", Success(None), None),
       ))
     }
     "handle failed responses" in {
