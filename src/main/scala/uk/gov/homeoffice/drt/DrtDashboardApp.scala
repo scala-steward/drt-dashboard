@@ -9,6 +9,7 @@ import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.service.notify.NotificationClient
 
 import scala.concurrent.duration.DurationInt
+import scala.jdk.CollectionConverters._
 
 object DrtDashboardApp extends App {
   val config = ConfigFactory.load()
