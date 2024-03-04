@@ -46,7 +46,6 @@ class PortHealthCheckSpec
       ApiHealthCheck(hoursBeforeNow = 2, hoursAfterNow = 1, minimumFlights = 4, passThresholdPercentage = 70, now),
       ArrivalLandingTimesHealthCheck(windowLength = 2.hours, buffer = 20, minimumFlights = 3, passThresholdPercentage = 70, now),
       ArrivalUpdatesHealthCheck(minutesBeforeNow = 30, minutesAfterNow = 60, updateThreshold = 30.minutes, minimumFlights = 3, passThresholdPercentage = 25, now),
-      ArrivalUpdatesHealthCheck(minutesBeforeNow = 0, minutesAfterNow = 120, updateThreshold = 6.hours, minimumFlights = 3, passThresholdPercentage = 5, now),
     )
 
     "parse successful responses" in {
@@ -55,8 +54,7 @@ class PortHealthCheckSpec
       Await.result(responses, 1.second) should ===(Seq(
         PercentageHealthCheckResponse(Priority1, "API received", Success(Some(50.5)), Option(false)),
         PercentageHealthCheckResponse(Priority1, "Landing Times", Success(Some(50.5)), Option(false)),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates - near", Success(Some(50.5)), Option(true)),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates - far", Success(Some(50.5)), Option(true)),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates", Success(Some(50.5)), Option(true)),
       ))
     }
     "parse null responses" in {
@@ -65,8 +63,7 @@ class PortHealthCheckSpec
       Await.result(responses, 1.second) should ===(Seq(
         PercentageHealthCheckResponse(Priority1, "API received", Success(None), None),
         PercentageHealthCheckResponse(Priority1, "Landing Times", Success(None), None),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates - near", Success(None), None),
-        PercentageHealthCheckResponse(Priority2, "Arrival Updates - far", Success(None), None),
+        PercentageHealthCheckResponse(Priority2, "Arrival Updates", Success(None), None),
       ))
     }
     "handle failed responses" in {
