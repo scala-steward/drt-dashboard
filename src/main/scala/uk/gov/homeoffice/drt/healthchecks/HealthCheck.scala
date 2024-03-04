@@ -2,7 +2,7 @@ package uk.gov.homeoffice.drt.healthchecks
 
 import uk.gov.homeoffice.drt.time.SDateLike
 
-import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Try}
 
 trait HealthCheck[A] {
@@ -51,11 +51,11 @@ case class ArrivalLandingTimesHealthCheck(windowLength: FiniteDuration, buffer: 
   override val url: String = s"/health-check/received-landing-times/${start.toISOString}/${end.toISOString}/$minimumFlights"
 }
 
-case class ArrivalUpdatesHealthCheck(minutesBeforeNow: Int, minutesAfterNow: Int, updateThreshold: FiniteDuration, minimumFlights: Int, passThresholdPercentage: Int, now: () => SDateLike, postfix: String) extends PercentageHealthCheck {
+case class ArrivalUpdatesHealthCheck(minutesBeforeNow: Int, minutesAfterNow: Int, updateThreshold: FiniteDuration, minimumFlights: Int, passThresholdPercentage: Int, now: () => SDateLike) extends PercentageHealthCheck {
   private val start = now().addMinutes(-minutesBeforeNow)
   private val end = now().addMinutes(minutesAfterNow)
   override val priority: IncidentPriority = Priority2
-  override val name: String = s"Arrival Updates - $postfix"
+  override val name: String = s"Arrival Updates"
   override val description: String = s"$passThresholdPercentage% of flights expected to land between ${start.toHoursAndMinutes} and ${end.toHoursAndMinutes} that have been updated in the past ${updateThreshold.toMinutes} minutes, when we have a minimum of $minimumFlights flights"
   override val url: String = s"/health-check/received-arrival-updates/${start.toISOString}/${end.toISOString}/$minimumFlights/${updateThreshold.toMinutes}"
 }

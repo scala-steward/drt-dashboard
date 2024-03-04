@@ -84,8 +84,7 @@ object Server {
   val healthChecks: Seq[HealthCheck[_ >: Double with Boolean <: AnyVal] with Serializable] = Seq(
     ApiHealthCheck(hoursBeforeNow = 2, hoursAfterNow = 1, minimumFlights = 4, passThresholdPercentage = 50, SDate.now),
     ArrivalLandingTimesHealthCheck(windowLength = 2.hours, buffer = 20, minimumFlights = 3, passThresholdPercentage = 50, SDate.now),
-    ArrivalUpdatesHealthCheck(minutesBeforeNow = 30, minutesAfterNow = 60, updateThreshold = 30.minutes, minimumFlights = 3, passThresholdPercentage = 25, SDate.now, "near"),
-    ArrivalUpdatesHealthCheck(minutesBeforeNow = 0, minutesAfterNow = 120, updateThreshold = 6.hours, minimumFlights = 3, passThresholdPercentage = 25, SDate.now, "far"),
+    ArrivalUpdatesHealthCheck(minutesBeforeNow = 30, minutesAfterNow = 30, updateThreshold = 60.minutes, minimumFlights = 3, passThresholdPercentage = 25, SDate.now),
   )
 
   def apply(serverConfig: ServerConfig,
