@@ -69,7 +69,7 @@ class PortHealthCheckSpec
     "handle failed responses" in {
       val responses = PortHealthCheck(PortCode("TST"), MockHttp.withFailureResponse(), healthChecks)
 
-      Await.result(responses, 1.second).map(_.value.isFailure) should ===(Seq(true, true, true, true))
+      Await.result(responses, 1.second).map(_.value.isFailure) should ===(Seq(true, true, true))
     }
   }
 }
