@@ -3,11 +3,21 @@ package uk.gov.homeoffice.drt.db
 import org.joda.time.DateTime
 import slick.lifted.ProvenShape
 import slick.jdbc.PostgresProfile.api._
+import uk.gov.homeoffice.drt.time.MilliDate.MillisSinceEpoch
 
 import java.sql.Timestamp
 import java.time.{ZoneId, ZonedDateTime}
 import java.time.format.DateTimeFormatter
 import scala.concurrent.{ExecutionContext, Future}
+
+
+case class DropIn(id: Option[Int],
+                  title: String,
+                  startTime: MillisSinceEpoch,
+                  endTime: MillisSinceEpoch,
+                  isPublished: Boolean,
+                  meetingLink: Option[String],
+                  lastUpdatedAt: MillisSinceEpoch)
 
 case class DropInRow(id: Option[Int],
                      title: String,

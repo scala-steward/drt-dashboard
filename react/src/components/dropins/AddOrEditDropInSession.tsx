@@ -16,8 +16,8 @@ import {enqueueSnackbar} from "notistack";
 import ApiClient from "../../services/ApiClient";
 
 export function jsonDropInData(startTime: Moment | null, endTime: Moment | null, title: string, meetingLink: string) {
-  const startTimeString = startTime?.format()
-  const endTimeString = endTime?.format()
+  const startTimeString = startTime?.valueOf()
+  const endTimeString = endTime?.valueOf()
   return {
     'title': title,
     'startTime': startTimeString,
