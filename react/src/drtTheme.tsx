@@ -3,7 +3,7 @@ import {createTheme} from '@mui/material/styles';
 const drtTheme = createTheme({
   palette: {
     primary: {
-      main: '#233E82',
+      main: '#005ea5',
     },
   },
   typography: {
@@ -56,6 +56,9 @@ const drtTheme = createTheme({
           fontWeight: 400,
           fontSize: '16px',
           padding: '6px 12px',
+        },
+        outlined: {
+          backgroundColor: '#fff'
         }
       },
     },

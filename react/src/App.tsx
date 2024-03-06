@@ -27,6 +27,7 @@ import {FeedbackList} from "./components/feedback/FeedbackList";
 import DownloadManager from './components/downloadmanager/DownloadManager';
 import {ExportConfig} from "./components/ExportConfig";
 import {HealthChecks} from "./components/healthchecks/HealthChecks";
+import RegionalDashboard from './components/regionalpressure/RegionalDashboard';
 
 const StyledDiv = styled('div')(() => ({
   textAlign: 'center',
@@ -97,6 +98,7 @@ export const App = () => {
           <Route path={"/access-requests"} element={<AccessRequests/>}/>
           <Route path={"/users"} element={<UsersList/>}/>
           <Route path={"/download"} element={<DownloadManager config={config.values} user={user.profile} />} />
+          <Route path={"/national-pressure"} element={<RegionalDashboard config={config.values} user={user.profile} />} />
           <Route path={"/alerts"} element={<Alerts regions={config.values.portsByRegion} user={user.profile}/>}/>
           <Route path={"/region/:regionName"} element={<RegionPage user={user.profile} config={config.values}/>}/>
           <Route path={"/feature-guides"}>
