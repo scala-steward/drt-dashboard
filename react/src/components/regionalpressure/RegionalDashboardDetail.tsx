@@ -63,13 +63,15 @@ interface RegionalPressureDetailProps {
 }
 
 const RegionalPressureDetail = ({config, portData, historicPortData, interval, region, setRegion}: RegionalPressureDetailProps) => {
-  const regionPorts = config.portsByRegion.filter((r) => r.name.toLowerCase() === region.toLowerCase())[0].ports;
+  let regionPorts = config.portsByRegion.filter((r) => r.name.toLowerCase() === region.toLowerCase())[0].ports;
+  if (region === 'LHR' ) {
+    regionPorts = ['LHR-T2', 'LHR-T3', 'LHR-T4', 'LHR-T5'];
+  }
   const [visiblePorts, setVisiblePorts] = React.useState<string[]>([...regionPorts]);
 
   const timeUnits = interval;
 
   const handleTogglePort = (port:string) => {
-    console.log(visiblePorts, port);
     if (visiblePorts.includes(port)) {
       const newPorts = [...visiblePorts];
       newPorts.splice(visiblePorts.indexOf(port), 1);
@@ -102,23 +104,25 @@ const RegionalPressureDetail = ({config, portData, historicPortData, interval, r
                 <Button variant="outlined"><ArrowDownwardIcon />Export</Button>
               </Stack>
             </Grid>
-            <Grid item xs={10}>
+            <Grid item xs={12}>
               <FormControl component="fieldset" variant="standard">
                 <FormLabel component="legend">Airports:</FormLabel>
                 <FormGroup>
-                  {
-                    regionPorts && regionPorts.map((port:string) => {
-                      return <FormControlLabel
-                        key={port}
-                        value={port}
-                        control={<Checkbox checked={visiblePorts.includes(port)} value={port} />}
-                        onClick={() => handleTogglePort(port)}
-                        label={port.toUpperCase()}
-                        labelPlacement="end"
-                        />
-                                
-                    })
-                  }
+                  <Stack direction={'row'}>
+                    {
+                      regionPorts && regionPorts.map((port:string) => {
+                        return <FormControlLabel
+                          key={port}
+                          value={port}
+                          control={<Checkbox checked={visiblePorts.includes(port)} value={port} />}
+                          onClick={() => handleTogglePort(port)}
+                          label={port.toUpperCase()}
+                          labelPlacement="end"
+                          />
+                                  
+                      })
+                    }
+                  </Stack>
                 </FormGroup>
               </FormControl>
             </Grid>

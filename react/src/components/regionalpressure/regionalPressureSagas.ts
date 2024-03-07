@@ -41,6 +41,7 @@ export type TerminalDataPoint = {
   queueCounts: QueueCount[],
   regionName: string,
   totalPcpPax: number, 
+  terminalName?: string,
 };
 
 export type PortsObject = {
@@ -90,8 +91,25 @@ function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
     else {
       currentResponse = yield call (axios.get, `${ApiClient.passengerTotalsEndpoint}${start}/${end}?granularity=${interval}&port-codes=${action.availablePorts.join()}`);
       historicResponse = yield call (axios.get, `${ApiClient.passengerTotalsEndpoint}${historicStart}/${historicEnd}?granularity=${interval}&port-codes=${action.availablePorts.join()}`);
+
       current = currentResponse.data;
       historic = historicResponse.data;
+
+      if (action.availablePorts.includes('LHR')) {
+        const LHRT2: Response = yield call (axios.get, `${ApiClient.passengerTotalsEndpoint}T2/${start}/${end}?granularity=${interval}&port-codes=LHR`);
+        const LHRT3: Response = yield call (axios.get, `${ApiClient.passengerTotalsEndpoint}T3/${start}/${end}?granularity=${interval}&port-codes=LHR`);
+        const LHRT4: Response = yield call (axios.get, `${ApiClient.passengerTotalsEndpoint}T4/${start}/${end}?granularity=${interval}&port-codes=LHR`);
+        const LHRT5: Response = yield call (axios.get, `${ApiClient.passengerTotalsEndpoint}T5/${start}/${end}?granularity=${interval}&port-codes=LHR`);
+
+        const LHRT2Historic: Response = yield call (axios.get, `${ApiClient.passengerTotalsEndpoint}T2/${historicStart}/${historicEnd}?granularity=${interval}&port-codes=LHR`);
+        const LHRT3Historic: Response = yield call (axios.get, `${ApiClient.passengerTotalsEndpoint}T3/${historicStart}/${historicEnd}?granularity=${interval}&port-codes=LHR`);
+        const LHRT4Historic: Response = yield call (axios.get, `${ApiClient.passengerTotalsEndpoint}T4/${historicStart}/${historicEnd}?granularity=${interval}&port-codes=LHR`);
+        const LHRT5Historic: Response = yield call (axios.get, `${ApiClient.passengerTotalsEndpoint}T5/${historicStart}/${historicEnd}?granularity=${interval}&port-codes=LHR`);
+
+        current = [...current, ...LHRT2.data, ...LHRT3.data, ...LHRT4.data, ...LHRT5.data ]
+        historic = [...current, ...LHRT2Historic.data, ...LHRT3Historic.data, ...LHRT4Historic.data, ...LHRT5Historic.data ]
+      }
+
     }
 
     const portData: PortsObject = {};
@@ -100,22 +118,25 @@ function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
     const historicPortTotals: PortTotals = {};
 
     current!.forEach((datapoint) => {
+      const portIndex = datapoint.terminalName ? `${datapoint.portCode}-${datapoint.terminalName}` : datapoint.portCode;
       datapoint.queueCounts.forEach(passengerCount => {
-        portTotals[datapoint.portCode] = (portTotals[datapoint.portCode] ? portTotals[datapoint.portCode] : 0) + passengerCount.count
+        portTotals[portIndex] = (portTotals[portIndex] ? portTotals[portIndex] : 0) + passengerCount.count
       })
-      portData[datapoint.portCode] ?
-      portData[datapoint.portCode].push(datapoint)
-        : portData[datapoint.portCode] = [datapoint]
+      portData[portIndex] ?
+      portData[portIndex].push(datapoint)
+        : portData[portIndex] = [datapoint]
     })
 
     historic!.forEach((datapoint) => {
+      const portIndex = datapoint.terminalName ? `${datapoint.portCode}-${datapoint.terminalName}` : datapoint.portCode;
       datapoint.queueCounts.forEach(passengerCount => {
-        historicPortTotals[datapoint.portCode] = (historicPortTotals[datapoint.portCode] ? historicPortTotals[datapoint.portCode] : 0) + passengerCount.count
+        historicPortTotals[portIndex] = (historicPortTotals[portIndex] ? historicPortTotals[portIndex] : 0) + passengerCount.count
       })
-      historicPortData[datapoint.portCode] ?
-      historicPortData[datapoint.portCode].push(datapoint)
-        : historicPortData[datapoint.portCode] = [datapoint]
+      historicPortData[portIndex] ?
+      historicPortData[portIndex].push(datapoint)
+        : historicPortData[portIndex] = [datapoint]
     })
+    
     yield(put(setRegionalDashboardState({
       portData,
       portTotals,

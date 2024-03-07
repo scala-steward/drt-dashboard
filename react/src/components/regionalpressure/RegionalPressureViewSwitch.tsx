@@ -25,7 +25,11 @@ const RegionalPressureViewSwitch = ({config, status, userPortsByRegion}: Regiona
 
   return (
     <Box>
-      { status === 'loading' && <CircularProgress /> }
+      { status === 'loading' && <Grid container justifyContent={"center"}>
+        <Grid item sx={{p: 4}}>
+          <CircularProgress />
+        </Grid>
+      </Grid> }
       { status !== 'loading' && region !== 'overview' && <RegionalDashboardDetail config={config} region={region} setRegion={setRegion} /> }
       { status !== 'loading' && region === 'overview' && 
       <Box>
@@ -40,8 +44,9 @@ const RegionalPressureViewSwitch = ({config, status, userPortsByRegion}: Regiona
             <Button variant="outlined" sx={{backgroundColor: '#fff'}}>Export</Button>
           </Grid>
           { userPortsByRegion.map(region => {
+            const regionPorts = region.name === 'LHR' ? ['LHR-T2', 'LHR-T2', 'LHR-T4', 'LHR-T5'] : region.ports
             return <Grid key={region.name} item xs={12} md={6} lg={3} sx={{mt: 2}}>
-              <RegionalPressureChart regionName={region.name} portCodes={region.ports} onMoreInfo={setRegion} />
+              <RegionalPressureChart regionName={region.name} portCodes={regionPorts} onMoreInfo={setRegion} />
             </Grid>
           })}
         </Grid>
