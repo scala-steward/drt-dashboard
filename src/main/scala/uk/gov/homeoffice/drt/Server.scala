@@ -118,7 +118,6 @@ object Server {
       val getAlarmStatuses: () => Future[Map[PortCode, Map[String, Boolean]]] = () => healthChecksActor.ask(replyTo => HealthChecksActor.GetAlarmStatuses(replyTo))
 
       val routes: Route = concat(
-        indexRoutes,
         pathPrefix("api") {
           concat(
             PassengerRoutes(ProdHttpClient),
@@ -135,7 +134,8 @@ object Server {
             FeedbackRoutes(userFeedbackDao),
             ExportConfigRoutes(ProdHttpClient, serverConfig.enabledPorts),
           )
-        }
+        },
+        indexRoutes,
       )
 
       val serverBinding = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)

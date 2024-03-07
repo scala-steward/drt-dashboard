@@ -31,18 +31,7 @@ case class IndexRoute(urls: Urls, indexResource: Route) {
           },
         )
       },
-      pathPrefix("access-requests")(indexRouteDirectives),
-      pathPrefix("users")(indexRouteDirectives),
-      pathPrefix("alerts")(indexRouteDirectives),
-      pathPrefix("region")(indexRouteDirectives),
-      pathPrefix("feature-guides")(indexRouteDirectives),
-      pathPrefix("drop-in-sessions")(indexRouteDirectives),
-      pathPrefix("feedback")(indexRouteDirectives),
-      pathPrefix("user-feedback")(indexRouteDirectives),
-      pathPrefix("health-checks")(indexRouteDirectives),
-      pathPrefix("health-check-pauses")(indexRouteDirectives),
-      pathPrefix("download")(indexRouteDirectives),
-      pathPrefix("export-config")(indexRouteDirectives),
+      indexRouteDirectives,
     )
 
   def indexRouteDirectives: Route = {
