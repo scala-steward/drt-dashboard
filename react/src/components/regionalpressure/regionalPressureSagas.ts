@@ -107,7 +107,7 @@ function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
         const LHRT5Historic: Response = yield call (axios.get, `${ApiClient.passengerTotalsEndpoint}T5/${historicStart}/${historicEnd}?granularity=${interval}&port-codes=LHR`);
 
         current = [...current, ...LHRT2.data, ...LHRT3.data, ...LHRT4.data, ...LHRT5.data ]
-        historic = [...current, ...LHRT2Historic.data, ...LHRT3Historic.data, ...LHRT4Historic.data, ...LHRT5Historic.data ]
+        historic = [...historic, ...LHRT2Historic.data, ...LHRT3Historic.data, ...LHRT4Historic.data, ...LHRT5Historic.data ]
       }
 
     }
