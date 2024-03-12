@@ -8,7 +8,7 @@ interface IStubService {
 class StubService implements IStubService {
   public generatePortPaxSeries(start: string, end: string, interval: string, region: string, portCodes: string[]) {
     const startDate = moment(start);
-    const endDate = moment(end);
+    const endDate = moment(end).add(1, 'day');
     const duration = moment.duration(endDate.diff(startDate));
     let momentUnit = 'hours';
     let durationInterval = 0;

@@ -19,7 +19,6 @@ const root = createRoot(container!);
 console.log(store);
 
 root.render(
-  <React.StrictMode>
     <Provider store={store}>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap"/>
       <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
@@ -35,7 +34,6 @@ root.render(
         </BrowserRouter>
       </StyledEngineProvider>
     </Provider>
-  </React.StrictMode>
 );
 
 // If you want your app to work offline and load faster, you can change

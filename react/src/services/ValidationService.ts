@@ -5,6 +5,10 @@ export interface FormError {
   message: string,
 }
 
+export interface ErrorFieldMapping {
+  [key:string]: boolean
+}
+
 interface FormFields {
   [key: string]: any
 }

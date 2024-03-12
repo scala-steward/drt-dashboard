@@ -9,6 +9,7 @@ import {
   Stack,
   useTheme,
 } from "@mui/material";
+import { Link } from 'react-router-dom';
 import { CheckCircle } from '@mui/icons-material';
 import ErrorIcon from '@mui/icons-material/Error';
 import {RootState} from '../../store/redux';
@@ -21,6 +22,8 @@ import {
   Filler,
   Tooltip,
   Legend,
+  TooltipItem,
+  ChartType,
 } from 'chart.js';
 import { Radar } from 'react-chartjs-2';
 
@@ -42,18 +45,19 @@ interface RegionalPressureChartProps {
   historicPortTotals: {
     [key: string]: number
   };
-  onMoreInfo: (region :string) => void
 }
 
 const doesExceed = (forecast: number, historic: number): boolean => {
   return forecast > historic;
 }
 
-const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortTotals, onMoreInfo}: RegionalPressureChartProps) => {
+const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortTotals}: RegionalPressureChartProps) => {
   const theme = useTheme();
 
-  const forecasts = [...portCodes].map(portCode => portTotals[portCode]);
-  const historics = [...portCodes].map(portCode => historicPortTotals[portCode]);
+  const forecasts = [...portCodes].map((portCode) => {
+    return (portTotals[portCode] - historicPortTotals[portCode]) / (historicPortTotals[portCode]) * 100
+  })
+  const historics = [...portCodes].map(() => 0);
 
   const chartData = {
     labels: portCodes,
@@ -66,6 +70,18 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
         borderDash: [5, 5],
         pointStyle: 'rectRot',
         borderWidth: 1,
+        tooltip: {
+          callbacks: {
+              label: function(context: TooltipItem<ChartType>) {
+                const port = context.label;
+                const arrivals = portTotals[port];
+                const value = new Intl.NumberFormat("en-US", {
+                    signDisplay: "exceptZero"
+                }).format(context.parsed.r);
+                return `${arrivals} arrivals (${value}%)`
+              }
+          }
+        },
       },
       {
         label: 'Historic PAX average',
@@ -76,6 +92,15 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
         pointBackgroundColor: '#547a00',
         borderDash: [0,0],
         borderWidth: 1,
+        tooltip: {
+          callbacks: {
+              label: function(context: TooltipItem<ChartType>) {
+                const port = context.label;
+                const arrivals = historicPortTotals[port];
+                return `${arrivals} arrivals`
+              }
+          }
+        },
       },
     ],
   };
@@ -88,6 +113,12 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
       padding: 0
     },
     plugins: {
+      datalabels: {
+          formatter: (value: number) => {
+              return `${value}%`;
+          },
+          color: '#fff',
+      },
       legend: {
         labels: {
           usePointStyle: true,
@@ -96,6 +127,13 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
     },
     scales: {
       r: {
+        suggestedMin: -100,
+        suggestedMax: 100,
+        ticks: {
+          callback: ((tick: any) => {
+            return tick
+          })
+        },
         pointLabels: {
           callback: (label: string, index: number): string | number | string[] | number[] => {
             return doesExceed(forecasts[index]!, historics[index]!) ? `⚠ ${label}` : `${label}`;
@@ -119,8 +157,7 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
       <CardContent>
         <Stack sx={{ width: '100%' }} spacing={2}>
           <Radar data={chartData} options={chartOptions} />
-          <Button onClick={() => onMoreInfo(regionName)} fullWidth variant='contained'>More Info</Button>
-
+          <Button component={Link} to={`${regionName.toLowerCase()}`} fullWidth variant='contained'>More Info</Button>
           { exceededCount > 0 ?
               <Alert icon={<ErrorIcon fontSize="inherit" />} severity="info">
                 {`PAX arrivals exceeds historic average across ${exceededCount} airports`}

@@ -45,7 +45,6 @@ interface DownloadManagerProps {
   checkDownloadStatus: (createdAt: string) => void;
 }
 
-
 const DownloadManager = ({status, createdAt, downloadUrl, errors, requestDownload, user, config, checkDownloadStatus}: DownloadManagerProps) => {
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
   const [selectedPorts, setSelectedPorts] = React.useState<string[]>([]);
