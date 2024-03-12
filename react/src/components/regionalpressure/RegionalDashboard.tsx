@@ -25,7 +25,6 @@ interface RegionalPressureDashboardProps {
   end?: string;
 }
 
-
 const RegionalPressureDashboard = ({config, user, status}: RegionalPressureDashboardProps) => {
   
   let userPortsByRegion: PortRegion[] = config.portsByRegion.map(region => {
@@ -49,7 +48,7 @@ const RegionalPressureDashboard = ({config, user, status}: RegionalPressureDashb
         </Grid> 
       }
   
-      <Grid container columnSpacing={2} justifyItems='stretch'>
+      { status !== 'loading' && <Grid container columnSpacing={2} justifyItems='stretch'>
         <Grid item xs={12}>
           <h2>Regional Overview</h2>
         </Grid>
@@ -60,12 +59,12 @@ const RegionalPressureDashboard = ({config, user, status}: RegionalPressureDashb
           <Button variant="outlined" sx={{backgroundColor: '#fff'}}>Export</Button>
         </Grid>
         { userPortsByRegion.map(region => {
-          const regionPorts = region.name === 'LHR' ? ['LHR-T2', 'LHR-T2', 'LHR-T4', 'LHR-T5'] : region.ports
+          const regionPorts = region.name === 'Heathrow' ? ['LHR-T2', 'LHR-T2', 'LHR-T4', 'LHR-T5'] : region.ports
           return <Grid key={region.name} item xs={12} md={6} lg={3} sx={{mt: 2}}>
             <RegionalPressureChart regionName={region.name} portCodes={regionPorts} />
           </Grid>
         })}
-      </Grid>
+      </Grid>}
     </Box>
   )
   
