@@ -69,7 +69,7 @@ interface RegionalPressureDetailProps {
 const RegionalPressureDetail = ({ config, portData, historicPortData, interval, type }: RegionalPressureDetailProps) => {
   const { region } = useParams() || '';
   let regionPorts = config.portsByRegion.filter((r) => r.name.toLowerCase() === region!.toLowerCase())[0].ports;
-  if (region === 'Heathrow') {
+  if (region === 'heathrow') {
     regionPorts = ['LHR-T2', 'LHR-T3', 'LHR-T4', 'LHR-T5'];
   }
   const [visiblePorts, setVisiblePorts] = React.useState<string[]>([...regionPorts]);
