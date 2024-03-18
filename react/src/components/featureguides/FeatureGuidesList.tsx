@@ -124,7 +124,7 @@ export const FeatureGuidesList = () => {
         </Box>
     }
     {previewGuide && <PreviewComponent guide={previewGuide}
-                                       videoUrl={"/guide/get-feature-videos/" + previewGuide.fileName}
+                                       fileUrl={"/guide/get-feature-files/" + previewGuide.fileName}
                                        onClose={() => {
                                          setPreviewGuide(undefined)
                                          setRequestedAt(moment().valueOf())

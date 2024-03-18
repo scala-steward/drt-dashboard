@@ -34,9 +34,9 @@ object FeatureGuideRoutes extends DefaultTimeJsonProtocol {
     }
   }
 
-  def getFeatureVideoFile(downloader: S3Downloader)
-                         (implicit ec: ExecutionContextExecutor): Route =
-    path("get-feature-videos" / Segment) { filename =>
+  def getFeatureFile(downloader: S3Downloader)
+                    (implicit ec: ExecutionContextExecutor): Route =
+    path("get-feature-file" / Segment) { filename =>
       get {
         val responseStreamF: Future[Source[ByteString, Future[IOResult]]] = downloader.download(filename)
 
@@ -84,7 +84,7 @@ object FeatureGuideRoutes extends DefaultTimeJsonProtocol {
     post {
       entity(as[Multipart.FormData]) { _ =>
         formFields('title, 'markdownContent) { (title, markdownContent) =>
-          fileUpload("webmFile") {
+          fileUpload("featureFile") {
             case (metadata, byteSource) =>
               val filename = metadata.fileName
               featureGuideService.insertFeatureGuide(filename, title, markdownContent)
@@ -147,7 +147,7 @@ object FeatureGuideRoutes extends DefaultTimeJsonProtocol {
             createFeatureGuide(featureGuideService, uploader),
           )
         },
-        getFeatureVideoFile(downloader),
+        getFeatureFile(downloader),
         getFeatureGuide(featureGuideService),
         updateFeatureGuide(featureGuideService),
         publishFeatureGuide(featureGuideService),

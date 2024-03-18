@@ -9,10 +9,11 @@ import {useNavigate} from "react-router-dom";
 import {DialogComponent} from "../DialogComponent";
 import {deleteFeatureGuide} from "../../store/featureGuides";
 import {FeatureGuide} from "./FeatureGuidesList";
+import ReactMarkdown from "react-markdown";
 
 interface Props {
   guide: FeatureGuide
-  videoUrl: string
+  fileUrl: string
   onClose: () => void
   actionsAvailable: boolean
 }
@@ -61,12 +62,21 @@ export function PreviewComponent(props: Props) {
         <Grid container spacing={"2"}>
           <Grid item xs={8}
                 sx={{"backgroundColor": "#FFFFFF", "border": "16px solid #C0C7DE"}}>
-            <video
-              src={props.videoUrl}
-              width="100%"
-              height="100%"
-              controls
-            />
+            {props.guide.fileName.endsWith('.webm') ?
+              <video
+                src={props.fileUrl}
+                width="100%"
+                height="100%"
+                controls
+              />
+              :
+              <img
+                alt={props.guide.title}
+                src={props.fileUrl}
+                width="100%"
+                height="100%"
+              />
+            }
           </Grid>
           <Grid item xs={4} sx={{
             "padding-left": "16px",
@@ -88,7 +98,7 @@ export function PreviewComponent(props: Props) {
               <Grid item xs={12} sx={{"font": "Arial", "padding-left": "16px"}}>
                 {props.guide.markdownContent && props.guide.markdownContent
                   .split('\n')
-                  .map(line => <div>{line}</div>)}
+                  .map(line => <div><ReactMarkdown>{line}</ReactMarkdown></div>)}
               </Grid>
             </Grid>
           </Grid>

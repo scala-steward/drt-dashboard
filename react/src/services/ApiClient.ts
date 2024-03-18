@@ -27,7 +27,7 @@ export default class ApiClient implements IApiClient {
   public static dropInSessionRegistrationDeleteEndpoint = "/api/drop-in-register"
 
   public static featureGuidesEndpoint = "/api/feature-guides"
-  public static featureGuidesVideosEndpoint = "/api/feature-guides/get-feature-videos"
+  public static featureGuidesFileEndpoint = "/api/feature-guides/get-feature-file"
   public static featureGuidesUpdatePublishedEndpoint = "/api/feature-guides/update-published"
 
   public static exportRegionEndpoint = "/api/export-region"

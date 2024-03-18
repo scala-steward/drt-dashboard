@@ -14,12 +14,11 @@ import ApiClient from "../../services/ApiClient";
 export const AddOrEditFeatureGuide = () => {
   const navigate = useNavigate()
 
-  const [video, setVideo] = useState<File | null>(null)
+  const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
   const [markdownContent, setMarkdownContent] = useState('')
   const [openPreview, setOpenPreview] = useState(false)
   const [fileName, setFileName] = useState('')
-
   const params = useParams()
   const guideId = params['guideId'] ? params['guideId'] : ''
 
@@ -48,21 +47,20 @@ export const AddOrEditFeatureGuide = () => {
     setOpenPreview(true)
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      setVideo(e.target.files[0])
+      setFile(e.target.files[0])
     }
   }
 
-  const videoUrl = video ? URL.createObjectURL(video) : `${ApiClient.featureGuidesVideosEndpoint}/${fileName}`
-
+  const fileUrl = file ? URL.createObjectURL(file) : `${ApiClient.featureGuidesFileEndpoint}/${fileName}`
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
     console.log(`submitting form data: ${title}, ${markdownContent}`)
 
     const formData = new FormData()
-    video && formData.append('webmFile', video)
+    file && formData.append('featureFile', file)
     formData.append('title', title)
     formData.append('markdownContent', markdownContent)
     const doAction = guideId ?
@@ -94,8 +92,8 @@ export const AddOrEditFeatureGuide = () => {
     </Breadcrumbs>
     <form onSubmit={handleSubmit}>
       {!guideId && <Stack sx={{gap: 1}}>
-          <div><label htmlFor="image">Demo video (webm format)</label></div>
-          <input type={'file'} id="webmFile" onChange={handleImageChange}/>
+          <div><label htmlFor="image">Demo video (webm format) / Image</label></div>
+          <input type={'file'} id="featureFile" onChange={handleFileChange}/>
       </Stack>}
       <div style={{marginTop: '20px'}}>
         <TextField label={'Title'} value={title} onChange={event => setTitle(event.target.value)}/>
@@ -126,7 +124,7 @@ export const AddOrEditFeatureGuide = () => {
               fileName: '',
               uploadTime: ''
             } as FeatureGuide}
-            videoUrl={videoUrl}
+            fileUrl={fileUrl}
             onClose={() => setOpenPreview(false)}
             actionsAvailable={false}
         />}
