@@ -19,7 +19,6 @@ import {
   Checkbox
 } from "@mui/material";
 import { Link } from 'react-router-dom';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import { ConfigValues } from "../../model/Config";
 import { RootState } from '../../store/redux';
 import drtTheme from '../../drtTheme';
@@ -50,6 +49,7 @@ import { ArrowBack } from '@mui/icons-material';
 import { TerminalDataPoint } from './regionalPressureSagas';
 import RegionalPressureDates from './RegionalPressureDates';
 import RegionalPressureForm from './RegionalPressureForm';
+import RegionalPressureExport from './RegionalPressureExport';
 
 
 interface RegionalPressureDetailProps {
@@ -108,7 +108,7 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
         </Grid>
         <Grid item xs={2}>
           <Stack direction="row-reverse" spacing={2}>
-            <Button variant="outlined"><ArrowDownwardIcon />Export</Button>
+            <RegionalPressureExport />
           </Stack>
         </Grid>
         <Grid item xs={12}>

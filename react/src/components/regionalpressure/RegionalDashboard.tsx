@@ -1,18 +1,18 @@
 import * as React from 'react';
-import {connect} from 'react-redux';
+import {connect, MapDispatchToProps} from 'react-redux';
 import {
   Box,
   Grid,
   CircularProgress,
-  Button
 } from "@mui/material";
 import {UserProfile} from "../../model/User";
 import {ConfigValues, PortRegion} from "../../model/Config";
 import {RootState} from '../../store/redux';
+import { requestPaxTotals } from './regionalPressureSagas';
 import { FormError } from '../../services/ValidationService';
 import RegionalPressureDates from './RegionalPressureDates';
 import RegionalPressureChart from './ RegionalPressureChart';
-
+import RegionalPressureExport from './RegionalPressureExport';
 import RegionalPressureForm from './RegionalPressureForm';
 
 interface RegionalPressureDashboardProps {
@@ -56,7 +56,7 @@ const RegionalPressureDashboard = ({config, user, status}: RegionalPressureDashb
           <RegionalPressureDates />
         </Grid>
         <Grid item xs={4} style={{textAlign: 'right'}}>
-          <Button variant="outlined" sx={{backgroundColor: '#fff'}}>Export</Button>
+          <RegionalPressureExport />
         </Grid>
         { userPortsByRegion.map(region => {
           const regionPorts = region.name === 'Heathrow' ? ['LHR-T2', 'LHR-T2', 'LHR-T4', 'LHR-T5'] : region.ports
@@ -69,6 +69,13 @@ const RegionalPressureDashboard = ({config, user, status}: RegionalPressureDashb
   )
   
 }
+const mapDispatch = (dispatch :MapDispatchToProps<any, RegionalPressureDashboardProps>) => {
+  return {
+    requestRegionExport: (userPorts: string[], availablePorts: string[], searchType: string, startDate: string, endDate: string,  isExport: boolean) => {
+      dispatch(requestPaxTotals(userPorts, availablePorts, searchType, startDate, endDate, isExport));
+    }
+  };
+};
 
 const mapState = (state: RootState) => {
   return { 
@@ -81,4 +88,4 @@ const mapState = (state: RootState) => {
 }
 
 
-export default connect(mapState)(RegionalPressureDashboard);
+export default connect(mapState, mapDispatch)(RegionalPressureDashboard);
