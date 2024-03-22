@@ -16,6 +16,8 @@ trait HealthCheck[A] {
 }
 
 trait PercentageHealthCheck extends HealthCheck[Double] {
+  private val log = org.slf4j.LoggerFactory.getLogger(getClass)
+
   def passThresholdPercentage: Int
 
   override val parseResponse: String => HealthCheckResponse[Double] =
@@ -25,6 +27,7 @@ trait PercentageHealthCheck extends HealthCheck[Double] {
         case _ => Try(Option(str.toDouble))
       }
       val maybeIsPass = value.toOption.flatten.map(_ >= passThresholdPercentage)
+      log.info(s"HealthCheck $name got response: $str, value: $value, maybeIsPass: $maybeIsPass")
 
       PercentageHealthCheckResponse(priority, name, value, maybeIsPass)
     }
