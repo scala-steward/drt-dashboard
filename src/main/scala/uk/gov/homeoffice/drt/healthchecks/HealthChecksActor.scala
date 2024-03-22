@@ -42,9 +42,12 @@ object HealthChecksActor {
           val newPortChecks = updateState(checks, portCode, response, checkName, now(), retainMaxResponses)
           val alarmNowActive = isHcAlarmActive(newPortChecks, portCode, checkName, alarmTriggerConsecutiveFailures)
 
-          if (!alarmNowActive && alarmPreviouslyActive)
+          val isResolved = !alarmNowActive && alarmPreviouslyActive
+          val isTriggered = alarmNowActive && !alarmPreviouslyActive
+
+          if (isResolved)
             silenceAlarm(portCode, checkName, response.priority)
-          if (alarmNowActive && !alarmPreviouslyActive)
+          if (isTriggered)
             soundAlarm(portCode, checkName, response.priority)
 
           replyTo ! (if (alarmNowActive) AlarmActive else AlarmInactive)
