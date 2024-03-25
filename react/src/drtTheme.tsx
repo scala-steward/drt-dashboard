@@ -5,11 +5,15 @@ const drtTheme = createTheme({
     primary: {
       main: '#005ea5',
     },
+    secondary: {
+      main: '#233E82'
+    }
   },
   typography: {
     h1: {
       fontSize: '46px',
       fontWeight: 'bold',
+      color: '#233E82'
     },
     h2: {
       fontSize: '40px',
@@ -76,6 +80,16 @@ const drtTheme = createTheme({
         },
         content: {
           margin: '12px 0 0 !important'
+        }
+      }
+    },
+    MuiRadio:{
+      styleOverrides:{
+        root: {
+          color: '#000',
+          "&.Mui-checked": {
+            color: '#000',
+          }
         }
       }
     }

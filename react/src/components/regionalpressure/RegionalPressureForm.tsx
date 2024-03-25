@@ -81,7 +81,7 @@ const RegionalPressureForm = ({ports, errors, availablePorts, start, type, end, 
           slotProps={{
             textField: { error: !!errorFieldMapping.startDate }
           }}
-          label="From" 
+          label={searchType == 'single' ? "Date" : "From" }
           sx={{backgroundColor: '#fff', marginRight: '10px'}}
           value={dates.start}
           onChange={(newValue: Moment | null) => handleDateChange('start', newValue)}/>

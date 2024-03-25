@@ -16,7 +16,9 @@ import {
   FormGroup,
   FormLabel,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  useMediaQuery,
+  Theme
 } from "@mui/material";
 import { Link } from 'react-router-dom';
 import { ConfigValues } from "../../model/Config";
@@ -72,9 +74,13 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
   if (region === 'heathrow') {
     regionPorts = ['LHR-T2', 'LHR-T3', 'LHR-T4', 'LHR-T5'];
   }
+  regionPorts.sort();
+
   const [visiblePorts, setVisiblePorts] = React.useState<string[]>([...regionPorts]);
   const availablePorts = config.ports.map(port => port.iata);
   const timeUnits = interval;
+
+  const is_mobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
 
   const handleTogglePort = (port: string) => {
     if (visiblePorts.includes(port)) {
@@ -106,16 +112,11 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
         <Grid item xs={10}>
           <RegionalPressureDates />
         </Grid>
-        <Grid item xs={2}>
-          <Stack direction="row-reverse" spacing={2}>
-            <RegionalPressureExport />
-          </Stack>
-        </Grid>
-        <Grid item xs={12}>
+        <Grid item xs={12} sm={10}>
           <FormControl component="fieldset" variant="standard">
             <FormLabel component="legend">Airports:</FormLabel>
             <FormGroup>
-              <Stack direction={'row'}>
+              <Stack direction={is_mobile ? 'column' : 'row'}>
                 {
                   regionPorts && regionPorts.map((port: string) => {
                     return <FormControlLabel
@@ -131,6 +132,11 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
               </Stack>
             </FormGroup>
           </FormControl>
+        </Grid>
+        <Grid item xs={12} sm={2}>
+          <Stack direction="row-reverse" spacing={2}>
+            <RegionalPressureExport />
+          </Stack>
         </Grid>
         {regionPorts && regionPorts.map((port: string) => {
           return visiblePorts.includes(port) && portData[port] && (
@@ -163,8 +169,14 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
                           }
                         }
                       },
+                      interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                      },
                       scales: {
                         x: {
+                          stacked: true,
                           border: {
                             display: true
                           },
@@ -179,6 +191,7 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
                           }
                         },
                         y: {
+                          stacked: true,
                           type: 'linear',
                           min: 0,
                           offset: true,
@@ -207,12 +220,13 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
                     data={{
                       datasets: [
                         {
-                          label: `Pax:`,
+                          label: `Pax`,
                           backgroundColor: 'rgba(0, 94, 165, 0.2)',
                           borderColor: drtTheme.palette.primary.main,
                           borderDash: [5, 5],
                           borderWidth: 1,
                           pointStyle: 'rectRot',
+                          pointRadius: 10,
                           fill: {
                             target: '+1',
                             above: 'rgba(0, 94, 165, 0.2)',
@@ -230,12 +244,13 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
                           })
                         },
                         {
-                          label: `Pax (previous year):`,
+                          label: `Pax (previous year)`,
                           backgroundColor: 'transparent',
                           borderColor: '#547a00',
                           borderDash: [0, 0],
                           borderWidth: 1,
                           pointStyle: 'circle',
+                          pointRadius: 10,
                           pointBackgroundColor: '#547a00',
                           data: historicPortData[port].map((datapoint: TerminalDataPoint) => {
                             const pointDate = moment(datapoint.date)

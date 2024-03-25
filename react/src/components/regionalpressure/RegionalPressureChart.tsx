@@ -8,6 +8,7 @@ import {
   Button,
   Stack,
   useTheme,
+  Box,
 } from "@mui/material";
 import { Link } from 'react-router-dom';
 import { CheckCircle } from '@mui/icons-material';
@@ -63,7 +64,7 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
     labels: portCodes,
     datasets: [
       {
-        label: 'Forecasted PAX arrivals',
+        label: 'Forecasted pax arrivals',
         data: forecasts,
         backgroundColor: 'rgba(0, 94, 165, 0.2)',
         borderColor: drtTheme.palette.primary.main,
@@ -76,6 +77,7 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
                 const port = context.label;
                 const arrivals = portTotals[port];
                 const value = new Intl.NumberFormat("en-US", {
+                    style: 'decimal',
                     signDisplay: "exceptZero"
                 }).format(context.parsed.r);
                 return `${arrivals} arrivals (${value}%)`
@@ -84,7 +86,7 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
         },
       },
       {
-        label: 'Historic PAX average',
+        label: 'Historic pax average',
         data: historics,
         backgroundColor: 'transparent',
         borderColor: '#547a00',
@@ -110,7 +112,7 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
 
   const chartOptions = {
     layout: {
-      padding: 0
+      padding: 0,
     },
     plugins: {
       datalabels: {
@@ -127,16 +129,21 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
     },
     scales: {
       r: {
+        grid: {
+          color: [theme.palette.grey[300]],
+        },
         suggestedMin: -100,
         suggestedMax: 100,
         ticks: {
           callback: ((tick: any) => {
-            return tick
-          })
+            return `${tick}%`
+          }),
+          backdropColor: theme.palette.grey[700],
+          color: '#fff'
         },
         pointLabels: {
           callback: (label: string, index: number): string | number | string[] | number[] => {
-            return doesExceed(forecasts[index]!, historics[index]!) ? `⚠ ${label}` : `${label}`;
+            return doesExceed(forecasts[index]!, historics[index]!) ? `ⓘ ${label}` : `${label}`;
           },
           font: {
             weight: (context: any) => {
@@ -144,7 +151,7 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
             }
           },
           color: (context: any) => {
-            return doesExceed(forecasts[context.index]!, historics[context.index]!) ? theme.palette.warning.main : 'black';
+            return doesExceed(forecasts[context.index]!, historics[context.index]!) ? theme.palette.info.main : 'black';
           },
         },
       }
@@ -153,20 +160,24 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
 
   return (
     <Card variant='outlined'>
-      <CardHeader title={regionName} />
-      <CardContent>
+      <CardHeader component='h3' sx={{m: 0, textAlign: 'center'}} title={regionName !== 'Heathrow' ? `${regionName} Region` : regionName} />
+      <CardContent sx={{px: 0}}>
         <Stack sx={{ width: '100%' }} spacing={2}>
           <Radar data={chartData} options={chartOptions} />
-          <Button component={Link} to={`${regionName.toLowerCase()}`} fullWidth variant='contained'>More Info</Button>
-          { exceededCount > 0 ?
-              <Alert icon={<ErrorIcon fontSize="inherit" />} severity="info">
-                {`PAX arrivals exceeds historic average across ${exceededCount} airports`}
-              </Alert>
-            :
-              <Alert icon={<CheckCircle fontSize="inherit" />} severity="success">
-                Pax arrivals do not exceed historic average at any airport
-              </Alert>
-          }
+          <Box sx={{px: 2}}>
+            { exceededCount > 0 ?
+                <Alert icon={<ErrorIcon fontSize="inherit" />} severity="info">
+                  {`Pax arrivals exceeds historic average across ${exceededCount} airports`}
+                </Alert>
+              :
+                <Alert icon={<CheckCircle fontSize="inherit" />} severity="success">
+                  Pax arrivals do not exceed historic average at any airport
+                </Alert>
+            }
+            <Button component={Link} to={`${regionName.toLowerCase()}`} fullWidth variant='contained' sx={{mt:2}}>
+              {regionName !== 'Heathrow' ? `View ${regionName} region` : `View ${regionName}`}
+            </Button>
+          </Box>
         </Stack>
       </CardContent>
     </Card>

@@ -10,8 +10,8 @@ interface RegionalPressureDateProps {
 
 const RegionalPressureDates = ({start, end}: RegionalPressureDateProps) => {
   return (
-    <p style={{lineHeight: 1.6, margin: 0}}>
-      <strong>Pax from selected date:</strong> { moment(start).format('ddd Do MMM YYYY') } to { moment(end).format('ddd Do MMM YYYY') }
+    <p style={{lineHeight: 1.2, margin: '0 0 1em 0'}}>
+      <strong>Pax from selected date:</strong> { moment(start).format('ddd Do MMM YYYY') } to { moment(end).format('ddd Do MMM YYYY') }<br/>
       <br/><strong>Pax from previous year:</strong> { moment(start).subtract(1,'y').format('ddd Do MMM YYYY') } to { moment(end).subtract(1,'y').format('ddd Do MMM YYYY') }
     </p>
   )

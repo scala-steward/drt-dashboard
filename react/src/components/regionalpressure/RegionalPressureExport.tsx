@@ -70,7 +70,7 @@ const RegionalPressureExport = ({portData, historicPortData, granularity}: Regio
     download(csvConfig)(csv)
   }
 
-  return <Button startIcon={<ArrowDownward />} variant="outlined" sx={{backgroundColor: '#fff'}} onClick={handleExport}>Export</Button>
+  return <Button fullWidth startIcon={<ArrowDownward />} variant="outlined" sx={{backgroundColor: '#fff'}} onClick={handleExport}>Export</Button>
 }
 
 

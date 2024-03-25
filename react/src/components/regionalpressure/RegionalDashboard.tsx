@@ -4,6 +4,7 @@ import {
   Box,
   Grid,
   CircularProgress,
+  Typography
 } from "@mui/material";
 import {UserProfile} from "../../model/User";
 import {ConfigValues, PortRegion} from "../../model/Config";
@@ -11,7 +12,7 @@ import {RootState} from '../../store/redux';
 import { requestPaxTotals } from './regionalPressureSagas';
 import { FormError } from '../../services/ValidationService';
 import RegionalPressureDates from './RegionalPressureDates';
-import RegionalPressureChart from './ RegionalPressureChart';
+import RegionalPressureChart from './RegionalPressureChart';
 import RegionalPressureExport from './RegionalPressureExport';
 import RegionalPressureForm from './RegionalPressureForm';
 
@@ -36,8 +37,10 @@ const RegionalPressureDashboard = ({config, user, status}: RegionalPressureDashb
 
   return (
     <Box sx={{backgroundColor: '#E6E9F1', p: 2}}>
-      <h1>National Dashboard</h1>
-      <h2>Compare pax arrivals vs previous year</h2>
+      <Box sx={{mb:4}}>
+        <Typography variant='h1' sx={{mb:3}}>National Dashboard</Typography>
+        <Typography variant='h3' component='h2'>Compare pax arrivals with previous year</Typography>
+      </Box>
       
       <RegionalPressureForm ports={user.ports} availablePorts={availablePorts} type="single" />
 
@@ -52,15 +55,15 @@ const RegionalPressureDashboard = ({config, user, status}: RegionalPressureDashb
         <Grid item xs={12}>
           <h2>Regional Overview</h2>
         </Grid>
-        <Grid item xs={8}>
+        <Grid item xs={12} sm={9}>
           <RegionalPressureDates />
         </Grid>
-        <Grid item xs={4} style={{textAlign: 'right'}}>
+        <Grid item xs={12} sm={3} style={{textAlign: 'right'}}>
           <RegionalPressureExport />
         </Grid>
         { userPortsByRegion.map(region => {
           const regionPorts = region.name === 'Heathrow' ? ['LHR-T2', 'LHR-T2', 'LHR-T4', 'LHR-T5'] : region.ports
-          return <Grid key={region.name} item xs={12} md={6} lg={3} sx={{mt: 2}}>
+          return <Grid key={region.name} item xs={12} md={6} sx={{mt: 2}}>
             <RegionalPressureChart regionName={region.name} portCodes={regionPorts} />
           </Grid>
         })}

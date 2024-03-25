@@ -1,5 +1,7 @@
 import React, {useEffect} from 'react';
 import './App.css';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import {Home} from './components/Home';
 import Alerts from './components/alerts/Alerts';
 import AccessRequests from './components/accessrequests/AccessRequests';
@@ -35,8 +37,6 @@ const StyledDiv = styled('div')(() => ({
 }));
 
 const StyledContainer = styled(Container)(() => ({
-  margin: 5,
-  padding: 15,
   textAlign: 'left',
   minHeight: 500,
   display: 'inline-block',
@@ -48,6 +48,8 @@ export const App = () => {
 
   const currentLocation = window.document.location;
   const logoutLink = "/oauth/logout?redirect=" + currentLocation.toString()
+  const theme = useTheme();
+  const is_mobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
     const trackUser = async () =>
@@ -87,7 +89,7 @@ export const App = () => {
       </header>
 
       <div id="global-header-bar"/>
-      <StyledContainer>
+      <StyledContainer disableGutters={is_mobile}>
         <SnackbarProvider
           anchorOrigin={{
             vertical: 'top',
