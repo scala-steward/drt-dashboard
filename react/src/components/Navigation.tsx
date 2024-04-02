@@ -25,7 +25,7 @@ export default function Navigation(props: IProps) {
     {label: 'Alert notices', link: '/alerts', roles: ['manage-users']},
     {label: 'Drop-in sessions', link: '/drop-in-sessions', roles: ['manage-users']},
     {label: 'Download Manager', link: '/download', roles: ['download-manager']},
-    {label: 'National Dashboard', link: '/national-pressure', roles: ['forecast:view']},
+    {label: 'National Dashboard', link: '/national-pressure', roles: ['national:view']},
     {label: 'Export Config', link: '/export-config', roles: ['manage-users']},
     {label: 'Feature guides', link: '/feature-guides', roles: ['manage-users']},
     {label: 'Health checks', link: '/health-checks', roles: ['health-checks:edit']},
