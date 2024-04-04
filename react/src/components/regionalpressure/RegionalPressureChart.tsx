@@ -58,7 +58,10 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
   const forecasts = [...portCodes].map((portCode) => {
     return (portTotals[portCode] - historicPortTotals[portCode]) / (historicPortTotals[portCode]) * 100
   })
-  const historics = [...portCodes].map(() => 0);
+  const historics = [...portCodes].map((portCode) => {
+    return historicPortTotals[portCode]
+  })
+  const historic_zero = [...portCodes].map(() => 0);
 
   const chartData = {
     labels: portCodes,
@@ -87,7 +90,7 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
       },
       {
         label: 'Historic pax average',
-        data: historics,
+        data: historic_zero,
         backgroundColor: 'transparent',
         borderColor: '#547a00',
         pointStyle: 'circle',
@@ -167,11 +170,11 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
           <Box sx={{px: 2}}>
             { exceededCount > 0 ?
                 <Alert icon={<ErrorIcon fontSize="inherit" />} severity="info">
-                  {`Pax arrivals exceeds historic average across ${exceededCount} airports`}
+                  {`Pax number exceeds previous year at ${exceededCount} airports`}
                 </Alert>
               :
                 <Alert icon={<CheckCircle fontSize="inherit" />} severity="success">
-                  Pax arrivals do not exceed historic average at any airport
+                  Pax number does not exceed previous year at any airport
                 </Alert>
             }
             <Button component={Link} to={`${regionName.toLowerCase()}`} fullWidth variant='contained' sx={{mt:2}}>
