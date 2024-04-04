@@ -48,8 +48,8 @@ interface RegionalPressureChartProps {
   };
 }
 
-const doesExceed = (forecast: number, historic: number): boolean => {
-  return forecast > historic;
+const doesExceed = (forecast: number): boolean => {
+  return forecast > 0
 }
 
 const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortTotals}: RegionalPressureChartProps) => {
@@ -57,9 +57,6 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
 
   const forecasts = [...portCodes].map((portCode) => {
     return (portTotals[portCode] - historicPortTotals[portCode]) / (historicPortTotals[portCode]) * 100
-  })
-  const historics = [...portCodes].map((portCode) => {
-    return historicPortTotals[portCode]
   })
   const historic_zero = [...portCodes].map(() => 0);
 
@@ -110,7 +107,7 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
     ],
   };
 
-  const exceededForecasts = forecasts.map((forecast, index) => {return (doesExceed(forecast!, historics[index]!))});
+  const exceededForecasts = forecasts.map(doesExceed);
   const exceededCount = exceededForecasts.filter(forecast => forecast).length;
 
   const chartOptions = {
@@ -146,15 +143,15 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
         },
         pointLabels: {
           callback: (label: string, index: number): string | number | string[] | number[] => {
-            return doesExceed(forecasts[index]!, historics[index]!) ? `ⓘ ${label}` : `${label}`;
+            return doesExceed(forecasts[index]) ? `ⓘ ${label}` : `${label}`;
           },
           font: {
             weight: (context: any) => {
-              return doesExceed(forecasts[context.index]!, historics[context.index]!) ? 'bold' : 'normal'
+              return doesExceed(forecasts[context.index]) ? 'bold' : 'normal'
             }
           },
           color: (context: any) => {
-            return doesExceed(forecasts[context.index]!, historics[context.index]!) ? theme.palette.info.main : 'black';
+            return doesExceed(forecasts[context.index]) ? theme.palette.info.main : 'black';
           },
         },
       }
