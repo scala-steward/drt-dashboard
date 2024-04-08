@@ -34,7 +34,7 @@ export const downloadManagerFormValidation :FormValidations = {
 
         let start = moment(otherFields?.startDate);
         let end = moment(value);
-        return end.isAfter(start, 'day');
+        return end.isSameOrAfter(start, 'day');
       },
       message: 'The end date must be after the start date.',
     },

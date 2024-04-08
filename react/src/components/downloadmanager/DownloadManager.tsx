@@ -49,7 +49,7 @@ const DownloadManager = ({status, createdAt, downloadUrl, errors, requestDownloa
   const [modalOpen, setModalOpen] = React.useState<boolean>(false);
   const [selectedPorts, setSelectedPorts] = React.useState<string[]>([]);
   const [dates, setDate] = React.useState<DownloadDates>({
-    start: moment().subtract(1, 'day'),
+    start: moment(),
     end: moment(),
   });
   const [exportType, setExportType] = React.useState<string>('passengers-port');
