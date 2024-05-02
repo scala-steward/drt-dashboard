@@ -1,7 +1,7 @@
 import {  call, put, takeEvery } from 'redux-saga/effects';
 import {setRegionalDashboardState, setStatus } from './regionalPressureState';
 import StubService from '../../services/stub-service';
-import moment from 'moment';
+import moment, { Moment } from 'moment';
 import ApiClient from '../../services/ApiClient';
 import axios from 'axios';
 import { generateCsv, download } from "export-to-csv";
@@ -59,14 +59,21 @@ export const requestPaxTotals = (userPorts: string[], availablePorts: string[], 
   };
 };
 
+export function getHistoricDateByDay(date: Moment) : Moment {
+  return moment(date)
+    .subtract(1, 'year')
+    .isoWeek(date.isoWeek())
+    .isoWeekday(date.isoWeekday())
+}
 
-function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
+export function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
   try {
     yield(put(setStatus('loading')))
     const start = moment(action.startDate);
     const end = action.searchType === 'single' ? start : moment(action.endDate).endOf('day');
-    const historicStart = moment(start).subtract(1, 'year').format('YYYY-MM-DD')
-    const historicEnd = moment(end).subtract(1, 'year').format('YYYY-MM-DD')
+    const historicStart = getHistoricDateByDay(start).format('YYYY-MM-DD')
+    const historicEnd = getHistoricDateByDay(end).format('YYYY-MM-DD')
+    
     const duration = moment.duration(end.diff(start)).asHours();
     const interval = duration >= 48 ? 'daily' : 'hourly';
 
@@ -79,7 +86,6 @@ function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
     let historicResponse: Response;
     if (window.location.hostname.includes('localhost')) {
       //stub all data for local development
-      
       current =  StubService.generatePortPaxSeries(fStart, fEnd, interval, 'region', action.availablePorts)
       historic = StubService.generatePortPaxSeries(historicStart, historicEnd, interval, 'region', action.availablePorts)
     } else {

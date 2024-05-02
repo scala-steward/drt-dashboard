@@ -2,6 +2,7 @@ import * as React from 'react';
 import {connect} from 'react-redux'
 import {RootState} from '../../store/redux';
 import moment from 'moment';
+import { getHistoricDateByDay } from './regionalPressureSagas';
 
 interface RegionalPressureDateProps {
   start: string;
@@ -9,6 +10,9 @@ interface RegionalPressureDateProps {
 }
 
 const RegionalPressureDates = ({start, end}: RegionalPressureDateProps) => {
+
+  const historicStart = getHistoricDateByDay(moment(start));
+  const historicEnd = getHistoricDateByDay(moment(end));
   return (
     <>
       <p style={{lineHeight: 1.2, margin: '0 0 1em 0'}}>
@@ -18,9 +22,9 @@ const RegionalPressureDates = ({start, end}: RegionalPressureDateProps) => {
         }
       </p>
       <p>
-        <strong>Pax from previous year: </strong> { moment(start).subtract(1,'y').format('ddd Do MMM YYYY') }
+        <strong>Pax from previous year: </strong> { historicStart.format('ddd Do MMM YYYY') }
         { start != end &&
-          <span>to { moment(end).subtract(1,'y').format('ddd Do MMM YYYY') }</span> 
+          <span>to { historicEnd.format('ddd Do MMM YYYY') }</span> 
         }
       </p>
     </>

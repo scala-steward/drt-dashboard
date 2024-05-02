@@ -8,7 +8,7 @@ platform:
   arch: amd64
 
 steps:
-  - name: Build front end
+  - name: Build and test front end
     pull: if-not-exists
     image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.2.0-beta1
     environment:
@@ -17,6 +17,7 @@ steps:
       - cd react
       - pwd && yarn install
       - pwd && yarn build
+      - pwd && yarn test-ci
     when:
       event:
         - push
@@ -31,7 +32,7 @@ steps:
       event:
         - push
     depends_on:
-      - Build front end
+      - Build and test front end
 
   - name: Unit tests
     pull: if-not-exists

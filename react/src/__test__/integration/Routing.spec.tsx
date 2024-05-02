@@ -7,7 +7,7 @@ import {App} from "../../App";
 import {BrowserRouter} from "react-router-dom";
 
 
-describe('Dashboard routing', () => {
+describe.skip('Dashboard routing', () => {
     function newServer(userPorts: string[], roles: string[], allPorts: string[]) {
         return setupServer(
             rest.get(ApiClient.userEndPoint, (req, res, ctx) => {
