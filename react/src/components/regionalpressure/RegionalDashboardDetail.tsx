@@ -242,7 +242,7 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
                           })
                         },
                         {
-                          label: `Pax (previous year)`,
+                          label: `Previous year`,
                           backgroundColor: 'transparent',
                           borderColor: '#547a00',
                           borderDash: [0, 0],
@@ -250,10 +250,14 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
                           pointStyle: 'circle',
                           pointRadius: 10,
                           pointBackgroundColor: '#547a00',
-                          data: historicPortData[port].map((datapoint: TerminalDataPoint) => {
+                          data: historicPortData[port].map((datapoint: TerminalDataPoint, index: number) => {
+                            let paxDate = moment(portData[port][index].date)
                             const pointDate = moment(datapoint.date)
+
                             if (interval === 'hour') {
+                              pointDate.set('date', paxDate.date())
                               pointDate.add(datapoint.hour, 'hours')
+
                             }
                             return {
                               x: pointDate.add(1, 'year').format('MM/DD/YYYY HH:mm'),
