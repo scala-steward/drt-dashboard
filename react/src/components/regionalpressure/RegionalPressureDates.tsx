@@ -16,13 +16,13 @@ const RegionalPressureDates = ({start, end}: RegionalPressureDateProps) => {
   return (
     <>
       <p style={{lineHeight: 1.2, margin: '0 0 1em 0'}}>
-        <strong>Pax from selected date: </strong>{ moment(start).format('ddd Do MMM YYYY') }
+        <strong>Pax from selected date: </strong>{ moment(start).format('dddd D MMM YYYY') }
         { start != end &&
           <span> to { moment(end).format('ddd Do MMM YYYY') }</span> 
         }
       </p>
       <p>
-        <strong>Pax from previous year: </strong> { historicStart.format('ddd Do MMM YYYY') }
+        <strong>Pax from previous year: </strong> { historicStart.format('dddd D MMM YYYY') }
         { start != end &&
           <span> to { historicEnd.format('ddd Do MMM YYYY') }</span> 
         }
