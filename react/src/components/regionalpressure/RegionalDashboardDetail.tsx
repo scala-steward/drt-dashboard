@@ -27,27 +27,11 @@ import drtTheme from '../../drtTheme';
 import { Chart } from 'react-chartjs-2'; 
 import {
   Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  TimeScale,
-  Title,
-  Tooltip,
-  Legend,
+  registerables
 } from 'chart.js';
 import 'chartjs-adapter-moment';
 import moment from 'moment';
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-  TimeScale
-);
+ChartJS.register(...registerables);
 import { ArrowBack } from '@mui/icons-material';
 import { TerminalDataPoint } from './regionalPressureSagas';
 import RegionalPressureDates from './RegionalPressureDates';
