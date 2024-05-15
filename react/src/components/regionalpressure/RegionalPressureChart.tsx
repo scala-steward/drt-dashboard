@@ -64,7 +64,7 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
     labels: portCodes,
     datasets: [
       {
-        label: 'Forecasted pax arrivals',
+        label: 'Forecast pax arrivals',
         data: forecasts,
         backgroundColor: 'rgba(0, 94, 165, 0.2)',
         borderColor: drtTheme.palette.primary.main,
@@ -86,7 +86,7 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
         },
       },
       {
-        label: 'Historic pax average',
+        label: 'Previous year',
         data: historic_zero,
         backgroundColor: 'transparent',
         borderColor: '#547a00',

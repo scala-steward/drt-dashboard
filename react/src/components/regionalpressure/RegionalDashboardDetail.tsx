@@ -2,6 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import { UserProfile } from "../../model/User";
 import { useParams } from 'react-router';
+import pattern from 'patternomaly'
 import {
   Alert,
   Box,
@@ -27,7 +28,7 @@ import drtTheme from '../../drtTheme';
 import { Chart } from 'react-chartjs-2'; 
 import {
   Chart as ChartJS,
-  registerables
+  registerables,
 } from 'chart.js';
 import 'chartjs-adapter-moment';
 import moment from 'moment';
@@ -57,10 +58,15 @@ interface RegionalPressureDetailProps {
 const RegionalPressureDetail = ({ config, portData, historicPortData, interval, type }: RegionalPressureDetailProps) => {
   const { region } = useParams() || '';
   let regionPorts = config.portsByRegion.filter((r) => r.name.toLowerCase() === region!.toLowerCase())[0].ports;
+  let title = `${region} Region`;
+  let portLabel = 'Airports:'
   if (region === 'heathrow') {
+    title = 'Heathrow'
+    portLabel == 'Aiport terminals:'
     regionPorts = ['LHR-T2', 'LHR-T3', 'LHR-T4', 'LHR-T5'];
   }
   regionPorts.sort();
+
 
   const [visiblePorts, setVisiblePorts] = React.useState<string[]>([...regionPorts]);
   const availablePorts = config.ports.map(port => port.iata);
@@ -88,7 +94,7 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
           <IconButton component={Link} to="/national-pressure" size='small' sx={{ margin: '16px 10px 0 16px' }}><ArrowBack /></IconButton>
         </Grid>
         <Grid>
-          <h2 style={{ textTransform: 'capitalize' }}>{`${region} Region`}</h2>
+          <h2 style={{ textTransform: 'capitalize' }}>{ title }</h2>
         </Grid>
       </Grid>
       <Grid>
@@ -100,7 +106,7 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
         </Grid>
         <Grid item xs={12} sm={10}>
           <FormControl component="fieldset" variant="standard">
-            <FormLabel component="legend">Airports:</FormLabel>
+            <FormLabel component="legend">{ portLabel }</FormLabel>
             <FormGroup>
               <Stack direction={is_mobile ? 'column' : 'row'}>
                 {
@@ -110,7 +116,7 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
                       value={port}
                       control={<Checkbox checked={visiblePorts.includes(port)} value={port} />}
                       onClick={() => handleTogglePort(port)}
-                      label={port.toUpperCase()}
+                      label={port.toUpperCase().replace("-", ' ')}
                       labelPlacement="end"
                     />
                   })
@@ -125,13 +131,14 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
           </Stack>
         </Grid>
         {regionPorts && regionPorts.map((port: string) => {
+          const portName = port.replace("-", ' ')
           return visiblePorts.includes(port) && portData[port] && (
             <Grid key={port} item xs={12}>
               <Card>
                 <CardHeader
-                  title={port}
+                  title={portName}
                   action={
-                    <Button variant="contained" href={`http://${port}.drt.homeoffice.gov.uk`}>View {port} arrivals</Button>
+                    <Button variant="contained" href={`http://${port}.drt.homeoffice.gov.uk`}>View {portName} arrivals</Button>
                   }
                 />
                 <CardContent>
@@ -162,9 +169,9 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
                               let historicPax = context.tooltipItems[1].parsed.y
                               let percentage = 100 * (pax - historicPax) / historicPax
                               if (percentage > 0) {
-                                return '#f47738'
+                                return '#FFB3BA'
                               } else {
-                                return '#c1d586'
+                                return '#C3E072'
                               }
                             }
                             return '#fff'
@@ -184,19 +191,20 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
                                   maximumSignificantDigits: 2
                                 
                                 }).format(percentage);
+                                percentage = isNaN(percentage) ? 0 : percentage;
                               }
-                              return [`${formattedPaxPercent}% Pax expected`]
+                              return [`${formattedPaxPercent}% pax expected`]
                             },
-                            label: function(context) : string {
+                            label: function(context) : string[] {
                               let date = moment(context.parsed.x)
-                              let dateFormat = type == 'single' ? 'HH:mm ddd Do MMM YYYY ' : 'ddd Do MMM YYYY'
+                              let dateFormat = timeUnits == 'hour' ? 'HH:mm ddd D MMM YYYY ' : 'ddd D MMM YYYY'
                               switch (context.dataset.label) {
                                 case 'Pax arrivals':
-                                  return `${date.format(dateFormat)}: ${context.parsed.y}`
+                                  return [`${date.format(dateFormat)}:`,` ${context.parsed.y} pax`]
                                 case 'Previous year':
-                                  return `${getHistoricDateByDay(date).format(dateFormat)}: ${context.parsed.y}`
+                                  return [`${getHistoricDateByDay(date).format(dateFormat)}:`,` ${context.parsed.y} pax`]
                                 default: 
-                                  return ''
+                                  return ['']
                               }
                             }
                           }
@@ -226,7 +234,7 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
                           ticks: {
                             callback: (label) => {
                               let date = moment(label)
-                              return type == 'single' ? date.format('HH:mm') : date.format('ddd Do MMM')
+                              return timeUnits == 'hour' ? date.format('HH:mm') : date.format('ddd D MMM')
                             }
                           }
                         },
@@ -260,18 +268,24 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
                         {
                           label: `Pax arrivals`,
                           type: 'line',
-                          backgroundColor: 'rgba(0, 94, 165, 0.2)',
+                          backgroundColor: [
+                            pattern.draw('diagonal', '#C94900'),
+                          ],
                           borderColor: '#005ea5',
                           borderDash: [0, 0],
-                          borderWidth: 1,
+                          borderWidth: 4,
                           pointStyle: 'rectRot',
-                          pointRadius: 5,
-                          pointHoverRadius: 10,
+                          pointRadius: 10,
+                          pointHoverRadius: 12,
                           pointBackgroundColor: '#005ea5',
+                          pointBorderColor: '#ffffff',
+                          pointBorderWidth: 3,
+                          pointHoverBorderWidth: 3,
+                          pointHoverBorderColor: '#ffffff',
+                          pointHoverBackgroundColor: '#0E2560',
                           xAxisID: 'x',
                           fill: {
                             target: '1',
-                            above: 'rgba(255, 244, 229, 0.7)',
                             below: 'transparent',
                           },
                           data: portData[port].map((datapoint: TerminalDataPoint) => {
@@ -290,10 +304,13 @@ const RegionalPressureDetail = ({ config, portData, historicPortData, interval, 
                           type: 'line',
                           borderColor: drtTheme.palette.grey[800],
                           borderDash: [5, 5],
-                          borderWidth: 1,
+                          borderWidth: 2,
                           pointStyle: 'circle',
-                          pointRadius: 3,
-                          pointHoverRadius: 10,
+                          pointRadius: 5,
+                          pointHoverRadius: 8,
+                          pointHoverBorderWidth: 3,
+                          pointBackgroundColor: '#ffffff',
+                          pointHoverBackgroundColor: '#ffffff',
                           data: historicPortData[port].map((datapoint: TerminalDataPoint, index: number) => {
                             const paxDate = moment(portData[port][index].date)
                             const pointDate = moment(datapoint.date)
