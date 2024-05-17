@@ -66,11 +66,19 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
       {
         label: 'Forecast pax arrivals',
         data: forecasts,
-        backgroundColor: 'rgba(0, 94, 165, 0.2)',
-        borderColor: drtTheme.palette.primary.main,
-        borderDash: [5, 5],
+        backgroundColor: 'transparent',
+        borderColor: '#005ea5',
+        borderDash: [0, 0],
+        borderWidth: 4,
         pointStyle: 'rectRot',
-        borderWidth: 1,
+        pointRadius: 10,
+        pointHoverRadius: 12,
+        pointBackgroundColor: '#005ea5',
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 3,
+        pointHoverBorderWidth: 3,
+        pointHoverBorderColor: '#ffffff',
+        pointHoverBackgroundColor: '#0E2560',
         tooltip: {
           callbacks: {
               label: function(context: TooltipItem<ChartType>) {
@@ -89,11 +97,15 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
         label: 'Previous year',
         data: historic_zero,
         backgroundColor: 'transparent',
-        borderColor: '#547a00',
+        borderColor: drtTheme.palette.grey[800],
+        borderDash: [5, 5],
+        borderWidth: 2,
         pointStyle: 'circle',
-        pointBackgroundColor: '#547a00',
-        borderDash: [0,0],
-        borderWidth: 1,
+        pointRadius: 5,
+        pointHoverRadius: 8,
+        pointHoverBorderWidth: 3,
+        pointBackgroundColor: '#ffffff',
+        pointHoverBackgroundColor: '#ffffff',
         tooltip: {
           callbacks: {
               label: function(context: TooltipItem<ChartType>) {
@@ -112,7 +124,7 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
 
   const chartOptions = {
     layout: {
-      padding: 0,
+      padding: 10,
     },
     plugins: {
       datalabels: {
