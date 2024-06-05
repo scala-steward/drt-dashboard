@@ -19,6 +19,8 @@ COPY --from=stage0 --chown=drt:root /4/opt/docker /opt/docker
 RUN mkdir -p /var/data
 RUN chown 1001:1001 -R /var/data
 
+RUN apt-get update
+RUN apt-get install -y openssh-client ca-certificates curl
 
 RUN mkdir -p /etc/drt
 RUN curl https://truststore.pki.rds.amazonaws.com/eu-west-2/eu-west-2-bundle.pem > /etc/drt/eu-west-2-bundle.pem
