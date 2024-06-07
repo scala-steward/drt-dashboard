@@ -26,5 +26,5 @@ trait AppDatabase {
 
 object ProdDatabase extends AppDatabase {
   override val profile: JdbcProfile = slick.jdbc.PostgresProfile
-  override val db: profile.backend.Database = profile.api.Database.forConfig("postgresDB")
+  override val db: profile.backend.Database = profile.api.Database.forConfig("slick-postgres")
 }
