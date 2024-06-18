@@ -16,8 +16,10 @@ case class User(email: String, roles: Set[Role]) {
 }
 
 object User {
-  def fromRoles(email: String, roles: String): User =
-    User(email, roles.split(",").flatMap(Roles.parse).toSet)
+  def fromRoles(email: String, roles: String): User = {
+    val rolesSeq: Array[String] = roles.split(",").map(_.split(":").last)
+    User(email, rolesSeq.flatMap(Roles.parse).toSet)
+  }
 }
 
 trait UserJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {

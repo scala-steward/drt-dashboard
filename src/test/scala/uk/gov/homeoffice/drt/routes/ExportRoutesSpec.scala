@@ -98,7 +98,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
       val exportPorts = Seq(ExportPort("lhr", Seq("t2", "t5")))
       val request = ExportRoutes.ExportRequest(Arrivals, exportPorts, LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
       Post("/export", request) ~>
-        RawHeader("X-Auth-Email", "someone@somewhere.com") ~>
+        RawHeader("X-Forwarded-Email", "someone@somewhere.com") ~>
         ExportRoutes(mockHttpClient(arrivalsResponse), mockUploader, mockDownloader, MockExportPersistence(None), nowProvider, MockEmailClient(emailProbe.ref), "https://test.com", "team-email@zyx.com") ~>
         check {
           uploadProbe.expectMessage((s"$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
@@ -113,7 +113,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
       val createdAt = SDate("2020-06-01T00:00")
       val export = Export("email", "", LocalDate(2020, 6, 6), LocalDate(2020, 7, 6), "complete", createdAt)
       Get(s"/export/status/${export.createdAt.millisSinceEpoch}") ~>
-        RawHeader("X-Auth-Email", "someone@somewhere.com") ~>
+        RawHeader("X-Forwarded-Email", "someone@somewhere.com") ~>
         ExportRoutes(mockHttpClient(arrivalsResponse), mockUploader, mockDownloader, MockExportPersistence(Option(export)), nowProvider, MockEmailClient(emailProbe.ref), "https://test.com", "team-email@zyx.com") ~>
         check {
           responseAs[String] should ===(s"""{"status": "${export.status}"}""")

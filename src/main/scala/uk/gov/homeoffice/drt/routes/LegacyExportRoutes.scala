@@ -46,7 +46,7 @@ object LegacyExportRoutes {
            (implicit ec: ExecutionContextExecutor, mat: Materializer, database: AppDatabase): Route = {
     lazy val exportCsvService = LegacyExportCsvService(httpClient)
     pathPrefix("export-region") {
-      headerValueByName("X-Auth-Email") { email =>
+      headerValueByName("X-Forwarded-Email") { email =>
         concat(
           pathEnd(
             post(entity(as[LegacyRegionExportRequest]) { exportRequest =>

@@ -72,8 +72,8 @@ class FeedbackRoutesSpec extends Specification
 
     Await.result(insertUserFeedback(userFeedbackRow, userFeedbackDao), 5.seconds)
     Get("/feedback") ~>
-      RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
-      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackDao) ~> check {
+      RawHeader("X-Forwarded-Groups", BorderForceStaff.name) ~>
+      RawHeader("X-Forwarded-Email", email) ~> userFeedbackRoute(userFeedbackDao) ~> check {
       val jsonUsers = responseAs[String].parseJson.asInstanceOf[JsArray].elements
       jsonUsers.contains(userFeedbackRow.toJson)
     }
@@ -91,8 +91,8 @@ class FeedbackRoutesSpec extends Specification
     val email = "test@email.com"
 
     Post("/feedback", feedbackData.toJson) ~>
-      RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
-      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackDao) ~> check {
+      RawHeader("X-Forwarded-Groups", BorderForceStaff.name) ~>
+      RawHeader("X-Forwarded-Email", email) ~> userFeedbackRoute(userFeedbackDao) ~> check {
       val responseResult = responseAs[String]
       val dataResult = Await.result(userFeedbackDao.selectByEmail(email), 5.seconds)
       dataResult.size === 1 && responseResult.contains(s"Feedback from user $email is saved successfully")
@@ -121,8 +121,8 @@ class FeedbackRoutesSpec extends Specification
     row.size === 1
     //There is issue here that we are not able to get the row from response but only header
     Get("/feedback/export") ~>
-      RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
-      RawHeader("X-Auth-Email", email) ~> userFeedbackRoute(userFeedbackDao) ~>
+      RawHeader("X-Forwarded-Groups", BorderForceStaff.name) ~>
+      RawHeader("X-Forwarded-Email", email) ~> userFeedbackRoute(userFeedbackDao) ~>
       check {
         status shouldBe StatusCodes.OK
         header[`Content-Disposition`] should not be None

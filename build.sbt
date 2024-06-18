@@ -83,5 +83,7 @@ Test / javaOptions += "-Duser.timezone=UTC"
 
 Runtime / javaOptions += "-Duser.timezone=UTC"
 
+Compile / unmanagedResourceDirectories += baseDirectory.value / "src" / "main" / "resources"
+
 run / fork := true
 cancelable in Global := true

@@ -47,7 +47,7 @@ export const App = () => {
   const {config} = useConfig()
 
   const currentLocation = window.document.location;
-  const logoutLink = "/oauth/logout?redirect=" + currentLocation.toString()
+  const logoutLink = "/oauth2/sign_out?redirect=" + currentLocation.toString()
   const theme = useTheme();
   const is_mobile = useMediaQuery(theme.breakpoints.down('md'));
 

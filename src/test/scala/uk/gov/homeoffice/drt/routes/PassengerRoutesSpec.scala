@@ -39,7 +39,7 @@ class PassengerRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteT
 
   "PassengerRoutes" should {
     val portCode = "stn"
-    val header = RawHeader("X-Auth-Email", "someone@somewhere.com")
+    val header = RawHeader("X-Forwarded-Email", "someone@somewhere.com")
     val startDate = "2020-01-01"
     val endDate = "2020-01-02"
     val defaultGranularity = "total"

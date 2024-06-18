@@ -69,7 +69,7 @@ class LegacyExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRou
   "Request heathrow arrival export" should {
     "collate all terminal arrivals" in {
       val request = LegacyRegionExportRequest("Heathrow", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
-      Post("/export-region", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> LegacyExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
+      Post("/export-region", request) ~> RawHeader("X-Forwarded-Email", "someone@somwehere.com") ~> LegacyExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
         uploadProbe.expectMessage((s"heathrow-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
         responseAs[String] should ===("ok")
       }
@@ -79,7 +79,7 @@ class LegacyExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRou
   "Request north arrival export" should {
     "collate all terminal arrivals" in {
       val request = LegacyRegionExportRequest("North", LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
-      Post("/export-region", request) ~> RawHeader("X-Auth-Email", "someone@somwehere.com") ~> LegacyExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
+      Post("/export-region", request) ~> RawHeader("X-Forwarded-Email", "someone@somwehere.com") ~> LegacyExportRoutes(mockHttpClient, mockUploader, mockDownloader, nowProvider) ~> check {
         uploadProbe.expectMessage((s"north-$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", northRegionPortTerminalData))
         responseAs[String] should ===("ok")
       }

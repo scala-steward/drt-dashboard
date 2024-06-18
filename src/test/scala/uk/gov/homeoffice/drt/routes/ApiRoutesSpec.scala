@@ -37,33 +37,33 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest with ClientConfig
 
   "Given a uri accessed by a user with an email but no port access, I should see an empty port list and their email address in JSON" >> {
     Get("/user") ~>
-      RawHeader("X-Auth-Roles", BorderForceStaff.name) ~>
-      RawHeader("X-Auth-Email", "my@email.com") ~> routes ~> check {
+      RawHeader("X-Forwarded-Groups", BorderForceStaff.name) ~>
+      RawHeader("X-Forwarded-Email", "my@email.com") ~> routes ~> check {
       responseAs[String] shouldEqual """{"ports":[],"roles":["border-force-staff"],"email":"my@email.com"}"""
     }
   }
 
   "Given a uri accessed by a user with an email and LHR port access, I should see LHR in the port list and their email address in JSON" >> {
     Get("/user") ~>
-      RawHeader("X-Auth-Roles", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~>
-      RawHeader("X-Auth-Email", "my@email.com") ~> routes ~> check {
+      RawHeader("X-Forwarded-Groups", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~>
+      RawHeader("X-Forwarded-Email", "my@email.com") ~> routes ~> check {
       responseAs[String] shouldEqual """{"ports":["LHR"],"roles":["border-force-staff","LHR"],"email":"my@email.com"}"""
     }
   }
 
   "Given an api request for config, I should see a JSON response containing the config passed to ApiRoutes" >> {
     Get("/config") ~>
-      RawHeader("X-Auth-Roles", "") ~>
-      RawHeader("X-Auth-Email", "my@email.com") ~> routes ~> check {
+      RawHeader("X-Forwarded-Groups", "") ~>
+      RawHeader("X-Forwarded-Email", "my@email.com") ~> routes ~> check {
       responseAs[JsValue] shouldEqual clientConfig.toJson
     }
   }
 
   "When user tracking is received with expected headers, user details is present in user table" >> {
     Get("/track-user") ~>
-      RawHeader("X-Auth-Roles", "") ~>
-      RawHeader("X-Auth-username", "my") ~>
-      RawHeader("X-Auth-Email", "my@email.com") ~> routes ~> check {
+      RawHeader("X-Forwarded-Groups", "") ~>
+      RawHeader("X-Forwarded-Preferred-Username", "my") ~>
+      RawHeader("X-Forwarded-Email", "my@email.com") ~> routes ~> check {
       responseAs.status shouldEqual OK
       val user = Await.result(userService.getUsers(), 1.seconds).head
       user.id shouldEqual "my"

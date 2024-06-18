@@ -55,7 +55,7 @@ object ExportRoutes {
            (implicit ec: ExecutionContext, mat: Materializer): Route = {
     lazy val exportCsvService = ExportCsvService(httpClient)
     pathPrefix("export") {
-      headerValueByName("X-Auth-Email") { email =>
+      headerValueByName("X-Forwarded-Email") { email =>
         concat(
           pathEnd(
             post(entity(as[ExportRequest]) { exportRequest =>

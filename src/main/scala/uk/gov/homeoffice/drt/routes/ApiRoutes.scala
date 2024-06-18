@@ -36,8 +36,8 @@ object ApiRoutes extends MultiPortAlertJsonSupport
 
   def authByRole(role: Role): Directive0 = authorize(ctx => {
     (for {
-      rolesHeader <- ctx.request.getHeader("X-Auth-Roles").asScala
-      emailHeader <- ctx.request.getHeader("X-Auth-Email").asScala
+      rolesHeader <- ctx.request.getHeader("X-Forwarded-Groups").asScala
+      emailHeader <- ctx.request.getHeader("X-Forwarded-Email").asScala
     } yield User.fromRoles(emailHeader.value(), rolesHeader.value())) match {
       case Some(user) => user.hasRole(role)
       case None => false
@@ -51,15 +51,15 @@ object ApiRoutes extends MultiPortAlertJsonSupport
            (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route =
     concat(
       (get & path("user")) {
-        headerValueByName("X-Auth-Roles") { rolesStr =>
-          headerValueByName("X-Auth-Email") { email =>
+        headerValueByName("X-Forwarded-Groups") { rolesStr =>
+          headerValueByName("X-Forwarded-Email") { email =>
             complete(User.fromRoles(email, rolesStr))
           }
         }
       },
       (get & path("track-user")) {
-        headerValueByName("X-Auth-Email") { email =>
-          optionalHeaderValueByName("X-Auth-Username") { usernameOption =>
+        headerValueByName("X-Forwarded-Email") { email =>
+          optionalHeaderValueByName("X-Forwarded-Preferred-Username") { usernameOption =>
             userService.upsertUser(
               uk.gov.homeoffice.drt.db.User(
                 id = usernameOption.getOrElse(email),
@@ -75,7 +75,7 @@ object ApiRoutes extends MultiPortAlertJsonSupport
         }
       },
       (get & path("config")) {
-        headerValueByName("X-Auth-Roles") { _ =>
+        headerValueByName("X-Forwarded-Groups") { _ =>
           complete(clientConfig)
         }
       },
@@ -102,8 +102,8 @@ object ApiRoutes extends MultiPortAlertJsonSupport
       },
       (post & path("alerts")) {
         authByRole(CreateAlerts) {
-          headerValueByName("X-Auth-Roles") { rolesStr =>
-            headerValueByName("X-Auth-Email") { email =>
+          headerValueByName("X-Forwarded-Groups") { rolesStr =>
+            headerValueByName("X-Forwarded-Email") { email =>
               entity(as[MultiPortAlert]) { multiPortAlert =>
                 val user = User.fromRoles(email, rolesStr)
                 val allPorts = PortRegion.ports.map(_.iata)
@@ -116,8 +116,8 @@ object ApiRoutes extends MultiPortAlertJsonSupport
       },
       (get & path("alerts")) {
         authByRole(CreateAlerts) {
-          headerValueByName("X-Auth-Roles") { rolesStr =>
-            headerValueByName("X-Auth-Email") { email =>
+          headerValueByName("X-Forwarded-Groups") { rolesStr =>
+            headerValueByName("X-Forwarded-Email") { email =>
               val user = User.fromRoles(email, rolesStr)
 
               val futurePortAlerts: Seq[Future[PortAlerts]] = user.accessiblePorts
@@ -150,8 +150,8 @@ object ApiRoutes extends MultiPortAlertJsonSupport
       },
       (delete & path("alerts" / Segment)) { port =>
         authByRole(CreateAlerts) {
-          headerValueByName("X-Auth-Roles") { rolesStr =>
-            headerValueByName("X-Auth-Email") { email =>
+          headerValueByName("X-Forwarded-Groups") { rolesStr =>
+            headerValueByName("X-Forwarded-Email") { email =>
               val user = User.fromRoles(email, rolesStr)
               val deleteEndpoint = s"${Dashboard.drtInternalUriForPortCode(PortCode(port))}/alerts"
               complete(DashboardClient.deleteWithRoles(deleteEndpoint, user.roles).map { res =>

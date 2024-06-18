@@ -44,7 +44,7 @@ object UserRoutes extends UserAccessRequestJsonSupport
     pathPrefix("users") {
       concat(
         (post & path("access-request")) {
-          headerValueByName("X-Auth-Email") { userEmail =>
+          headerValueByName("X-Forwarded-Email") { userEmail =>
             entity(as[AccessRequest]) { accessRequest =>
               userRequestService.saveUserRequest(userEmail, accessRequest, new Timestamp(DateTime.now().getMillis))
               val failures = notifications.sendRequest(userEmail, accessRequest).foldLeft(List[(String, Throwable)]()) {
@@ -63,7 +63,7 @@ object UserRoutes extends UserAccessRequestJsonSupport
         },
         (get & path("access-request")) {
           parameters("status") { status =>
-            headerValueByName("X-Auth-Roles") { _ =>
+            headerValueByName("X-Forwarded-Groups") { _ =>
               onComplete(userRequestService.getUserRequest(status)) {
                 case Success(value) =>
                   complete(value.toJson)
@@ -73,7 +73,7 @@ object UserRoutes extends UserAccessRequestJsonSupport
           }
         },
         (get & path("all")) {
-          headerValueByName("X-Auth-Roles") { _ =>
+          headerValueByName("X-Forwarded-Groups") { _ =>
             onComplete(userService.getUsers()) {
               case Success(value) =>
                 complete(value.toJson)
@@ -83,9 +83,9 @@ object UserRoutes extends UserAccessRequestJsonSupport
         },
         (get & path("user-details" / Segment)) { userEmail =>
           authByRole(ManageUsers) {
-            headerValueByName("X-Auth-Roles") { _ =>
-              headerValueByName("X-Auth-Email") { _ =>
-                headerValueByName("X-Auth-Token") { xAuthToken =>
+            headerValueByName("X-Forwarded-Groups") { _ =>
+              headerValueByName("X-Forwarded-Email") { _ =>
+                headerValueByName("X-Forwarded-Access-Token") { xAuthToken =>
                   log.info(s"request to get user details $keyClockUrl/data/userDetails/$userEmail}")
                   val keycloakService = getKeyCloakService(xAuthToken)
                   val keyCloakUser: Future[KeyCloakUser] =
@@ -103,9 +103,9 @@ object UserRoutes extends UserAccessRequestJsonSupport
         },
         (post & path("accept-access-request" / Segment)) { id =>
           authByRole(ManageUsers) {
-            headerValueByName("X-Auth-Roles") { _ =>
-              headerValueByName("X-Auth-Email") { _ =>
-                headerValueByName("X-Auth-Token") { xAuthToken =>
+            headerValueByName("X-Forwarded-Groups") { _ =>
+              headerValueByName("X-Forwarded-Email") { _ =>
+                headerValueByName("X-Forwarded-Access-Token") { xAuthToken =>
                   entity(as[ClientUserRequestedAccessData]) { userRequestedAccessData =>
                     val keycloakService = getKeyCloakService(xAuthToken)
                     if (userRequestedAccessData.portsRequested.nonEmpty || userRequestedAccessData.regionsRequested.nonEmpty) {
@@ -146,8 +146,8 @@ object UserRoutes extends UserAccessRequestJsonSupport
         },
         (post & path("update-access-request" / Segment)) { status =>
           authByRole(ManageUsers) {
-            headerValueByName("X-Auth-Roles") { _ =>
-              headerValueByName("X-Auth-Email") { _ =>
+            headerValueByName("X-Forwarded-Groups") { _ =>
+              headerValueByName("X-Forwarded-Email") { _ =>
                 entity(as[ClientUserRequestedAccessData]) { userRequestedAccessData =>
                   onComplete(userRequestService.updateUserRequest(userRequestedAccessData, status)) {
                     case Success(value) => complete(s"The result was $value")

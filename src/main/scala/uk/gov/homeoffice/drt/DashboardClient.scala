@@ -16,7 +16,7 @@ object DashboardClient {
   }
 
   def userDetailDrtApi(uri: String, roles: Iterable[Role], keyCloakToken: String, method: String)(implicit system: ClassicActorSystemProvider): Future[HttpResponse] = {
-    val keyCloakHeader = HttpHeader.parse("X-Auth-Token", keyCloakToken) match {
+    val keyCloakHeader = HttpHeader.parse("X-Forwarded-Access-Token", keyCloakToken) match {
       case Ok(header, _) => Option(header)
       case _ => None
     }
@@ -45,7 +45,7 @@ object DashboardClient {
 
   def rolesToRoleHeader(roles: Iterable[Role]): List[HttpHeader] = {
     val roleHeader: Option[HttpHeader] = HttpHeader
-      .parse("X-Auth-Roles", roles.map(_.name.toLowerCase).mkString(",")) match {
+      .parse("X-Forwarded-Groups", roles.map(_.name.toLowerCase).mkString(",")) match {
         case Ok(header, _) => Option(header)
         case _ => None
       }
