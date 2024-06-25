@@ -17,7 +17,7 @@ case class User(email: String, roles: Set[Role]) {
 
 object User {
   def fromRoles(email: String, roles: String): User = {
-    val rolesSeq: Array[String] = roles.split(",").map(_.split(":").last)
+    val rolesSeq: Array[String] = roles.split(",").map(_.split("role:").last)
     User(email, rolesSeq.flatMap(Roles.parse).toSet)
   }
 }
