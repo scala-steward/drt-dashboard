@@ -40,7 +40,7 @@ case class ExportCsvService(httpClient: HttpClient) {
         if (r.status == OK) {
           log.info(s"Got 200 response from $uri")
           r.entity.dataBytes
-            .runReduce(_ ++ _)
+            .runFold(ByteString.empty)(_ ++ _)
             .map(content => ByteString(content.utf8String))
             .recover { case e: Throwable =>
               log.error(s"Error while requesting export for $uri", e)
