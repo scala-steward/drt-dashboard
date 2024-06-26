@@ -9,7 +9,8 @@ import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Terminals.{T1, T2}
 import uk.gov.homeoffice.drt.time.LocalDate
 
-import scala.concurrent.ExecutionContextExecutor
+import scala.concurrent.duration.DurationInt
+import scala.concurrent.{Await, ExecutionContextExecutor}
 
 
 class ExportCsvServiceSpec extends Specification {
@@ -44,6 +45,25 @@ class ExportCsvServiceSpec extends Specification {
       val expectedUri = "http://lhr:9000/api/passengers/2022-07-22/2022-07-24/T2?granularity=daily"
       val uri = ExportCsvService.getUri(TerminalPassengersDaily, LocalDate(2022, 7, 22), LocalDate(2022, 7, 24), PortCode("LHR"), Option(T2))
       uri mustEqual expectedUri
+    }
+  }
+
+  "responseContentAsByteString should" >> {
+    "Return a string given a non-empty response" >> {
+      val service = ExportCsvService(MockHttpClient(() => "content"))
+      val byteString = Await.result(service.responseContentAsByteString("uri", PortCode("LHR")), 1.second)
+
+      byteString.utf8String mustEqual "content"
+    }
+    "Return an empty string given an empty response" >> {
+      val service = ExportCsvService(MockHttpClient(() => ""))
+      val byteString = Await.result(service.responseContentAsByteString("uri", PortCode("LHR")), 1.second)
+
+      byteString.utf8String mustEqual ""
+    }
+    "Throw an exception given a non-200 response" >> {
+      val service = ExportCsvService(MockHttpClient(() => throw new Exception("boom")))
+      Await.result(service.responseContentAsByteString("uri", PortCode("LHR")), 1.second) must throwA[Exception]
     }
   }
 }
