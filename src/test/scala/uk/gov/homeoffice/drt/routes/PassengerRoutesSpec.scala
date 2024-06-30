@@ -29,6 +29,7 @@ class PassengerRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteT
     "regionName",
     "portCode",
     Some("terminalName"),
+    2,
     1,
     Map(Queues.EeaDesk -> 1),
     Some(LocalDate(2020, 1, 1)),
