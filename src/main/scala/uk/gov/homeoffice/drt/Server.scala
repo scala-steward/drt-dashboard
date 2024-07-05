@@ -119,7 +119,7 @@ object Server {
       val routes: Route = concat(
         pathPrefix("api") {
           concat(
-            PassengerRoutes(PassengerSummaryStreams(db)),
+            PassengerRoutes(PassengerSummaryStreams(db).streamForGranularity),
             CiriumRoutes(serverConfig.ciriumDataUri),
             DrtRoutes(serverConfig.portIataCodes),
             LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),

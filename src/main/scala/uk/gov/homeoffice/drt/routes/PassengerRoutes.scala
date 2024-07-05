@@ -6,25 +6,23 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
-import org.slf4j.LoggerFactory
 import spray.json.enrichAny
 import uk.gov.homeoffice.drt.models.{PassengersSummaries, PassengersSummary}
 import uk.gov.homeoffice.drt.ports.Queues.Queue
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion, Queues}
-import uk.gov.homeoffice.drt.services.PassengerSummaryStreams
 import uk.gov.homeoffice.drt.services.PassengerSummaryStreams.{Granularity, Total}
 import uk.gov.homeoffice.drt.time.TimeZoneHelper.europeLondonTimeZone
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate}
 
-import scala.concurrent.ExecutionContext
-import scala.util.Success
+import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 
 object PassengerRoutes {
-  private val log = LoggerFactory.getLogger(getClass)
+  private val log = org.slf4j.LoggerFactory.getLogger(getClass)
 
-  def apply(passengerSummaries: PassengerSummaryStreams)
+  def apply(summaryProvider: (LocalDate, LocalDate, Granularity, Option[Terminal]) => PortCode => Source[(Map[Queue, Int], Int, Option[Any]), NotUsed])
            (implicit ec: ExecutionContext, mat: Materializer): Route =
     pathPrefix("passengers" / Segment / Segment) {
       case (startDate, endDate) =>
@@ -32,10 +30,10 @@ object PassengerRoutes {
           val portCodes = portCodesStr.split(",")
           concat(
             pathEnd(
-              passengersForPort(portCodes, startDate, endDate, None, passengerSummaries)
+              passengersForPort(portCodes, startDate, endDate, None, summaryProvider)
             ),
             path(Segment)(terminal =>
-              passengersForPort(portCodes, startDate, endDate, Some(terminal), passengerSummaries)
+              passengersForPort(portCodes, startDate, endDate, Some(terminal), summaryProvider)
             )
           )
         }
@@ -45,7 +43,7 @@ object PassengerRoutes {
                                 startDate: String,
                                 endDate: String,
                                 maybeTerminal: Option[String],
-                                passengerSummaries: PassengerSummaryStreams,
+                                summaryProvider: (LocalDate, LocalDate, Granularity, Option[Terminal]) => PortCode => Source[(Map[Queue, Int], Int, Option[Any]), NotUsed],
                                )
                                (implicit ec: ExecutionContext, mat: Materializer): Route = {
     get {
@@ -56,37 +54,52 @@ object PassengerRoutes {
             case _ => throw new IllegalArgumentException(s"Invalid date range: $startDate - $endDate")
           }
           val granularity = maybeGranularity.map(Granularity.fromString).getOrElse(Total)
-          val streamForPort = passengerSummaries.streamForGranularity(start, end, granularity, maybeTerminal.map(Terminal(_)))
+          val streamForPort = summaryProvider(start, end, granularity, maybeTerminal.map(Terminal(_)))
 
-          val contentType = request.headers.find(_.name() == "Accept").map {
-            case header if header.value() == "text/csv" => ContentTypes.`text/csv(UTF-8)`
-            case _ => ContentTypes.`application/json`
-          }.getOrElse(ContentTypes.`application/json`)
+          val contentType = contentTypeFromRequest(request)
 
-          val portResult: Source[(PortCode, (Map[Queue, Int], Int, Option[Any])), NotUsed] = Source(portCodes.toList)
-            .flatMapConcat(portCodeStr => {
+          val portResults = Source(portCodes.toList)
+            .flatMapConcat { portCodeStr =>
               val portCode = PortCode(portCodeStr)
               streamForPort(portCode).map(result => (portCode, result))
-            })
-
-          val eventualContent = if (contentType == ContentTypes.`text/csv(UTF-8)`)
-            portResult.runFold("") {
-              case (acc, (portCode, (queues, capacity, x))) => acc + passengersCsvRow(portCode, maybeTerminal, queues, capacity, x)
             }
-          else {
-            import uk.gov.homeoffice.drt.jsonformats.PassengersSummaryFormat._
-            portResult
-              .runFold(PassengersSummaries.empty) {
-                case (acc, (portCode, (queues, capacity, x))) => acc ++ Seq(passengersJson(portCode, maybeTerminal, queues, capacity, x))
-              }
-              .map(_.toJson.compactPrint)
-          }
+
+          val eventualContent = sourceToContent(contentType, portResults, maybeTerminal)
 
           onComplete(eventualContent) {
             case Success(content) => complete(HttpEntity(contentType, content))
+            case Failure(t) =>
+              log.error(s"Failed to get passengers for $portCodes, $startDate, $endDate, $maybeTerminal", t)
+              complete(StatusCodes.InternalServerError, t.getMessage)
           }
         }
       }
+    }
+  }
+
+  private def contentTypeFromRequest(request: HttpRequest) = {
+    request.headers.find(_.name() == "Accept").map {
+      case header if header.value() == "text/csv" => ContentTypes.`text/csv(UTF-8)`
+      case _ => ContentTypes.`application/json`
+    }.getOrElse(ContentTypes.`application/json`)
+  }
+
+  private def sourceToContent(contentType: ContentType,
+                              portResult: Source[(PortCode, (Map[Queue, Int], Int, Option[Any])), NotUsed],
+                              maybeTerminal: Option[String],
+                             )
+                             (implicit mat: Materializer, ec: ExecutionContext): Future[String] = {
+    if (contentType == ContentTypes.`text/csv(UTF-8)`)
+      portResult.runFold("") {
+        case (acc, (portCode, (queues, capacity, x))) => acc + passengersCsvRow(portCode, maybeTerminal, queues, capacity, x)
+      }
+    else {
+      import uk.gov.homeoffice.drt.jsonformats.PassengersSummaryFormat._
+      portResult
+        .runFold(PassengersSummaries.empty) {
+          case (acc, (portCode, (queues, capacity, x))) => acc ++ Seq(passengersJson(portCode, maybeTerminal, queues, capacity, x))
+        }
+        .map(_.summaries.toJson.compactPrint)
     }
   }
 

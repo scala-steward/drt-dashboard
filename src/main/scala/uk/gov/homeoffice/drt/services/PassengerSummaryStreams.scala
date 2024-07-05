@@ -2,7 +2,6 @@ package uk.gov.homeoffice.drt.services
 
 import akka.NotUsed
 import akka.stream.scaladsl.Source
-import slick.jdbc.PostgresProfile.api._
 import uk.gov.homeoffice.drt.db.AppDatabase
 import uk.gov.homeoffice.drt.db.dao.{CapacityHourlyDao, PassengersHourlyDao}
 import uk.gov.homeoffice.drt.ports.PortCode
