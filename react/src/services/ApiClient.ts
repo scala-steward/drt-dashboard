@@ -9,7 +9,7 @@ export default class ApiClient implements IApiClient {
   public static userEndPoint = "/api/user"
   public static userTrackingEndPoint = "/api/track-user"
   public static configEndPoint = "/api/config"
-  public static logoutEndPoint = "/oauth/logout"
+  public static logoutEndPoint = "/oauth2/sign_out"
   public static alertsEndPoint = "/api/alerts"
   public static healthChecks = "/api/health-checks"
   public static healthCheckAlarmStatuses = "/api/health-checks/alarm-statuses"

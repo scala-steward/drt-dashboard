@@ -52,7 +52,7 @@ class IndexRouteSpec extends Specification with Specs2RouteTest {
     Get("/?fromPort=lhr") ~>
       RawHeader("X-Forwarded-Groups", Seq(BorderForceStaff.name, LHR.name).mkString(",")) ~> routes ~> check {
         val isTempRedirected = status shouldEqual StatusCodes.TemporaryRedirect
-        val isLhrLogoutUrl = header("Location") shouldEqual Option(Location(s"$lhrUrl/oauth/logout?redirect=$lhrUrl"))
+        val isLhrLogoutUrl = header("Location") shouldEqual Option(Location(s"$lhrUrl/oauth2/sign_out?redirect=$lhrUrl"))
         isTempRedirected && isLhrLogoutUrl
       }
   }
