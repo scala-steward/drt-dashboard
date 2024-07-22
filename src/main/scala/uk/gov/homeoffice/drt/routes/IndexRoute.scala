@@ -42,7 +42,7 @@ case class IndexRoute(urls: Urls, indexResource: Route) {
             val user = User.fromRoles("", rolesStr)
             if (user.accessiblePorts.contains(portCode)) {
               val portLogoutUrl = urls.logoutUrlForPort(portCode)
-              log.info(s"Redirecting back to $portCode ($portLogoutUrl)")
+              log.info(s"DRT v2's user session is out of date. Redirecting user to log out of port $portCode ($portLogoutUrl)")
               redirect(portLogoutUrl, StatusCodes.TemporaryRedirect)
             } else {
               log.info(s"Redirecting to root url as originating $portCode is not available to user")
