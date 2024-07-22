@@ -1,13 +1,18 @@
 package uk.gov.homeoffice.drt.db
 
+import slick.dbio.{DBIOAction, NoStream}
 import slick.jdbc.JdbcProfile
 import slick.lifted.TableQuery
+
+import scala.concurrent.Future
 
 
 trait AppDatabase {
   val profile: slick.jdbc.JdbcProfile
 
   val db: profile.backend.Database
+
+  def run[R](a: DBIOAction[R, NoStream, Nothing]): Future[R] = db.run(a)
 
   lazy val userTable: TableQuery[UserTable] = TableQuery[UserTable]
 

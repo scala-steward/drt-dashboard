@@ -21,7 +21,7 @@ import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes._
 import uk.gov.homeoffice.drt.services.s3.S3Service
-import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
+import uk.gov.homeoffice.drt.services.{PassengerSummaryStreams, UserRequestService, UserService}
 import uk.gov.homeoffice.drt.time.SDate
 import uk.gov.homeoffice.drt.uploadTraining.FeatureGuideService
 
@@ -119,7 +119,7 @@ object Server {
       val routes: Route = concat(
         pathPrefix("api") {
           concat(
-            PassengerRoutes(ProdHttpClient),
+            PassengerRoutes(PassengerSummaryStreams(db).streamForGranularity),
             CiriumRoutes(serverConfig.ciriumDataUri),
             DrtRoutes(serverConfig.portIataCodes),
             LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
