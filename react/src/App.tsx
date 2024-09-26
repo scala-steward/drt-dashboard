@@ -22,8 +22,8 @@ import {AddOrEditDropInSession} from "./components/dropins/AddOrEditDropInSessio
 import {DropInSessionRegistrations} from "./components/dropins/DropInSessionRegistrations";
 import {SnackbarProvider} from 'notistack';
 import Link from "@mui/material/Link";
-import {FeatureGuidesList} from "./components/featureguides/FeatureGuidesList";
-import {AddOrEditFeatureGuide} from "./components/featureguides/AddOrEditFeatureGuide";
+import {FeatureGuideList} from "./components/featureguides/FeatureGuideList";
+import {FeatureGuideAddOrEdit} from "./components/featureguides/FeatureGuideAddOrEdit";
 import {FeedbackForms} from "./components/feedback/FeedbackForms";
 import {FeedbackList} from "./components/feedback/FeedbackList";
 import DownloadManager from './components/downloadmanager/DownloadManager';
@@ -106,9 +106,9 @@ export const App = () => {
           <Route path={"/alerts"} element={<Alerts regions={config.values.portsByRegion} user={user.profile}/>}/>
           <Route path={"/region/:regionName"} element={<RegionPage user={user.profile} config={config.values}/>}/>
           <Route path={"/feature-guides"}>
-            <Route path={""} element={<FeatureGuidesList/>}/>
-            <Route path={"edit"} element={<AddOrEditFeatureGuide/>}/>
-            <Route path={"edit/:guideId"} element={<AddOrEditFeatureGuide/>}/>
+            <Route path={""} element={<FeatureGuideList/>}/>
+            <Route path={"edit"} element={<FeatureGuideAddOrEdit/>}/>
+            <Route path={"edit/:guideId"} element={<FeatureGuideAddOrEdit/>}/>
           </Route>
           <Route path={"/drop-in-sessions"}>
             <Route path={""} element={<DropInSessionsList/>}/>

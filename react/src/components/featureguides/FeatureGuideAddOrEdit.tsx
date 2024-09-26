@@ -7,11 +7,13 @@ import {Breadcrumbs, Stack} from "@mui/material"
 import {Link, useNavigate, useParams} from "react-router-dom"
 import Typography from "@mui/material/Typography"
 import {enqueueSnackbar} from "notistack"
-import {FeatureGuide} from "./FeatureGuidesList"
+import {FeatureGuide} from "./FeatureGuideList"
 import TextField from "@mui/material/TextField"
 import ApiClient from "../../services/ApiClient";
+import {Helmet} from "react-helmet";
+import {adminPageTitleSuffix} from "../../utils/common";
 
-export const AddOrEditFeatureGuide = () => {
+export const FeatureGuideAddOrEdit = () => {
   const navigate = useNavigate()
 
   const [file, setFile] = useState<File | null>(null)
@@ -80,53 +82,58 @@ export const AddOrEditFeatureGuide = () => {
       .catch(() => enqueueSnackbar('Feature guide upload failed', {variant: 'error'}))
   }
 
-  return <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
-    <Breadcrumbs>
-      <Link to={"/"}>
-        Home
-      </Link>
-      <Link to={"/feature-guides"}>
-        Feature guides
-      </Link>
-      <Typography color="text.primary">{guideId ? 'Edit' : 'Add'}</Typography>
-    </Breadcrumbs>
-    <form onSubmit={handleSubmit}>
-      {!guideId && <Stack sx={{gap: 1}}>
+  return <>
+    <Helmet>
+      <title>Feature Guides {adminPageTitleSuffix}</title>
+    </Helmet>
+    <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
+      <Breadcrumbs>
+        <Link to={"/"}>
+          Home
+        </Link>
+        <Link to={"/feature-guides"}>
+          Feature guides
+        </Link>
+        <Typography color="text.primary">{guideId ? 'Edit' : 'Add'}</Typography>
+      </Breadcrumbs>
+      <form onSubmit={handleSubmit}>
+        {!guideId && <Stack sx={{gap: 1}}>
           <div><label htmlFor="image">Demo video (webm format) / Image</label></div>
           <input type={'file'} id="featureFile" onChange={handleFileChange}/>
-      </Stack>}
-      <div style={{marginTop: '20px'}}>
-        <TextField label={'Title'} value={title} onChange={event => setTitle(event.target.value)}/>
-      </div>
-      <div style={{marginTop: '20px', font: "Arial", fontSize: "16px"}}>
-        <label htmlFor="markdown">Markdown:</label>
-        <MarkdownEditor
-          markdownContent={markdownContent}
-          handleMarkdownChange={event => setMarkdownContent(event.target.value)}
-        />
-      </div>
-      <Stack gap={1} direction={'row'}>
-        <Button variant={"outlined"} onClick={() => navigate('/feature-guides')}>Cancel</Button>
-        <Button variant={"outlined"} color={"primary"} type={"submit"}>{guideId ? 'Save changes' : 'Save'}</Button>
-      </Stack>
-    </form>
-    {markdownContent.length > 0 ?
-      <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-        <Button variant="contained" color="primary" onClick={handlePreviewOpen}>Preview</Button>
-      </div> : <span/>}
+        </Stack>}
+        <div style={{marginTop: '20px'}}>
+          <TextField label={'Title'} value={title} onChange={event => setTitle(event.target.value)}/>
+        </div>
+        <div style={{marginTop: '20px', font: "Arial", fontSize: "16px"}}>
+          <label htmlFor="markdown">Markdown:</label>
+          <MarkdownEditor
+            markdownContent={markdownContent}
+            handleMarkdownChange={event => setMarkdownContent(event.target.value)}
+          />
+        </div>
+        <Stack gap={1} direction={'row'}>
+          <Button variant={"outlined"} onClick={() => navigate('/feature-guides')}>Cancel</Button>
+          <Button variant={"outlined"} color={"primary"} type={"submit"}>{guideId ? 'Save changes' : 'Save'}</Button>
+        </Stack>
+      </form>
+      {markdownContent.length > 0 ?
+        <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+          <Button variant="contained" color="primary" onClick={handlePreviewOpen}>Preview</Button>
+        </div> : <span/>}
 
-    {openPreview &&
+      {openPreview &&
         <PreviewComponent
-            guide={{
-              id: '',
-              title: title,
-              markdownContent: markdownContent,
-              fileName: '',
-              uploadTime: ''
-            } as FeatureGuide}
-            fileUrl={fileUrl}
-            onClose={() => setOpenPreview(false)}
-            actionsAvailable={false}
+          guide={{
+            id: '',
+            title: title,
+            markdownContent: markdownContent,
+            fileName: '',
+            uploadTime: ''
+          } as FeatureGuide}
+          fileUrl={fileUrl}
+          onClose={() => setOpenPreview(false)}
+          actionsAvailable={false}
         />}
-  </Stack>
+    </Stack>
+  </>
 }

@@ -13,6 +13,8 @@ import {columns, KeyCloakUser} from "./AccessRequestCommon";
 import {GridRowSelectionModel} from "@mui/x-data-grid/models/gridRowSelectionModel";
 import {Link} from "react-router-dom";
 import Typography from "@mui/material/Typography";
+import { Helmet } from 'react-helmet';
+import {adminPageTitleSuffix} from "../../utils/common";
 
 export default function AccessRequests() {
   const [accessRequestListRequested, setAccessRequestListRequested] = React.useState(false);
@@ -127,16 +129,18 @@ export default function AccessRequests() {
         }}
       />
       {(openModal && rowDetails) ? <AccessRequestDetails openModal={openModal}
-                                           setOpenModal={setOpenModal}
-                                           accessRequest={rowDetails}
-                                           receivedUserDetails={receivedUserDetails}
-                                           setReceivedUserDetails={setReceivedUserDetails}
-                                           status={""}/> : <span/>
+                                                         setOpenModal={setOpenModal}
+                                                         accessRequest={rowDetails}
+                                                         receivedUserDetails={receivedUserDetails}
+                                                         setReceivedUserDetails={setReceivedUserDetails}
+                                                         status={""}/> : <span/>
       }
 
       <Stack gap={1} direction={'row'} sx={{my: 2}}>
-          <Button variant="outlined" disabled={selectedRowIds.length === 0} onClick={approveSelectedUserRequests}>Approve</Button>
-          <Button variant="outlined" disabled={selectedRowIds.length === 0} onClick={dismissSelectedAccessRequests}>Dismiss</Button>
+        <Button variant="outlined" disabled={selectedRowIds.length === 0}
+                onClick={approveSelectedUserRequests}>Approve</Button>
+        <Button variant="outlined" disabled={selectedRowIds.length === 0}
+                onClick={dismissSelectedAccessRequests}>Dismiss</Button>
       </Stack>
     </Box>
   }
@@ -191,25 +195,30 @@ export default function AccessRequests() {
     }
   }
 
-  return <Stack gap={4} alignItems={'stretch'} sx={{mt: 2, mb: 10}}>
-    <Breadcrumbs>
-      <Link to={"/"}>
-        Home
-      </Link>
-      <Typography color="text.primary">Access requests</Typography>
-    </Breadcrumbs>
-    <Box sx={{width: '100%'}}>
-      <Tabs
-        value={statusFilterValue}
-        onChange={handleChange}
-        textColor="secondary"
-        indicatorColor="secondary"
-        aria-label="secondary tabs example">
-        <Tab value="Requested" label="Requested Access"/>
-        <Tab value="Approved" label="Approved Access"/>
-        <Tab value="Dismissed" label="Dismissed Access"/>
-      </Tabs>
-      <div> {accessRequestOrApprovedList()} </div>
-    </Box>
-  </Stack>
+  return <>
+    <Helmet>
+      <title>Access requests {adminPageTitleSuffix}</title>
+    </Helmet>
+    <Stack gap={4} alignItems={'stretch'} sx={{mt: 2, mb: 10}}>
+      <Breadcrumbs>
+        <Link to={"/"}>
+          Home
+        </Link>
+        <Typography color="text.primary">Access requests</Typography>
+      </Breadcrumbs>
+      <Box sx={{width: '100%'}}>
+        <Tabs
+          value={statusFilterValue}
+          onChange={handleChange}
+          textColor="secondary"
+          indicatorColor="secondary"
+          aria-label="secondary tabs example">
+          <Tab value="Requested" label="Requested Access"/>
+          <Tab value="Approved" label="Approved Access"/>
+          <Tab value="Dismissed" label="Dismissed Access"/>
+        </Tabs>
+        <div> {accessRequestOrApprovedList()} </div>
+      </Box>
+    </Stack>
+  </>
 }
