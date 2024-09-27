@@ -14,6 +14,8 @@ import {Link, useNavigate, useParams} from "react-router-dom";
 import Typography from "@mui/material/Typography";
 import {enqueueSnackbar} from "notistack";
 import ApiClient from "../../services/ApiClient";
+import {adminPageTitleSuffix} from "../../utils/common";
+import {Helmet} from "react-helmet";
 
 export function jsonDropInData(startTime: Moment | null, endTime: Moment | null, title: string, meetingLink: string) {
   const startTimeString = startTime?.valueOf()
@@ -101,7 +103,11 @@ export function AddOrEditDropInSession() {
     }
   };
 
-  return <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
+  return <>
+    <Helmet>
+      <title>{sessionId ? 'Edit' : 'Add'} Drop-in session {adminPageTitleSuffix}</title>
+    </Helmet>
+    <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
       <Breadcrumbs>
         <Link to={"/"}>
           Home
@@ -109,7 +115,7 @@ export function AddOrEditDropInSession() {
         <Link to={"/drop-in-sessions"}>
           Drop-in sessions
         </Link>
-        <Typography color="text.primary">Add session</Typography>
+        <Typography color="text.primary">{sessionId ? 'Edit' : 'Add'} session</Typography>
       </Breadcrumbs>
       {errorText && <Alert severity="warning">{errorText}</Alert>}
       <form onSubmit={handleSubmit}>
@@ -178,4 +184,5 @@ export function AddOrEditDropInSession() {
         </Grid>
       </form>
     </Stack>
+  </>
 }
