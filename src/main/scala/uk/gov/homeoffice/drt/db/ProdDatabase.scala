@@ -3,6 +3,7 @@ package uk.gov.homeoffice.drt.db
 import slick.dbio.{DBIOAction, NoStream}
 import slick.jdbc.JdbcProfile
 import slick.lifted.TableQuery
+import uk.gov.homeoffice.drt.db.tables.UserFeedbackTable
 
 import scala.concurrent.Future
 

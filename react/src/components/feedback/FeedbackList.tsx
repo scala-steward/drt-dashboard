@@ -10,6 +10,8 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import {Breadcrumbs, Stack, Link as MuiLink} from "@mui/material";
 import {Link} from "react-router-dom";
 import ApiClient from "../../services/ApiClient";
+import {adminPageTitleSuffix} from "../../utils/common";
+import {Helmet} from "react-helmet";
 
 export function FeedbackList() {
   const [requestedAt, setRequestedAt] = useState(moment().valueOf())
@@ -69,36 +71,41 @@ export function FeedbackList() {
   ];
 
 
-  return <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
-    <Breadcrumbs>
-      <Link to={"/"}>
-        Home
-      </Link>
-      <Typography color="text.primary">User feedback responses</Typography>
-    </Breadcrumbs>
-    <Stack direction={'row'} justifyContent={'space-between'}>
-      <Button
-        sx={{maxWidth: '350px'}}
-        startIcon={<FileDownloadIcon/>}
-        component={MuiLink}
-        href={`${ApiClient.feedBacksEndpoint}/export`}
-        target="_blank"
-        onClick={() => setRequestedAt(moment().valueOf())}
-      > Download feedback responses</Button>
+  return <>
+    <Helmet>
+      <title>Feedback {adminPageTitleSuffix}</title>
+    </Helmet>
+    <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
+      <Breadcrumbs>
+        <Link to={"/"}>
+          Home
+        </Link>
+        <Typography color="text.primary">User feedback responses</Typography>
+      </Breadcrumbs>
+      <Stack direction={'row'} justifyContent={'space-between'}>
+        <Button
+          sx={{maxWidth: '350px'}}
+          startIcon={<FileDownloadIcon/>}
+          component={MuiLink}
+          href={`${ApiClient.feedBacksEndpoint}/export`}
+          target="_blank"
+          onClick={() => setRequestedAt(moment().valueOf())}
+        > Download feedback responses</Button>
+      </Stack>
+      {loading ? <Loading/> :
+        failed ?
+          <Typography variant={'body1'}>Sorry, I couldn't load the existing pauses</Typography> :
+          userFeedbacks.length === 0 ?
+            <Typography variant={'body1'}>There are no current or upcoming pauses</Typography> :
+            <Box sx={{height: 400, width: '100%'}}>
+              <DataGrid
+                getRowId={(rowsData) => rowsData.email + '_' + rowsData.createdAt}
+                rows={userFeedbacks}
+                columns={abFeatureColumns}
+                pageSizeOptions={[5]}
+              />
+            </Box>
+      }
     </Stack>
-    {loading ? <Loading/> :
-      failed ?
-        <Typography variant={'body1'}>Sorry, I couldn't load the existing pauses</Typography> :
-        userFeedbacks.length === 0 ?
-          <Typography variant={'body1'}>There are no current or upcoming pauses</Typography> :
-          <Box sx={{height: 400, width: '100%'}}>
-            <DataGrid
-              getRowId={(rowsData) => rowsData.email + '_' + rowsData.createdAt}
-              rows={userFeedbacks}
-              columns={abFeatureColumns}
-              pageSizeOptions={[5]}
-            />
-          </Box>
-    }
-  </Stack>
+  </>
 }

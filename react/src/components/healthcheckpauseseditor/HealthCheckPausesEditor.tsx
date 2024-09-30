@@ -14,6 +14,8 @@ import {DataGrid} from "@mui/x-data-grid"
 import {Alert} from "@mui/lab"
 import {Link} from "react-router-dom"
 import {enqueueSnackbar} from "notistack";
+import {Helmet} from "react-helmet";
+import {adminPageTitleSuffix} from "../../utils/common";
 
 type ConfirmOpen = {
   kind: 'open'
@@ -146,84 +148,89 @@ export const HealthCheckEditor = () => {
   const rows = [...healthCheckPauses]
     .sort((a, b) => -1 * (b.startsAt.valueOf() - a.startsAt.valueOf()))
 
-  return <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale={'en-gb'}>
-    <Stack gap={4} alignItems={'left'} sx={{my: 2}}>
-      <Breadcrumbs>
-        <Link to={"/"}>
-          Home
-        </Link>
-        <Typography color="text.primary">Health check pauses</Typography>
-      </Breadcrumbs>
-      <>
-        <Link to={''} onClick={e => {
-          e.preventDefault()
-          addNewPause()
-        }}><Button color="primary" variant="outlined" size="medium">Add a new pause</Button></Link>
-      </>
-      <>
-        {newPause &&
+  return <>
+    <Helmet>
+      <title>Health Check Pauses {adminPageTitleSuffix}</title>
+    </Helmet>
+    <LocalizationProvider dateAdapter={AdapterMoment} adapterLocale={'en-gb'}>
+      <Stack gap={4} alignItems={'left'} sx={{my: 2}}>
+        <Breadcrumbs>
+          <Link to={"/"}>
+            Home
+          </Link>
+          <Typography color="text.primary">Health check pauses</Typography>
+        </Breadcrumbs>
+        <>
+          <Link to={''} onClick={e => {
+            e.preventDefault()
+            addNewPause()
+          }}><Button color="primary" variant="outlined" size="medium">Add a new pause</Button></Link>
+        </>
+        <>
+          {newPause &&
             <Dialog open={true} maxWidth="xs">
-                <DialogTitle>
-                    Add a pause
-                </DialogTitle>
-                <DialogContent sx={{minWidth: 380}}>
-                    <Stack sx={{my: 2, gap: 2}}>
-                      {!newPauseIsValid && <Alert severity="error">The start time must be before the end time</Alert>}
-                        <DateTimePicker
-                            slotProps={{textField: {variant: 'outlined'}}}
-                            value={moment(newPause.startsAt)}
-                            label={'From'}
-                            onChange={setStart}/>
-                        <DateTimePicker
-                            slotProps={{textField: {variant: 'outlined'}}}
-                            value={moment(newPause.endsAt)}
-                            label={'To'}
-                            onChange={setEnd}
-                        />
-                    </Stack>
-                </DialogContent>
-                <DialogActions>
-                    <Button color="primary" variant="outlined" size="medium"
-                            onClick={() => setNewPause(null)}>
-                        <Cancel/> Cancel
-                    </Button>
-                    <Button color="primary" variant="outlined" size="medium"
-                            onClick={() => newPause && saveNewPause(newPause)}
-                            disabled={!newPauseIsValid}>
-                        <Save/> Save
-                    </Button>
-                </DialogActions>
+              <DialogTitle>
+                Add a pause
+              </DialogTitle>
+              <DialogContent sx={{minWidth: 380}}>
+                <Stack sx={{my: 2, gap: 2}}>
+                  {!newPauseIsValid && <Alert severity="error">The start time must be before the end time</Alert>}
+                  <DateTimePicker
+                    slotProps={{textField: {variant: 'outlined'}}}
+                    value={moment(newPause.startsAt)}
+                    label={'From'}
+                    onChange={setStart}/>
+                  <DateTimePicker
+                    slotProps={{textField: {variant: 'outlined'}}}
+                    value={moment(newPause.endsAt)}
+                    label={'To'}
+                    onChange={setEnd}
+                  />
+                </Stack>
+              </DialogContent>
+              <DialogActions>
+                <Button color="primary" variant="outlined" size="medium"
+                        onClick={() => setNewPause(null)}>
+                  <Cancel/> Cancel
+                </Button>
+                <Button color="primary" variant="outlined" size="medium"
+                        onClick={() => newPause && saveNewPause(newPause)}
+                        disabled={!newPauseIsValid}>
+                  <Save/> Save
+                </Button>
+              </DialogActions>
             </Dialog>}
-        {confirm.kind === 'open' &&
+          {confirm.kind === 'open' &&
             <Dialog open={true} maxWidth="xs">
-                <DialogTitle>{confirm.message}</DialogTitle>
-                <DialogActions>
-                    <Button color="primary" variant="outlined" size="medium"
-                            onClick={() => setConfirm({kind: 'closed'})}
-                            key="no">
-                        No
-                    </Button>
-                    <Button color="primary" variant="outlined" size="medium" onClick={confirm.onConfirm} key="yes">
-                        Yes
-                    </Button>
-                </DialogActions>
+              <DialogTitle>{confirm.message}</DialogTitle>
+              <DialogActions>
+                <Button color="primary" variant="outlined" size="medium"
+                        onClick={() => setConfirm({kind: 'closed'})}
+                        key="no">
+                  No
+                </Button>
+                <Button color="primary" variant="outlined" size="medium" onClick={confirm.onConfirm} key="yes">
+                  Yes
+                </Button>
+              </DialogActions>
             </Dialog>}
-        {loading ?
-          <Loading/> :
-          failed ?
-            <Typography variant={'body1'}>Sorry, I couldn't load the existing pauses</Typography> :
-            healthCheckPauses.length === 0 ?
-              <Typography variant={'body1'}>There are no current or upcoming pauses</Typography> :
-              <Box sx={{height: 400, width: '100%'}}>
-                <DataGrid
-                  rows={rows}
-                  columns={columns}
-                  getRowId={(r) => r.createdAt.valueOf().toString()}
-                  disableRowSelectionOnClick={true}
-                />
-              </Box>
-        }
-      </>
-    </Stack>
-  </LocalizationProvider>
+          {loading ?
+            <Loading/> :
+            failed ?
+              <Typography variant={'body1'}>Sorry, I couldn't load the existing pauses</Typography> :
+              healthCheckPauses.length === 0 ?
+                <Typography variant={'body1'}>There are no current or upcoming pauses</Typography> :
+                <Box sx={{height: 400, width: '100%'}}>
+                  <DataGrid
+                    rows={rows}
+                    columns={columns}
+                    getRowId={(r) => r.createdAt.valueOf().toString()}
+                    disableRowSelectionOnClick={true}
+                  />
+                </Box>
+          }
+        </>
+      </Stack>
+    </LocalizationProvider>
+  </>
 }

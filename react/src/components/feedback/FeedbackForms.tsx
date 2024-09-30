@@ -1,22 +1,24 @@
 import React from 'react';
-import {Formik, Form, Field} from 'formik';
+import {Field, Form, Formik} from 'formik';
 import {
-  RadioGroup,
-  FormControlLabel,
-  Radio,
-  FormControl,
-  FormLabel,
   Button,
-  Typography,
-  TextField
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Radio,
+  RadioGroup,
+  Stack,
+  TextField,
+  Typography
 } from '@mui/material';
-import {Stack} from "@mui/material";
 import Grid from "@mui/material/Grid";
 import Link from "@mui/material/Link";
 import axios, {AxiosResponse} from "axios";
 import {useParams} from "react-router-dom";
 import ApiClient from "../../services/ApiClient";
 import drtTheme from "../../drtTheme";
+import {customerPageTitleSuffix} from "../../utils/common";
+import {Helmet} from "react-helmet";
 
 interface FeedbackData {
   feedbackType: string;
@@ -102,7 +104,7 @@ export function FeedbackForms() {
               </Field>
             </Stack>
             <br/>
-            <Button sx={{maxWidth:"120px"}} type="submit" variant="outlined">Continue</Button>
+            <Button sx={{maxWidth: "120px"}} type="submit" variant="outlined">Continue</Button>
           </FormControl>
         </Form>
       )}
@@ -159,7 +161,7 @@ export function FeedbackForms() {
               </Field>
             </Stack>
             <br/>
-            <Button sx={{maxWidth:"120px"}} type="submit" variant="outlined">Continue</Button>
+            <Button sx={{maxWidth: "120px"}} type="submit" variant="outlined">Continue</Button>
           </FormControl>
         </Form>
       )}
@@ -371,8 +373,8 @@ export function FeedbackForms() {
         <Typography variant="h5" sx={{float: "centre", fontWeight: 'bold', color: '#111224'}}>
           You may now close this window.
         </Typography> :
-        <Button  variant="outlined" sx={{maxWidth: '150px'}}
-                      onClick={() => window.close()}>Exit Feedback</Button>
+        <Button variant="outlined" sx={{maxWidth: '150px'}}
+                onClick={() => window.close()}>Exit Feedback</Button>
       }
 
     </Stack>
@@ -395,11 +397,15 @@ export function FeedbackForms() {
     }
   };
 
-  return (
+  return <>
+    <Helmet>
+      <title>Feedback {customerPageTitleSuffix}</title>
+    </Helmet>
     <Stack>
-      <Typography variant="h2" sx={{color: drtTheme.palette.primary.main, padding: "10px 0px"}}>DRT
-        Feedback</Typography>
+      <Typography variant="h2" sx={{color: drtTheme.palette.primary.main, padding: "10px 0px"}}>
+        DRT Feedback
+      </Typography>
       {displayQuestion()}
     </Stack>
-  );
+  </>
 }

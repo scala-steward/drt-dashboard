@@ -12,6 +12,8 @@ import axios from "axios";
 import {useParams} from "react-router-dom";
 import {StringUtils} from "../utils/StringUtils";
 import ApiClient from "../services/ApiClient";
+import {customerPageTitleSuffix} from "../utils/common";
+import {Helmet} from "react-helmet";
 
 interface IProps {
   user: UserProfile;
@@ -31,7 +33,7 @@ export const RegionPage = (props: IProps) => {
 
   const [downloads, setDownloads] = React.useState<Download[] | undefined>(undefined)
 
-  const { regionName } = useParams() as { regionName: string }
+  const {regionName = ''} = useParams()
 
   const fetchDownloads = () => {
     axios
@@ -62,48 +64,53 @@ export const RegionPage = (props: IProps) => {
     return moment(date).format("DD/MM/YYYY")
   }
 
-  const sortedDownloads  = downloads ? downloads.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)) : undefined
+  const sortedDownloads = downloads ? downloads.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1)) : undefined
 
-  return <div className="flex-container">
-    <Breadcrumbs aria-label="breadcrumb">
-      <Link underline="hover" color="inherit" href="/">DRT</Link>
-      <Typography color="text.primary">{StringUtils.ucFirst(regionName)}</Typography>
-    </Breadcrumbs>
-    {props.user.roles.includes("rcc:" + regionName.toLowerCase()) ?
-      <Box>
-        <h1>{StringUtils.ucFirst(regionName)} region</h1>
-        <p>You can download an arrivals export covering all port terminals in
-          this region.</p>
-        <ArrivalExport region={regionName}/>
-        <h2>Downloads</h2>
-        {sortedDownloads ?
-          <Grid container spacing={2}>
-            <Grid xs={3}><Typography fontWeight="bold">Created</Typography></Grid>
-            <Grid xs={6}><Typography fontWeight="bold">Date range</Typography></Grid>
-            <Grid xs={3}></Grid>
-            {sortedDownloads.map(download => {
-              const downloadUrl = `${ApiClient.exportRegionEndpoint}/${download.region}/${download.createdAt}`
-              return <>
-                <Grid xs={3}><Typography>{formatDateDDMMYYYYHHmm(new Date(download.createdAt))}</Typography></Grid>
-                <Grid xs={6}>
-                  <Typography>{formatDateDDMMYYYY(download.startDate)} - {formatDateDDMMYYYY(download.endDate)}</Typography>
-                </Grid>
-                <Grid xs={3}><Typography>
-                  {download.status === 'complete' ?
-                    <Link href={downloadUrl} target={'_blank'}>Download</Link> :
-                    download.status
-                  }
-                </Typography></Grid>
-              </>
-            })}
-          </Grid> :
-          <p>No downloads yet.</p>
-        }
-      </Box> :
-      <Box>
-        <p>You don't have access to this page. To request access please get in touch with us at <a
-          href={"mailto:" + props.config.teamEmail}> {props.config.teamEmail}</a>.</p>
-      </Box>
-    }
-  </div>
+  return <>
+    <Helmet>
+      <title>{StringUtils.ucFirst(regionName)} - Regional Dashboard {customerPageTitleSuffix}</title>
+    </Helmet>
+    <div className="flex-container">
+      <Breadcrumbs aria-label="breadcrumb">
+        <Link underline="hover" color="inherit" href="/">DRT</Link>
+        <Typography color="text.primary">{StringUtils.ucFirst(regionName)}</Typography>
+      </Breadcrumbs>
+      {props.user.roles.includes("rcc:" + regionName.toLowerCase()) ?
+        <Box>
+          <h1>{StringUtils.ucFirst(regionName)} region</h1>
+          <p>You can download an arrivals export covering all port terminals in
+            this region.</p>
+          <ArrivalExport region={regionName}/>
+          <h2>Downloads</h2>
+          {sortedDownloads ?
+            <Grid container spacing={2}>
+              <Grid xs={3}><Typography fontWeight="bold">Created</Typography></Grid>
+              <Grid xs={6}><Typography fontWeight="bold">Date range</Typography></Grid>
+              <Grid xs={3}></Grid>
+              {sortedDownloads.map(download => {
+                const downloadUrl = `${ApiClient.exportRegionEndpoint}/${download.region}/${download.createdAt}`
+                return <>
+                  <Grid xs={3}><Typography>{formatDateDDMMYYYYHHmm(new Date(download.createdAt))}</Typography></Grid>
+                  <Grid xs={6}>
+                    <Typography>{formatDateDDMMYYYY(download.startDate)} - {formatDateDDMMYYYY(download.endDate)}</Typography>
+                  </Grid>
+                  <Grid xs={3}><Typography>
+                    {download.status === 'complete' ?
+                      <Link href={downloadUrl} target={'_blank'}>Download</Link> :
+                      download.status
+                    }
+                  </Typography></Grid>
+                </>
+              })}
+            </Grid> :
+            <p>No downloads yet.</p>
+          }
+        </Box> :
+        <Box>
+          <p>You don't have access to this page. To request access please get in touch with us at <a
+            href={"mailto:" + props.config.teamEmail}> {props.config.teamEmail}</a>.</p>
+        </Box>
+      }
+    </div>
+  </>
 }

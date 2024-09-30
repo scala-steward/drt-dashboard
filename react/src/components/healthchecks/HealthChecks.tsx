@@ -14,6 +14,8 @@ import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
+import {Helmet} from "react-helmet";
+import {adminPageTitleSuffix} from "../../utils/common";
 
 interface Props {
   portsByRegion: PortRegion[]
@@ -33,46 +35,51 @@ export const HealthChecks = (props: Props) => {
     set()
   }, []);
 
-  return <Box>
-    <h1>Health Checks</h1>
-    {loading && <p>Loading...</p>}
-    {failed && <p>Failed to load health checks</p>}
+  return <>
+    <Helmet>
+      <title>Health Checks {adminPageTitleSuffix}</title>
+    </Helmet>
+    <Box>
+      <h1>Health Checks</h1>
+      {loading && <p>Loading...</p>}
+      {failed && <p>Failed to load health checks</p>}
 
-    <TableContainer component={Paper}>
-      <Table aria-label="collapsible table">
-        <TableHead>
-          <TableRow>
-            <TableCell/>
-            <TableCell>
-              <Typography variant={'h5'}>Region</Typography>
-            </TableCell>
-            {healthChecks.healthChecks.map((healthCheck, index) => {
-              return <TableCell key={index} align="right">
-                <Tooltip title={healthCheck.description} placement={'top'} arrow>
-                  <Typography variant={'h5'}>{healthCheck.name}</Typography>
-                </Tooltip>
+      <TableContainer component={Paper}>
+        <Table aria-label="collapsible table">
+          <TableHead>
+            <TableRow>
+              <TableCell/>
+              <TableCell>
+                <Typography variant={'h5'}>Region</Typography>
               </TableCell>
-            })}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {props.portsByRegion.map((portRegion, index) => {
-            const regionAlarms = portRegion.ports
-              .filter(port => healthCheckAlarms.some(alarm => alarm.port === port))
-              .sort((a, b) => a.localeCompare(b))
-              .map(port => healthCheckAlarms.find(alarm => alarm.port === port))
-              .filter(alarm => !!alarm) as PortHealthCheckAlarms[]
+              {healthChecks.healthChecks.map((healthCheck, index) => {
+                return <TableCell key={index} align="right">
+                  <Tooltip title={healthCheck.description} placement={'top'} arrow>
+                    <Typography variant={'h5'}>{healthCheck.name}</Typography>
+                  </Tooltip>
+                </TableCell>
+              })}
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {props.portsByRegion.map((portRegion, index) => {
+              const regionAlarms = portRegion.ports
+                .filter(port => healthCheckAlarms.some(alarm => alarm.port === port))
+                .sort((a, b) => a.localeCompare(b))
+                .map(port => healthCheckAlarms.find(alarm => alarm.port === port))
+                .filter(alarm => !!alarm) as PortHealthCheckAlarms[]
 
-            if (regionAlarms.length !== 0 && regionAlarms)
-              return <Row region={portRegion.name} regionPortAlarms={regionAlarms}
-                          healthChecks={healthChecks.healthChecks} key={index}/>
-            else
-              return <></>
-          })}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  </Box>
+              if (regionAlarms.length !== 0 && regionAlarms)
+                return <Row region={portRegion.name} regionPortAlarms={regionAlarms}
+                            healthChecks={healthChecks.healthChecks} key={index}/>
+              else
+                return <></>
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  </>
 }
 
 function Row(props: { region: string, regionPortAlarms: PortHealthCheckAlarms[], healthChecks: HealthCheck[] }) {

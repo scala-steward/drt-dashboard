@@ -15,7 +15,9 @@ import slick.dbio.DBIO
 import slick.jdbc.PostgresProfile.api._
 import spray.json._
 import uk.gov.homeoffice.drt.auth.Roles.BorderForceStaff
-import uk.gov.homeoffice.drt.db.{TestDatabase, UserFeedbackDao, UserFeedbackRow}
+import uk.gov.homeoffice.drt.db.TestDatabase
+import uk.gov.homeoffice.drt.db.dao.UserFeedbackDao
+import uk.gov.homeoffice.drt.db.tables.UserFeedbackRow
 
 import java.sql.Timestamp
 import java.time.Instant

@@ -14,6 +14,7 @@ import akka.stream.Materializer
 import akka.util.Timeout
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.db._
+import uk.gov.homeoffice.drt.db.dao.UserFeedbackDao
 import uk.gov.homeoffice.drt.healthchecks._
 import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications, SlackClient}
 import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealthCheckPausePersistenceImpl}

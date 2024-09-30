@@ -9,7 +9,8 @@ import akka.http.scaladsl.server.Route
 import akka.stream.scaladsl.Source
 import akka.util.ByteString
 import spray.json.{RootJsonFormat, enrichAny}
-import uk.gov.homeoffice.drt.db.{UserFeedbackDao, UserFeedbackRow}
+import uk.gov.homeoffice.drt.db.dao.UserFeedbackDao
+import uk.gov.homeoffice.drt.db.tables.UserFeedbackRow
 import uk.gov.homeoffice.drt.json.DefaultTimeJsonProtocol
 
 import java.sql.Timestamp

@@ -9,6 +9,8 @@ import moment from "moment-timezone";
 import {Breadcrumbs, Stack} from "@mui/material";
 import Typography from "@mui/material/Typography";
 import {Link} from "react-router-dom";
+import {adminPageTitleSuffix} from "../../utils/common";
+import {Helmet} from "react-helmet";
 
 const formatDate = (param: GridValueFormatterParams) => {
   return moment(param?.value).format("YYYY-MM-DD HH:mm")
@@ -68,19 +70,24 @@ export default function UsersList() {
     fetchUsers();
   }, []);
 
-  return <Stack gap={4} sx={{mt: 2}}>
-    <Breadcrumbs>
-      <Link to="/">
-        Home
-      </Link>
-      <Typography color="text.primary">Users</Typography>
-    </Breadcrumbs>
-    <Box sx={{height: 400, width: '100%'}}>
-      <DataGrid
-        rows={rowsData}
-        columns={userColumns}
-        pageSizeOptions={[5]}
-      />
-    </Box>
-  </Stack>
+  return <>
+    <Helmet>
+      <title>Users {adminPageTitleSuffix}</title>
+    </Helmet>
+    <Stack gap={4} sx={{mt: 2}}>
+      <Breadcrumbs>
+        <Link to="/">
+          Home
+        </Link>
+        <Typography color="text.primary">Users</Typography>
+      </Breadcrumbs>
+      <Box sx={{height: 400, width: '100%'}}>
+        <DataGrid
+          rows={rowsData}
+          columns={userColumns}
+          pageSizeOptions={[5]}
+        />
+      </Box>
+    </Stack>
+  </>
 }

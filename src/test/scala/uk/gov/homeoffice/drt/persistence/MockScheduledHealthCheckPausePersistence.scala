@@ -11,7 +11,7 @@ object MockScheduledHealthCheckPausePersistence extends ScheduledHealthCheckPaus
   }
 
   override def get(maybeAfter: Option[Long]): Future[Seq[ScheduledPause]] = Future.successful(pauses)
-0
+
   override def delete(from: Long, to: Long): Future[Int] = {
     pauses = pauses.filter(p => p.startsAt.getMillis != from && p.endsAt.getMillis != to)
     Future.successful(1)

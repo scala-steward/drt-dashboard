@@ -21,6 +21,8 @@ import Loading from "../Loading";
 import {useDropInSessions} from "../../store/dropInSessions";
 import {DialogComponent} from "../DialogComponent";
 import ApiClient from "../../services/ApiClient";
+import {adminPageTitleSuffix} from "../../utils/common";
+import {Helmet} from "react-helmet";
 
 moment.locale('en-gb')
 
@@ -185,63 +187,68 @@ export function DropInSessionsList() {
       })
   }
 
-  return <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
-    <Breadcrumbs>
-      <Link to={"/"}>
-        Home
-      </Link>
-      <Typography color="text.primary">Drop-in sessions</Typography>
-    </Breadcrumbs>
-    <Stack direction={'row'} justifyContent={'space-between'}>
-      <Link to={'/drop-in-sessions/edit'}><Button sx={{fontWeight: 'bold', maxWidth: '250px'}} variant={'outlined'}>New
-        drop in session</Button></Link>
-      <FormControlLabel
-        label={'Show all'}
-        control={<Checkbox checked={showAll} onChange={() => setShowAll(!showAll)} color="primary"/>}
-      />
-    </Stack>
-    {loading ?
-      <Loading/> :
-      failed ?
-        <Typography variant={'body1'}>Sorry, I couldn't load the existing pauses</Typography> :
-        dropInSessions.length === 0 ?
-          <Typography variant={'body1'}>There are no current or upcoming pauses</Typography> :
-          <Box sx={{height: 400, width: '100%'}}>
-            <DataGrid
-              getRowId={(rowsData) => rowsData.id}
-              rows={dropInSessions}
-              columns={dropInColumns}
-              pageSizeOptions={[5]}
-            />
-          </Box>
-    }
-    <ViewDropInSession id={rowDetails?.id}
-                       title={rowDetails?.title}
-                       startTime={rowDetails?.startTime}
-                       endTime={rowDetails?.endTime}
-                       meetingLink={rowDetails?.meetingLink}
-                       view={view}
-                       setView={setView}/>
-    {showDelete && <DialogComponent
+  return <>
+    <Helmet>
+      <title>Drop-in sessions {adminPageTitleSuffix}</title>
+    </Helmet>
+    <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
+      <Breadcrumbs>
+        <Link to={"/"}>
+          Home
+        </Link>
+        <Typography color="text.primary">Drop-in sessions</Typography>
+      </Breadcrumbs>
+      <Stack direction={'row'} justifyContent={'space-between'}>
+        <Link to={'/drop-in-sessions/edit'}><Button sx={{fontWeight: 'bold', maxWidth: '250px'}} variant={'outlined'}>New
+          drop in session</Button></Link>
+        <FormControlLabel
+          label={'Show all'}
+          control={<Checkbox checked={showAll} onChange={() => setShowAll(!showAll)} color="primary"/>}
+        />
+      </Stack>
+      {loading ?
+        <Loading/> :
+        failed ?
+          <Typography variant={'body1'}>Sorry, I couldn't load the existing pauses</Typography> :
+          dropInSessions.length === 0 ?
+            <Typography variant={'body1'}>There are no current or upcoming pauses</Typography> :
+            <Box sx={{height: 400, width: '100%'}}>
+              <DataGrid
+                getRowId={(rowsData) => rowsData.id}
+                rows={dropInSessions}
+                columns={dropInColumns}
+                pageSizeOptions={[5]}
+              />
+            </Box>
+      }
+      <ViewDropInSession id={rowDetails?.id}
+                         title={rowDetails?.title}
+                         startTime={rowDetails?.startTime}
+                         endTime={rowDetails?.endTime}
+                         meetingLink={rowDetails?.meetingLink}
+                         view={view}
+                         setView={setView}/>
+      {showDelete && <DialogComponent
         actionText='remove drop-in'
         onCancel={() => setShowDelete(false)}
         onConfirm={() => {
           deleteSession(rowDetails?.id as string)
           setShowDelete(false)
         }}/>}
-    {publish && <DialogComponent
+      {publish && <DialogComponent
         actionText="publish"
         onCancel={() => setShowDelete(false)}
         onConfirm={() => {
           updatePublished(rowDetails?.id as string, true)
           setPublish(false)
         }}/>}
-    {unPublish && <DialogComponent
+      {unPublish && <DialogComponent
         actionText="unPublish"
         onCancel={() => setShowDelete(false)}
         onConfirm={() => {
           updatePublished(rowDetails?.id as string, false)
           setUnPublish(false)
         }}/>}
-  </Stack>
+    </Stack>
+  </>
 }

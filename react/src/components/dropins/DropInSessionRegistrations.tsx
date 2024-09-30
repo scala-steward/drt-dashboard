@@ -11,6 +11,8 @@ import {Alert, DialogComponent} from "../DialogComponent";
 import {enqueueSnackbar} from "notistack";
 import ApiClient from "../../services/ApiClient";
 import Typography from "@mui/material/Typography";
+import {adminPageTitleSuffix} from "../../utils/common";
+import {Helmet} from "react-helmet";
 
 export interface DropInRegisteredUsers {
   email: string;
@@ -101,38 +103,43 @@ export function DropInSessionRegistrations() {
       })
   }
 
-  return <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
-    <Breadcrumbs>
-      <Link to={"/"}>
-        Home
-      </Link>
-      <Link to={"/drop-in-sessions"}>
-        Drop-in sessions
-      </Link>
-      <Typography color="text.primary">Registrations :: {dropInSession?.title}</Typography>
-    </Breadcrumbs>
-    <Snackbar
-      anchorOrigin={{vertical: 'top', horizontal: 'center'}}
-      open={error}
-      autoHideDuration={6000}
-      onClose={() => setError(false)}>
-      <Alert onClose={() => setError(false)} severity="error" sx={{width: '100%'}}>
-        There was a problem booking drop-ins. Please try reloading the page.
-      </Alert>
-    </Snackbar>
-    <Box sx={{height: 400, width: '100%'}}>
-      <DataGrid
-        getRowId={(rowsData) => rowsData.email + '_' + rowsData.dropInId}
-        rows={rowsData}
-        columns={columns}
-        pageSizeOptions={[5]}
-      />
-    </Box>
-    {unregister && <DialogComponent actionText='unregister'
-                                    onCancel={() => setUnregister(false)}
-                                    onConfirm={() => {
-                                      removeRegistration(rowDetails?.dropInId as string, rowDetails?.email as string)
-                                    }}
-    />}
-  </Stack>
+  return <>
+    <Helmet>
+      <title>Drop-in session registrations {adminPageTitleSuffix}</title>
+    </Helmet>
+    <Stack gap={4} alignItems={'stretch'} sx={{mt: 2}}>
+      <Breadcrumbs>
+        <Link to={"/"}>
+          Home
+        </Link>
+        <Link to={"/drop-in-sessions"}>
+          Drop-in sessions
+        </Link>
+        <Typography color="text.primary">Registrations :: {dropInSession?.title}</Typography>
+      </Breadcrumbs>
+      <Snackbar
+        anchorOrigin={{vertical: 'top', horizontal: 'center'}}
+        open={error}
+        autoHideDuration={6000}
+        onClose={() => setError(false)}>
+        <Alert onClose={() => setError(false)} severity="error" sx={{width: '100%'}}>
+          There was a problem booking drop-ins. Please try reloading the page.
+        </Alert>
+      </Snackbar>
+      <Box sx={{height: 400, width: '100%'}}>
+        <DataGrid
+          getRowId={(rowsData) => rowsData.email + '_' + rowsData.dropInId}
+          rows={rowsData}
+          columns={columns}
+          pageSizeOptions={[5]}
+        />
+      </Box>
+      {unregister && <DialogComponent actionText='unregister'
+                                      onCancel={() => setUnregister(false)}
+                                      onConfirm={() => {
+                                        removeRegistration(rowDetails?.dropInId as string, rowDetails?.email as string)
+                                      }}
+      />}
+    </Stack>
+  </>
 }

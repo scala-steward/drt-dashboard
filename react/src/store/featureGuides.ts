@@ -1,7 +1,7 @@
 import axios from "axios";
 import {enqueueSnackbar} from "notistack";
 import {useEffect, useState} from "react";
-import {FeatureGuide} from "../components/featureguides/FeatureGuidesList";
+import {FeatureGuide} from "../components/featureguides/FeatureGuideList";
 import ApiClient from "../services/ApiClient";
 
 export const deleteFeatureGuide = (id: string) => {

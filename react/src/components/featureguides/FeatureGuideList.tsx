@@ -16,6 +16,8 @@ import {deleteFeatureGuide, updatePublishedStatus, useFeatureGuides} from "../..
 import Loading from "../Loading"
 import moment from "moment-timezone"
 import Button from "@mui/material/Button";
+import {Helmet} from "react-helmet";
+import {adminPageTitleSuffix} from "../../utils/common";
 
 export interface FeatureGuide {
   id: string
@@ -25,7 +27,7 @@ export interface FeatureGuide {
   markdownContent: string
 }
 
-export const FeatureGuidesList = () => {
+export const FeatureGuideList = () => {
   const navigate = useNavigate()
   const [previewGuide, setPreviewGuide] = React.useState<FeatureGuide | undefined>(undefined)
 
@@ -99,59 +101,64 @@ export const FeatureGuidesList = () => {
 
   const [requestedAt, setRequestedAt] = useState<number>(moment().valueOf())
   const {features, loading, failed} = useFeatureGuides(requestedAt)
-  const [deleteId, setDeleteId] = useState<string|undefined>(undefined)
-  const [publishId, setPublishId] = useState<string|undefined>(undefined)
-  const [unpublishId, setUnpublishId] = useState<string|undefined>(undefined)
+  const [deleteId, setDeleteId] = useState<string | undefined>(undefined)
+  const [publishId, setPublishId] = useState<string | undefined>(undefined)
+  const [unpublishId, setUnpublishId] = useState<string | undefined>(undefined)
 
-  return <Stack gap={4} alignItems={"stretch"} sx={{mt: 2}}>
-    <Breadcrumbs>
-      <Link to={"/"}>
-        Home
-      </Link>
-      <Typography color="text.primary">Feature guides</Typography>
-    </Breadcrumbs>
-    <Link to={'/feature-guides/edit'}><Button sx={{fontWeight:'bold'}} variant={'outlined'}>New guide</Button></Link>
-    {loading ?
-      <Loading/> :
-      failed ? <Typography variant={'body1'}>Failed to load features. Try refreshing the page</Typography> :
-        <Box sx={{height: 400, width: '100%'}}>
-          <DataGrid
-            getRowId={(rowsData) => rowsData.id}
-            rows={features}
-            columns={featureColumns}
-            pageSizeOptions={[5]}
-          />
-        </Box>
-    }
-    {previewGuide && <PreviewComponent guide={previewGuide}
-                                       fileUrl={"/guide/get-feature-files/" + previewGuide.fileName}
-                                       onClose={() => {
-                                         setPreviewGuide(undefined)
-                                         setRequestedAt(moment().valueOf())
-                                       }}
-                                       actionsAvailable={true}/>}
-    {publishId && <DialogComponent actionText={'publish'}
-                                   onConfirm={() => {
-                                     publishId && updatePublishedStatus(publishId, true, () => {
-                                       setPublishId(undefined)
-                                       setRequestedAt(moment().valueOf())
-                                     })
-                                   }}
-                                   onCancel={() => setPublishId(undefined)}/>}
-    {unpublishId && <DialogComponent actionText={'unpublish'}
+  return <>
+    <Helmet>
+      <title>Feature Guides {adminPageTitleSuffix}</title>
+    </Helmet>
+    <Stack gap={4} alignItems={"stretch"} sx={{mt: 2}}>
+      <Breadcrumbs>
+        <Link to={"/"}>
+          Home
+        </Link>
+        <Typography color="text.primary">Feature guides</Typography>
+      </Breadcrumbs>
+      <Link to={'/feature-guides/edit'}><Button sx={{fontWeight: 'bold'}} variant={'outlined'}>New guide</Button></Link>
+      {loading ?
+        <Loading/> :
+        failed ? <Typography variant={'body1'}>Failed to load features. Try refreshing the page</Typography> :
+          <Box sx={{height: 400, width: '100%'}}>
+            <DataGrid
+              getRowId={(rowsData) => rowsData.id}
+              rows={features}
+              columns={featureColumns}
+              pageSizeOptions={[5]}
+            />
+          </Box>
+      }
+      {previewGuide && <PreviewComponent guide={previewGuide}
+                                         fileUrl={"/guide/get-feature-files/" + previewGuide.fileName}
+                                         onClose={() => {
+                                           setPreviewGuide(undefined)
+                                           setRequestedAt(moment().valueOf())
+                                         }}
+                                         actionsAvailable={true}/>}
+      {publishId && <DialogComponent actionText={'publish'}
                                      onConfirm={() => {
-                                       unpublishId && updatePublishedStatus(unpublishId, false, () => {
-                                         setUnpublishId(undefined)
+                                       publishId && updatePublishedStatus(publishId, true, () => {
+                                         setPublishId(undefined)
                                          setRequestedAt(moment().valueOf())
                                        })
                                      }}
-                                     onCancel={() => setUnpublishId(undefined)}/>}
-    {deleteId && <DialogComponent actionText={'delete'}
-                                  onConfirm={() => {
-                                    deleteId && deleteFeatureGuide(deleteId)
-                                    setDeleteId(undefined)
-                                    setRequestedAt(moment().valueOf())
-                                  }}
-                                  onCancel={() => setDeleteId(undefined)}/>}
-  </Stack>
+                                     onCancel={() => setPublishId(undefined)}/>}
+      {unpublishId && <DialogComponent actionText={'unpublish'}
+                                       onConfirm={() => {
+                                         unpublishId && updatePublishedStatus(unpublishId, false, () => {
+                                           setUnpublishId(undefined)
+                                           setRequestedAt(moment().valueOf())
+                                         })
+                                       }}
+                                       onCancel={() => setUnpublishId(undefined)}/>}
+      {deleteId && <DialogComponent actionText={'delete'}
+                                    onConfirm={() => {
+                                      deleteId && deleteFeatureGuide(deleteId)
+                                      setDeleteId(undefined)
+                                      setRequestedAt(moment().valueOf())
+                                    }}
+                                    onCancel={() => setDeleteId(undefined)}/>}
+    </Stack>
+  </>
 }

@@ -8,7 +8,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import {useNavigate} from "react-router-dom";
 import {DialogComponent} from "../DialogComponent";
 import {deleteFeatureGuide} from "../../store/featureGuides";
-import {FeatureGuide} from "./FeatureGuidesList";
+import {FeatureGuide} from "./FeatureGuideList";
 import ReactMarkdown from "react-markdown";
 
 interface Props {
