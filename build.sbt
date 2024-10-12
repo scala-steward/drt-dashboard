@@ -17,7 +17,7 @@ lazy val notificationsJavaClientVersion = "4.1.1-RELEASE"
 lazy val scalaCsvVersion = "1.3.10"
 lazy val slickVersion = "3.4.1"
 lazy val awsJava2SdkVersion = "2.21.40"
-lazy val postgresqlVersion = "42.7.0"
+lazy val postgresqlVersion = "42.7.2"
 lazy val mockitoVersion = "4.6.1"
 lazy val poiScalaVersion ="0.24"
 
@@ -64,7 +64,7 @@ lazy val root = (project in file(".")).
       "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
       "org.specs2" %% "specs2-core" % specs2Version % Test,
       "org.mockito" % "mockito-core" % mockitoVersion % Test,
-),
+    ),
 
     resolvers += "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/",
     resolvers += "Artifactory Realm release local" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-release-local/",

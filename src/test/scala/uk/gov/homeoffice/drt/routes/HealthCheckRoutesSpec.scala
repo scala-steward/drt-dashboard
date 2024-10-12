@@ -7,6 +7,7 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import spray.json.enrichAny
 import uk.gov.homeoffice.drt.healthchecks.{ApiHealthCheck, ArrivalLandingTimesHealthCheck, ArrivalUpdatesHealthCheck, HealthCheck}
+import uk.gov.homeoffice.drt.persistence.MockScheduledHealthCheckPausePersistence
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.routes.HealthCheckRoutes.alarmStatusFormat
 import uk.gov.homeoffice.drt.time.SDate
@@ -33,7 +34,7 @@ class HealthCheckRoutesSpec extends AnyWordSpec with Matchers with ScalatestRout
       () => Future.successful(alarms)
 
     "call the corresponding port uri for the port and dates, given no granularity" in {
-      Get("/health-checks/alarm-statuses") ~> HealthCheckRoutes(getAlarmStatuses, healthChecks) ~> check {
+      Get("/health-checks/alarm-statuses") ~> HealthCheckRoutes(getAlarmStatuses, healthChecks, MockScheduledHealthCheckPausePersistence) ~> check {
         val str = responseAs[String]
 
         str shouldEqual alarms.toJson.compactPrint

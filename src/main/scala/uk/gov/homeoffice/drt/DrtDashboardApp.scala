@@ -4,12 +4,11 @@ import akka.actor.typed.ActorSystem
 import com.typesafe.config.ConfigFactory
 import uk.gov.homeoffice.drt.notifications.{EmailClientImpl, EmailNotifications, NoopSlackClient, SlackClientImpl}
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
-import uk.gov.homeoffice.drt.schedule.{DropInNotification, DropInReminder, UserTracking}
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
+import uk.gov.homeoffice.drt.schedule.{DropInNotification, DropInReminder, UserTracking}
 import uk.gov.service.notify.NotificationClient
 
 import scala.concurrent.duration.DurationInt
-import scala.jdk.CollectionConverters._
 
 object DrtDashboardApp extends App {
   val config = ConfigFactory.load()
@@ -64,7 +63,9 @@ object DrtDashboardApp extends App {
 
   private val emailNotifications = EmailNotifications(serverConfig.accessRequestEmails, govNotifyClient)
 
-  val system: ActorSystem[Server.Message] = ActorSystem(Server(serverConfig, emailNotifications, emailClient, slackClient), "DrtDashboard")
+  private val server = Server(serverConfig, emailNotifications, emailClient, slackClient)
+
+  val system: ActorSystem[Server.Message] = ActorSystem(server, "DrtDashboard")
   if (serverConfig.userTrackingFeatureFlag) {
     ActorSystem(UserTracking(serverConfig, 1.minutes, 100, emailNotifications), "UserTrackingTimer")
   }

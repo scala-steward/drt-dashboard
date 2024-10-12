@@ -7,7 +7,7 @@ import akka.util.Timeout
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.ServerConfig
 import uk.gov.homeoffice.drt.authentication.KeyCloakUser
-import uk.gov.homeoffice.drt.db.{ProdDatabase, User, UserDao}
+import uk.gov.homeoffice.drt.db.{ProdDatabase, UserDao, UserRow}
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuthTokenService.GetToken
 import uk.gov.homeoffice.drt.keycloak.{KeyCloakAuthToken, KeyCloakAuthTokenService, KeycloakService}
 import uk.gov.homeoffice.drt.notifications.templates.AccessRequestTemplates.{inactiveUserNotificationTemplateId, revokeAccessTemplateId}
@@ -106,7 +106,7 @@ class UserTracking(serverConfig: ServerConfig,
         val keyClockClient = KeyCloakAuthTokenService.getKeyClockClient(serverConfig.keyClockConfig.url, token)
         val keycloakService = KeycloakService(keyClockClient)
         usersToRevoke.map { utrOption =>
-          utrOption.map { userToRevoke: User =>
+          utrOption.map { userToRevoke: UserRow =>
             if (userToRevoke.email.nonEmpty) {
               keycloakService.getUserForEmail(userToRevoke.email).map { ud =>
                 ud.map { userFromKeycloak =>
@@ -143,7 +143,7 @@ class UserTracking(serverConfig: ServerConfig,
     }
   }
 
-  def removeUser(keycloakService: KeycloakService, uId: KeyCloakUser, utr: User)
+  def removeUser(keycloakService: KeycloakService, uId: KeyCloakUser, utr: UserRow)
     (implicit ec: ExecutionContext): Future[Int] = {
     keycloakService.removeUser(uId.id)
     userService.upsertUser(utr.copy(revoked_access = Some(new Timestamp(new Date().getTime))), Some("revoked"))

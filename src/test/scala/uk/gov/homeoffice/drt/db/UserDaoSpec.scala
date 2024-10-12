@@ -14,13 +14,20 @@ import scala.concurrent.{Await, ExecutionContext}
 class UserDaoSpec extends Specification with BeforeEach {
   sequential
 
+  lazy val db: Database = Database.forConfig("h2-db")
+
+  override protected def before: Any = {
+    val schema = TestDatabase.userTable.schema
+    Await.ready(db.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
+  }
+
   private val numberOfInactivityDays = 60
   private val deactivateAfterWarningDays = 7
   val secondsInADay: Int = 24 * 60 * 60
 
   val userDao = UserDao(TestDatabase.db)
 
-  val userActive1: User = User(
+  val userActive1: UserRow = UserRow(
     id = "user1",
     username = "user1",
     email = "user1@test.com",
@@ -31,7 +38,7 @@ class UserDaoSpec extends Specification with BeforeEach {
     created_at = None
   )
 
-  val userActive2: User = User(
+  val userActive2: UserRow = UserRow(
     id = "user2",
     username = "user2",
     email = "user2@test.com",
@@ -41,7 +48,7 @@ class UserDaoSpec extends Specification with BeforeEach {
     drop_in_notification_at = None,
     created_at = None)
 
-  val userInactiveMoreThan60days: User = User(
+  val userInactiveMoreThan60days: UserRow = UserRow(
     id = "user3",
     username = "user3",
     email = "user3@test.com",
@@ -51,7 +58,7 @@ class UserDaoSpec extends Specification with BeforeEach {
     drop_in_notification_at = None,
     created_at = None)
 
-  val userInactiveMoreThan67days: User = User(
+  val userInactiveMoreThan67days: UserRow = UserRow(
     id = "user4",
     username = "user4",
     email = "user4@test.com",
@@ -61,7 +68,7 @@ class UserDaoSpec extends Specification with BeforeEach {
     drop_in_notification_at = None,
     created_at = None)
 
-  val userWithNoEmail: User = User(
+  val userWithNoEmail: UserRow = UserRow(
     id = "user5",
     username = "user5",
     email = "",
@@ -130,13 +137,6 @@ class UserDaoSpec extends Specification with BeforeEach {
     oneInActiveUser.head mustEqual (inActiveUser)
     oneUserToRevoke.head mustEqual (revokedUser)
     noInactiveUser.isEmpty && noUserToRevoke.isEmpty
-  }
-
-  lazy val db: Database = Database.forConfig("h2-db")
-
-  override protected def before: Any = {
-    val schema = TestDatabase.userTable.schema
-    Await.ready(db.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
   }
 
 }
