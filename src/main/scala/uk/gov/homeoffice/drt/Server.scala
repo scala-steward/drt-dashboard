@@ -6,7 +6,7 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, PostStop}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
-import akka.http.scaladsl.model.HttpRequest
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
 import akka.http.scaladsl.server.Directives.{concat, getFromResource, pathPrefix}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.settings.ConnectionPoolSettings
@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.db._
 import uk.gov.homeoffice.drt.db.dao.UserFeedbackDao
 import uk.gov.homeoffice.drt.healthchecks._
+import uk.gov.homeoffice.drt.keycloak.KeyCloakAuth
 import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications, SlackClient}
 import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealthCheckPausePersistenceImpl}
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
@@ -30,7 +31,7 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
-case class KeyClockConfig(url: String,
+case class KeyCloakConfig(url: String,
                           tokenUrl: String,
                           clientId: String,
                           clientSecret: String)
@@ -68,7 +69,7 @@ case class ServerConfig(host: String,
                        ) {
   val portIataCodes: Iterable[String] = portTerminals.keys.map(_.iata)
   val clientConfig: ClientConfig = ClientConfig(portRegions, portTerminals, rootDomain, teamEmail)
-  val keyClockConfig: KeyClockConfig = KeyClockConfig(keycloakUrl, keycloakTokenUrl, keycloakClientId, keycloakClientSecret)
+  val keyClockConfig: KeyCloakConfig = KeyCloakConfig(keycloakUrl, keycloakTokenUrl, keycloakClientId, keycloakClientSecret)
 }
 
 object Server {
@@ -87,19 +88,21 @@ object Server {
     ArrivalLandingTimesHealthCheck(windowLength = 2.hours, buffer = 20, minimumFlights = 3, passThresholdPercentage = 50, SDate.now),
   )
 
-  def apply(serverConfig: ServerConfig,
+  def apply(config: ServerConfig,
             notifications: EmailNotifications,
             emailClient: EmailClient,
             slackClient: SlackClient
            ): Behavior[Message] =
     Behaviors.setup { ctx: ActorContext[Message] =>
       implicit val system: ActorSystem[Nothing] = ctx.system
+      val systemClassic = system.classicSystem
+      implicit val mat = Materializer.matFromSystem(systemClassic)
       implicit val ec: ExecutionContextExecutor = system.executionContext
       implicit val timeout: Timeout = new Timeout(1.second)
 
       val now = () => SDate.now()
 
-      val urls = Urls(serverConfig.rootDomain, serverConfig.useHttps)
+      val urls = Urls(config.rootDomain, config.useHttps)
       val userRequestService = UserRequestService(UserAccessRequestDao(ProdDatabase.db))
       val userService = UserService(UserDao(ProdDatabase.db))
       val dropInDao = DropInDao(ProdDatabase.db)
@@ -107,8 +110,8 @@ object Server {
       val userFeedbackDao = UserFeedbackDao(ProdDatabase.db)
       val featureGuideService = FeatureGuideService(FeatureGuideDao(ProdDatabase.db), FeatureGuideViewDao(ProdDatabase.db))
 
-      val (exportUploader, exportDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.exportsFolderPrefix)
-      val (featureUploader, featureDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.featureFolderPrefix)
+      val (exportUploader, exportDownloader) = S3Service.s3FileUploaderAndDownloader(config, config.exportsFolderPrefix)
+      val (featureUploader, featureDownloader) = S3Service.s3FileUploaderAndDownloader(config, config.featureFolderPrefix)
 
       implicit val db: AppDatabase = ProdDatabase
 
@@ -117,28 +120,32 @@ object Server {
       val healthChecksActor = startHealthChecksActor(slackClient, urls)
       val getAlarmStatuses: () => Future[Map[PortCode, Map[String, Boolean]]] = () => healthChecksActor.ask(replyTo => HealthChecksActor.GetAlarmStatuses(replyTo))
 
+      val sendHttpRequest: HttpRequest => Future[HttpResponse] = request => Http().singleRequest(request)
+
+      val keyCloakAuth = KeyCloakAuth(config.keycloakTokenUrl, config.keycloakClientId, config.keycloakClientSecret, sendHttpRequest)
+
       val routes: Route = concat(
         pathPrefix("api") {
           concat(
             PassengerRoutes(PassengerSummaryStreams(db).streamForGranularity),
-            CiriumRoutes(serverConfig.ciriumDataUri),
-            DrtRoutes(serverConfig.portIataCodes),
+            CiriumRoutes(config.ciriumDataUri),
+            DrtRoutes(config.portIataCodes),
             LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
-            ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), () => SDate.now(), emailClient, urls.rootUrl, serverConfig.teamEmail),
-            UserRoutes(serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
+            ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), () => SDate.now(), emailClient, urls.rootUrl, config.teamEmail),
+            UserRoutes(config.clientConfig, userService, userRequestService, notifications, config.keycloakUrl, keyCloakAuth.getToken),
             FeatureGuideRoutes(featureGuideService, featureUploader, featureDownloader),
             AlertsRoutes(),
             HealthCheckRoutes(getAlarmStatuses, healthChecks, ScheduledHealthCheckPausePersistenceImpl(db, now)),
             DropInSessionsRoute(dropInDao),
             DropInRegisterRoutes(dropInRegistrationDao),
             FeedbackRoutes(userFeedbackDao),
-            ExportConfigRoutes(ProdHttpClient, serverConfig.enabledPorts),
+            ExportConfigRoutes(ProdHttpClient, config.enabledPorts),
           )
         },
         indexRoutes,
       )
 
-      val serverBinding = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
+      val serverBinding = Http().newServerAt(config.host, config.port).bind(routes)
 
       ctx.pipeToSelf(serverBinding) {
         case Success(binding) => Started(binding)
@@ -172,7 +179,7 @@ object Server {
 
             if (wasStopped) ctx.self ! Stop
 
-            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, db, healthChecksActor)
+            val monitor: Cancellable = startHealthCheckMonitor(config, db, healthChecksActor)
 
             running(binding, monitor)
 

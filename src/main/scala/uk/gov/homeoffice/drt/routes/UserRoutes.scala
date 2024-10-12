@@ -1,23 +1,24 @@
 package uk.gov.homeoffice.drt.routes
 
 import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.StatusCodes.InternalServerError
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.StatusCodes.{BadRequest, InternalServerError}
+import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.{Route, StandardRoute}
+import akka.stream.Materializer
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 import spray.json.enrichAny
 import uk.gov.homeoffice.drt.auth.Roles.ManageUsers
 import uk.gov.homeoffice.drt.authentication._
-import uk.gov.homeoffice.drt.{ClientConfig, db}
 import uk.gov.homeoffice.drt.db.UserRowJsonSupport
-import uk.gov.homeoffice.drt.http.ProdSendAndReceive
-import uk.gov.homeoffice.drt.keycloak.{KeycloakClient, KeycloakService}
+import uk.gov.homeoffice.drt.keycloak._
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.routes.AlertsRoutes.clientUserAccessDataJsonSupportDataFormatParser
 import uk.gov.homeoffice.drt.routes.services.AuthByRole
 import uk.gov.homeoffice.drt.services.{UserRequestService, UserService}
+import uk.gov.homeoffice.drt.{ClientConfig, db}
 
 import java.sql.Timestamp
 import java.util.Date
@@ -28,23 +29,81 @@ object UserRoutes extends db.UserAccessRequestJsonSupport
   with UserJsonSupport
   with UserRowJsonSupport
   with AccessRequestJsonSupport
-  with KeyCloakUserJsonSupport {
+  with KeyCloakUserParserProtocol
+  with KeyCloakAuthTokenParserProtocol {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
   def apply(clientConfig: ClientConfig,
             userService: UserService,
             userRequestService: UserRequestService,
             notifications: EmailNotifications,
-            keyClockUrl: String,
+            keyCloakUrl: String,
+            getKeyCloakToken: (String, String) => Future[KeyCloakAuthResponse],
            )
            (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route = {
 
+    implicit val mat = Materializer.matFromSystem(system.classicSystem)
+    val sendHttpRequest: HttpRequest => Future[HttpResponse] = request => Http().singleRequest(request)
+
     def getKeyCloakService(accessToken: String): KeycloakService = {
-      val keyClockClient = new KeycloakClient(accessToken, keyClockUrl) with ProdSendAndReceive
+      val keyClockClient = KeyCloakClient(accessToken, keyCloakUrl, sendHttpRequest)
       KeycloakService(keyClockClient)
     }
 
     concat(
+      (get & path("user")) {
+        headerValueByName("X-Forwarded-Groups") { rolesStr =>
+          headerValueByName("X-Forwarded-Email") { email =>
+            complete(User.fromRoles(email, rolesStr))
+          }
+        }
+      },
+      (get & path("track-user")) {
+        headerValueByName("X-Forwarded-Email") { email =>
+          optionalHeaderValueByName("X-Forwarded-Preferred-Username") { usernameOption =>
+            onComplete(
+              userService.upsertUser(
+                uk.gov.homeoffice.drt.db.UserRow(
+                  id = usernameOption.getOrElse(email),
+                  username = usernameOption.getOrElse(email),
+                  email = email,
+                  drop_in_notification_at = None,
+                  latest_login = new Timestamp(new Date().getTime),
+                  inactive_email_sent = None,
+                  revoked_access = None,
+                  created_at = Some(new Timestamp(new Date().getTime))
+                ),
+                Some("userTracking")
+              )) {
+              case Success(_) => complete(StatusCodes.OK)
+              case Failure(ex) =>
+                log.error(s"Failed to track user $email", ex)
+                complete(InternalServerError)
+            }
+          }
+        }
+      },
+      (get & path("auth/token")) {
+        parameters("username", "password") { (username, password) =>
+
+          def tokenToHttpResponse(token: KeyCloakAuthResponse): String = token match {
+            case t: KeyCloakAuthToken =>
+              log.info(s"Successful login to API via keycloak for $username")
+              t.toJson.toString
+            case _: KeyCloakAuthError =>
+              throw new Exception(s"Failed login to API via keycloak for $username")
+          }
+
+          val eventualRoute: Future[String] = getKeyCloakToken(username, password).map(tokenToHttpResponse)
+
+          onComplete(eventualRoute) {
+            case Success(v) => complete(v)
+            case Failure(t) =>
+              log.error(t.getMessage)
+              complete(InternalServerError)
+          }
+        }
+      },
       pathPrefix("users") {
         concat(
           (post & path("access-request")) {
@@ -88,13 +147,13 @@ object UserRoutes extends db.UserAccessRequestJsonSupport
               headerValueByName("X-Forwarded-Groups") { _ =>
                 headerValueByName("X-Forwarded-Email") { _ =>
                   headerValueByName("X-Forwarded-Access-Token") { xAuthToken =>
-                    log.info(s"request to get user details $keyClockUrl/data/userDetails/$userEmail}")
+                    log.info(s"request to get user details $keyCloakUrl/data/userDetails/$userEmail}")
                     val keycloakService = getKeyCloakService(xAuthToken)
                     val keyCloakUser: Future[KeyCloakUser] =
                       keycloakService.getUserForEmail(userEmail).map {
                         case Some(keyCloakUser) => keyCloakUser
                         case None =>
-                          log.error(s"Failed at $keyClockUrl/data/userDetails/$userEmail}")
+                          log.error(s"Failed at $keyCloakUrl/data/userDetails/$userEmail}")
                           KeyCloakUser("", "", enabled = false, emailVerified = false, "", "", "")
                       }
                     complete(keyCloakUser)
@@ -161,38 +220,6 @@ object UserRoutes extends db.UserAccessRequestJsonSupport
             }
           }
         )
-      },
-      (get & path("user")) {
-        headerValueByName("X-Forwarded-Groups") { rolesStr =>
-          headerValueByName("X-Forwarded-Email") { email =>
-            complete(User.fromRoles(email, rolesStr))
-          }
-        }
-      },
-      (get & path("track-user")) {
-        headerValueByName("X-Forwarded-Email") { email =>
-          optionalHeaderValueByName("X-Forwarded-Preferred-Username") { usernameOption =>
-            onComplete(
-              userService.upsertUser(
-                uk.gov.homeoffice.drt.db.UserRow(
-                  id = usernameOption.getOrElse(email),
-                  username = usernameOption.getOrElse(email),
-                  email = email,
-                  drop_in_notification_at = None,
-                  latest_login = new Timestamp(new Date().getTime),
-                  inactive_email_sent = None,
-                  revoked_access = None,
-                  created_at = Some(new Timestamp(new Date().getTime))
-                ),
-                Some("userTracking")
-              )) {
-              case Success(_) => complete(StatusCodes.OK)
-              case Failure(ex) =>
-                log.error(s"Failed to track user $email", ex)
-                complete(InternalServerError)
-            }
-          }
-        }
       },
     )
   }

@@ -17,6 +17,7 @@ import uk.gov.homeoffice.drt.ClientConfig
 import uk.gov.homeoffice.drt.auth.Roles.{BorderForceStaff, LHR}
 import uk.gov.homeoffice.drt.authentication.{AccessRequest, AccessRequestJsonSupport}
 import uk.gov.homeoffice.drt.db._
+import uk.gov.homeoffice.drt.keycloak.KeyCloakAuthToken
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
 import uk.gov.homeoffice.drt.ports.Terminals.T1
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
@@ -88,7 +89,9 @@ class UserRoutesSpec extends Specification
     userService,
     userRequestService,
     EmailNotifications(List("access-requests@drt"), new MockNotificationClient),
-    "")
+    "",
+    (_, _) => Future.successful(KeyCloakAuthToken("token", 1000, 1000, "refresh-token", "bearer", 100, "session-state", "scope"))
+  )
 
   val accessRequest: AccessRequest = AccessRequest(
     agreeDeclaration = false,

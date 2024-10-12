@@ -1,17 +1,17 @@
 package uk.gov.homeoffice.drt.schedule
 
+import akka.actor
 import akka.actor.typed.scaladsl.AskPattern.Askable
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors, TimerScheduler}
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior, Scheduler}
+import akka.actor.typed.{ActorRef, Behavior, Scheduler}
 import akka.util.Timeout
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.ServerConfig
-import uk.gov.homeoffice.drt.authentication.KeyCloakUser
 import uk.gov.homeoffice.drt.db.{ProdDatabase, UserDao, UserRow}
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuthTokenService.GetToken
-import uk.gov.homeoffice.drt.keycloak.{KeyCloakAuthToken, KeyCloakAuthTokenService, KeycloakService}
-import uk.gov.homeoffice.drt.notifications.templates.AccessRequestTemplates.{inactiveUserNotificationTemplateId, revokeAccessTemplateId}
+import uk.gov.homeoffice.drt.keycloak.{KeyCloakAuthToken, KeyCloakAuthTokenService, KeyCloakUser, KeycloakService}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
+import uk.gov.homeoffice.drt.notifications.templates.AccessRequestTemplates.{inactiveUserNotificationTemplateId, revokeAccessTemplateId}
 import uk.gov.homeoffice.drt.services.UserService
 
 import java.sql.Timestamp
@@ -101,7 +101,7 @@ class UserTracking(serverConfig: ServerConfig,
 
       case PerformAccountRevocations(token: KeyCloakAuthToken) =>
         context.log.info("KeyCloakToken-RevokeAccess")
-        implicit val actorSystem: ActorSystem[Nothing] = context.system
+        implicit val actorSystem: actor.ActorSystem = context.system.classicSystem
         val usersToRevoke = userService.getUsersToRevoke(numberOfInactivityDays, deactivateAfterWarningDays).map(_.take(maxSize))
         val keyClockClient = KeyCloakAuthTokenService.getKeyClockClient(serverConfig.keyClockConfig.url, token)
         val keycloakService = KeycloakService(keyClockClient)
