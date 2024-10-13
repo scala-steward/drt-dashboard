@@ -2,14 +2,14 @@ package uk.gov.homeoffice.drt.routes
 
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.StatusCodes.{BadRequest, InternalServerError}
+import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.{Route, StandardRoute}
+import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
-import spray.json.enrichAny
+import spray.json.{RootJsonFormat, enrichAny}
 import uk.gov.homeoffice.drt.auth.Roles.ManageUsers
 import uk.gov.homeoffice.drt.authentication._
 import uk.gov.homeoffice.drt.db.UserRowJsonSupport
@@ -83,21 +83,21 @@ object UserRoutes extends db.UserAccessRequestJsonSupport
           }
         }
       },
-      (get & path("auth/token")) {
-        parameters("username", "password") { (username, password) =>
+      (post & path("auth" / "token")) {
+        case class Creds(username: String, password: String)
+        implicit val creds: RootJsonFormat[Creds] = jsonFormat2(Creds)
 
-          def tokenToHttpResponse(token: KeyCloakAuthResponse): String = token match {
-            case t: KeyCloakAuthToken =>
+        entity(as[Creds]) { case Creds(username, password) =>
+          val eventualToken = getKeyCloakToken(username, password).map {
+            case token: KeyCloakAuthToken =>
               log.info(s"Successful login to API via keycloak for $username")
-              t.toJson.toString
+              token
             case _: KeyCloakAuthError =>
               throw new Exception(s"Failed login to API via keycloak for $username")
           }
 
-          val eventualRoute: Future[String] = getKeyCloakToken(username, password).map(tokenToHttpResponse)
-
-          onComplete(eventualRoute) {
-            case Success(v) => complete(v)
+          onComplete(eventualToken) {
+            case Success(token) => complete(token)
             case Failure(t) =>
               log.error(t.getMessage)
               complete(InternalServerError)
