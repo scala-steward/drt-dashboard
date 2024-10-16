@@ -13,7 +13,7 @@ import uk.gov.homeoffice.drt.ports.Terminals.T1
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.{ClientConfig, ClientConfigJsonFormats}
 
-class ApiRoutesSpec extends Specification with Specs2RouteTest with ClientConfigJsonFormats with SprayJsonSupport with DefaultJsonProtocol{
+class ConfigRoutesSpec extends Specification with Specs2RouteTest with ClientConfigJsonFormats with SprayJsonSupport with DefaultJsonProtocol{
   val testKit: ActorTestKit = ActorTestKit()
 
   implicit val sys: ActorSystem[Nothing] = testKit.system
@@ -22,7 +22,7 @@ class ApiRoutesSpec extends Specification with Specs2RouteTest with ClientConfig
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
 
   val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), Map(PortCode("NCL") -> Seq(T1)), "somedomain.com", "test@test.com")
-  val routes: Route = ApiRoutes(clientConfig)
+  val routes: Route = ConfigRoutes(clientConfig)
   "Given an api request for config, I should see a JSON response containing the config passed to ApiRoutes" >> {
     Get("/config") ~>
       RawHeader("X-Forwarded-Groups", "") ~>

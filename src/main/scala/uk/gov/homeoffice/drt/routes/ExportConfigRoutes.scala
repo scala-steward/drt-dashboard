@@ -19,16 +19,14 @@ import scala.concurrent.ExecutionContext
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 object ExportConfigRoutes {
-
-  def getMergePortConfig(httpClient: HttpClient, enabledPorts: Seq[PortCode])(implicit ec: ExecutionContext, mat: Materializer): Route = get {
-    implicit val system: ActorSystem = mat.system
-
+  private def getMergePortConfig(httpClient: HttpClient, enabledPorts: Seq[PortCode])
+                                (implicit ec: ExecutionContext, mat: Materializer): Route = get {
     val endpoints = enabledPorts.map { portCode =>
       (portCode.iata, s"http://${portCode.iata.toLowerCase}:9000/export/port-config")
     }
+    val parallelism = 10
 
-
-    val excelSource: Source[ByteString, _]  = {
+    val excelSource: Source[ByteString, _] = {
       val workbook = new XSSFWorkbook()
 
       def writeToWorkbook(sheetName: String, data: Seq[String]): Unit = {
@@ -45,19 +43,23 @@ object ExportConfigRoutes {
         }
       }
 
-      val processData = Source(endpoints).mapAsync(10) { case (portCode, uriString) =>
-        val request = HttpRequest(uri = Uri(uriString))
-        httpClient.send(request).flatMap { response =>
-          Unmarshal(response.entity).to[String].map { data =>
-            val lines = data.split("\n")
-            (portCode, lines.toSeq)
-          }
-        }.recover { case e: Throwable =>
-          (portCode, Seq(s"We couldn't fetch the config for this port. Please try exporting the file again"))
+      val processData = Source(endpoints)
+        .mapAsync(parallelism) { case (portCode, uriString) =>
+          val request = HttpRequest(uri = Uri(uriString))
+          httpClient.send(request)
+            .flatMap { response =>
+              Unmarshal(response.entity).to[String].map { data =>
+                val lines = data.split("\n")
+                (portCode, lines.toSeq)
+              }
+            }
+            .recover { _ =>
+              (portCode, Seq(s"We couldn't fetch the config for this port. Please try exporting the file again"))
+            }
         }
-      }.runForeach { case (portCode, lines) =>
-        writeToWorkbook(portCode, lines)
-      }
+        .runForeach { case (portCode, lines) =>
+          writeToWorkbook(portCode, lines)
+        }
 
       Source.future(processData.map { _ =>
         val byteStream = new ByteArrayOutputStream()
@@ -68,7 +70,6 @@ object ExportConfigRoutes {
     }
 
     val excelContentType = ContentType.parse("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").getOrElse(ContentTypes.`application/octet-stream`)
-
 
     val contentDispositionHeader = `Content-Disposition`(ContentDispositionTypes.attachment, Map("filename" -> s"port-config-${SDate.now()}.xlsx"))
 

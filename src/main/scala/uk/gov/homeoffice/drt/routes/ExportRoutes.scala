@@ -190,9 +190,7 @@ object ExportRoutes {
     if (!emailSuccess) log.error("Failed to send email")
   }
 
-  private def downloadUrl(rootDomain: String, export: Export) = {
-    s"$rootDomain/api/export/${export.createdAt.millisSinceEpoch}"
-  }
+  private def downloadUrl(rootDomain: String, export: Export): String = s"$rootDomain/api/export/${export.createdAt.millisSinceEpoch}"
 
   private def handleReportFailure(emailClient: EmailClient,
                                   export: Export,

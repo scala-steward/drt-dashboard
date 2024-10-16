@@ -9,7 +9,7 @@ import uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport
 import uk.gov.homeoffice.drt.authentication._
 
 
-object ApiRoutes extends MultiPortAlertJsonSupport
+object ConfigRoutes extends MultiPortAlertJsonSupport
   with UserJsonSupport
   with ClientConfigJsonFormats
   with ClientUserAccessDataJsonSupport {
@@ -18,11 +18,9 @@ object ApiRoutes extends MultiPortAlertJsonSupport
 
 
   def apply(clientConfig: ClientConfig): Route =
-    concat(
-      (get & path("config")) {
-        headerValueByName("X-Forwarded-Groups") { _ =>
-          complete(clientConfig)
-        }
+    (get & path("config")) {
+      headerValueByName("X-Forwarded-Groups") { _ =>
+        complete(clientConfig)
       }
-    )
+    }
 }
