@@ -22,7 +22,7 @@ import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealth
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes._
-import uk.gov.homeoffice.drt.routes.api.v1.QueueApiRoutes
+import uk.gov.homeoffice.drt.routes.api.v1.{FlightApiRoutes, QueueApiRoutes}
 import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{PassengerSummaryStreams, UserRequestService, UserService}
 import uk.gov.homeoffice.drt.time.SDate
@@ -131,7 +131,8 @@ object Server {
             PassengerRoutes(PassengerSummaryStreams(db).streamForGranularity),
             CiriumRoutes(config.ciriumDataUri),
             ConfigRoutes(config.clientConfig),
-            QueueApiRoutes(ProdHttpClient, config.enabledPorts, now, urls.rootUrl),
+            QueueApiRoutes(ProdHttpClient, config.enabledPorts),
+            FlightApiRoutes(ProdHttpClient, config.enabledPorts),
             LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, now),
             ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), now, emailClient, urls.rootUrl, config.teamEmail),
             UserRoutes(config.clientConfig, userService, userRequestService, notifications, config.keycloakUrl, keyCloakAuth.getToken),

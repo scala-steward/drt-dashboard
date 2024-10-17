@@ -12,13 +12,13 @@ import akka.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.exports.{ExportPort, ExportType}
 import uk.gov.homeoffice.drt.ports.PortCode
-import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
+import uk.gov.homeoffice.drt.time.{LocalDate, SDate}
 import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
 
 import scala.concurrent.ExecutionContext
 
 
-object QueueApiRoutes {
+object FlightApiRoutes {
   private val log = LoggerFactory.getLogger(getClass)
 
   case class ExportRequest(exportType: ExportType, ports: Seq[ExportPort], startDate: LocalDate, endDate: LocalDate)
@@ -33,18 +33,18 @@ object QueueApiRoutes {
             destinationPorts: Iterable[PortCode],
            )
            (implicit ec: ExecutionContext, mat: Materializer): Route =
-    (get & path("v1" / "queues")) {
+    (get & path("v1" / "flights")) {
       pathEnd(
         headerValueByName("X-Forwarded-Email") { email =>
           headerValueByName("X-Forwarded-Groups") { groups =>
-            parameters("start", "end", "period-minutes".as[Int].withDefault(15)) { (startStr, endStr, periodMinutes) =>
+            parameters("start", "end") { (startStr, endStr) =>
               val start = SDate(startStr)
               val end = SDate(endStr)
               val parallelism = 10
 
               val eventualContent = Source(destinationPorts.toSeq)
                 .mapAsync(parallelism) { portCode =>
-                  val uri = s"${Dashboard.drtInternalUriForPortCode(portCode)}/api/v1/queues?start=${start.toISOString}&end=${end.toISOString}&period-minutes=$periodMinutes"
+                  val uri = s"${Dashboard.drtInternalUriForPortCode(portCode)}/api/v1/flights?start=${start.toISOString}&end=${end.toISOString}"
                   val request = HttpRequest(uri = uri, headers = Seq(RawHeader("X-Forwarded-Email", email), RawHeader("X-Forwarded-Groups", groups)))
                   httpClient.send(request)
                 }
@@ -58,7 +58,6 @@ object QueueApiRoutes {
                   s"""{
                      |  "startTime": "$startStr",
                      |  "endTime": "$endStr",
-                     |  "periodLengthMinutes": $periodMinutes,
                      |  "ports": [${ports.mkString(",")}]
                      |}""".stripMargin
                 )
