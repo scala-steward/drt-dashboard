@@ -12,7 +12,7 @@ import akka.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.exports.{ExportPort, ExportType}
 import uk.gov.homeoffice.drt.ports.PortCode
-import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
+import uk.gov.homeoffice.drt.time.{LocalDate, SDate}
 import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
 
 import scala.concurrent.ExecutionContext
