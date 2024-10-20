@@ -6,7 +6,7 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior, PostStop}
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.Http.ServerBinding
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
+import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.server.Directives.{concat, getFromResource, pathPrefix}
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.settings.ConnectionPoolSettings
@@ -17,7 +17,7 @@ import uk.gov.homeoffice.drt.db._
 import uk.gov.homeoffice.drt.db.dao.UserFeedbackDao
 import uk.gov.homeoffice.drt.healthchecks._
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuth
-import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications, SlackClient}
+import uk.gov.homeoffice.drt.notifications._
 import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealthCheckPausePersistenceImpl}
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
@@ -68,7 +68,6 @@ case class ServerConfig(host: String,
                         enabledPorts: Seq[PortCode],
                         slackUrl: String
                        ) {
-  val portIataCodes: Iterable[String] = portTerminals.keys.map(_.iata)
   val clientConfig: ClientConfig = ClientConfig(portRegions, portTerminals, rootDomain, teamEmail)
   val keyClockConfig: KeyCloakConfig = KeyCloakConfig(keycloakUrl, keycloakTokenUrl, keycloakClientId, keycloakClientSecret)
 }
@@ -92,12 +91,11 @@ object Server {
   def apply(config: ServerConfig,
             notifications: EmailNotifications,
             emailClient: EmailClient,
-            slackClient: SlackClient
            ): Behavior[Message] =
     Behaviors.setup { ctx: ActorContext[Message] =>
       implicit val system: ActorSystem[Nothing] = ctx.system
       val systemClassic = system.classicSystem
-      implicit val mat = Materializer.matFromSystem(systemClassic)
+      implicit val mat: Materializer = Materializer.matFromSystem(systemClassic)
       implicit val ec: ExecutionContextExecutor = system.executionContext
       implicit val timeout: Timeout = new Timeout(1.second)
 
@@ -118,10 +116,15 @@ object Server {
 
       val indexRoutes = IndexRoute(urls, indexResource = getFromResource("frontend/index.html")).route
 
+      val sendHttpRequest = (request: HttpRequest) => Http()(mat.system).singleRequest(request)
+      val httpClient = ProdHttpClient(sendHttpRequest)
+
+      val slackClient =
+        if (config.slackUrl.nonEmpty) SlackClientImpl(httpClient, config.slackUrl)
+        else NoopSlackClient
+
       val healthChecksActor = startHealthChecksActor(slackClient, urls)
       val getAlarmStatuses: () => Future[Map[PortCode, Map[String, Boolean]]] = () => healthChecksActor.ask(replyTo => HealthChecksActor.GetAlarmStatuses(replyTo))
-
-      val sendHttpRequest: HttpRequest => Future[HttpResponse] = request => Http().singleRequest(request)
 
       val keyCloakAuth = KeyCloakAuth(config.keycloakTokenUrl, config.keycloakClientId, config.keycloakClientSecret, sendHttpRequest)
 
@@ -131,10 +134,10 @@ object Server {
             PassengerRoutes(PassengerSummaryStreams(db).streamForGranularity),
             CiriumRoutes(config.ciriumDataUri),
             ConfigRoutes(config.clientConfig),
-            QueueApiRoutes(ProdHttpClient, config.enabledPorts),
-            FlightApiRoutes(ProdHttpClient, config.enabledPorts),
-            LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, now),
-            ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), now, emailClient, urls.rootUrl, config.teamEmail),
+            QueueApiRoutes(httpClient, config.enabledPorts),
+            FlightApiRoutes(httpClient, config.enabledPorts),
+            LegacyExportRoutes(httpClient, exportUploader.upload, exportDownloader.download, now),
+            ExportRoutes(httpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), now, emailClient, urls.rootUrl, config.teamEmail),
             UserRoutes(config.clientConfig, userService, userRequestService, notifications, config.keycloakUrl, keyCloakAuth.getToken),
             FeatureGuideRoutes(featureGuideService, featureUploader, featureDownloader),
             AlertsRoutes(),
@@ -142,7 +145,7 @@ object Server {
             DropInSessionsRoute(dropInDao),
             DropInRegisterRoutes(dropInRegistrationDao),
             FeedbackRoutes(userFeedbackDao),
-            ExportConfigRoutes(ProdHttpClient, config.enabledPorts),
+            ExportConfigRoutes(httpClient, config.enabledPorts),
           )
         },
         indexRoutes,

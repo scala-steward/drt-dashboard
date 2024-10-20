@@ -2,6 +2,7 @@ package uk.gov.homeoffice.drt.routes.api.v1
 
 import akka.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
 import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
+import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest}
 import akka.http.scaladsl.server.Directives._
@@ -10,18 +11,20 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.util.ByteString
 import org.slf4j.LoggerFactory
-import uk.gov.homeoffice.drt.exports.{ExportPort, ExportType}
+import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 import uk.gov.homeoffice.drt.ports.PortCode
-import uk.gov.homeoffice.drt.time.{LocalDate, SDate}
+import uk.gov.homeoffice.drt.time.SDate
 import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
 
 import scala.concurrent.ExecutionContext
 
 
-object FlightApiRoutes {
+object FlightApiRoutes extends DefaultJsonProtocol {
   private val log = LoggerFactory.getLogger(getClass)
 
-  case class ExportRequest(exportType: ExportType, ports: Seq[ExportPort], startDate: LocalDate, endDate: LocalDate)
+  case class JsonResponse(startTime: String, endTime: String, ports: Seq[String])
+
+  implicit val jsonResponseFormat: RootJsonFormat[JsonResponse] = jsonFormat3(JsonResponse)
 
   implicit val csvStreaming: CsvEntityStreamingSupport = EntityStreamingSupport.csv().withFramingRenderer(Flow[ByteString])
   implicit val csvMarshaller: ToEntityMarshaller[ByteString] =
@@ -54,18 +57,13 @@ object FlightApiRoutes {
                     .map(_.utf8String)
                 }
                 .runWith(Sink.seq)
-                .map(ports =>
-                  s"""{
-                     |  "startTime": "$startStr",
-                     |  "endTime": "$endStr",
-                     |  "ports": [${ports.mkString(",")}]
-                     |}""".stripMargin
-                )
+                .map(ports => JsonResponse(startStr, endStr, ports).toJson.compactPrint)
+
               onComplete(eventualContent) {
                 case scala.util.Success(content) => complete(content)
                 case scala.util.Failure(e) =>
-                  log.error("Failed to get export", e)
-                  complete("Failed to get export")
+                  log.error(s"Failed to get export: ${e.getMessage}")
+                  complete(InternalServerError)
               }
             }
           }
