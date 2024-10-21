@@ -9,7 +9,7 @@ import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
-import spray.json.{RootJsonFormat, enrichAny}
+import spray.json.enrichAny
 import uk.gov.homeoffice.drt.auth.Roles.ManageUsers
 import uk.gov.homeoffice.drt.authentication._
 import uk.gov.homeoffice.drt.db.UserRowJsonSupport
@@ -38,7 +38,6 @@ object UserRoutes extends db.UserAccessRequestJsonSupport
             userRequestService: UserRequestService,
             notifications: EmailNotifications,
             keyCloakUrl: String,
-            getKeyCloakToken: (String, String) => Future[KeyCloakAuthResponse],
            )
            (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route = {
 
@@ -80,27 +79,6 @@ object UserRoutes extends db.UserAccessRequestJsonSupport
                 log.error(s"Failed to track user $email", ex)
                 complete(InternalServerError)
             }
-          }
-        }
-      },
-      (post & path("auth" / "token")) {
-        case class Creds(username: String, password: String)
-        implicit val creds: RootJsonFormat[Creds] = jsonFormat2(Creds)
-
-        entity(as[Creds]) { case Creds(username, password) =>
-          val eventualToken = getKeyCloakToken(username, password).map {
-            case token: KeyCloakAuthToken =>
-              log.info(s"Successful login to API via keycloak for $username")
-              token
-            case _: KeyCloakAuthError =>
-              throw new Exception(s"Failed login to API via keycloak for $username")
-          }
-
-          onComplete(eventualToken) {
-            case Success(token) => complete(token)
-            case Failure(t) =>
-              log.error(t.getMessage)
-              complete(InternalServerError)
           }
         }
       },

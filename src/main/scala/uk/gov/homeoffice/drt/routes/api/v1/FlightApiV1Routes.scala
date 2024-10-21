@@ -19,7 +19,7 @@ import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
 import scala.concurrent.ExecutionContext
 
 
-object FlightApiRoutes extends DefaultJsonProtocol {
+object FlightApiV1Routes extends DefaultJsonProtocol {
   private val log = LoggerFactory.getLogger(getClass)
 
   case class JsonResponse(startTime: String, endTime: String, ports: Seq[String])
@@ -36,7 +36,7 @@ object FlightApiRoutes extends DefaultJsonProtocol {
             destinationPorts: Iterable[PortCode],
            )
            (implicit ec: ExecutionContext, mat: Materializer): Route =
-    (get & path("v1" / "flights")) {
+    (get & path("flights")) {
       pathEnd(
         headerValueByName("X-Forwarded-Email") { email =>
           headerValueByName("X-Forwarded-Groups") { groups =>

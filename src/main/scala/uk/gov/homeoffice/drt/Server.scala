@@ -22,7 +22,7 @@ import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealth
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes._
-import uk.gov.homeoffice.drt.routes.api.v1.{FlightApiRoutes, QueueApiRoutes}
+import uk.gov.homeoffice.drt.routes.api.v1.{AuthApiV1Routes, FlightApiV1Routes, QueueApiV1Routes}
 import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{PassengerSummaryStreams, UserRequestService, UserService}
 import uk.gov.homeoffice.drt.time.SDate
@@ -131,14 +131,19 @@ object Server {
       val routes: Route = concat(
         pathPrefix("api") {
           concat(
+            pathPrefix("v1") {
+              concat(
+                QueueApiV1Routes(httpClient, config.enabledPorts),
+                FlightApiV1Routes(httpClient, config.enabledPorts),
+                AuthApiV1Routes(keyCloakAuth.getToken),
+              )
+            },
             PassengerRoutes(PassengerSummaryStreams(db).streamForGranularity),
             CiriumRoutes(config.ciriumDataUri),
             ConfigRoutes(config.clientConfig),
-            QueueApiRoutes(httpClient, config.enabledPorts),
-            FlightApiRoutes(httpClient, config.enabledPorts),
             LegacyExportRoutes(httpClient, exportUploader.upload, exportDownloader.download, now),
             ExportRoutes(httpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), now, emailClient, urls.rootUrl, config.teamEmail),
-            UserRoutes(config.clientConfig, userService, userRequestService, notifications, config.keycloakUrl, keyCloakAuth.getToken),
+            UserRoutes(config.clientConfig, userService, userRequestService, notifications, config.keycloakUrl),
             FeatureGuideRoutes(featureGuideService, featureUploader, featureDownloader),
             AlertsRoutes(),
             HealthCheckRoutes(getAlarmStatuses, healthChecks, ScheduledHealthCheckPausePersistenceImpl(db, now)),

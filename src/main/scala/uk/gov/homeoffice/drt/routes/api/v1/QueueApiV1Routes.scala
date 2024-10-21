@@ -19,7 +19,7 @@ import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
 import scala.concurrent.ExecutionContext
 
 
-object QueueApiRoutes extends DefaultJsonProtocol{
+object QueueApiV1Routes extends DefaultJsonProtocol{
   private val log = LoggerFactory.getLogger(getClass)
 
   case class JsonResponse(startTime: String, endTime: String, periodLengthMinutes: Int, ports: Seq[String])
@@ -36,13 +36,13 @@ object QueueApiRoutes extends DefaultJsonProtocol{
             destinationPorts: Iterable[PortCode],
            )
            (implicit ec: ExecutionContext, mat: Materializer): Route = {
-      (get & path("v1" / "queues")) {
+      (get & path("queues")) {
         pathEnd {
           headerValueByName("X-Forwarded-Email") { email =>
             headerValueByName("X-Forwarded-Groups") { groups =>
-              val defaultPeriodMinutes = 15
+              val defaultSlotSizeMinutes = 15
 
-              parameters("start", "end", "period-minutes".as[Int].withDefault(defaultPeriodMinutes)) { (startStr, endStr, periodMinutes) =>
+              parameters("start", "end", "slot-size-minutes".as[Int].withDefault(defaultSlotSizeMinutes)) { (startStr, endStr, periodMinutes) =>
                 val start = SDate(startStr)
                 val end = SDate(endStr)
                 val parallelism = 10
