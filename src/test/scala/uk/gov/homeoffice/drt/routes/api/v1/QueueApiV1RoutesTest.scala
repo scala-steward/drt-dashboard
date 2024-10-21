@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.routes.api.v1
 
 import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.model.HttpRequest
+import akka.http.javadsl.server.AuthorizationFailedRejection
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.Materializer
@@ -9,9 +9,9 @@ import akka.testkit.TestProbe
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import uk.gov.homeoffice.drt.ports.PortCode
+import uk.gov.homeoffice.drt.routes.api.v1.RouteTestHelper.requestPortAndUriExist
 import uk.gov.homeoffice.drt.{MockHttpClient, ProdHttpClient}
 
-import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
 class QueueApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRouteTest {
@@ -21,16 +21,16 @@ class QueueApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRoute
 
   "Given a request for the queue status, I should see a JSON response containing the queue status" in {
     val portContent = """["some content"]"""
-    val queueApiRoutes = QueueApiV1Routes(
+    val routes = QueueApiV1Routes(
       httpClient = MockHttpClient(() => portContent),
-      destinationPorts = Seq(PortCode("LHR"), PortCode("LGW")),
+      enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
     )
     val start = "2024-10-20T10:00"
     val end = "2024-10-20T12:00"
     Get("/queues?start=" + start + "&end=" + end) ~>
-      RawHeader("X-Forwarded-Groups", "LHR,LGW") ~>
+      RawHeader("X-Forwarded-Groups", "LHR,LGW,api-queue-access") ~>
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
-      queueApiRoutes ~> check {
+      routes ~> check {
 
       val defaultSlotSizeMinutes = 15
       responseAs[String] shouldEqual QueueApiV1Routes.JsonResponse(start, end, defaultSlotSizeMinutes, Seq(portContent, portContent)).toJson.compactPrint
@@ -40,43 +40,63 @@ class QueueApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRoute
   "Given a request without the optional slot-size-minutes parameter, the default slot size should be 15 minutes" in {
     val probe = TestProbe("queueApiV1Routes")
     val portContent = """["some content"]"""
-    val queueApiRoutes = QueueApiV1Routes(
+    val routes = QueueApiV1Routes(
       httpClient = MockHttpClient(() => portContent, maybeProbe = Option(probe)),
-      destinationPorts = Seq(PortCode("LHR"), PortCode("LGW")),
+      enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
     )
     Get("/queues?start=" + "2024-10-20T10:00" + "&end=" + "2024-10-20T12:00") ~>
-      RawHeader("X-Forwarded-Groups", "LHR,LGW") ~>
+      RawHeader("X-Forwarded-Groups", "LHR,LGW,api-queue-access") ~>
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
-      queueApiRoutes ~> check {
+      routes ~> check {
       val defaultSlotSizeMinutes = "15"
 
-      probe.fishForMessage(1.second) {
-        case req: HttpRequest =>
-          req.uri.toString.contains("lhr") &&
-            req.uri.toString.contains("start=2024-10-20T10:00:00Z&end=2024-10-20T12:00:00Z&period-minutes=" + defaultSlotSizeMinutes)
-      }
-      probe.fishForMessage(1.second) {
-        case req: HttpRequest =>
-          req.uri.toString.contains("lgw") &&
-            req.uri.toString.contains("start=2024-10-20T10:00:00Z&end=2024-10-20T12:00:00Z&period-minutes=" + defaultSlotSizeMinutes)
-      }
+      requestPortAndUriExist(probe, "lhr", s"start=2024-10-20T10:00:00Z&end=2024-10-20T12:00:00Z&period-minutes=$defaultSlotSizeMinutes")
+      requestPortAndUriExist(probe, "lgw", s"start=2024-10-20T10:00:00Z&end=2024-10-20T12:00:00Z&period-minutes=$defaultSlotSizeMinutes")
     }
   }
 
   "Given a failed response from a port the response status should be 500" in {
-    val queueApiRoutes = QueueApiV1Routes(
+    val routes = QueueApiV1Routes(
       httpClient = ProdHttpClient(_ => Future.failed(new RuntimeException("Failed to connect"))),
-      destinationPorts = Seq(PortCode("LHR"), PortCode("LGW")),
+      enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
     )
     val start = "2024-10-20T10:00"
     val end = "2024-10-20T12:00"
     Get("/queues?start=" + start + "&end=" + end) ~>
-      RawHeader("X-Forwarded-Groups", "LHR,LGW") ~>
+      RawHeader("X-Forwarded-Groups", "LHR,LGW,api-queue-access") ~>
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
-      queueApiRoutes ~> check {
+      routes ~> check {
 
       response.status.intValue() shouldEqual 500
     }
   }
 
+  "Given a request from a user with access to some ports that are not enabled, the response should only contain the enabled ports" in {
+    val probe = TestProbe("queueApiV1Routes")
+    val portContent = """["some content"]"""
+    val routes = QueueApiV1Routes(httpClient = MockHttpClient(() => portContent, maybeProbe = Option(probe)), enabledPorts = Seq(PortCode("LHR")))
+    val start = "2024-10-20T10:00"
+    val end = "2024-10-20T12:00"
+    Get("/queues?start=" + start + "&end=" + end) ~>
+      RawHeader("X-Forwarded-Groups", "LHR,LGW,STN,api-queue-access") ~>
+      RawHeader("X-Forwarded-Email", "my@email.com") ~>
+      routes ~> check {
+
+      requestPortAndUriExist(probe, "lhr", s"start=2024-10-20T10:00:00Z&end=2024-10-20T12:00:00Z")
+    }
+  }
+
+  "Given a request from a user without access to the queue api, the response should be 403" in {
+    val portContent = """["some content"]"""
+    val routes = QueueApiV1Routes(httpClient = MockHttpClient(() => portContent), enabledPorts = Seq(PortCode("LHR")))
+    val start = "2024-10-20T10:00"
+    val end = "2024-10-20T12:00"
+    Get("/queues?start=" + start + "&end=" + end) ~>
+      RawHeader("X-Forwarded-Groups", "LHR") ~>
+      RawHeader("X-Forwarded-Email", "my@email.com") ~>
+      routes ~> check {
+
+      rejection.isInstanceOf[AuthorizationFailedRejection] shouldBe true
+    }
+  }
 }

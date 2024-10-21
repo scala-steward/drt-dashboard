@@ -51,21 +51,21 @@ object AlertsRoutes extends MultiPortAlertJsonSupport
 
               val futurePortAlerts: Seq[Future[PortAlerts]] = user.accessiblePorts
                 .map { portCode =>
-                  DashboardClient.getWithRoles(s"${Dashboard.drtInternalUriForPortCode(PortCode(portCode))}/alerts/0", user.roles)
+                  DashboardClient.getWithRoles(s"${Dashboard.drtInternalUriForPortCode(portCode)}/alerts/0", user.roles)
                     .flatMap { res =>
                       Unmarshal[HttpEntity](res.entity.withContentType(ContentTypes.`application/json`))
                         .to[List[Alert]]
-                        .map(alerts => PortAlerts(portCode, alerts))
+                        .map(alerts => PortAlerts(portCode.iata, alerts))
                         .recover {
                           case e: Throwable =>
                             log.error(s"Failed to unmarshall json alerts for $portCode", e)
-                            PortAlerts(portCode, List())
+                            PortAlerts(portCode.iata, List())
                         }
                     }
                     .recover {
                       case t =>
-                        log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtInternalUriForPortCode(PortCode(portCode))}/alerts/0", t)
-                        PortAlerts(portCode, List())
+                        log.error(s"Failed to retrieve alerts for $portCode at ${Dashboard.drtInternalUriForPortCode(portCode)}/alerts/0", t)
+                        PortAlerts(portCode.iata, List())
                     }
                 }
                 .toList

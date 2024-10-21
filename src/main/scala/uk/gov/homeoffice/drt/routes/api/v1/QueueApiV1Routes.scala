@@ -12,14 +12,17 @@ import akka.stream.scaladsl.{Flow, Sink, Source}
 import akka.util.ByteString
 import org.slf4j.LoggerFactory
 import spray.json.{DefaultJsonProtocol, RootJsonFormat, enrichAny}
+import uk.gov.homeoffice.drt.auth.Roles.ApiQueueAccess
+import uk.gov.homeoffice.drt.authentication.User
 import uk.gov.homeoffice.drt.ports.PortCode
+import uk.gov.homeoffice.drt.routes.services.AuthByRole
 import uk.gov.homeoffice.drt.time.SDate
 import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
 
 import scala.concurrent.ExecutionContext
 
 
-object QueueApiV1Routes extends DefaultJsonProtocol{
+object QueueApiV1Routes extends DefaultJsonProtocol {
   private val log = LoggerFactory.getLogger(getClass)
 
   case class JsonResponse(startTime: String, endTime: String, periodLengthMinutes: Int, ports: Seq[String])
@@ -32,14 +35,15 @@ object QueueApiV1Routes extends DefaultJsonProtocol{
       HttpEntity(ContentTypes.`text/csv(UTF-8)`, bytes)
     }
 
-  def apply(httpClient: HttpClient,
-            destinationPorts: Iterable[PortCode],
-           )
-           (implicit ec: ExecutionContext, mat: Materializer): Route = {
+  def apply(httpClient: HttpClient, enabledPorts: Iterable[PortCode])
+           (implicit ec: ExecutionContext, mat: Materializer): Route =
+    AuthByRole(ApiQueueAccess) {
       (get & path("queues")) {
         pathEnd {
           headerValueByName("X-Forwarded-Email") { email =>
             headerValueByName("X-Forwarded-Groups") { groups =>
+              val user = User.fromRoles(email, groups)
+
               val defaultSlotSizeMinutes = 15
 
               parameters("start", "end", "slot-size-minutes".as[Int].withDefault(defaultSlotSizeMinutes)) { (startStr, endStr, periodMinutes) =>
@@ -47,7 +51,9 @@ object QueueApiV1Routes extends DefaultJsonProtocol{
                 val end = SDate(endStr)
                 val parallelism = 10
 
-                val eventualContent = Source(destinationPorts.toSeq)
+                val ports = enabledPorts.filter(user.accessiblePorts.contains(_)).toList
+
+                val eventualContent = Source(ports)
                   .mapAsync(parallelism) { portCode =>
                     val uri = s"${Dashboard.drtInternalUriForPortCode(portCode)}/api/v1/queues?start=${start.toISOString}&end=${end.toISOString}&period-minutes=$periodMinutes"
                     val request = HttpRequest(uri = uri, headers = Seq(RawHeader("X-Forwarded-Email", email), RawHeader("X-Forwarded-Groups", groups)))
@@ -72,5 +78,5 @@ object QueueApiV1Routes extends DefaultJsonProtocol{
           }
         }
       }
-  }
+    }
 }

@@ -1,16 +1,13 @@
 package uk.gov.homeoffice.drt.authentication
 
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import spray.json.{ DefaultJsonProtocol, JsArray, JsObject, JsString, JsValue, RootJsonFormat }
+import spray.json.{DefaultJsonProtocol, JsArray, JsObject, JsString, JsValue, RootJsonFormat}
 import uk.gov.homeoffice.drt.auth.Roles
-import uk.gov.homeoffice.drt.auth.Roles.{ PortAccess, Role, Staff }
+import uk.gov.homeoffice.drt.auth.Roles.{PortAccess, Role}
+import uk.gov.homeoffice.drt.ports.PortCode
 
 case class User(email: String, roles: Set[Role]) {
-  def hasStaffCredential: Boolean = roles.exists(_.isInstanceOf[Staff])
-
-  def hasPortAccess: Boolean = roles.exists(_.isInstanceOf[PortAccess])
-
-  def accessiblePorts: Set[String] = roles.filter(_.isInstanceOf[PortAccess]).map(_.name)
+  def accessiblePorts: Set[PortCode] = roles.filter(_.isInstanceOf[PortAccess]).map(role => PortCode(role.name))
 
   def hasRole(role: Role): Boolean = roles.contains(role)
 }
@@ -35,7 +32,7 @@ trait UserJsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
 
   implicit object UserFormatParser extends RootJsonFormat[User] {
     override def write(user: User): JsValue = JsObject(Map(
-      "ports" -> JsArray(user.accessiblePorts.map(JsString(_)).toVector),
+      "ports" -> JsArray(user.accessiblePorts.map(pc => JsString(pc.iata)).toVector),
       "roles" -> JsArray(user.roles.map(r => JsString(r.name)).toVector),
       "email" -> JsString(user.email)))
 

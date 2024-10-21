@@ -7,6 +7,7 @@ import akka.http.scaladsl.server.Route
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.Urls
 import uk.gov.homeoffice.drt.authentication.User
+import uk.gov.homeoffice.drt.ports.PortCode
 
 
 case class IndexRoute(urls: Urls, indexResource: Route) {
@@ -40,7 +41,7 @@ case class IndexRoute(urls: Urls, indexResource: Route) {
         (params.get("fromPort").flatMap(urls.portCodeFromUrl), maybeRoles) match {
           case (Some(portCode), Some(rolesStr)) =>
             val user = User.fromRoles("", rolesStr)
-            if (user.accessiblePorts.contains(portCode)) {
+            if (user.accessiblePorts.contains(PortCode(portCode))) {
               val portLogoutUrl = urls.logoutUrlForPort(portCode)
               log.info(s"DRT v2's user session is out of date. Redirecting user to log out of port $portCode ($portLogoutUrl)")
               redirect(portLogoutUrl, StatusCodes.TemporaryRedirect)
