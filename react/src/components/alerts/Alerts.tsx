@@ -1,15 +1,16 @@
 import React from "react";
-import {Breadcrumbs, Stack, Tab, Tabs} from "@mui/material";
+import { Tab, Tabs} from "@mui/material";
 import moment from "moment-timezone";
 import {a11yProps, TabPanel} from "../TabPanel";
 import AlertForm from "./AlertForm";
 import {ListAlerts} from "./ViewAlerts";
 import {UserProfile} from "../../model/User";
 import {PortRegion} from "../../model/Config";
-import {Link} from "react-router-dom";
-import Typography from "@mui/material/Typography";
+import {Typography, Stack, Breadcrumbs} from "@mui/material";
+import { Link } from "react-router-dom";
 import {Helmet} from "react-helmet";
 import {adminPageTitleSuffix} from "../../utils/common";
+import PageContentWrapper from '../PageContentWrapper';
 
 moment.locale("en-gb");
 
@@ -24,7 +25,7 @@ export default function Alerts(props: IProps) {
 
   const changeTabs = (event: React.ChangeEvent<any>, newValue: number) => setSelectedTab(newValue);
 
-  return <>
+  return <PageContentWrapper>
     <Helmet>
       <title>Alerts {adminPageTitleSuffix}</title>
     </Helmet>
@@ -46,5 +47,5 @@ export default function Alerts(props: IProps) {
         <ListAlerts/>
       </TabPanel>
     </Stack>
-  </>
+  </PageContentWrapper>
 }

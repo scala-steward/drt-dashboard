@@ -6,11 +6,11 @@ import axios from "axios";
 import ApiClient from "../../services/ApiClient";
 import {GridValueFormatterParams} from "@mui/x-data-grid/models/params/gridCellParams";
 import moment from "moment-timezone";
-import {Breadcrumbs, Stack} from "@mui/material";
-import Typography from "@mui/material/Typography";
+import {Stack, Typography, Breadcrumbs} from "@mui/material";
 import {Link} from "react-router-dom";
 import {adminPageTitleSuffix} from "../../utils/common";
 import {Helmet} from "react-helmet";
+import PageContentWrapper from '../PageContentWrapper';
 
 const formatDate = (param: GridValueFormatterParams) => {
   return moment(param?.value).format("YYYY-MM-DD HH:mm")
@@ -70,7 +70,7 @@ export default function UsersList() {
     fetchUsers();
   }, []);
 
-  return <>
+  return <PageContentWrapper>
     <Helmet>
       <title>Users {adminPageTitleSuffix}</title>
     </Helmet>
@@ -89,5 +89,5 @@ export default function UsersList() {
         />
       </Box>
     </Stack>
-  </>
+  </PageContentWrapper>
 }

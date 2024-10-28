@@ -1,5 +1,5 @@
 import React, {useState} from 'react'
-import {Box, Breadcrumbs, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack} from "@mui/material"
+import {Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Breadcrumbs} from "@mui/material"
 import {Cancel, Delete, Save} from "@mui/icons-material"
 import {ScheduledHealthCheckPause} from "./model"
 import moment from "moment-timezone"
@@ -16,6 +16,7 @@ import {Link} from "react-router-dom"
 import {enqueueSnackbar} from "notistack";
 import {Helmet} from "react-helmet";
 import {adminPageTitleSuffix} from "../../utils/common";
+import PageContentWrapper from '../PageContentWrapper';
 
 type ConfirmOpen = {
   kind: 'open'
@@ -148,7 +149,7 @@ export const HealthCheckEditor = () => {
   const rows = [...healthCheckPauses]
     .sort((a, b) => -1 * (b.startsAt.valueOf() - a.startsAt.valueOf()))
 
-  return <>
+  return <PageContentWrapper>
     <Helmet>
       <title>Health Check Pauses {adminPageTitleSuffix}</title>
     </Helmet>
@@ -232,5 +233,5 @@ export const HealthCheckEditor = () => {
         </>
       </Stack>
     </LocalizationProvider>
-  </>
+  </PageContentWrapper>
 }

@@ -11,7 +11,7 @@ import {
   Radio,
   RadioGroup,
   SelectChangeEvent,
-  TextField
+  TextField,
 } from "@mui/material";
 
 import {DatePicker} from '@mui/x-date-pickers/DatePicker';
@@ -26,6 +26,7 @@ import {ConfigValues, PortRegion} from "../../model/Config";
 import {FormError} from '../../services/ValidationService';
 import {Helmet} from "react-helmet";
 import {adminPageTitleSuffix} from "../../utils/common";
+import PageContentWrapper from '../PageContentWrapper';
 
 interface DownloadDates {
   start: Moment;
@@ -167,7 +168,7 @@ const DownloadManager = ({
     requestDownload(portsWithTerminals, exportString, dates.start, dates.end);
   }
 
-  return <>
+  return <PageContentWrapper>
     <Helmet>
       <title>Download Manager {adminPageTitleSuffix}</title>
     </Helmet>
@@ -253,7 +254,7 @@ const DownloadManager = ({
                        handleModalClose={handleModalClose}/>
       </Box>
     </Box>
-  </>
+  </PageContentWrapper>
 }
 
 const mapState = (state: RootState) => {

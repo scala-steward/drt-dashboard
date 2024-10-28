@@ -6,15 +6,15 @@ import axios, {AxiosResponse} from "axios";
 import AccessRequestDetails, {UserRequestedAccessData} from "./AccessRequestDetails";
 import ConfirmAccessRequest from "./ConfirmAccessRequest";
 import AccessRequestStatusList from "./AccessRequestStatusList";
-import {Breadcrumbs, Button, Stack} from "@mui/material";
+import {Button, Stack, Typography, Breadcrumbs} from "@mui/material";
+import { Link } from 'react-router-dom';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import {columns, KeyCloakUser} from "./AccessRequestCommon";
 import {GridRowSelectionModel} from "@mui/x-data-grid/models/gridRowSelectionModel";
-import {Link} from "react-router-dom";
-import Typography from "@mui/material/Typography";
 import { Helmet } from 'react-helmet';
 import {adminPageTitleSuffix} from "../../utils/common";
+import PageContentWrapper from '../PageContentWrapper';
 
 export default function AccessRequests() {
   const [accessRequestListRequested, setAccessRequestListRequested] = React.useState(false);
@@ -195,7 +195,7 @@ export default function AccessRequests() {
     }
   }
 
-  return <>
+  return <PageContentWrapper>
     <Helmet>
       <title>Access requests {adminPageTitleSuffix}</title>
     </Helmet>
@@ -220,5 +220,5 @@ export default function AccessRequests() {
         <div> {accessRequestOrApprovedList()} </div>
       </Box>
     </Stack>
-  </>
+  </PageContentWrapper>
 }

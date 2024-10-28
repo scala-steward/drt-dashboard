@@ -4,9 +4,10 @@ import FileDownloadIcon from "@mui/icons-material/FileDownload";
 import ApiClient from "../services/ApiClient";
 import {Helmet} from "react-helmet";
 import {adminPageTitleSuffix} from "../utils/common";
+import PageContentWrapper from './PageContentWrapper';
 
 export function ExportConfig() {
-  return <>
+  return <PageContentWrapper>
     <Helmet>
       <title>Export Config {adminPageTitleSuffix}</title>
     </Helmet>
@@ -17,5 +18,5 @@ export function ExportConfig() {
       href={`${ApiClient.exportConfigEndpoint}`}
       target="_blank"
     > Download ports config</Button>
-  </>
+  </PageContentWrapper>
 }

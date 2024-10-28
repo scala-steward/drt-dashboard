@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react'
-import {Box, Collapse, IconButton, TableHead, Tooltip, Typography} from "@mui/material"
+import {Collapse, IconButton, TableHead, Tooltip, Typography, Box} from "@mui/material"
 import {HealthCheck, PortHealthCheckAlarms, useHealthCheckAlarms, useHealthChecks} from "../../store/heathChecks";
 import {Moment} from "moment"
 import moment from "moment-timezone"
@@ -16,6 +16,7 @@ import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlin
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import {Helmet} from "react-helmet";
 import {adminPageTitleSuffix} from "../../utils/common";
+import PageContentWrapper from '../PageContentWrapper';
 
 interface Props {
   portsByRegion: PortRegion[]
@@ -35,7 +36,7 @@ export const HealthChecks = (props: Props) => {
     set()
   }, []);
 
-  return <>
+  return <PageContentWrapper>
     <Helmet>
       <title>Health Checks {adminPageTitleSuffix}</title>
     </Helmet>
@@ -79,7 +80,7 @@ export const HealthChecks = (props: Props) => {
         </Table>
       </TableContainer>
     </Box>
-  </>
+  </PageContentWrapper>
 }
 
 function Row(props: { region: string, regionPortAlarms: PortHealthCheckAlarms[], healthChecks: HealthCheck[] }) {

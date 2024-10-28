@@ -11,12 +11,12 @@ const drtTheme = createTheme({
   },
   typography: {
     h1: {
-      fontSize: '46px',
+      fontSize: '38px',
       fontWeight: 'bold',
       color: '#233E82'
     },
     h2: {
-      fontSize: '40px',
+      fontSize: '32px',
       fontWeight: 'bold',
     },
     h3: {

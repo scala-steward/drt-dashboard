@@ -8,6 +8,8 @@ interface RegionalPressureState {
   type: string,
   start: string,
   end: string,
+  historicStart: string,
+  historicEnd: string,
   interval: string,
   portData: {
     [key: string] : TerminalDataPoint[]
@@ -40,7 +42,9 @@ type SetStatePayload = {
   },
   historicPortTotals: {
     [key: string] : number
-  }
+  },
+  historicStart: string,
+  historicEnd: string,
 }
 
 const regionalPressureSlice = createSlice({
@@ -55,6 +59,8 @@ const regionalPressureSlice = createSlice({
     type: "single",
     start: new Date().toString(),
     end: new Date().toString(),
+    historicStart: new Date().toString(),
+    historicEnd: new Date().toString(),
     interval: "daily",
   } as RegionalPressureState,
   reducers: {
@@ -71,6 +77,8 @@ const regionalPressureSlice = createSlice({
       state.end = action.payload.end;
       state.interval = action.payload.interval;
       state.status = action.payload.status;
+      state.historicStart = action.payload.historicStart;
+      state.historicEnd = action.payload.historicEnd;
     },
   }
 });

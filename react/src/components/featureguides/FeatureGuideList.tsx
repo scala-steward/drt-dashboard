@@ -1,7 +1,6 @@
 import React, {useState} from "react"
 import {DataGrid, GridColDef, GridRenderCellParams} from "@mui/x-data-grid"
-import Box from "@mui/material/Box"
-import {Breadcrumbs, Stack} from "@mui/material"
+import {Box, Typography, Button, Breadcrumbs, Stack} from "@mui/material"
 import {PreviewComponent} from "./PreviewComponent"
 import PublishIcon from '@mui/icons-material/Publish'
 import UnpublishedIcon from '@mui/icons-material/Unpublished'
@@ -10,14 +9,13 @@ import PreviewIcon from '@mui/icons-material/Preview'
 import DeleteIcon from "@mui/icons-material/Delete"
 import EditIcon from '@mui/icons-material/Edit'
 import {Link, useNavigate} from "react-router-dom"
-import Typography from "@mui/material/Typography"
 import {DialogComponent} from "../DialogComponent"
 import {deleteFeatureGuide, updatePublishedStatus, useFeatureGuides} from "../../store/featureGuides"
 import Loading from "../Loading"
 import moment from "moment-timezone"
-import Button from "@mui/material/Button";
 import {Helmet} from "react-helmet";
 import {adminPageTitleSuffix} from "../../utils/common";
+import PageContentWrapper from '../PageContentWrapper';
 
 export interface FeatureGuide {
   id: string
@@ -105,7 +103,7 @@ export const FeatureGuideList = () => {
   const [publishId, setPublishId] = useState<string | undefined>(undefined)
   const [unpublishId, setUnpublishId] = useState<string | undefined>(undefined)
 
-  return <>
+  return <PageContentWrapper>
     <Helmet>
       <title>Feature Guides {adminPageTitleSuffix}</title>
     </Helmet>
@@ -160,5 +158,5 @@ export const FeatureGuideList = () => {
                                     }}
                                     onCancel={() => setDeleteId(undefined)}/>}
     </Stack>
-  </>
+  </PageContentWrapper>
 }

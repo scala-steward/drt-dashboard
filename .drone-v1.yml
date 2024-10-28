@@ -10,14 +10,14 @@ platform:
 steps:
   - name: Build and test front end
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.2.0-beta1
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.3.0a
     environment:
       CI: false
     commands:
       - cd react
-      - pwd && yarn install
-      - pwd && yarn build
-      - pwd && yarn test-ci
+      - pwd && npm install
+      - pwd && npm run build
+      - pwd && npm run test-ci
     when:
       event:
         - push

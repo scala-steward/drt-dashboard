@@ -7,15 +7,11 @@ import PreviewIcon from "@mui/icons-material/Preview";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import axios from "axios";
-import {Breadcrumbs, FormControlLabel, Stack} from "@mui/material";
-import Box from "@mui/material/Box";
 import {ViewDropInSession} from "./ViewDropInSession";
 import {CalendarViewMonth} from "@mui/icons-material";
 import moment from 'moment-timezone';
 import {Link} from "react-router-dom";
-import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
-import Checkbox from "@mui/material/Checkbox";
+import {Typography, Button, Checkbox, Breadcrumbs, Stack, FormControlLabel, Box} from "@mui/material";
 import {enqueueSnackbar} from "notistack";
 import Loading from "../Loading";
 import {useDropInSessions} from "../../store/dropInSessions";
@@ -23,6 +19,7 @@ import {DialogComponent} from "../DialogComponent";
 import ApiClient from "../../services/ApiClient";
 import {adminPageTitleSuffix} from "../../utils/common";
 import {Helmet} from "react-helmet";
+import PageContentWrapper from '../PageContentWrapper';
 
 moment.locale('en-gb')
 
@@ -187,7 +184,7 @@ export function DropInSessionsList() {
       })
   }
 
-  return <>
+  return <PageContentWrapper>
     <Helmet>
       <title>Drop-in sessions {adminPageTitleSuffix}</title>
     </Helmet>
@@ -250,5 +247,5 @@ export function DropInSessionsList() {
           setUnPublish(false)
         }}/>}
     </Stack>
-  </>
+  </PageContentWrapper>
 }

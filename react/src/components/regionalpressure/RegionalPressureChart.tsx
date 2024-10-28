@@ -86,9 +86,10 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
                 const arrivals = portTotals[port];
                 const value = new Intl.NumberFormat("en-US", {
                     style: 'decimal',
-                    signDisplay: "exceptZero"
+                    signDisplay: "exceptZero",
+                    maximumFractionDigits: 0
                 }).format(context.parsed.r);
-                return `${arrivals} arrivals (${value}%)`
+                return `${arrivals.toLocaleString()} pax (${value}%)`
               }
           }
         },
@@ -111,7 +112,7 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
               label: function(context: TooltipItem<ChartType>) {
                 const port = context.label;
                 const arrivals = historicPortTotals[port];
-                return `${arrivals} arrivals`
+                return `${arrivals.toLocaleString()} historical pax`
               }
           }
         },

@@ -1,17 +1,15 @@
 import React, {useState} from "react";
 import {DataGrid, GridColDef} from "@mui/x-data-grid";
 import moment from "moment-timezone";
-import Box from "@mui/material/Box";
 import {useUserFeedbacks} from "../../store/feedbacks";
 import Loading from "../Loading";
-import Typography from "@mui/material/Typography";
-import Button from "@mui/material/Button";
+import { Typography, Button, Box, Breadcrumbs, Stack, Link as MuiLink } from "@mui/material";
+import { Link } from "react-router-dom";
 import FileDownloadIcon from "@mui/icons-material/FileDownload";
-import {Breadcrumbs, Stack, Link as MuiLink} from "@mui/material";
-import {Link} from "react-router-dom";
 import ApiClient from "../../services/ApiClient";
 import {adminPageTitleSuffix} from "../../utils/common";
 import {Helmet} from "react-helmet";
+import PageContentWrapper from '../PageContentWrapper';
 
 export function FeedbackList() {
   const [requestedAt, setRequestedAt] = useState(moment().valueOf())
@@ -71,7 +69,7 @@ export function FeedbackList() {
   ];
 
 
-  return <>
+  return <PageContentWrapper>
     <Helmet>
       <title>Feedback {adminPageTitleSuffix}</title>
     </Helmet>
@@ -107,5 +105,5 @@ export function FeedbackList() {
             </Box>
       }
     </Stack>
-  </>
+  </PageContentWrapper>
 }

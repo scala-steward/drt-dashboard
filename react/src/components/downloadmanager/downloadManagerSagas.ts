@@ -73,6 +73,7 @@ function* handleRequestDownload(action: RequestDownloadActionType) {
     yield put(setDownloadLink(response.data.downloadLink))
   } catch (e) {
     yield put(setStatus('failed'))
+    console.log(e);
   }
 }
 

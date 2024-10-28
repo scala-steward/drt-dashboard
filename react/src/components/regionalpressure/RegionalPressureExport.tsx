@@ -1,11 +1,13 @@
 import * as React from 'react';
 import {connect} from 'react-redux'
 import {RootState} from '../../store/redux';
-import { Button } from '@mui/material';
+import { useNavigate } from 'react-router';
+import { Button, ButtonGroup } from '@mui/material';
 import { TerminalDataPoint } from './regionalPressureSagas';
 import { mkConfig, generateCsv, download } from "export-to-csv";
 import { PortsObject } from './regionalPressureSagas';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
+import BrowserUpdatedIcon from '@mui/icons-material/BrowserUpdated';
 import moment from 'moment';
 
 interface RegionalPressureExportProps {
@@ -44,9 +46,9 @@ const results_to_array = (data: PortsObject, is_hourly: boolean) => {
         regionName: portDataPoint.regionName || '',
         totalPcpPax: portDataPoint.totalPcpPax || 0,
         terminalName: portDataPoint.terminalName || '',
-        EEA: portDataPoint.queueCounts[0]?.count || 0,
-        eGates: portDataPoint.queueCounts[1]?.count || 0,
-        nonEEA: portDataPoint.queueCounts[2]?.count || 0,
+        EEA: portDataPoint.queueCounts![0]?.count || 0,
+        eGates: portDataPoint.queueCounts![1]?.count || 0,
+        nonEEA: portDataPoint.queueCounts![2]?.count || 0,
       }
       data_rows.push(exportDataPoint)
     })
@@ -57,6 +59,7 @@ const results_to_array = (data: PortsObject, is_hourly: boolean) => {
 
 const RegionalPressureExport = ({portData, historicPortData, granularity}: RegionalPressureExportProps) => {
 
+  const navigate = useNavigate();
   const is_hourly = granularity === 'hour'
 
   const csvConfig = mkConfig({ 
@@ -70,7 +73,20 @@ const RegionalPressureExport = ({portData, historicPortData, granularity}: Regio
     download(csvConfig)(csv)
   }
 
-  return <Button fullWidth startIcon={<ArrowDownward />} variant="outlined" sx={{backgroundColor: '#fff'}} onClick={handleExport}>Export</Button>
+  return <ButtonGroup sx={{width: '100%'}}>
+    <Button 
+      fullWidth 
+      startIcon={<ArrowDownward />} 
+      variant="outlined" 
+      sx={{backgroundColor: '#fff'}} 
+      onClick={handleExport}>Export</Button>
+    <Button 
+      fullWidth 
+      startIcon={<BrowserUpdatedIcon />} 
+      variant="outlined" 
+      sx={{backgroundColor: '#fff'}} 
+      onClick={() => navigate('/download')}>Download Manager</Button>
+    </ButtonGroup>
 }
 
 
