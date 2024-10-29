@@ -10,11 +10,11 @@ import java.sql.Timestamp
 import java.time.{Duration, Instant, LocalDateTime, ZoneOffset}
 import scala.concurrent.{ExecutionContext, Future}
 
-trait UserJsonSupport extends DateTimeJsonSupport {
-  implicit val userFormatParser: RootJsonFormat[User] = jsonFormat8(User)
+trait UserRowJsonSupport extends DateTimeJsonSupport {
+  implicit val userFormatParser: RootJsonFormat[UserRow] = jsonFormat8(UserRow)
 }
 
-case class User(
+case class UserRow(
   id: String,
   username: String,
   email: String,
@@ -24,7 +24,7 @@ case class User(
   drop_in_notification_at: Option[java.sql.Timestamp],
   created_at: Option[java.sql.Timestamp])
 
-class UserTable(tag: Tag, tableName: String = "user") extends Table[User](tag, tableName) {
+class UserTable(tag: Tag, tableName: String = "user") extends Table[UserRow](tag, tableName) {
 
   def id = column[String]("id", O.PrimaryKey)
 
@@ -42,21 +42,21 @@ class UserTable(tag: Tag, tableName: String = "user") extends Table[User](tag, t
 
   def created_at = column[Option[java.sql.Timestamp]]("created_at")
 
-  def * = (id, username, email, latest_login, inactive_email_sent, revoked_access, drop_in_notification_at, created_at) <> (User.tupled, User.unapply)
+  def * = (id, username, email, latest_login, inactive_email_sent, revoked_access, drop_in_notification_at, created_at) <> (UserRow.tupled, UserRow.unapply)
 
 }
 
 trait IUserDao {
 
-  def upsertUser(user: User, purpose: Option[String])(implicit ec: ExecutionContext): Future[Int]
+  def upsertUser(user: UserRow, purpose: Option[String])(implicit ec: ExecutionContext): Future[Int]
 
-  def selectInactiveUsers(numberOfInactivityDays: Int)(implicit executionContext: ExecutionContext): Future[Seq[User]]
+  def selectInactiveUsers(numberOfInactivityDays: Int)(implicit executionContext: ExecutionContext): Future[Seq[UserRow]]
 
-  def selectUsersToRevokeAccess(numberOfInactivityDays: Int, deactivateAfterWarningDays: Int)(implicit executionContext: ExecutionContext): Future[Seq[User]]
+  def selectUsersToRevokeAccess(numberOfInactivityDays: Int, deactivateAfterWarningDays: Int)(implicit executionContext: ExecutionContext): Future[Seq[UserRow]]
 
-  def selectAll()(implicit executionContext: ExecutionContext): Future[Seq[User]]
+  def selectAll()(implicit executionContext: ExecutionContext): Future[Seq[UserRow]]
 
-  def getUsersWithoutDropInNotification()(implicit executionContext: ExecutionContext): Future[Seq[User]]
+  def getUsersWithoutDropInNotification()(implicit executionContext: ExecutionContext): Future[Seq[UserRow]]
 
 }
 
@@ -76,27 +76,27 @@ case class UserDao(db: Database) extends IUserDao {
       user.latest_login < new Timestamp(Instant.now().minusSeconds((numberOfInactivityDays + deactivateAfterWarningDays) * secondsInADay).toEpochMilli) &&
       user.inactive_email_sent.map(_ < new Timestamp(Instant.now().minusSeconds((deactivateAfterWarningDays) * secondsInADay).toEpochMilli)).getOrElse(false)
 
-  private def insertOrUpdate(userData: User): Future[Int] = {
+  private def insertOrUpdate(userData: UserRow): Future[Int] = {
     db.run(userTable insertOrUpdate userData)
   }
 
-  def selectInactiveUsers(numberOfInactivityDays: Int)(implicit executionContext: ExecutionContext): Future[Seq[User]] = {
+  def selectInactiveUsers(numberOfInactivityDays: Int)(implicit executionContext: ExecutionContext): Future[Seq[UserRow]] = {
     val inactiveIdx: UserTable => PostgresProfile.api.Rep[Boolean] = noActivitySinceDays(numberOfInactivityDays)
     db.run(userTable.filter(inactiveIdx).result)
-      .mapTo[Seq[User]]
+      .mapTo[Seq[UserRow]]
   }
 
-  def selectUsersToRevokeAccess(numberOfInactivityDays: Int, deactivateAfterWarningDays: Int)(implicit executionContext: ExecutionContext): Future[Seq[User]] = {
+  def selectUsersToRevokeAccess(numberOfInactivityDays: Int, deactivateAfterWarningDays: Int)(implicit executionContext: ExecutionContext): Future[Seq[UserRow]] = {
     val revokeIdx: UserTable => PostgresProfile.api.Rep[Boolean] = accessShouldBeRevoked(numberOfInactivityDays, deactivateAfterWarningDays)
     db.run(userTable.filter(revokeIdx).result)
-      .mapTo[Seq[User]]
+      .mapTo[Seq[UserRow]]
   }
 
-  def selectAll()(implicit executionContext: ExecutionContext): Future[Seq[User]] = {
-    db.run(userTable.result).mapTo[Seq[User]]
+  def selectAll()(implicit executionContext: ExecutionContext): Future[Seq[UserRow]] = {
+    db.run(userTable.result).mapTo[Seq[UserRow]]
   }
 
-  override def getUsersWithoutDropInNotification()(implicit executionContext: ExecutionContext): Future[Seq[User]] = {
+  override def getUsersWithoutDropInNotification()(implicit executionContext: ExecutionContext): Future[Seq[UserRow]] = {
     val specificDate = Timestamp.from(LocalDateTime.of(2023, 9, 1, 0, 0).toInstant(ZoneOffset.UTC))
     val fifteenDaysAgo = Timestamp.from(Instant.now.minus(Duration.ofDays(15)))
 
@@ -105,10 +105,10 @@ case class UserDao(db: Database) extends IUserDao {
         u.created_at < fifteenDaysAgo &&
         u.drop_in_notification_at.isEmpty &&
         u.revoked_access.isEmpty
-    ).result).mapTo[Seq[User]]
+    ).result).mapTo[Seq[UserRow]]
   }
 
-  def upsertUser(user: User, purpose: Option[String])(implicit ec: ExecutionContext): Future[Int] = {
+  def upsertUser(user: UserRow, purpose: Option[String])(implicit ec: ExecutionContext): Future[Int] = {
     for {
       updateCount <- insertOrUpdateUser(user, purpose)
       result <- if (updateCount > 0) Future.successful(updateCount) else insertOrUpdate(user)
@@ -119,7 +119,7 @@ case class UserDao(db: Database) extends IUserDao {
       0
   }
 
-  private def insertOrUpdateUser(user: User, purpose: Option[String]): Future[Int] = {
+  private def insertOrUpdateUser(user: UserRow, purpose: Option[String]): Future[Int] = {
     val query = purpose match {
       case Some(p) if p == "userTracking" =>
         userTable.filter(_.email === user.email)

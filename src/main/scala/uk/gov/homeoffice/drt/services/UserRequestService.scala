@@ -11,7 +11,7 @@ case class UserRequestService(userAccessRequestDao: IUserAccessRequestDao) {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
   def saveUserRequest(email: String, accessRequest: AccessRequest, timestamp: Timestamp): Future[Int] = {
-    val userAccessRequest = userAccessRequestDao.getUserAccessRequest(email, accessRequest, timestamp, "Requested")
+    val userAccessRequest = userAccessRequestDao.userAccessRequest(email, accessRequest, timestamp, "Requested")
     userAccessRequestDao.insertOrUpdate(userAccessRequest)
   }
 

@@ -59,7 +59,7 @@ class UserAccessRequestsTable(tag: Tag) extends Table[UserAccessRequest](tag, "u
 }
 
 trait IUserAccessRequestDao {
-  def getUserAccessRequest(email: String, accessRequest: AccessRequest, timestamp: java.sql.Timestamp, status: String): UserAccessRequest = {
+  def userAccessRequest(email: String, accessRequest: AccessRequest, timestamp: java.sql.Timestamp, status: String): UserAccessRequest =
     UserAccessRequest(
       email = email,
       portsRequested = accessRequest.portsRequested.mkString(","),
@@ -73,7 +73,6 @@ trait IUserAccessRequestDao {
       staffText = accessRequest.staffText,
       status = status,
       requestTime = timestamp)
-  }
 
   def insertOrUpdate(userAccessRequest: UserAccessRequest): Future[Int]
 

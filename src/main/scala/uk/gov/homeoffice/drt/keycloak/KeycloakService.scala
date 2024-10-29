@@ -1,10 +1,9 @@
 package uk.gov.homeoffice.drt.keycloak
 
 import akka.http.scaladsl.model.HttpResponse
-import org.slf4j.{ Logger, LoggerFactory }
-import uk.gov.homeoffice.drt.authentication.KeyCloakUser
+import org.slf4j.{Logger, LoggerFactory}
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 trait IKeycloakService {
   implicit val ec: ExecutionContext
@@ -18,7 +17,8 @@ trait IKeycloakService {
   def logout(username: String): Future[Option[Future[HttpResponse]]]
 }
 
-case class KeycloakService(keycloakClient: KeycloakClient)(implicit val ec: ExecutionContext) extends IKeycloakService {
+case class KeycloakService(keycloakClient: KeyCloakClient)
+                          (implicit val ec: ExecutionContext) extends IKeycloakService {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
   def getUserForEmail(email: String): Future[Option[KeyCloakUser]] = {
@@ -26,7 +26,7 @@ case class KeycloakService(keycloakClient: KeycloakClient)(implicit val ec: Exec
   }
 
   def getUserForUsername(username: String): Future[Option[KeyCloakUser]] = {
-    keycloakClient.getUserForUsername(username)
+    keycloakClient.getUserByUsername(username)
   }
 
   def removeUser(userId: String): Future[HttpResponse] = {
@@ -54,13 +54,10 @@ case class KeycloakService(keycloakClient: KeycloakClient)(implicit val ec: Exec
     }
   }
 
-  def logout(username: String): Future[Option[Future[HttpResponse]]] = {
-    keycloakClient.getUserForUsername(username)
-      .map(u =>
-        u.map { ud =>
-          keycloakClient.logoutUser(ud.id)
-        })
-  }
+  def logout(username: String): Future[Option[Future[HttpResponse]]] =
+    keycloakClient
+      .getUserByUsername(username)
+      .map(_.map(ud => keycloakClient.logUserOut(ud.id)))
 
 }
 

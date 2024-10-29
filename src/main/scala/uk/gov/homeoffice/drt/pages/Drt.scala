@@ -10,7 +10,7 @@ import scala.language.postfixOps
 
 object Drt {
 
-  val feedOrder = Seq(
+  private val feedOrder = Seq(
     DrtFeedDisplay("ApiFeedSource",
       "API",
       successWarningThreshold = 2 minutes,
@@ -115,15 +115,11 @@ object Drt {
           })))
   }
 
-  def maybeTimestampToWords(maybeLong: Option[Long]) = maybeLong
+  private def maybeTimestampToWords(maybeLong: Option[Long]) = maybeLong
     .map(l => timeAgoInWords(timeSince(l))).getOrElse("")
 
-  def maybeTimestampToWarningLevelClass(maybeLastEvent: Option[Long], warningThreshold: FiniteDuration, errorThreshold: FiniteDuration, errorThresholdFunction: (Long, Duration, Duration) => AlertLevel) = maybeLastEvent
+  private def maybeTimestampToWarningLevelClass(maybeLastEvent: Option[Long], warningThreshold: FiniteDuration, errorThreshold: FiniteDuration, errorThresholdFunction: (Long, Duration, Duration) => AlertLevel) = maybeLastEvent
     .map(l => errorThresholdFunction(timeSince(l), warningThreshold, errorThreshold).className).getOrElse(InfoStatus.className)
-
-  def uriForPortCode(portCode: String) = {
-    "http://localhost:9000/feed-statuses"
-  }
 
   case class DrtFeedDisplay(sourceName: String,
                             displayName: String,

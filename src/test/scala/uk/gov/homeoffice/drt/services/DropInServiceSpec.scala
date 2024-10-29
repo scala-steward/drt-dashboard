@@ -47,14 +47,14 @@ class DropInServiceSpec extends SpecificationLike with BeforeEach {
   }
 
   def response(
-    notificationId: String = "",
-    reference: String = "",
-    templateId: String = "templateId",
-    templateVersion: String = "2",
-    templateUri: String = "uri",
-    body: String = "body",
-    subject: String = "subject",
-    fromEmail: String = "") = {
+                notificationId: String = "",
+                reference: String = "",
+                templateId: String = "templateId",
+                templateVersion: String = "2",
+                templateUri: String = "uri",
+                body: String = "body",
+                subject: String = "subject",
+                fromEmail: String = "") = {
     s"""{"id":"${UUID.randomUUID()}",
        | "notificationId":"$notificationId",
        | "reference":"$reference",
@@ -72,7 +72,7 @@ class DropInServiceSpec extends SpecificationLike with BeforeEach {
   }
 
   def getUser(createdAt: String) = {
-    User(id = "test",
+    UserRow(id = "test",
       username = "test",
       email = "test@test.com",
       latest_login = new Timestamp(1693609200000L),
@@ -157,7 +157,7 @@ class DropInServiceSpec extends SpecificationLike with BeforeEach {
         //Notification should not be sent when user is created before 1st September 2023
         Mockito.verify(emailClient, Mockito.times(0)).sendEmail(any, any(), any(), any())
 
-        val afterDropInNotification: Seq[User] = Await.result(userService.getUsers(), 1.second)
+        val afterDropInNotification: Seq[UserRow] = Await.result(userService.getUsers(), 1.second)
         afterDropInNotification.head.drop_in_notification_at.isDefined === false
         afterDropInNotification.size === 1
 
@@ -165,7 +165,7 @@ class DropInServiceSpec extends SpecificationLike with BeforeEach {
         sendNotificationAndUserDropInNotificationIsEmptyCheck()
         //Notification should be sent when user is created after 1st September 2023
         Mockito.verify(emailClient, Mockito.times(1)).sendEmail(any, any(), any(), any())
-        val afterDropInNotification: Seq[User] = Await.result(userService.getUsers(), 1.second)
+        val afterDropInNotification: Seq[UserRow] = Await.result(userService.getUsers(), 1.second)
         afterDropInNotification.head.drop_in_notification_at.isDefined === true
         afterDropInNotification.size === 1
 
@@ -180,20 +180,20 @@ class DropInServiceSpec extends SpecificationLike with BeforeEach {
         // Notification is not sent as user is already registered for drop in
         Mockito.verify(emailClient, Mockito.times(0)).sendEmail(any, any(), any(), any())
 
-        val afterDropInNotification: Seq[User] = Await.result(userService.getUsers(), 1.second)
+        val afterDropInNotification: Seq[UserRow] = Await.result(userService.getUsers(), 1.second)
         afterDropInNotification.head.drop_in_notification_at.isDefined === false
         afterDropInNotification.size === 1
 
       case (false, false, true) =>
         sendNotificationAndUserDropInNotificationIsEmptyCheck()
         Mockito.verify(emailClient, Mockito.times(1)).sendEmail(any, any(), any(), any())
-        val afterDropInNotification: Seq[User] = Await.result(userService.getUsers(), 1.second)
+        val afterDropInNotification: Seq[UserRow] = Await.result(userService.getUsers(), 1.second)
         afterDropInNotification.head.drop_in_notification_at.isDefined === true
         afterDropInNotification.size === 1
         Await.result(dropInService.sendDropInNotificationToNewUsers(emailNotifications, rootDomain), 1.second)
         //After resending the DropIn notification and sendEmail is not called again which mean once notification is sent it will not be sent again
         Mockito.verify(emailClient, Mockito.times(1)).sendEmail(any, any(), any(), any())
-        val replayDropInNotification: Seq[User] = Await.result(userService.getUsers(), 1.second)
+        val replayDropInNotification: Seq[UserRow] = Await.result(userService.getUsers(), 1.second)
         replayDropInNotification.head.drop_in_notification_at.isDefined === true
         replayDropInNotification.size === 1
         replayDropInNotification.head.drop_in_notification_at === afterDropInNotification.head.drop_in_notification_at

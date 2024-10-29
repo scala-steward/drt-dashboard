@@ -1,8 +1,9 @@
 package uk.gov.homeoffice.drt.services
 
 import org.joda.time.DateTime
-import uk.gov.homeoffice.drt.db.{DropInDao, DropInRegistrationDao, DropInRegistrationRow, User, UserAccessRequest}
+import uk.gov.homeoffice.drt.db.{DropInDao, DropInRegistrationDao, DropInRegistrationRow}
 import uk.gov.homeoffice.drt.notifications.EmailNotifications
+
 import java.sql.Timestamp
 import scala.concurrent.{ExecutionContext, Future}
 

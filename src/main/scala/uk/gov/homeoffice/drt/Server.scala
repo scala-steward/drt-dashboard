@@ -16,11 +16,13 @@ import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.db._
 import uk.gov.homeoffice.drt.db.dao.UserFeedbackDao
 import uk.gov.homeoffice.drt.healthchecks._
-import uk.gov.homeoffice.drt.notifications.{EmailClient, EmailNotifications, SlackClient}
+import uk.gov.homeoffice.drt.keycloak.KeyCloakAuth
+import uk.gov.homeoffice.drt.notifications._
 import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealthCheckPausePersistenceImpl}
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.routes._
+import uk.gov.homeoffice.drt.routes.api.v1.{AuthApiV1Routes, FlightApiV1Routes, QueueApiV1Routes}
 import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{PassengerSummaryStreams, UserRequestService, UserService}
 import uk.gov.homeoffice.drt.time.SDate
@@ -30,7 +32,7 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
-case class KeyClockConfig(url: String,
+case class KeyCloakConfig(url: String,
                           tokenUrl: String,
                           clientId: String,
                           clientSecret: String)
@@ -66,9 +68,8 @@ case class ServerConfig(host: String,
                         enabledPorts: Seq[PortCode],
                         slackUrl: String
                        ) {
-  val portIataCodes: Iterable[String] = portTerminals.keys.map(_.iata)
   val clientConfig: ClientConfig = ClientConfig(portRegions, portTerminals, rootDomain, teamEmail)
-  val keyClockConfig: KeyClockConfig = KeyClockConfig(keycloakUrl, keycloakTokenUrl, keycloakClientId, keycloakClientSecret)
+  val keyClockConfig: KeyCloakConfig = KeyCloakConfig(keycloakUrl, keycloakTokenUrl, keycloakClientId, keycloakClientSecret)
 }
 
 object Server {
@@ -87,19 +88,20 @@ object Server {
     ArrivalLandingTimesHealthCheck(windowLength = 2.hours, buffer = 20, minimumFlights = 3, passThresholdPercentage = 50, SDate.now),
   )
 
-  def apply(serverConfig: ServerConfig,
+  def apply(config: ServerConfig,
             notifications: EmailNotifications,
             emailClient: EmailClient,
-            slackClient: SlackClient
            ): Behavior[Message] =
     Behaviors.setup { ctx: ActorContext[Message] =>
       implicit val system: ActorSystem[Nothing] = ctx.system
+      val systemClassic = system.classicSystem
+      implicit val mat: Materializer = Materializer.matFromSystem(systemClassic)
       implicit val ec: ExecutionContextExecutor = system.executionContext
       implicit val timeout: Timeout = new Timeout(1.second)
 
       val now = () => SDate.now()
 
-      val urls = Urls(serverConfig.rootDomain, serverConfig.useHttps)
+      val urls = Urls(config.rootDomain, config.useHttps)
       val userRequestService = UserRequestService(UserAccessRequestDao(ProdDatabase.db))
       val userService = UserService(UserDao(ProdDatabase.db))
       val dropInDao = DropInDao(ProdDatabase.db)
@@ -107,38 +109,54 @@ object Server {
       val userFeedbackDao = UserFeedbackDao(ProdDatabase.db)
       val featureGuideService = FeatureGuideService(FeatureGuideDao(ProdDatabase.db), FeatureGuideViewDao(ProdDatabase.db))
 
-      val (exportUploader, exportDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.exportsFolderPrefix)
-      val (featureUploader, featureDownloader) = S3Service.s3FileUploaderAndDownloader(serverConfig, serverConfig.featureFolderPrefix)
+      val (exportUploader, exportDownloader) = S3Service.s3FileUploaderAndDownloader(config, config.exportsFolderPrefix)
+      val (featureUploader, featureDownloader) = S3Service.s3FileUploaderAndDownloader(config, config.featureFolderPrefix)
 
       implicit val db: AppDatabase = ProdDatabase
 
       val indexRoutes = IndexRoute(urls, indexResource = getFromResource("frontend/index.html")).route
 
+      val sendHttpRequest = (request: HttpRequest) => Http()(mat.system).singleRequest(request)
+      val httpClient = ProdHttpClient(sendHttpRequest)
+
+      val slackClient =
+        if (config.slackUrl.nonEmpty) SlackClientImpl(httpClient, config.slackUrl)
+        else NoopSlackClient
+
       val healthChecksActor = startHealthChecksActor(slackClient, urls)
       val getAlarmStatuses: () => Future[Map[PortCode, Map[String, Boolean]]] = () => healthChecksActor.ask(replyTo => HealthChecksActor.GetAlarmStatuses(replyTo))
+
+      val keyCloakAuth = KeyCloakAuth(config.keycloakTokenUrl, config.keycloakClientId, config.keycloakClientSecret, sendHttpRequest)
 
       val routes: Route = concat(
         pathPrefix("api") {
           concat(
+            pathPrefix("v1") {
+              concat(
+                QueueApiV1Routes(httpClient, config.enabledPorts),
+                FlightApiV1Routes(httpClient, config.enabledPorts),
+                AuthApiV1Routes(keyCloakAuth.getToken),
+              )
+            },
             PassengerRoutes(PassengerSummaryStreams(db).streamForGranularity),
-            CiriumRoutes(serverConfig.ciriumDataUri),
-            DrtRoutes(serverConfig.portIataCodes),
-            LegacyExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, () => SDate.now()),
-            ExportRoutes(ProdHttpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), () => SDate.now(), emailClient, urls.rootUrl, serverConfig.teamEmail),
-            UserRoutes(serverConfig.clientConfig, userService, userRequestService, notifications, serverConfig.keycloakUrl),
+            CiriumRoutes(config.ciriumDataUri),
+            ConfigRoutes(config.clientConfig),
+            LegacyExportRoutes(httpClient, exportUploader.upload, exportDownloader.download, now),
+            ExportRoutes(httpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), now, emailClient, urls.rootUrl, config.teamEmail),
+            UserRoutes(config.clientConfig, userService, userRequestService, notifications, config.keycloakUrl),
             FeatureGuideRoutes(featureGuideService, featureUploader, featureDownloader),
-            ApiRoutes(serverConfig.clientConfig, userService, ScheduledHealthCheckPausePersistenceImpl(db, now)),
-            HealthCheckRoutes(getAlarmStatuses, healthChecks),
+            AlertsRoutes(),
+            HealthCheckRoutes(getAlarmStatuses, healthChecks, ScheduledHealthCheckPausePersistenceImpl(db, now)),
             DropInSessionsRoute(dropInDao),
             DropInRegisterRoutes(dropInRegistrationDao),
             FeedbackRoutes(userFeedbackDao),
-            ExportConfigRoutes(ProdHttpClient, serverConfig.enabledPorts),
+            ExportConfigRoutes(httpClient, config.enabledPorts),
           )
         },
         indexRoutes,
       )
 
-      val serverBinding = Http().newServerAt(serverConfig.host, serverConfig.port).bind(routes)
+      val serverBinding = Http().newServerAt(config.host, config.port).bind(routes)
 
       ctx.pipeToSelf(serverBinding) {
         case Success(binding) => Started(binding)
@@ -172,7 +190,7 @@ object Server {
 
             if (wasStopped) ctx.self ! Stop
 
-            val monitor: Cancellable = startHealthCheckMonitor(serverConfig, db, healthChecksActor)
+            val monitor: Cancellable = startHealthCheckMonitor(config, db, healthChecksActor)
 
             running(binding, monitor)
 

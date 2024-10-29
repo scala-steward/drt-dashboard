@@ -14,7 +14,7 @@ import scala.concurrent.{ExecutionContext, Future}
 trait HttpClient {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  def send(httpRequest: HttpRequest)(implicit executionContext: ExecutionContext, mat: Materializer): Future[HttpResponse]
+  def send(httpRequest: HttpRequest): Future[HttpResponse]
 
   def httpRequestForPortCsv(uri: String, portCode: PortCode): HttpRequest = {
     val roleHeaders = rolesToRoleHeader(List(
@@ -28,9 +28,12 @@ trait HttpClient {
   }
 }
 
-object ProdHttpClient extends HttpClient {
-  def send(httpRequest: HttpRequest)
-          (implicit executionContext: ExecutionContext, mat: Materializer): Future[HttpResponse] = {
-    Http()(mat.system).singleRequest(httpRequest)
-  }
+case class ProdHttpClient(sendHttpRequest: HttpRequest => Future[HttpResponse])(implicit val ec: ExecutionContext, val mat: Materializer) extends HttpClient {
+  def send(httpRequest: HttpRequest): Future[HttpResponse] =
+    sendHttpRequest(httpRequest)
+      .recover {
+        case e: Throwable =>
+          log.error(s"Failed to connect to ${httpRequest.uri}. ${e.getMessage}")
+          throw e
+      }
 }
