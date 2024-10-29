@@ -33,7 +33,7 @@ case class ProdHttpClient(sendHttpRequest: HttpRequest => Future[HttpResponse])(
     sendHttpRequest(httpRequest)
       .recover {
         case e: Throwable =>
-          log.error(s"Failed to connect to ${httpRequest.uri}", e)
+          log.error(s"Failed to connect to ${httpRequest.uri}. ${e.getMessage}")
           throw e
       }
 }

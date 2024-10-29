@@ -1,39 +1,36 @@
 package uk.gov.homeoffice.drt.routes.api.v1
 
-import akka.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
-import akka.http.scaladsl.marshalling.{Marshaller, ToEntityMarshaller}
-import akka.http.scaladsl.model.StatusCodes.InternalServerError
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpRequest}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
-import akka.stream.scaladsl.{Flow, Sink, Source}
-import akka.util.ByteString
-import org.slf4j.LoggerFactory
-import spray.json.{DefaultJsonProtocol, RootJsonFormat, enrichAny}
+import spray.json._
 import uk.gov.homeoffice.drt.auth.Roles.ApiQueueAccess
-import uk.gov.homeoffice.drt.authentication.User
 import uk.gov.homeoffice.drt.ports.PortCode
+import uk.gov.homeoffice.drt.routes.api.v1.AuthApiV1Routes.JsonResponse
+import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.QueueJsonResponse
 import uk.gov.homeoffice.drt.routes.services.AuthByRole
-import uk.gov.homeoffice.drt.time.SDate
 import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
 
 import scala.concurrent.ExecutionContext
 
+trait QueueApiV1JsonFormats extends DefaultJsonProtocol {
+  implicit object jsonResponseFormat extends RootJsonFormat[JsonResponse] {
 
-object QueueApiV1Routes extends DefaultJsonProtocol {
-  private val log = LoggerFactory.getLogger(getClass)
-
-  case class JsonResponse(startTime: String, endTime: String, periodLengthMinutes: Int, ports: Seq[String])
-
-  implicit val jsonResponseFormat: RootJsonFormat[JsonResponse] = jsonFormat4(JsonResponse)
-
-  implicit val csvStreaming: CsvEntityStreamingSupport = EntityStreamingSupport.csv().withFramingRenderer(Flow[ByteString])
-  implicit val csvMarshaller: ToEntityMarshaller[ByteString] =
-    Marshaller.withFixedContentType(ContentTypes.`text/csv(UTF-8)`) { bytes =>
-      HttpEntity(ContentTypes.`text/csv(UTF-8)`, bytes)
+    override def write(obj: JsonResponse): JsValue = obj match {
+      case obj: QueueJsonResponse => JsObject(Map(
+        "startTime" -> obj.startTime.toJson,
+        "endTime" -> obj.endTime.toJson,
+        "periodLengthMinutes" -> obj.slotSizeMinutes.toJson,
+        "ports" -> JsArray(obj.ports.map(_.parseJson).toVector),
+      ))
     }
+
+    override def read(json: JsValue): JsonResponse = throw new Exception("Not implemented")
+  }
+}
+
+object QueueApiV1Routes extends DefaultJsonProtocol with ApiV1Routes with QueueApiV1JsonFormats {
+  case class QueueJsonResponse(startTime: String, endTime: String, slotSizeMinutes: Int, ports: Seq[String]) extends JsonResponse
 
   def apply(httpClient: HttpClient, enabledPorts: Iterable[PortCode])
            (implicit ec: ExecutionContext, mat: Materializer): Route =
@@ -42,37 +39,16 @@ object QueueApiV1Routes extends DefaultJsonProtocol {
         pathEnd {
           headerValueByName("X-Forwarded-Email") { email =>
             headerValueByName("X-Forwarded-Groups") { groups =>
-              val user = User.fromRoles(email, groups)
-
               val defaultSlotSizeMinutes = 15
 
-              parameters("start", "end", "slot-size-minutes".as[Int].withDefault(defaultSlotSizeMinutes)) { (startStr, endStr, periodMinutes) =>
-                val start = SDate(startStr)
-                val end = SDate(endStr)
-                val parallelism = 10
+              parameters("start", "end", "slot-size-minutes".as[Int].withDefault(defaultSlotSizeMinutes)) { (startStr, endStr, slotSizeMinutes) =>
+                val portUri: PortCode => String =
+                  portCode => s"${Dashboard.drtInternalUriForPortCode(portCode)}/api/v1/queues?start=$startStr&end=$endStr&period-minutes=$slotSizeMinutes"
 
-                val ports = enabledPorts.filter(user.accessiblePorts.contains(_)).toList
+                val jsonResponse: (String, String, Seq[String]) => QueueJsonResponse =
+                  (startTime, endTime, ports) => QueueJsonResponse(startTime, endTime, slotSizeMinutes, ports)
 
-                val eventualContent = Source(ports)
-                  .mapAsync(parallelism) { portCode =>
-                    val uri = s"${Dashboard.drtInternalUriForPortCode(portCode)}/api/v1/queues?start=${start.toISOString}&end=${end.toISOString}&period-minutes=$periodMinutes"
-                    val request = HttpRequest(uri = uri, headers = Seq(RawHeader("X-Forwarded-Email", email), RawHeader("X-Forwarded-Groups", groups)))
-                    httpClient.send(request)
-                  }
-                  .mapAsync(1) { response =>
-                    response.entity.dataBytes
-                      .runFold(ByteString.empty)(_ ++ _)
-                      .map(_.utf8String)
-                  }
-                  .runWith(Sink.seq)
-                  .map(ports => JsonResponse(startStr, endStr, periodMinutes, ports).toJson.compactPrint)
-
-                onComplete(eventualContent) {
-                  case scala.util.Success(content) => complete(content)
-                  case scala.util.Failure(e) =>
-                    log.error(s"Failed to get export: ${e.getMessage}")
-                    complete(InternalServerError)
-                }
+                multiPortResponse(httpClient, enabledPorts, email, groups, portUri, jsonResponse, startStr, endStr)
               }
             }
           }

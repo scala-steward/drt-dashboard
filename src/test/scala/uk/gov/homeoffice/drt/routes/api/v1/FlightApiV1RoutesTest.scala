@@ -8,16 +8,21 @@ import akka.stream.Materializer
 import akka.testkit.TestProbe
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import spray.json.enrichAny
 import uk.gov.homeoffice.drt.ports.PortCode
+import uk.gov.homeoffice.drt.routes.api.v1.AuthApiV1Routes.JsonResponse
 import uk.gov.homeoffice.drt.routes.api.v1.RouteTestHelper.requestPortAndUriExist
 import uk.gov.homeoffice.drt.{MockHttpClient, ProdHttpClient}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
-class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRouteTest {
+class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRouteTest with FlightApiV1JsonFormats {
   implicit val typedSystem: ActorSystem[Nothing] = ActorSystem.wrap(system)
   implicit val mat: Materializer = Materializer(system)
   implicit val ec: ExecutionContextExecutor = mat.executionContext
+
+  val start = "2024-10-20T10:00"
+  val end = "2024-10-20T12:00"
 
   "Given a request for the flight status, I should see a JSON response containing the flight status" in {
     val portContent = """["some content"]"""
@@ -25,14 +30,14 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
       httpClient = MockHttpClient(() => portContent),
       enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
     )
-    val start = "2024-10-20T10:00"
-    val end = "2024-10-20T12:00"
+
     Get("/flights?start=" + start + "&end=" + end) ~>
       RawHeader("X-Forwarded-Groups", "LHR,LGW,api-flight-access") ~>
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
       routes ~> check {
 
-      responseAs[String] shouldEqual FlightApiV1Routes.JsonResponse(start, end, Seq(portContent, portContent)).toJson.compactPrint
+      val expected: JsonResponse = FlightApiV1Routes.FlightJsonResponse(start, end, Seq(portContent, portContent))
+      responseAs[String] shouldEqual expected.toJson.compactPrint
     }
   }
 
@@ -41,8 +46,7 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
       httpClient = ProdHttpClient(_ => Future.failed(new RuntimeException("Failed to connect"))),
       enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
     )
-    val start = "2024-10-20T10:00"
-    val end = "2024-10-20T12:00"
+
     Get("/flights?start=" + start + "&end=" + end) ~>
       RawHeader("X-Forwarded-Groups", "LHR,LGW,api-flight-access") ~>
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
@@ -56,22 +60,20 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
     val probe = TestProbe("flightApiV1Routes")
     val portContent = """["some content"]"""
     val routes = FlightApiV1Routes(httpClient = MockHttpClient(() => portContent, maybeProbe = Option(probe)), enabledPorts = Seq(PortCode("LHR")))
-    val start = "2024-10-20T10:00"
-    val end = "2024-10-20T12:00"
+
     Get("/flights?start=" + start + "&end=" + end) ~>
       RawHeader("X-Forwarded-Groups", "LHR,LGW,STN,api-flight-access") ~>
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
       routes ~> check {
 
-      requestPortAndUriExist(probe, "lhr", s"start=2024-10-20T10:00:00Z&end=2024-10-20T12:00:00Z")
+      requestPortAndUriExist(probe, "lhr", s"start=$start&end=$end")
     }
   }
 
   "Given a request from a user without access to the flight api, the response should be 403" in {
     val portContent = """["some content"]"""
     val routes = FlightApiV1Routes(httpClient = MockHttpClient(() => portContent), enabledPorts = Seq(PortCode("LHR")))
-    val start = "2024-10-20T10:00"
-    val end = "2024-10-20T12:00"
+
     Get("/flights?start=" + start + "&end=" + end) ~>
       RawHeader("X-Forwarded-Groups", "LHR") ~>
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
