@@ -18,7 +18,7 @@ lazy val scalaCsvVersion = "1.3.10"
 lazy val slickVersion = "3.4.1"
 lazy val awsJava2SdkVersion = "2.21.40"
 lazy val postgresqlVersion = "42.7.2"
-lazy val mockitoVersion = "4.6.1"
+lazy val mockitoVersion = "4.11.0"
 lazy val poiScalaVersion ="0.24"
 
 lazy val root = (project in file(".")).
