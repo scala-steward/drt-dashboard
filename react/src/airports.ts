@@ -29,6 +29,7 @@ export const AirportNameIndex: IAirportIndex = {
   BFS: 'Belfast',
   BHD: 'Belfast City',
   EDI: 'Edinburgh',
+  BRS: 'Bristol',
   GLA: 'Glasgow',
   PIK: 'Prestwick',
   HUY: 'Humberside',
