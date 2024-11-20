@@ -7,7 +7,7 @@ import akka.http.scaladsl.server.Route
 import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import spray.json.enrichAny
-import uk.gov.homeoffice.drt.models.{PassengersSummaries, PassengersSummary}
+import uk.gov.homeoffice.drt.model.{PassengersSummaries, PassengersSummary}
 import uk.gov.homeoffice.drt.ports.Queues.Queue
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion, Queues}
