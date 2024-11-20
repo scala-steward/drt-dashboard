@@ -12,7 +12,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import spray.json.DefaultJsonProtocol.immSeqFormat
 import spray.json._
 import uk.gov.homeoffice.drt.jsonformats.PassengersSummaryFormat.JsonFormat
-import uk.gov.homeoffice.drt.models.PassengersSummary
+import uk.gov.homeoffice.drt.model.PassengersSummary
 import uk.gov.homeoffice.drt.ports.Queues.Queue
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.{PortCode, Queues}
