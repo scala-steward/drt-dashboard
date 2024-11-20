@@ -144,7 +144,7 @@ object ExportRoutes {
     val stream = Source(exportRequest.ports.toList.sortBy(_.port))
       .mapConcat { exportPort =>
         val portCode = PortCode(exportPort.port)
-        AirportConfigs.confByPort.get(portCode).map(config => (exportPort, config.terminals))
+
         exportRequest.exportType match {
           case _: PortExportType =>
             val uri = getUri(exportRequest.exportType, exportRequest.startDate, exportRequest.endDate, portCode, None)
