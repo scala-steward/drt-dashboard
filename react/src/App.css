@@ -1,4 +1,24 @@
 
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+#content {
+  flex: 1;
+}
+
+#footer {
+  background-color: #dee0e2;
+  border-top: 1px solid #a1acb2;
+  padding: 10px;
+}
 
 .App-logo {
   height: 40vmin;
@@ -109,7 +129,7 @@ html {
 }
 
 #footer .footer-wrapper {
-  padding-top: 60px;
+  padding: 10px;
 }
 
 #footer .footer-meta {

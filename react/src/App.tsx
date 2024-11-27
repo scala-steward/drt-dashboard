@@ -4,7 +4,7 @@ import {Home} from './components/Home'
 import Alerts from './components/alerts/Alerts'
 import AccessRequests from './components/accessrequests/AccessRequests'
 import UsersList from './components/users/UsersList'
-import {Route, Routes, useNavigate} from "react-router-dom"
+import {Route, Routes, useNavigate, useParams} from "react-router-dom"
 import Loading from "./components/Loading"
 import {useConfig} from "./store/config"
 import {Container} from "@mui/material"
@@ -27,9 +27,9 @@ import {ExportConfig} from "./components/ExportConfig"
 import {HealthChecks} from "./components/healthchecks/HealthChecks"
 import RegionalDashboard from './components/regionalpressure/RegionalDashboard'
 import NationalDashboard from "./components/regionalpressure/NationalDashboard"
-import { Header } from 'drt-react';
-import { adminMenuItems } from './components/Navigation';
-import { AirportNameIndex, getAirportByCode } from './airports';
+import {Header, BottomBar, AccessibilityStatement} from 'drt-react';
+import {adminMenuItems} from './components/Navigation';
+import {AirportNameIndex, getAirportByCode} from './airports';
 
 const StyledContainer = styled(Container)(() => ({
   textAlign: 'left',
@@ -85,63 +85,88 @@ export const App = () => {
     }
   }
 
+  const onClickAccessibilityStatement = () => {
+    navigate('/accessibility/statement');
+  }
+
+  const getRandomAB = (): string => {
+    return Math.random() < 0.5 ? 'A' : 'B';
+  };
+
+  const AccessibilityStatementWrapper = () => {
+    const params = useParams()
+    const scrollSection = params['scrollSection'] ? params['scrollSection'] : ''
+    return (
+      <AccessibilityStatement
+        accessibilityStatementUrl="/accessibility"
+        teamEmail="your-team-email@example.com"
+        sendReportProblemGaEvent={() => console.log('Report Problem')}
+        scrollSection={scrollSection || ''}
+      />
+    );
+  };
 
   const roles = isSignedIn && user.profile?.roles;
 
   return (user.kind === "SignedInUser" && config.kind === "LoadedConfig") ?
-    <div>
-      <Header 
-        routingFunction={routingFunction}
-        logoutLink={logoutLink}
-        userRoles={roles as string[]} 
-        adminMenuItems={adminMenuItems} 
-        rightMenuItems={[]} 
-        leftMenuItems={[]} 
-        maxWidth='none'
-        initialSelectedPortMenuItem={''}
-        portMenuItems={portMenuItems} />
-      <StyledContainer>
-        <SnackbarProvider
-          anchorOrigin={{
-            vertical: 'top',
-            horizontal: 'center'
-          }}
+    <div id="root">
+      <div id="content">
+        <Header
+          routingFunction={routingFunction}
+          logoutLink={logoutLink}
+          userRoles={roles as string[]}
+          adminMenuItems={adminMenuItems}
+          rightMenuItems={[]}
+          leftMenuItems={[]}
+          maxWidth='none'
+          initialSelectedPortMenuItem={''}
+          portMenuItems={portMenuItems}/>
+        <StyledContainer>
+          <SnackbarProvider
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'center'
+            }}
+          />
+          <Routes>
+            <Route path={"/"} element={<Home config={config.values} user={user.profile}/>}/>
+            <Route path={"/accessibility/:scrollSection"} element={<AccessibilityStatementWrapper/>}/>
+            <Route path={"/access-requests"} element={<AccessRequests/>}/>
+            <Route path={"/users"} element={<UsersList/>}/>
+            <Route path={"/download"} element={<DownloadManager config={config.values} user={user.profile}/>}/>
+            <Route path={"/national-pressure"}
+                   element={<NationalDashboard config={config.values} user={user.profile}/>}/>
+            <Route path={"/national-pressure/:region"}
+                   element={<RegionalDashboard config={config.values} user={user.profile}/>}/>
+            <Route path={"/alerts"} element={<Alerts regions={config.values.portsByRegion} user={user.profile}/>}/>
+            <Route path={"/region/:regionName"} element={<RegionPage user={user.profile} config={config.values}/>}/>
+            <Route path={"/feature-guides"}>
+              <Route path={""} element={<FeatureGuideList/>}/>
+              <Route path={"edit"} element={<FeatureGuideAddOrEdit/>}/>
+              <Route path={"edit/:guideId"} element={<FeatureGuideAddOrEdit/>}/>
+            </Route>
+            <Route path={"/drop-in-sessions"}>
+              <Route path={""} element={<DropInSessionsList/>}/>
+              <Route path={"list"} element={<DropInSessionsList/>}/>
+              <Route path={"edit"} element={<AddOrEditDropInSession/>}/>
+              <Route path={"edit/:dropInId"} element={<AddOrEditDropInSession/>}/>
+              <Route path={"list/registered-users/:dropInId"} element={<DropInSessionRegistrations/>}/>
+            </Route>
+            <Route path={"/health-checks"} element={<HealthChecks portsByRegion={config.values.portsByRegion}/>}/>
+            <Route path={"/health-check-pauses"} element={<HealthCheckEditor/>}/>
+            <Route path={"/feedback/:feedbackType/:abVersion"} element={<FeedbackForms/>}/>
+            <Route path={"/user-feedback"} element={<FeedbackList/>}/>
+            <Route path={"/export-config"} element={<ExportConfig/>}/>
+          </Routes>
+        </StyledContainer>
+      </div>
+      <footer id="footer" role="contentinfo">
+        <BottomBar
+          email="your-email@example.com"
+          onClickAccessibilityStatement={() => onClickAccessibilityStatement()}
+          accessibilityStatementUrl={'/accessibility/statement'}
+          feedbackUrl={`${window.location.origin}/feedback/banner/${getRandomAB()}`}
         />
-        <Routes>
-          <Route path={"/"} element={<Home config={config.values} user={user.profile}/>}/>
-          <Route path={"/access-requests"} element={<AccessRequests/>}/>
-          <Route path={"/users"} element={<UsersList/>}/>
-          <Route path={"/download"} element={<DownloadManager config={config.values} user={user.profile} />} />
-          <Route path={"/national-pressure"} element={<NationalDashboard config={config.values} user={user.profile} />} />
-          <Route path={"/national-pressure/:region"} element={<RegionalDashboard config={config.values} user={user.profile} />} />
-          <Route path={"/alerts"} element={<Alerts regions={config.values.portsByRegion} user={user.profile}/>}/>
-          <Route path={"/region/:regionName"} element={<RegionPage user={user.profile} config={config.values}/>}/>
-          <Route path={"/feature-guides"}>
-            <Route path={""} element={<FeatureGuideList/>}/>
-            <Route path={"edit"} element={<FeatureGuideAddOrEdit/>}/>
-            <Route path={"edit/:guideId"} element={<FeatureGuideAddOrEdit/>}/>
-          </Route>
-          <Route path={"/drop-in-sessions"}>
-            <Route path={""} element={<DropInSessionsList/>}/>
-            <Route path={"list"} element={<DropInSessionsList/>}/>
-            <Route path={"edit"} element={<AddOrEditDropInSession/>}/>
-            <Route path={"edit/:dropInId"} element={<AddOrEditDropInSession/>}/>
-            <Route path={"list/registered-users/:dropInId"} element={<DropInSessionRegistrations/>}/>
-          </Route>
-          <Route path={"/health-checks"} element={<HealthChecks portsByRegion={config.values.portsByRegion}/>}/>
-          <Route path={"/health-check-pauses"} element={<HealthCheckEditor/>}/>
-          <Route path={"/feedback/:feedbackType/:abVersion"} element={<FeedbackForms/>}/>
-          <Route path={"/user-feedback"} element={<FeedbackList/>}/>
-          <Route path={"/export-config"} element={<ExportConfig/>}/>
-        </Routes>
-      </StyledContainer>
-      <footer className="group js-footer" id="footer" role="contentinfo">
-        <div className="footer-wrapper">
-          <div className="footer-meta">
-            <div className="footer-meta-inner">
-            </div>
-          </div>
-        </div>
       </footer>
     </div> : <Loading/>
 }
