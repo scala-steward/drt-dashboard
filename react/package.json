@@ -29,7 +29,7 @@
     "chart.js": "^4.4.1",
     "chartjs-adapter-moment": "^1.0.1",
     "date-fns": "^2.29.1",
-    "drt-react": "https://github.com/UKHomeOffice/drt-react.git#1.6.3",
+    "drt-react": "https://github.com/UKHomeOffice/drt-react.git#1.6.4",
     "eslint": "^8.57.0",
     "export-to-csv": "^1.2.4",
     "formik": "^2.4.5",
