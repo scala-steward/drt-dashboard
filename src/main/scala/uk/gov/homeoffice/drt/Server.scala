@@ -20,9 +20,9 @@ import uk.gov.homeoffice.drt.keycloak.KeyCloakAuth
 import uk.gov.homeoffice.drt.notifications._
 import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealthCheckPausePersistenceImpl}
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
-import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
+import uk.gov.homeoffice.drt.ports._
 import uk.gov.homeoffice.drt.routes._
-import uk.gov.homeoffice.drt.routes.api.v1.{AuthApiV1Routes, FlightApiV1Routes, QueueApiV1Routes}
+import uk.gov.homeoffice.drt.routes.api.v1.{AuthApiV1Routes, FlightApiV1Routes, FlightExport, QueueApiV1Routes, QueueExport}
 import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{PassengerSummaryStreams, UserRequestService, UserService}
 import uk.gov.homeoffice.drt.time.SDate
@@ -88,6 +88,26 @@ object Server {
     ArrivalLandingTimesHealthCheck(windowLength = 2.hours, buffer = 20, minimumFlights = 3, passThresholdPercentage = 50, SDate.now),
   )
 
+  private val nonMlPaxPorts = Set("ABZ", "EXT", "HUY", "INV", "LHR", "MME", "NQY", "NWI", "PIK", "SEN")
+
+  val paxFeedSourceOrder: PortCode => List[FeedSource] =
+    portCode => if (!nonMlPaxPorts.contains(portCode.iata)) List(
+      ScenarioSimulationSource,
+      LiveFeedSource,
+      ApiFeedSource,
+      MlFeedSource,
+      ForecastFeedSource,
+      HistoricApiFeedSource,
+      AclFeedSource,
+    ) else List(
+      ScenarioSimulationSource,
+      LiveFeedSource,
+      ApiFeedSource,
+      ForecastFeedSource,
+      HistoricApiFeedSource,
+      AclFeedSource,
+    )
+
   def apply(config: ServerConfig,
             notifications: EmailNotifications,
             emailClient: EmailClient,
@@ -133,8 +153,8 @@ object Server {
           concat(
             pathPrefix("v1") {
               concat(
-                QueueApiV1Routes(httpClient, config.enabledPorts),
-                FlightApiV1Routes(httpClient, config.enabledPorts),
+                QueueApiV1Routes(config.enabledPorts, QueueExport.queues(db)),
+                FlightApiV1Routes(config.enabledPorts, FlightExport.flights(db)),
                 AuthApiV1Routes(keyCloakAuth.getToken),
               )
             },

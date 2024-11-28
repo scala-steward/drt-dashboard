@@ -4,23 +4,16 @@ import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import org.slf4j.{Logger, LoggerFactory}
-import spray.json.RootJsonFormat
+import spray.json.{JsObject, RootJsonFormat}
 import uk.gov.homeoffice.drt.db
 import uk.gov.homeoffice.drt.keycloak._
+import uk.gov.homeoffice.drt.routes.api.v1.QueueExport.PortQueuesJson
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}
 
 object AuthApiV1Routes extends db.UserAccessRequestJsonSupport with KeyCloakAuthTokenParserProtocol {
   val log: Logger = LoggerFactory.getLogger(getClass)
-
-  trait JsonResponse {
-    def startTime: String
-
-    def endTime: String
-
-    def ports: Seq[String]
-  }
 
   case class Credentials(username: String, password: String)
 
