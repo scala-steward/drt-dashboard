@@ -4,10 +4,9 @@ import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import org.slf4j.{Logger, LoggerFactory}
-import spray.json.{JsObject, RootJsonFormat}
+import spray.json.RootJsonFormat
 import uk.gov.homeoffice.drt.db
 import uk.gov.homeoffice.drt.keycloak._
-import uk.gov.homeoffice.drt.routes.api.v1.QueueExport.PortQueuesJson
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.util.{Failure, Success}

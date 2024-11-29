@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.drt
 
+import akka.NotUsed
 import akka.actor.Cancellable
 import akka.actor.typed.scaladsl.AskPattern.{Askable, schedulerFromActorSystem}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
@@ -11,21 +12,25 @@ import akka.http.scaladsl.server.Directives.{concat, getFromResource, pathPrefix
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.stream.Materializer
+import akka.stream.scaladsl.Source
 import akka.util.Timeout
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.db._
-import uk.gov.homeoffice.drt.db.dao.UserFeedbackDao
+import uk.gov.homeoffice.drt.db.dao.{QueueSlotDao, UserFeedbackDao}
 import uk.gov.homeoffice.drt.healthchecks._
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuth
+import uk.gov.homeoffice.drt.model.CrunchMinute
 import uk.gov.homeoffice.drt.notifications._
 import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealthCheckPausePersistenceImpl}
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports._
 import uk.gov.homeoffice.drt.routes._
-import uk.gov.homeoffice.drt.routes.api.v1.{AuthApiV1Routes, FlightApiV1Routes, FlightExport, QueueApiV1Routes, QueueExport}
+import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.QueueJsonResponse
+import uk.gov.homeoffice.drt.routes.api.v1.{AuthApiV1Routes, FlightApiV1Routes, QueueApiV1Routes}
+import uk.gov.homeoffice.drt.services.api.v1.{FlightExport, QueueExport}
 import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{PassengerSummaryStreams, UserRequestService, UserService}
-import uk.gov.homeoffice.drt.time.SDate
+import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike, UtcDate}
 import uk.gov.homeoffice.drt.uploadTraining.FeatureGuideService
 
 import scala.concurrent.duration.DurationInt
@@ -148,12 +153,17 @@ object Server {
 
       val keyCloakAuth = KeyCloakAuth(config.keycloakTokenUrl, config.keycloakClientId, config.keycloakClientSecret, sendHttpRequest)
 
+      val queuesForPortAndDatesAndSlotSize: (PortCode, Terminal, Int, LocalDate, LocalDate) => Source[(UtcDate, Seq[CrunchMinute]), NotUsed] = {
+        (port, terminal, slotSize, start, end) =>
+          QueueSlotDao().queueSlotsForDateRange(port, slotSize, db.run)(start, end, Seq(terminal))
+      }
+
       val routes: Route = concat(
         pathPrefix("api") {
           concat(
             pathPrefix("v1") {
               concat(
-                QueueApiV1Routes(config.enabledPorts, QueueExport.queues(db)),
+                QueueApiV1Routes(config.enabledPorts, QueueExport.queues(queuesForPortAndDatesAndSlotSize)),
                 FlightApiV1Routes(config.enabledPorts, FlightExport.flights(db)),
                 AuthApiV1Routes(keyCloakAuth.getToken),
               )

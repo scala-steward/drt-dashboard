@@ -11,7 +11,8 @@ import org.scalatest.wordspec.AnyWordSpec
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Terminals.T2
 import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.FlightJsonResponse
-import uk.gov.homeoffice.drt.routes.api.v1.FlightExport.{FlightJson, PortFlightsJson, TerminalFlightsJson}
+import uk.gov.homeoffice.drt.services.api.v1.FlightExport.{FlightJson, PortFlightsJson, TerminalFlightsJson}
+import uk.gov.homeoffice.drt.services.api.v1.serialiser.FlightApiV1JsonFormats
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -42,7 +43,7 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
   "Given a request for the flight status, I should see a JSON response containing the flight status" in {
     val routes = FlightApiV1Routes(
       enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
-      arrivalSource = _ => (_, _) => Future.successful(FlightJsonResponse(start, end, Seq(portFlightJsonLhr, portFlightJsonLhr))),
+      dateRangeJsonForPorts = _ => (_, _) => Future.successful(FlightJsonResponse(start, end, Seq(portFlightJsonLhr, portFlightJsonLhr))),
     )
 
     Get("/flights?start=" + start + "&end=" + end) ~>
@@ -58,7 +59,7 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
   "Given a failed response from a port the response status should be 500" in {
     val routes = FlightApiV1Routes(
       enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
-      arrivalSource = _ => (_, _) => Future.failed(new Exception("Failed to get flights")),
+      dateRangeJsonForPorts = _ => (_, _) => Future.failed(new Exception("Failed to get flights")),
     )
 
     Get("/flights?start=" + start + "&end=" + end) ~>
@@ -74,7 +75,7 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
     val probe = TestProbe("flight-source")
     val routes = FlightApiV1Routes(
       enabledPorts = Seq(PortCode("LHR")),
-      arrivalSource = portCodes => (_, _) => {
+      dateRangeJsonForPorts = portCodes => (_, _) => {
         probe.ref ! portCodes
         Future.successful(FlightJsonResponse(start, end, Seq.empty))
       },
@@ -91,7 +92,7 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
   "Given a request from a user without access to the flight api, the response should be 403" in {
     val routes = FlightApiV1Routes(
       enabledPorts = Seq(PortCode("LHR")),
-      arrivalSource = _ => (_, _) => Future.successful(FlightJsonResponse(start, end, Seq.empty)),
+      dateRangeJsonForPorts = _ => (_, _) => Future.successful(FlightJsonResponse(start, end, Seq.empty)),
     )
 
     Get("/flights?start=" + start + "&end=" + end) ~>

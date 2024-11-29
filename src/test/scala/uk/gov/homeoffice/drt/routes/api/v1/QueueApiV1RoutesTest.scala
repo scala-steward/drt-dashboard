@@ -12,7 +12,8 @@ import spray.json.enrichAny
 import uk.gov.homeoffice.drt.ports.Terminals.T2
 import uk.gov.homeoffice.drt.ports.{PortCode, Queues}
 import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.QueueJsonResponse
-import uk.gov.homeoffice.drt.routes.api.v1.QueueExport.{PeriodJson, PortQueuesJson, QueueJson, TerminalQueuesJson}
+import uk.gov.homeoffice.drt.services.api.v1.QueueExport.{PeriodJson, PortQueuesJson, QueueJson, TerminalQueuesJson}
+import uk.gov.homeoffice.drt.services.api.v1.serialiser.QueueApiV1JsonFormats
 import uk.gov.homeoffice.drt.time.SDate
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -35,7 +36,7 @@ class QueueApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRoute
   "Given a request for the queue status, I should see a JSON response containing the queue status" in {
     val routes = QueueApiV1Routes(
       enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
-      arrivalSource = (_, _) => (_, _) => Future.successful(QueueJsonResponse(start, end, defaultSlotSizeMinutes, Seq(portQueueJsonLhr, portQueueJsonLhr))),
+      dateRangeJsonForPortsAndSlotSize = (_, _) => (_, _) => Future.successful(QueueJsonResponse(start, end, defaultSlotSizeMinutes, Seq(portQueueJsonLhr, portQueueJsonLhr))),
     )
     Get("/queues?start=" + start + "&end=" + end) ~>
       RawHeader("X-Forwarded-Groups", "LHR,LGW,api-queue-access") ~>
@@ -52,7 +53,7 @@ class QueueApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRoute
     val probe = TestProbe("queueApiV1Routes")
     val routes = QueueApiV1Routes(
       enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
-      arrivalSource = (_, slotSize) => (_, _) => {
+      dateRangeJsonForPortsAndSlotSize = (_, slotSize) => (_, _) => {
         probe.ref ! slotSize
         Future.successful(QueueJsonResponse(start, end, defaultSlotSizeMinutes, Seq(portQueueJsonLhr, portQueueJsonLhr)))
       },
@@ -69,7 +70,7 @@ class QueueApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRoute
   "Given a failed response from a port the response status should be 500" in {
     val routes = QueueApiV1Routes(
       enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
-      arrivalSource = (_, _) => (_, _) => Future.failed(new Exception("Failed to get flights")),
+      dateRangeJsonForPortsAndSlotSize = (_, _) => (_, _) => Future.failed(new Exception("Failed to get flights")),
     )
 
     Get("/queues?start=" + start + "&end=" + end) ~>
@@ -85,7 +86,7 @@ class QueueApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRoute
     val probe = TestProbe("queueApiV1Routes")
     val routes = QueueApiV1Routes(
       enabledPorts = Seq(PortCode("LHR")),
-      arrivalSource = (portCodes, _) => (_, _) => {
+      dateRangeJsonForPortsAndSlotSize = (portCodes, _) => (_, _) => {
         probe.ref ! portCodes
         Future.successful(QueueJsonResponse(start, end, defaultSlotSizeMinutes, Seq.empty))
       },
@@ -102,7 +103,7 @@ class QueueApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRoute
   "Given a request from a user without access to the queue api, the response should be 403" in {
     val routes = QueueApiV1Routes(
       enabledPorts = Seq(PortCode("LHR")),
-      arrivalSource = (_, _) => (_, _) => Future.successful(QueueJsonResponse(start, end, defaultSlotSizeMinutes, Seq(portQueueJsonLhr, portQueueJsonLhr))),
+      dateRangeJsonForPortsAndSlotSize = (_, _) => (_, _) => Future.successful(QueueJsonResponse(start, end, defaultSlotSizeMinutes, Seq(portQueueJsonLhr, portQueueJsonLhr))),
     )
 
     Get("/queues?start=" + start + "&end=" + end) ~>
