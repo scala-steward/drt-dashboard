@@ -25,12 +25,11 @@ import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealth
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports._
 import uk.gov.homeoffice.drt.routes._
-import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.QueueJsonResponse
 import uk.gov.homeoffice.drt.routes.api.v1.{AuthApiV1Routes, FlightApiV1Routes, QueueApiV1Routes}
 import uk.gov.homeoffice.drt.services.api.v1.{FlightExport, QueueExport}
 import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{PassengerSummaryStreams, UserRequestService, UserService}
-import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike, UtcDate}
+import uk.gov.homeoffice.drt.time.{LocalDate, SDate, UtcDate}
 import uk.gov.homeoffice.drt.uploadTraining.FeatureGuideService
 
 import scala.concurrent.duration.DurationInt
@@ -126,6 +125,7 @@ object Server {
 
       val now = () => SDate.now()
 
+      val defaultQueueSlotMinutes = 15
       val urls = Urls(config.rootDomain, config.useHttps)
       val userRequestService = UserRequestService(UserAccessRequestDao(ProdDatabase.db))
       val userService = UserService(UserDao(ProdDatabase.db))
@@ -153,9 +153,9 @@ object Server {
 
       val keyCloakAuth = KeyCloakAuth(config.keycloakTokenUrl, config.keycloakClientId, config.keycloakClientSecret, sendHttpRequest)
 
-      val queuesForPortAndDatesAndSlotSize: (PortCode, Terminal, Int, LocalDate, LocalDate) => Source[(UtcDate, Seq[CrunchMinute]), NotUsed] = {
-        (port, terminal, slotSize, start, end) =>
-          QueueSlotDao().queueSlotsForDateRange(port, slotSize, db.run)(start, end, Seq(terminal))
+      val queuesForPortAndDatesAndSlotSize: (PortCode, Terminal, LocalDate, LocalDate) => Source[(UtcDate, Seq[CrunchMinute]), NotUsed] = {
+        (port, terminal, start, end) =>
+          QueueSlotDao().queueSlotsForDateRange(port, defaultQueueSlotMinutes, db.run)(start, end, Seq(terminal))
       }
 
       val routes: Route = concat(

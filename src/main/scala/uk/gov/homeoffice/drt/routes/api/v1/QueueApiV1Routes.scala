@@ -42,7 +42,7 @@ object QueueApiV1Routes extends DefaultJsonProtocol with QueueApiV1JsonFormats {
                 onComplete(dateRangeJson(start, end)) {
                   case Success(value) => complete(value.toJson.compactPrint)
                   case Failure(t) =>
-                    log.error(s"Failed to get export: ${t.getMessage}")
+                    log.error(s"Failed to get export: ${t.getMessage}", t)
                     complete(InternalServerError)
                 }
               }
