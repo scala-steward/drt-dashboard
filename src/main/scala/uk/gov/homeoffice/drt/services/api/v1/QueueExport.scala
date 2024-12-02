@@ -65,7 +65,7 @@ object QueueExport {
             .map(PortQueuesJson(portCode, _))
         }
         .runWith(Sink.seq)
-        .map(QueueJsonResponse(start.toString(), end.toString(), slotSize, _))
+        .map(QueueJsonResponse(start, end, slotSize, _))
     }
 
   def terminalMinutesByMinute[T <: MinuteLike[_, _]](minutes: Seq[T],

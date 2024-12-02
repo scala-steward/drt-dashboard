@@ -20,7 +20,7 @@ import scala.util.{Failure, Success}
 object QueueApiV1Routes extends DefaultJsonProtocol with QueueApiV1JsonFormats {
   private val log = LoggerFactory.getLogger(getClass)
 
-  case class QueueJsonResponse(startTime: String, endTime: String, slotSizeMinutes: Int, ports: Seq[PortQueuesJson])
+  case class QueueJsonResponse(startTime: SDateLike, endTime: SDateLike, slotSizeMinutes: Int, ports: Seq[PortQueuesJson])
 
   def apply(enabledPorts: Iterable[PortCode],
             dateRangeJsonForPortsAndSlotSize: (Seq[PortCode], Int) => (SDateLike, SDateLike) => Future[QueueJsonResponse]): Route =

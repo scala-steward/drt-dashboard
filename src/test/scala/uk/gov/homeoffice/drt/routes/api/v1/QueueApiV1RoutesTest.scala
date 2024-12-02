@@ -14,7 +14,7 @@ import uk.gov.homeoffice.drt.ports.{PortCode, Queues}
 import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.QueueJsonResponse
 import uk.gov.homeoffice.drt.services.api.v1.QueueExport.{PeriodJson, PortQueuesJson, QueueJson, TerminalQueuesJson}
 import uk.gov.homeoffice.drt.services.api.v1.serialiser.QueueApiV1JsonFormats
-import uk.gov.homeoffice.drt.time.SDate
+import uk.gov.homeoffice.drt.time.{SDate, SDateLike}
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -23,11 +23,11 @@ class QueueApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRoute
   implicit val mat: Materializer = Materializer(system)
   implicit val ec: ExecutionContextExecutor = mat.executionContext
 
-  val start = "2024-10-20T10:00"
-  val end = "2024-10-20T12:00"
+  val start: SDateLike = SDate("2024-10-20T10:00")
+  val end: SDateLike = SDate("2024-10-20T12:00")
 
   val queueJson: QueueJson = QueueJson(Queues.EeaDesk, 100, 10)
-  val periodJson: PeriodJson = PeriodJson(SDate(start), Seq(queueJson))
+  val periodJson: PeriodJson = PeriodJson(start, Seq(queueJson))
   val terminalQueueJson: TerminalQueuesJson = TerminalQueuesJson(T2, Seq(periodJson))
   val portQueueJsonLhr: PortQueuesJson = PortQueuesJson(PortCode("LHR"), Seq(terminalQueueJson))
   val portQueueJsonStn: PortQueuesJson = PortQueuesJson(PortCode("STN"), Seq(terminalQueueJson))
@@ -38,7 +38,7 @@ class QueueApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRoute
       enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
       dateRangeJsonForPortsAndSlotSize = (_, _) => (_, _) => Future.successful(QueueJsonResponse(start, end, defaultSlotSizeMinutes, Seq(portQueueJsonLhr, portQueueJsonLhr))),
     )
-    Get("/queues?start=" + start + "&end=" + end) ~>
+    Get("/queues?start=" + start.toISOString + "&end=" + end.toISOString) ~>
       RawHeader("X-Forwarded-Groups", "LHR,LGW,api-queue-access") ~>
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
       routes ~> check {

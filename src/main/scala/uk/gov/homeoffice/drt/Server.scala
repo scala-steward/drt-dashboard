@@ -15,8 +15,9 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
 import org.slf4j.LoggerFactory
+import uk.gov.homeoffice.drt.arrivals.ApiFlightWithSplits
 import uk.gov.homeoffice.drt.db._
-import uk.gov.homeoffice.drt.db.dao.{QueueSlotDao, UserFeedbackDao}
+import uk.gov.homeoffice.drt.db.dao.{FlightDao, QueueSlotDao, UserFeedbackDao}
 import uk.gov.homeoffice.drt.healthchecks._
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuth
 import uk.gov.homeoffice.drt.model.CrunchMinute
@@ -158,13 +159,17 @@ object Server {
           QueueSlotDao().queueSlotsForDateRange(port, defaultQueueSlotMinutes, db.run)(start, end, Seq(terminal))
       }
 
+      val flightsForDatesAndTerminals: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[(UtcDate, Seq[ApiFlightWithSplits]), NotUsed] =
+        (portCode, sourceOrder, start, end, terminals) =>
+          FlightDao().flightsForPcpDateRange(portCode, sourceOrder, db.run)(start, end, terminals)
+
       val routes: Route = concat(
         pathPrefix("api") {
           concat(
             pathPrefix("v1") {
               concat(
                 QueueApiV1Routes(config.enabledPorts, QueueExport.queues(queuesForPortAndDatesAndSlotSize)),
-                FlightApiV1Routes(config.enabledPorts, FlightExport.flights(db)),
+                FlightApiV1Routes(config.enabledPorts, FlightExport.flights(flightsForDatesAndTerminals)),
                 AuthApiV1Routes(keyCloakAuth.getToken),
               )
             },

@@ -1,9 +1,10 @@
 package uk.gov.homeoffice.drt.services.api.v1
 
+import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
 import uk.gov.homeoffice.drt.Server.paxFeedSourceOrder
-import uk.gov.homeoffice.drt.arrivals.Arrival
+import uk.gov.homeoffice.drt.arrivals.{ApiFlightWithSplits, Arrival}
 import uk.gov.homeoffice.drt.db.AppDatabase
 import uk.gov.homeoffice.drt.db.dao.FlightDao
 import uk.gov.homeoffice.drt.ports.{FeedSource, PortCode}
@@ -11,7 +12,7 @@ import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.FlightJsonResponse
 import uk.gov.homeoffice.drt.services.AirportInfoService
-import uk.gov.homeoffice.drt.time.SDateLike
+import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike, UtcDate}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -49,17 +50,15 @@ object FlightExport {
 
   case class PortFlightsJson(portCode: PortCode, terminals: Iterable[TerminalFlightsJson])
 
-  def flights(db: AppDatabase)
+  def flights(flightsForDatesAndTerminals: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[(UtcDate, Seq[ApiFlightWithSplits]), NotUsed])
              (implicit ec: ExecutionContext, mat: Materializer): Seq[PortCode] => (SDateLike, SDateLike) => Future[FlightJsonResponse] =
     portCodes => (start, end) => {
       val dates = Set(start.toLocalDate, end.toLocalDate)
-      val flightDao = FlightDao()
 
       Source(portCodes)
         .mapAsync(1) { portCode =>
           val eventualPortFlights = AirportConfigs.confByPort(portCode).terminals.map { terminal =>
             implicit val sourceOrder: List[FeedSource] = paxFeedSourceOrder(portCode)
-            val flightsForDatesAndTerminals = flightDao.flightsForPcpDateRange(portCode, sourceOrder, db.run)
 
             flightsForDatesAndTerminals(dates.min, dates.max, Seq(terminal))
               .runWith(Sink.seq)
