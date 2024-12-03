@@ -30,7 +30,7 @@ object QueueExport {
 
   case class PortQueuesJson(portCode: PortCode, terminals: Iterable[TerminalQueuesJson])
 
-  def queues(queuesForPortAndDatesAndSlotSize: (PortCode, Terminal, LocalDate, LocalDate) => Source[(UtcDate, Seq[CrunchMinute]), NotUsed])
+  def queues(queuesForPortAndDatesAndSlotSize: (PortCode, Terminal, LocalDate, LocalDate) => Source[CrunchMinute, NotUsed])
             (implicit ec: ExecutionContext, mat: Materializer): (Seq[PortCode], Int) => (SDateLike, SDateLike) => Future[QueueJsonResponse] =
     (portCodes, slotSize) => (start, end) => {
       if (slotSize % defaultSlotSize != 0) throw new IllegalArgumentException(s"Slot size must be a multiple of $defaultSlotSize minutes. Got $slotSize")
@@ -40,25 +40,23 @@ object QueueExport {
 
       Source(portCodes)
         .mapAsync(1) { portCode =>
-          val eventualPortQueueSlots = AirportConfigs.confByPort(portCode).terminals.map { terminal =>
+          val eventualPortQueueSlots = AirportConfigs.confByPort(portCode)
+            .terminals.map { terminal =>
+              queuesForPortAndDatesAndSlotSize(portCode, terminal, dates.min, dates.max)
+                .runWith(Sink.seq)
+                .map { mins: Seq[CrunchMinute] =>
+                  val minsInRange = mins.filter(m => start.millisSinceEpoch <= m.minute && m.minute < end.millisSinceEpoch)
 
-            queuesForPortAndDatesAndSlotSize(portCode, terminal, dates.min, dates.max)
-              .runWith(Sink.seq)
-              .map { r: Seq[(UtcDate, Seq[CrunchMinute])] =>
-                val periodJsons = r
-                  .map(_._2.filter(m => start.millisSinceEpoch <= m.minute && m.minute < end.millisSinceEpoch))
-                  .flatMap { mins =>
-                    val byMinute = terminalMinutesByMinute(mins, terminal)
-                    val grouped = groupCrunchMinutesBy(groupSize)(byMinute, terminal, Queues.queueOrder)
-                    grouped.map {
-                      case (minute, queueMinutes) =>
-                        val queues = queueMinutes.map(QueueJson.apply)
-                        PeriodJson(SDate(minute), queues)
-                    }
+                  val byMinute = terminalMinutesByMinute(minsInRange, terminal)
+                  val grouped = groupCrunchMinutesBy(groupSize)(byMinute, terminal, Queues.queueOrder)
+                  val periodJsons = grouped.map {
+                    case (minute, queueMinutes) =>
+                      val queues = queueMinutes.map(QueueJson.apply)
+                      PeriodJson(SDate(minute), queues)
                   }
-                TerminalQueuesJson(terminal, periodJsons)
-              }
-          }
+                  TerminalQueuesJson(terminal, periodJsons)
+                }
+            }
 
           Future
             .sequence(eventualPortQueueSlots)

@@ -1,12 +1,12 @@
 package uk.gov.homeoffice.drt.services.api.v1.serialiser
 
 import spray.json._
+import uk.gov.homeoffice.drt.json.SDateLikeJsonFormats.SDateLikeJsonFormat
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Queues.Queue
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.QueueJsonResponse
 import uk.gov.homeoffice.drt.services.api.v1.QueueExport.{PeriodJson, PortQueuesJson, QueueJson, TerminalQueuesJson}
-import uk.gov.homeoffice.drt.time.{SDate, SDateLike}
 
 trait QueueApiV1JsonFormats extends DefaultJsonProtocol {
 
@@ -20,15 +20,6 @@ trait QueueApiV1JsonFormats extends DefaultJsonProtocol {
   }
 
   implicit val queueJsonFormat: RootJsonFormat[QueueJson] = jsonFormat3(QueueJson.apply)
-
-  implicit object SDateJsonFormat extends RootJsonFormat[SDateLike] {
-    override def write(obj: SDateLike): JsValue = obj.toISOString.toJson
-
-    override def read(json: JsValue): SDateLike = json match {
-      case JsString(value) => SDate(value)
-      case unexpected => throw new Exception(s"Failed to parse SDate. Expected JsNumber. Got ${unexpected.getClass}")
-    }
-  }
 
   implicit val periodJsonFormat: RootJsonFormat[PeriodJson] = jsonFormat2(PeriodJson.apply)
 

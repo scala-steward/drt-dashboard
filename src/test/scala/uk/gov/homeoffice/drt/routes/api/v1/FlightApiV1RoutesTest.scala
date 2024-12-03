@@ -13,6 +13,7 @@ import uk.gov.homeoffice.drt.ports.Terminals.T2
 import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.FlightJsonResponse
 import uk.gov.homeoffice.drt.services.api.v1.FlightExport.{FlightJson, PortFlightsJson, TerminalFlightsJson}
 import uk.gov.homeoffice.drt.services.api.v1.serialiser.FlightApiV1JsonFormats
+import uk.gov.homeoffice.drt.time.SDate
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -43,7 +44,7 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
   "Given a request for the flight status, I should see a JSON response containing the flight status" in {
     val routes = FlightApiV1Routes(
       enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
-      dateRangeJsonForPorts = _ => (_, _) => Future.successful(FlightJsonResponse(start, end, Seq(portFlightJsonLhr, portFlightJsonLhr))),
+      dateRangeJsonForPorts = _ => (_, _) => Future.successful(FlightJsonResponse(SDate(start), SDate(end), Seq(portFlightJsonLhr, portFlightJsonLhr))),
     )
 
     Get("/flights?start=" + start + "&end=" + end) ~>
@@ -51,7 +52,7 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
       routes ~> check {
 
-      val expected = FlightApiV1Routes.FlightJsonResponse(start, end, Seq(portFlightJsonLhr, portFlightJsonLhr))
+      val expected = FlightApiV1Routes.FlightJsonResponse(SDate(start), SDate(end), Seq(portFlightJsonLhr, portFlightJsonLhr))
       responseAs[String] shouldEqual expected.toJson.compactPrint
     }
   }
@@ -77,7 +78,7 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
       enabledPorts = Seq(PortCode("LHR")),
       dateRangeJsonForPorts = portCodes => (_, _) => {
         probe.ref ! portCodes
-        Future.successful(FlightJsonResponse(start, end, Seq.empty))
+        Future.successful(FlightJsonResponse(SDate(start), SDate(end), Seq.empty))
       },
     )
 
@@ -92,7 +93,7 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
   "Given a request from a user without access to the flight api, the response should be 403" in {
     val routes = FlightApiV1Routes(
       enabledPorts = Seq(PortCode("LHR")),
-      dateRangeJsonForPorts = _ => (_, _) => Future.successful(FlightJsonResponse(start, end, Seq.empty)),
+      dateRangeJsonForPorts = _ => (_, _) => Future.successful(FlightJsonResponse(SDate(start), SDate(end), Seq.empty)),
     )
 
     Get("/flights?start=" + start + "&end=" + end) ~>

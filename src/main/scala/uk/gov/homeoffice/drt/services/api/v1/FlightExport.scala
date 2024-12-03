@@ -5,14 +5,12 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
 import uk.gov.homeoffice.drt.Server.paxFeedSourceOrder
 import uk.gov.homeoffice.drt.arrivals.{ApiFlightWithSplits, Arrival}
-import uk.gov.homeoffice.drt.db.AppDatabase
-import uk.gov.homeoffice.drt.db.dao.FlightDao
-import uk.gov.homeoffice.drt.ports.{FeedSource, PortCode}
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
+import uk.gov.homeoffice.drt.ports.{FeedSource, PortCode}
 import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.FlightJsonResponse
 import uk.gov.homeoffice.drt.services.AirportInfoService
-import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike, UtcDate}
+import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike}
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
@@ -50,7 +48,7 @@ object FlightExport {
 
   case class PortFlightsJson(portCode: PortCode, terminals: Iterable[TerminalFlightsJson])
 
-  def flights(flightsForDatesAndTerminals: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[(UtcDate, Seq[ApiFlightWithSplits]), NotUsed])
+  def flights(flightsForDatesAndTerminals: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[ApiFlightWithSplits, NotUsed])
              (implicit ec: ExecutionContext, mat: Materializer): Seq[PortCode] => (SDateLike, SDateLike) => Future[FlightJsonResponse] =
     portCodes => (start, end) => {
       val dates = Set(start.toLocalDate, end.toLocalDate)
@@ -60,14 +58,13 @@ object FlightExport {
           val eventualPortFlights = AirportConfigs.confByPort(portCode).terminals.map { terminal =>
             implicit val sourceOrder: List[FeedSource] = paxFeedSourceOrder(portCode)
 
-            flightsForDatesAndTerminals(dates.min, dates.max, Seq(terminal))
+            flightsForDatesAndTerminals(portCode, sourceOrder, dates.min, dates.max, Seq(terminal))
               .runWith(Sink.seq)
               .map { r =>
-                val relevantFlights = r.flatMap { case (_, flights) =>
-                  flights
-                    .filter(_.apiFlight.hasPcpDuring(start, end, sourceOrder))
-                    .map(f => FlightJson(f.apiFlight))
-                }
+                val relevantFlights = r
+                  .filter(_.apiFlight.hasPcpDuring(start, end, sourceOrder))
+                  .map(f => FlightJson(f.apiFlight))
+
                 TerminalFlightsJson(terminal, relevantFlights)
               }
           }
@@ -77,6 +74,6 @@ object FlightExport {
             .map(PortFlightsJson(portCode, _))
         }
         .runWith(Sink.seq)
-        .map(FlightJsonResponse(start.toISOString, end.toISOString, _))
+        .map(FlightJsonResponse(start, end, _))
     }
 }

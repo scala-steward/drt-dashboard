@@ -59,7 +59,7 @@ class QueueApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRoute
       },
     )
 
-    Get("/queues?start=" + start + "&end=" + end) ~>
+    Get("/queues?start=" + start.toISOString + "&end=" + end.toISOString) ~>
       RawHeader("X-Forwarded-Groups", "LHR,LGW,api-queue-access") ~>
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
       routes ~> check {
@@ -73,7 +73,7 @@ class QueueApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRoute
       dateRangeJsonForPortsAndSlotSize = (_, _) => (_, _) => Future.failed(new Exception("Failed to get flights")),
     )
 
-    Get("/queues?start=" + start + "&end=" + end) ~>
+    Get("/queues?start=" + start.toISOString + "&end=" + end.toISOString) ~>
       RawHeader("X-Forwarded-Groups", "LHR,LGW,api-queue-access") ~>
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
       routes ~> check {
@@ -92,7 +92,7 @@ class QueueApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRoute
       },
     )
 
-    Get("/queues?start=" + start + "&end=" + end) ~>
+    Get("/queues?start=" + start.toISOString + "&end=" + end.toISOString) ~>
       RawHeader("X-Forwarded-Groups", "LHR,LGW,STN,api-queue-access") ~>
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
       routes ~> check {
@@ -106,7 +106,7 @@ class QueueApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRoute
       dateRangeJsonForPortsAndSlotSize = (_, _) => (_, _) => Future.successful(QueueJsonResponse(start, end, defaultSlotSizeMinutes, Seq(portQueueJsonLhr, portQueueJsonLhr))),
     )
 
-    Get("/queues?start=" + start + "&end=" + end) ~>
+    Get("/queues?start=" + start.toISOString + "&end=" + end.toISOString) ~>
       RawHeader("X-Forwarded-Groups", "LHR") ~>
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
       routes ~> check {

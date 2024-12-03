@@ -20,7 +20,7 @@ import scala.util.{Failure, Success}
 object FlightApiV1Routes extends DefaultJsonProtocol with FlightApiV1JsonFormats {
   private val log = LoggerFactory.getLogger(getClass)
 
-  case class FlightJsonResponse(startTime: String, endTime: String, ports: Seq[PortFlightsJson])
+  case class FlightJsonResponse(startTime: SDateLike, endTime: SDateLike, ports: Seq[PortFlightsJson])
 
   def apply(enabledPorts: Iterable[PortCode],
             dateRangeJsonForPorts: Seq[PortCode] => (SDateLike, SDateLike) => Future[FlightJsonResponse]): Route =

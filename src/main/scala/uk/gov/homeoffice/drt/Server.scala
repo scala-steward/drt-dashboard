@@ -154,14 +154,20 @@ object Server {
 
       val keyCloakAuth = KeyCloakAuth(config.keycloakTokenUrl, config.keycloakClientId, config.keycloakClientSecret, sendHttpRequest)
 
-      val queuesForPortAndDatesAndSlotSize: (PortCode, Terminal, LocalDate, LocalDate) => Source[(UtcDate, Seq[CrunchMinute]), NotUsed] = {
+      val queuesForPortAndDatesAndSlotSize: (PortCode, Terminal, LocalDate, LocalDate) => Source[CrunchMinute, NotUsed] = {
         (port, terminal, start, end) =>
-          QueueSlotDao().queueSlotsForDateRange(port, defaultQueueSlotMinutes, db.run)(start, end, Seq(terminal))
+          QueueSlotDao()
+            .queueSlotsForDateRange(port, defaultQueueSlotMinutes, db.run)(start, end, Seq(terminal))
+            .map(_._2)
+            .mapConcat(identity)
       }
 
-      val flightsForDatesAndTerminals: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[(UtcDate, Seq[ApiFlightWithSplits]), NotUsed] =
+      val flightsForDatesAndTerminals: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[ApiFlightWithSplits, NotUsed] =
         (portCode, sourceOrder, start, end, terminals) =>
-          FlightDao().flightsForPcpDateRange(portCode, sourceOrder, db.run)(start, end, terminals)
+          FlightDao()
+            .flightsForPcpDateRange(portCode, sourceOrder, db.run)(start, end, terminals)
+            .map(_._2)
+            .mapConcat(identity)
 
       val routes: Route = concat(
         pathPrefix("api") {

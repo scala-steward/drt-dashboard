@@ -68,9 +68,8 @@ class QueueExportTest extends AnyWordSpec with Matchers {
       val system = ActorSystem("QueueExportSpec")
       implicit val mat: Materializer = Materializer(system)
 
-      val source: (PortCode, Terminal, LocalDate, LocalDate) => Source[(UtcDate, Seq[CrunchMinute]), NotUsed] = (_: PortCode, _: Terminal, _: LocalDate, _: LocalDate) => {
+      val source: (PortCode, Terminal, LocalDate, LocalDate) => Source[CrunchMinute, NotUsed] = (_: PortCode, _: Terminal, _: LocalDate, _: LocalDate) => {
         Source(List(
-          utcDate -> Seq(
             CrunchMinute(T1, EeaDesk, start.addMinutes(-15).millisSinceEpoch, 10d, 0d, 0, 0, None, None, None, None, None, None, None),
             CrunchMinute(T1, NonEeaDesk, start.addMinutes(-15).millisSinceEpoch, 12d, 0d, 0, 0, None, None, None, None, None, None, None),
             CrunchMinute(T1, EGate, start.addMinutes(-15).millisSinceEpoch, 14d, 0d, 0, 0, None, None, None, None, None, None, None),
@@ -83,7 +82,6 @@ class QueueExportTest extends AnyWordSpec with Matchers {
             CrunchMinute(T1, EeaDesk, start.addMinutes(30).millisSinceEpoch, 10d, 0d, 0, 0, None, None, None, None, None, None, None),
             CrunchMinute(T1, NonEeaDesk, start.addMinutes(30).millisSinceEpoch, 12d, 0d, 0, 0, None, None, None, None, None, None, None),
             CrunchMinute(T1, EGate, start.addMinutes(30).millisSinceEpoch, 14d, 0d, 0, 0, None, None, None, None, None, None, None),
-          ),
         ))
       }
       val export = QueueExport.queues(source)
@@ -98,7 +96,7 @@ class QueueExportTest extends AnyWordSpec with Matchers {
               Set(
                 TerminalQueuesJson(
                   T1,
-                  Seq(
+                  Vector(
                     PeriodJson(start, Seq(
                       QueueJson(EGate, 14, 0),
                       QueueJson(EeaDesk, 10, 0),
