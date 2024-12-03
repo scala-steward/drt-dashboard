@@ -3,7 +3,7 @@ package uk.gov.homeoffice.drt.json
 import spray.json.{DefaultJsonProtocol, JsString, JsValue, RootJsonFormat}
 import uk.gov.homeoffice.drt.exports._
 import uk.gov.homeoffice.drt.json.LocalDateJsonFormats.LocalDateJsonFormat
-import uk.gov.homeoffice.drt.json.SDateLikeJsonFormats.SDateLikeJsonFormat
+import uk.gov.homeoffice.drt.json.SDateLikeJsonFormats.SDateLikeTimestampJsonFormat
 import uk.gov.homeoffice.drt.models.Export
 import uk.gov.homeoffice.drt.routes.ExportRoutes.ExportRequest
 

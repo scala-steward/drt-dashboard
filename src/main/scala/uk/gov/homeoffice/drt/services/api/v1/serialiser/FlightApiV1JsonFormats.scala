@@ -1,14 +1,11 @@
 package uk.gov.homeoffice.drt.services.api.v1.serialiser
 
-import spray.json.{DefaultJsonProtocol, JsObject, JsString, JsValue, RootJsonFormat, enrichAny}
-import uk.gov.homeoffice.drt.json.SDateLikeJsonFormats.SDateLikeJsonFormat
-import uk.gov.homeoffice.drt.ports.PortCode
-import uk.gov.homeoffice.drt.ports.Terminals.Terminal
+import spray.json.{DefaultJsonProtocol, JsObject, JsValue, RootJsonFormat, enrichAny}
 import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.FlightJsonResponse
 import uk.gov.homeoffice.drt.services.api.v1.FlightExport.{FlightJson, PortFlightsJson, TerminalFlightsJson}
 import uk.gov.homeoffice.drt.time.SDate
 
-trait FlightApiV1JsonFormats extends DefaultJsonProtocol {
+trait FlightApiV1JsonFormats extends DefaultJsonProtocol with CommonJsonFormats {
   implicit object FlightJsonJsonFormat extends RootJsonFormat[FlightJson] {
     override def write(obj: FlightJson): JsValue = {
       val maybePax = obj.estimatedPaxCount.filter(_ > 0)
@@ -45,28 +42,10 @@ trait FlightApiV1JsonFormats extends DefaultJsonProtocol {
 
   implicit val flightJsonFormat: RootJsonFormat[FlightJson] = jsonFormat10(FlightJson.apply)
 
-  implicit object TerminalJsonFormat extends RootJsonFormat[Terminal] {
-    override def write(obj: Terminal): JsValue = obj.toString.toJson
-
-    override def read(json: JsValue): Terminal = json match {
-      case JsString(value) => Terminal(value)
-      case unexpected => throw new Exception(s"Failed to parse Terminal. Expected JsString. Got ${unexpected.getClass}")
-    }
-  }
-
   implicit val terminalFlightsJsonFormat: RootJsonFormat[TerminalFlightsJson] = jsonFormat2(TerminalFlightsJson.apply)
 
-  implicit object PortCodeJsonFormat extends RootJsonFormat[PortCode] {
-    override def write(obj: PortCode): JsValue = obj.iata.toJson
-
-    override def read(json: JsValue): PortCode = json match {
-      case JsString(value) => PortCode(value)
-      case unexpected => throw new Exception(s"Failed to parse Terminal. Expected JsString. Got ${unexpected.getClass}")
-    }
-  }
-
-
   implicit val portFlightsJsonFormat: RootJsonFormat[PortFlightsJson] = jsonFormat2(PortFlightsJson.apply)
+
   implicit object jsonResponseFormat extends RootJsonFormat[FlightJsonResponse] {
 
     override def write(obj: FlightJsonResponse): JsValue = JsObject(Map(
