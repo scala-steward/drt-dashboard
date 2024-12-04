@@ -14,14 +14,6 @@ import scala.util.{Failure, Success}
 object AuthApiV1Routes extends db.UserAccessRequestJsonSupport with KeyCloakAuthTokenParserProtocol {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
-  trait JsonResponse {
-    def startTime: String
-
-    def endTime: String
-
-    def ports: Seq[String]
-  }
-
   case class Credentials(username: String, password: String)
 
   implicit val credentialsJsonFormat: RootJsonFormat[Credentials] = jsonFormat2(Credentials)

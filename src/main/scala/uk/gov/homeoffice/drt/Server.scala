@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.drt
 
+import akka.NotUsed
 import akka.actor.Cancellable
 import akka.actor.typed.scaladsl.AskPattern.{Askable, schedulerFromActorSystem}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
@@ -11,21 +12,25 @@ import akka.http.scaladsl.server.Directives.{concat, getFromResource, pathPrefix
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.settings.ConnectionPoolSettings
 import akka.stream.Materializer
+import akka.stream.scaladsl.Source
 import akka.util.Timeout
 import org.slf4j.LoggerFactory
+import uk.gov.homeoffice.drt.arrivals.ApiFlightWithSplits
 import uk.gov.homeoffice.drt.db._
-import uk.gov.homeoffice.drt.db.dao.UserFeedbackDao
+import uk.gov.homeoffice.drt.db.dao.{FlightDao, QueueSlotDao, UserFeedbackDao}
 import uk.gov.homeoffice.drt.healthchecks._
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuth
+import uk.gov.homeoffice.drt.model.CrunchMinute
 import uk.gov.homeoffice.drt.notifications._
 import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealthCheckPausePersistenceImpl}
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
-import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
+import uk.gov.homeoffice.drt.ports._
 import uk.gov.homeoffice.drt.routes._
 import uk.gov.homeoffice.drt.routes.api.v1.{AuthApiV1Routes, FlightApiV1Routes, QueueApiV1Routes}
+import uk.gov.homeoffice.drt.services.api.v1.{FlightExport, QueueExport}
 import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{PassengerSummaryStreams, UserRequestService, UserService}
-import uk.gov.homeoffice.drt.time.SDate
+import uk.gov.homeoffice.drt.time.{LocalDate, SDate, UtcDate}
 import uk.gov.homeoffice.drt.uploadTraining.FeatureGuideService
 
 import scala.concurrent.duration.DurationInt
@@ -88,6 +93,26 @@ object Server {
     ArrivalLandingTimesHealthCheck(windowLength = 2.hours, buffer = 20, minimumFlights = 3, passThresholdPercentage = 50, SDate.now),
   )
 
+  private val nonMlPaxPorts = Set("ABZ", "EXT", "HUY", "INV", "LHR", "MME", "NQY", "NWI", "PIK", "SEN")
+
+  val paxFeedSourceOrder: PortCode => List[FeedSource] =
+    portCode => if (!nonMlPaxPorts.contains(portCode.iata)) List(
+      ScenarioSimulationSource,
+      LiveFeedSource,
+      ApiFeedSource,
+      MlFeedSource,
+      ForecastFeedSource,
+      HistoricApiFeedSource,
+      AclFeedSource,
+    ) else List(
+      ScenarioSimulationSource,
+      LiveFeedSource,
+      ApiFeedSource,
+      ForecastFeedSource,
+      HistoricApiFeedSource,
+      AclFeedSource,
+    )
+
   def apply(config: ServerConfig,
             notifications: EmailNotifications,
             emailClient: EmailClient,
@@ -101,6 +126,7 @@ object Server {
 
       val now = () => SDate.now()
 
+      val defaultQueueSlotMinutes = 15
       val urls = Urls(config.rootDomain, config.useHttps)
       val userRequestService = UserRequestService(UserAccessRequestDao(ProdDatabase.db))
       val userService = UserService(UserDao(ProdDatabase.db))
@@ -128,13 +154,28 @@ object Server {
 
       val keyCloakAuth = KeyCloakAuth(config.keycloakTokenUrl, config.keycloakClientId, config.keycloakClientSecret, sendHttpRequest)
 
+      val queuesForPortAndDatesAndSlotSize: (PortCode, Terminal, LocalDate, LocalDate) => Source[CrunchMinute, NotUsed] = {
+        (port, terminal, start, end) =>
+          QueueSlotDao()
+            .queueSlotsForDateRange(port, defaultQueueSlotMinutes, db.run)(start, end, Seq(terminal))
+            .map(_._2)
+            .mapConcat(identity)
+      }
+
+      val flightsForDatesAndTerminals: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[ApiFlightWithSplits, NotUsed] =
+        (portCode, sourceOrder, start, end, terminals) =>
+          FlightDao()
+            .flightsForPcpDateRange(portCode, sourceOrder, db.run)(start, end, terminals)
+            .map(_._2)
+            .mapConcat(identity)
+
       val routes: Route = concat(
         pathPrefix("api") {
           concat(
             pathPrefix("v1") {
               concat(
-                QueueApiV1Routes(httpClient, config.enabledPorts),
-                FlightApiV1Routes(httpClient, config.enabledPorts),
+                QueueApiV1Routes(config.enabledPorts, QueueExport.queues(queuesForPortAndDatesAndSlotSize)),
+                FlightApiV1Routes(config.enabledPorts, FlightExport.flights(flightsForDatesAndTerminals)),
                 AuthApiV1Routes(keyCloakAuth.getToken),
               )
             },

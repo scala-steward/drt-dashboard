@@ -1,49 +1,48 @@
 package uk.gov.homeoffice.drt.routes.api.v1
 
+import akka.http.scaladsl.model.StatusCodes.InternalServerError
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import akka.stream.Materializer
+import org.slf4j.LoggerFactory
 import spray.json._
 import uk.gov.homeoffice.drt.auth.Roles.ApiFlightAccess
+import uk.gov.homeoffice.drt.authentication.User
 import uk.gov.homeoffice.drt.ports.PortCode
-import uk.gov.homeoffice.drt.routes.api.v1.AuthApiV1Routes.JsonResponse
 import uk.gov.homeoffice.drt.routes.services.AuthByRole
-import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
+import uk.gov.homeoffice.drt.services.api.v1.FlightExport.PortFlightsJson
+import uk.gov.homeoffice.drt.services.api.v1.serialiser.FlightApiV1JsonFormats
+import uk.gov.homeoffice.drt.time.{SDate, SDateLike}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.Future
+import scala.util.{Failure, Success}
 
 
-trait FlightApiV1JsonFormats extends DefaultJsonProtocol {
-  implicit object jsonResponseFormat extends RootJsonFormat[JsonResponse] {
+object FlightApiV1Routes extends DefaultJsonProtocol with FlightApiV1JsonFormats {
+  private val log = LoggerFactory.getLogger(getClass)
 
-    override def write(obj: JsonResponse): JsValue = JsObject(Map(
-      "startTime" -> obj.startTime.toJson,
-      "endTime" -> obj.endTime.toJson,
-      "ports" -> JsArray(obj.ports.map(_.parseJson).toVector),
-    ))
+  case class FlightJsonResponse(startTime: SDateLike, endTime: SDateLike, ports: Seq[PortFlightsJson])
 
-    override def read(json: JsValue): JsonResponse = throw new Exception("Not implemented")
-  }
-}
-
-object FlightApiV1Routes extends DefaultJsonProtocol with ApiV1Routes with FlightApiV1JsonFormats {
-
-  case class FlightJsonResponse(startTime: String, endTime: String, ports: Seq[String]) extends JsonResponse
-
-  def apply(httpClient: HttpClient, enabledPorts: Iterable[PortCode])
-           (implicit ec: ExecutionContext, mat: Materializer): Route =
+  def apply(enabledPorts: Iterable[PortCode],
+            dateRangeJsonForPorts: Seq[PortCode] => (SDateLike, SDateLike) => Future[FlightJsonResponse]): Route =
     AuthByRole(ApiFlightAccess) {
       (get & path("flights")) {
         pathEnd(
           headerValueByName("X-Forwarded-Email") { email =>
             headerValueByName("X-Forwarded-Groups") { groups =>
               parameters("start", "end") { (startStr, endStr) =>
-                val portUri: PortCode => String =
-                  portCode => s"${Dashboard.drtInternalUriForPortCode(portCode)}/api/v1/flights?start=$startStr&end=$endStr"
-                val jsonResponse: (String, String, Seq[String]) => JsonResponse =
-                  (startTime, endTime, ports) => FlightJsonResponse(startTime, endTime, ports)
+                val user = User.fromRoles(email, groups)
+                val ports = enabledPorts.filter(user.accessiblePorts.contains(_)).toList
+                val dateRangeJson = dateRangeJsonForPorts(ports)
 
-                multiPortResponse(httpClient, enabledPorts, email, groups, portUri, jsonResponse, startStr, endStr)
+                val start = SDate(startStr)
+                val end = SDate(endStr)
+
+                onComplete(dateRangeJson(start, end)) {
+                  case Success(value) => complete(value.toJson.compactPrint)
+                  case Failure(t) =>
+                    log.error(s"Failed to get export: ${t.getMessage}")
+                    complete(InternalServerError)
+                }
               }
             }
           }

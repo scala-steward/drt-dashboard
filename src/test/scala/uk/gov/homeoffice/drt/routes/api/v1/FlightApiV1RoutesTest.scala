@@ -8,11 +8,12 @@ import akka.stream.Materializer
 import akka.testkit.TestProbe
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import spray.json.enrichAny
 import uk.gov.homeoffice.drt.ports.PortCode
-import uk.gov.homeoffice.drt.routes.api.v1.AuthApiV1Routes.JsonResponse
-import uk.gov.homeoffice.drt.routes.api.v1.RouteTestHelper.requestPortAndUriExist
-import uk.gov.homeoffice.drt.{MockHttpClient, ProdHttpClient}
+import uk.gov.homeoffice.drt.ports.Terminals.T2
+import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.FlightJsonResponse
+import uk.gov.homeoffice.drt.services.api.v1.FlightExport.{FlightJson, PortFlightsJson, TerminalFlightsJson}
+import uk.gov.homeoffice.drt.services.api.v1.serialiser.FlightApiV1JsonFormats
+import uk.gov.homeoffice.drt.time.SDate
 
 import scala.concurrent.{ExecutionContextExecutor, Future}
 
@@ -24,11 +25,26 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
   val start = "2024-10-20T10:00"
   val end = "2024-10-20T12:00"
 
+  val flightJson: FlightJson = FlightJson(
+    "BA0001",
+    "LHR",
+    "Heathrow",
+    1600000000000L,
+    Some(1600000000000L),
+    Some(1600000000000L),
+    Some(1600000000000L),
+    Some(1600000000000L),
+    Option(100),
+    "scheduled"
+  )
+  val terminalFlightJson: TerminalFlightsJson = TerminalFlightsJson(T2, Seq(flightJson))
+  val portFlightJsonLhr: PortFlightsJson = PortFlightsJson(PortCode("LHR"), Seq(terminalFlightJson))
+  val portFlightJsonStn: PortFlightsJson = PortFlightsJson(PortCode("STN"), Seq(terminalFlightJson))
+
   "Given a request for the flight status, I should see a JSON response containing the flight status" in {
-    val portContent = """["some content"]"""
     val routes = FlightApiV1Routes(
-      httpClient = MockHttpClient(() => portContent),
       enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
+      dateRangeJsonForPorts = _ => (_, _) => Future.successful(FlightJsonResponse(SDate(start), SDate(end), Seq(portFlightJsonLhr, portFlightJsonLhr))),
     )
 
     Get("/flights?start=" + start + "&end=" + end) ~>
@@ -36,15 +52,15 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
       routes ~> check {
 
-      val expected: JsonResponse = FlightApiV1Routes.FlightJsonResponse(start, end, Seq(portContent, portContent))
+      val expected = FlightApiV1Routes.FlightJsonResponse(SDate(start), SDate(end), Seq(portFlightJsonLhr, portFlightJsonLhr))
       responseAs[String] shouldEqual expected.toJson.compactPrint
     }
   }
 
   "Given a failed response from a port the response status should be 500" in {
     val routes = FlightApiV1Routes(
-      httpClient = ProdHttpClient(_ => Future.failed(new RuntimeException("Failed to connect"))),
       enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
+      dateRangeJsonForPorts = _ => (_, _) => Future.failed(new Exception("Failed to get flights")),
     )
 
     Get("/flights?start=" + start + "&end=" + end) ~>
@@ -56,23 +72,29 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
     }
   }
 
-  "Given a request from a user with access to some ports that are not enabled, the response should only contain the enabled ports" in {
-    val probe = TestProbe("flightApiV1Routes")
-    val portContent = """["some content"]"""
-    val routes = FlightApiV1Routes(httpClient = MockHttpClient(() => portContent, maybeProbe = Option(probe)), enabledPorts = Seq(PortCode("LHR")))
+  "Given a request from a user with access to some ports that are not enabled, only the enabled ports should be passed to the source function" in {
+    val probe = TestProbe("flight-source")
+    val routes = FlightApiV1Routes(
+      enabledPorts = Seq(PortCode("LHR")),
+      dateRangeJsonForPorts = portCodes => (_, _) => {
+        probe.ref ! portCodes
+        Future.successful(FlightJsonResponse(SDate(start), SDate(end), Seq.empty))
+      },
+    )
 
     Get("/flights?start=" + start + "&end=" + end) ~>
       RawHeader("X-Forwarded-Groups", "LHR,LGW,STN,api-flight-access") ~>
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
       routes ~> check {
-
-      requestPortAndUriExist(probe, "lhr", s"start=$start&end=$end")
+      probe.expectMsg(Seq(PortCode("LHR")))
     }
   }
 
   "Given a request from a user without access to the flight api, the response should be 403" in {
-    val portContent = """["some content"]"""
-    val routes = FlightApiV1Routes(httpClient = MockHttpClient(() => portContent), enabledPorts = Seq(PortCode("LHR")))
+    val routes = FlightApiV1Routes(
+      enabledPorts = Seq(PortCode("LHR")),
+      dateRangeJsonForPorts = _ => (_, _) => Future.successful(FlightJsonResponse(SDate(start), SDate(end), Seq.empty)),
+    )
 
     Get("/flights?start=" + start + "&end=" + end) ~>
       RawHeader("X-Forwarded-Groups", "LHR") ~>
