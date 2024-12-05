@@ -9,9 +9,7 @@ import akka.testkit.TestProbe
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import uk.gov.homeoffice.drt.ports.PortCode
-import uk.gov.homeoffice.drt.ports.Terminals.T2
-import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.FlightJsonResponse
-import uk.gov.homeoffice.drt.services.api.v1.FlightExport.{FlightJson, PortFlightsJson, TerminalFlightsJson}
+import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.{FlightJson, FlightJsonResponse}
 import uk.gov.homeoffice.drt.services.api.v1.serialiser.FlightApiV1JsonFormats
 import uk.gov.homeoffice.drt.time.SDate
 
@@ -26,8 +24,10 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
   val end = "2024-10-20T12:00"
 
   val flightJson: FlightJson = FlightJson(
-    "BA0001",
     "LHR",
+    "T2",
+    "BA0001",
+    "JFK",
     "Heathrow",
     1600000000000L,
     Some(1600000000000L),
@@ -37,14 +37,11 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
     Option(100),
     "scheduled"
   )
-  val terminalFlightJson: TerminalFlightsJson = TerminalFlightsJson(T2, Seq(flightJson))
-  val portFlightJsonLhr: PortFlightsJson = PortFlightsJson(PortCode("LHR"), Seq(terminalFlightJson))
-  val portFlightJsonStn: PortFlightsJson = PortFlightsJson(PortCode("STN"), Seq(terminalFlightJson))
 
   "Given a request for the flight status, I should see a JSON response containing the flight status" in {
     val routes = FlightApiV1Routes(
       enabledPorts = Seq(PortCode("LHR"), PortCode("LGW")),
-      dateRangeJsonForPorts = _ => (_, _) => Future.successful(FlightJsonResponse(SDate(start), SDate(end), Seq(portFlightJsonLhr, portFlightJsonLhr))),
+      dateRangeJsonForPorts = _ => (_, _) => Future.successful(FlightJsonResponse(SDate(start), SDate(end), Seq(flightJson, flightJson))),
     )
 
     Get("/flights?start=" + start + "&end=" + end) ~>
@@ -52,7 +49,7 @@ class FlightApiV1RoutesTest extends AnyWordSpec with Matchers with ScalatestRout
       RawHeader("X-Forwarded-Email", "my@email.com") ~>
       routes ~> check {
 
-      val expected = FlightApiV1Routes.FlightJsonResponse(SDate(start), SDate(end), Seq(portFlightJsonLhr, portFlightJsonLhr))
+      val expected = FlightApiV1Routes.FlightJsonResponse(SDate(start), SDate(end), Seq(flightJson, flightJson))
       responseAs[String] shouldEqual expected.toJson.compactPrint
     }
   }

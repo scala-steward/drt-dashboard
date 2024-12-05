@@ -1,0 +1,267 @@
+{
+  "periodStart": "2024-11-29T10:00:00Z",
+  "periodEnd": "2024-11-29T10:30:00Z",
+  "periodLengthMinutes": 15,
+  "periods": [
+    {
+      "portCode": "STN",
+      "queues": [
+        {
+          "incomingPax": 131,
+          "maxWaitMinutes": 2,
+          "queue": "egate"
+        },
+        {
+          "incomingPax": 55,
+          "maxWaitMinutes": 6,
+          "queue": "eeadesk"
+        },
+        {
+          "incomingPax": 25,
+          "maxWaitMinutes": 22,
+          "queue": "noneeadesk"
+        }
+      ],
+      "slotStartTime": "2024-11-29T10:00:00Z",
+      "terminal": "T1"
+    },
+    {
+      "portCode": "STN",
+      "queues": [
+        {
+          "incomingPax": 175,
+          "maxWaitMinutes": 4,
+          "queue": "egate"
+        },
+        {
+          "incomingPax": 64,
+          "maxWaitMinutes": 12,
+          "queue": "eeadesk"
+        },
+        {
+          "incomingPax": 15,
+          "maxWaitMinutes": 27,
+          "queue": "noneeadesk"
+        }
+      ],
+      "slotStartTime": "2024-11-29T10:15:00Z",
+      "terminal": "T1"
+    },
+    {
+      "portCode": "LHR",
+      "queues": [
+        {
+          "incomingPax": 0,
+          "maxWaitMinutes": 0,
+          "queue": "egate"
+        },
+        {
+          "incomingPax": 0,
+          "maxWaitMinutes": 0,
+          "queue": "eeadesk"
+        },
+        {
+          "incomingPax": 0,
+          "maxWaitMinutes": 40,
+          "queue": "noneeadesk"
+        },
+        {
+          "incomingPax": 0,
+          "maxWaitMinutes": 0,
+          "queue": "fasttrack"
+        }
+      ],
+      "slotStartTime": "2024-11-29T10:00:00Z",
+      "terminal": "T4"
+    },
+    {
+      "portCode": "LHR",
+      "queues": [
+        {
+          "incomingPax": 377,
+          "maxWaitMinutes": 7,
+          "queue": "egate"
+        },
+        {
+          "incomingPax": 159,
+          "maxWaitMinutes": 9,
+          "queue": "eeadesk"
+        },
+        {
+          "incomingPax": 15,
+          "maxWaitMinutes": 23,
+          "queue": "noneeadesk"
+        },
+        {
+          "incomingPax": 0,
+          "maxWaitMinutes": 0,
+          "queue": "fasttrack"
+        }
+      ],
+      "slotStartTime": "2024-11-29T10:00:00Z",
+      "terminal": "T2"
+    },
+    {
+      "portCode": "LHR",
+      "queues": [
+        {
+          "incomingPax": 99,
+          "maxWaitMinutes": 8,
+          "queue": "egate"
+        },
+        {
+          "incomingPax": 33,
+          "maxWaitMinutes": 16,
+          "queue": "eeadesk"
+        },
+        {
+          "incomingPax": 159,
+          "maxWaitMinutes": 10,
+          "queue": "noneeadesk"
+        },
+        {
+          "incomingPax": 0,
+          "maxWaitMinutes": 0,
+          "queue": "fasttrack"
+        }
+      ],
+      "slotStartTime": "2024-11-29T10:15:00Z",
+      "terminal": "T2"
+    },
+    {
+      "portCode": "LHR",
+      "queues": [
+        {
+          "incomingPax": 433,
+          "maxWaitMinutes": 10,
+          "queue": "egate"
+        },
+        {
+          "incomingPax": 105,
+          "maxWaitMinutes": 8,
+          "queue": "eeadesk"
+        },
+        {
+          "incomingPax": 51,
+          "maxWaitMinutes": 15,
+          "queue": "noneeadesk"
+        },
+        {
+          "incomingPax": 0,
+          "maxWaitMinutes": 0,
+          "queue": "fasttrack"
+        }
+      ],
+      "slotStartTime": "2024-11-29T10:00:00Z",
+      "terminal": "T3"
+    },
+    {
+      "portCode": "LHR",
+      "queues": [
+        {
+          "incomingPax": 117,
+          "maxWaitMinutes": 3,
+          "queue": "egate"
+        },
+        {
+          "incomingPax": 6,
+          "maxWaitMinutes": 19,
+          "queue": "eeadesk"
+        },
+        {
+          "incomingPax": 6,
+          "maxWaitMinutes": 26,
+          "queue": "noneeadesk"
+        },
+        {
+          "incomingPax": 0,
+          "maxWaitMinutes": 0,
+          "queue": "fasttrack"
+        }
+      ],
+      "slotStartTime": "2024-11-29T10:00:00Z",
+      "terminal": "T5"
+    },
+    {
+      "portCode": "LHR",
+      "queues": [
+        {
+          "incomingPax": 333,
+          "maxWaitMinutes": 4,
+          "queue": "egate"
+        },
+        {
+          "incomingPax": 39,
+          "maxWaitMinutes": 20,
+          "queue": "eeadesk"
+        },
+        {
+          "incomingPax": 9,
+          "maxWaitMinutes": 12,
+          "queue": "noneeadesk"
+        },
+        {
+          "incomingPax": 0,
+          "maxWaitMinutes": 0,
+          "queue": "fasttrack"
+        }
+      ],
+      "slotStartTime": "2024-11-29T10:15:00Z",
+      "terminal": "T5"
+    },
+    {
+      "portCode": "LHR",
+      "queues": [
+        {
+          "incomingPax": 162,
+          "maxWaitMinutes": 13,
+          "queue": "egate"
+        },
+        {
+          "incomingPax": 35,
+          "maxWaitMinutes": 13,
+          "queue": "eeadesk"
+        },
+        {
+          "incomingPax": 75,
+          "maxWaitMinutes": 19,
+          "queue": "noneeadesk"
+        },
+        {
+          "incomingPax": 0,
+          "maxWaitMinutes": 0,
+          "queue": "fasttrack"
+        }
+      ],
+      "slotStartTime": "2024-11-29T10:15:00Z",
+      "terminal": "T3"
+    },
+    {
+      "portCode": "LHR",
+      "queues": [
+        {
+          "incomingPax": 0,
+          "maxWaitMinutes": 0,
+          "queue": "egate"
+        },
+        {
+          "incomingPax": 0,
+          "maxWaitMinutes": 0,
+          "queue": "eeadesk"
+        },
+        {
+          "incomingPax": 0,
+          "maxWaitMinutes": 37,
+          "queue": "noneeadesk"
+        },
+        {
+          "incomingPax": 0,
+          "maxWaitMinutes": 0,
+          "queue": "fasttrack"
+        }
+      ],
+      "slotStartTime": "2024-11-29T10:15:00Z",
+      "terminal": "T4"
+    }
+  ]
+}

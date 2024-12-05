@@ -1,0 +1,34 @@
+{
+  "periodStart": "2024-11-29T10:00:00Z",
+  "periodEnd": "2024-11-29T12:00:00Z",
+  "flights": [
+    {
+      "actualChocksTime": "2024-11-29T11:18:00Z",
+      "arrivalPortCode": "STN",
+      "arrivalTerminal": "T1",
+      "code": "FR0585",
+      "estimatedLandingTime": "2024-11-29T11:18:00Z",
+      "estimatedPcpEndTime": "2024-11-29T11:39:00Z",
+      "estimatedPcpPaxCount": 172,
+      "estimatedPcpStartTime": "2024-11-29T11:31:00Z",
+      "originPortIata": "PSA",
+      "originPortName": "Pisa",
+      "scheduledTime": "2024-11-29T11:10:00Z",
+      "status": "On Chocks"
+    },
+    {
+      "actualChocksTime": "2024-11-29T09:40:00Z",
+      "arrivalPortCode": "STN",
+      "arrivalTerminal": "T1",
+      "code": "FR8777",
+      "estimatedLandingTime": "2024-11-29T09:41:00Z",
+      "estimatedPcpEndTime": "2024-11-29T10:00:00Z",
+      "estimatedPcpPaxCount": 151,
+      "estimatedPcpStartTime": "2024-11-29T09:53:00Z",
+      "originPortIata": "LIG",
+      "originPortName": "Bellegarde",
+      "scheduledTime": "2024-11-29T09:40:00Z",
+      "status": "On Chocks"
+    },
+  ]
+}
