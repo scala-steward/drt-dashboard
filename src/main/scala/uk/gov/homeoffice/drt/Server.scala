@@ -30,7 +30,7 @@ import uk.gov.homeoffice.drt.routes.api.v1.{AuthApiV1Routes, FlightApiV1Routes, 
 import uk.gov.homeoffice.drt.services.api.v1.{FlightExport, QueueExport}
 import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{PassengerSummaryStreams, UserRequestService, UserService}
-import uk.gov.homeoffice.drt.time.{LocalDate, SDate, UtcDate}
+import uk.gov.homeoffice.drt.time.{LocalDate, SDate}
 import uk.gov.homeoffice.drt.uploadTraining.FeatureGuideService
 
 import scala.concurrent.duration.DurationInt
@@ -162,11 +162,10 @@ object Server {
             .mapConcat(identity)
       }
 
-      val flightsForDatesAndTerminals: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[ApiFlightWithSplits, NotUsed] =
+      val flightsStream: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[ApiFlightWithSplits, NotUsed] =
         (portCode, sourceOrder, start, end, terminals) =>
           FlightDao()
-            .flightsForPcpDateRange(portCode, sourceOrder, db.run)(start, end, terminals)
-            .map(_._2)
+            .uniqueFlightsForDatesAndTerminals(db.run)(portCode, sourceOrder, start, end, terminals)
             .mapConcat(identity)
 
       val routes: Route = concat(
@@ -175,7 +174,7 @@ object Server {
             pathPrefix("v1") {
               concat(
                 QueueApiV1Routes(config.enabledPorts, QueueExport.queues(queuesForPortAndDatesAndSlotSize)),
-                FlightApiV1Routes(config.enabledPorts, FlightExport.flights(flightsForDatesAndTerminals)),
+                FlightApiV1Routes(config.enabledPorts, FlightExport.flights(flightsStream)),
                 AuthApiV1Routes(keyCloakAuth.getToken),
               )
             },
