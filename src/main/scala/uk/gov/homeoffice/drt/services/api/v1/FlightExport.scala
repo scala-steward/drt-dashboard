@@ -4,50 +4,16 @@ import akka.NotUsed
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
 import uk.gov.homeoffice.drt.Server.paxFeedSourceOrder
-import uk.gov.homeoffice.drt.arrivals.{ApiFlightWithSplits, Arrival}
+import uk.gov.homeoffice.drt.arrivals.ApiFlightWithSplits
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.ports.{FeedSource, PortCode}
-import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.FlightJsonResponse
-import uk.gov.homeoffice.drt.services.AirportInfoService
+import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.{FlightJson, FlightJsonResponse}
 import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike}
 
 import scala.concurrent.{ExecutionContext, Future}
-import scala.util.Try
 
 object FlightExport {
-  case class FlightJson(code: String,
-                        originPortIata: String,
-                        originPortName: String,
-                        scheduledTime: Long,
-                        estimatedLandingTime: Option[Long],
-                        actualChocksTime: Option[Long],
-                        estimatedPcpStartTime: Option[Long],
-                        estimatedPcpEndTime: Option[Long],
-                        estimatedPaxCount: Option[Int],
-                        status: String,
-                       )
-
-  object FlightJson {
-    def apply(ar: Arrival)
-             (implicit sourceOrderPreference: List[FeedSource]): FlightJson = FlightJson(
-      code = ar.flightCodeString,
-      originPortIata = ar.Origin.iata,
-      originPortName = AirportInfoService.airportInfo(ar.Origin).map(_.airportName).getOrElse("n/a"),
-      scheduledTime = ar.Scheduled,
-      estimatedLandingTime = ar.Estimated,
-      actualChocksTime = ar.ActualChox,
-      estimatedPcpStartTime = Try(ar.pcpRange(sourceOrderPreference).min).toOption,
-      estimatedPcpEndTime = Try(ar.pcpRange(sourceOrderPreference).max).toOption,
-      estimatedPaxCount = ar.bestPcpPaxEstimate(sourceOrderPreference),
-      status = ar.displayStatus.description,
-    )
-  }
-
-  case class TerminalFlightsJson(terminal: Terminal, flights: Iterable[FlightJson])
-
-  case class PortFlightsJson(portCode: PortCode, terminals: Iterable[TerminalFlightsJson])
-
   def flights(flightsForDatesAndTerminals: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[ApiFlightWithSplits, NotUsed])
              (implicit ec: ExecutionContext, mat: Materializer): Seq[PortCode] => (SDateLike, SDateLike) => Future[FlightJsonResponse] =
     portCodes => (start, end) => {
@@ -60,20 +26,18 @@ object FlightExport {
 
             flightsForDatesAndTerminals(portCode, sourceOrder, dates.min, dates.max, Seq(terminal))
               .runWith(Sink.seq)
-              .map { r =>
-                val relevantFlights = r
+              .map {
+                _
                   .filter(_.apiFlight.hasPcpDuring(start, end, sourceOrder))
-                  .map(f => FlightJson(f.apiFlight))
-
-                TerminalFlightsJson(terminal, relevantFlights)
+                  .map(f => FlightJson(portCode, f.apiFlight))
               }
           }
 
           Future
             .sequence(eventualPortFlights)
-            .map(PortFlightsJson(portCode, _))
+            .map(_.flatten)
         }
-        .runWith(Sink.seq)
+        .runWith(Sink.fold(Seq.empty[FlightJson])(_ ++ _))
         .map(FlightJsonResponse(start, end, _))
     }
 }

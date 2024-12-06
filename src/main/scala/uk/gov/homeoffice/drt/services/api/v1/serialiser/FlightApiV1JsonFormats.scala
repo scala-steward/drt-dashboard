@@ -1,8 +1,7 @@
 package uk.gov.homeoffice.drt.services.api.v1.serialiser
 
 import spray.json.{DefaultJsonProtocol, JsObject, JsValue, RootJsonFormat, enrichAny}
-import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.FlightJsonResponse
-import uk.gov.homeoffice.drt.services.api.v1.FlightExport.{FlightJson, PortFlightsJson, TerminalFlightsJson}
+import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.{FlightJson, FlightJsonResponse}
 import uk.gov.homeoffice.drt.time.SDate
 
 trait FlightApiV1JsonFormats extends DefaultJsonProtocol with CommonJsonFormats {
@@ -10,6 +9,8 @@ trait FlightApiV1JsonFormats extends DefaultJsonProtocol with CommonJsonFormats 
     override def write(obj: FlightJson): JsValue = {
       val maybePax = obj.estimatedPaxCount.filter(_ > 0)
       JsObject(
+        "arrivalPortCode" -> obj.arrivalPortCode.toJson,
+        "arrivalTerminal" -> obj.arrivalTerminal.toJson,
         "code" -> obj.code.toJson,
         "originPortIata" -> obj.originPortIata.toJson,
         "originPortName" -> obj.originPortName.toJson,
@@ -25,6 +26,8 @@ trait FlightApiV1JsonFormats extends DefaultJsonProtocol with CommonJsonFormats 
 
     override def read(json: JsValue): FlightJson = json match {
       case JsObject(fields) => FlightJson(
+        fields.get("arrivalPortCode").map(_.convertTo[String]).getOrElse(""),
+        fields.get("arrivalTerminal").map(_.convertTo[String]).getOrElse(""),
         fields.get("code").map(_.convertTo[String]).getOrElse(""),
         fields.get("originPortIata").map(_.convertTo[String]).getOrElse(""),
         fields.get("originPortName").map(_.convertTo[String]).getOrElse(""),
@@ -40,18 +43,14 @@ trait FlightApiV1JsonFormats extends DefaultJsonProtocol with CommonJsonFormats 
     }
   }
 
-  implicit val flightJsonFormat: RootJsonFormat[FlightJson] = jsonFormat10(FlightJson.apply)
-
-  implicit val terminalFlightsJsonFormat: RootJsonFormat[TerminalFlightsJson] = jsonFormat2(TerminalFlightsJson.apply)
-
-  implicit val portFlightsJsonFormat: RootJsonFormat[PortFlightsJson] = jsonFormat2(PortFlightsJson.apply)
+  implicit val flightJsonFormat: RootJsonFormat[FlightJson] = jsonFormat12(FlightJson.apply)
 
   implicit object jsonResponseFormat extends RootJsonFormat[FlightJsonResponse] {
 
     override def write(obj: FlightJsonResponse): JsValue = JsObject(Map(
-      "startTime" -> obj.startTime.toJson,
-      "endTime" -> obj.endTime.toJson,
-      "ports" -> obj.ports.toJson,
+      "periodStart" -> obj.periodStart.toJson,
+      "periodEnd" -> obj.periodEnd.toJson,
+      "flights" -> obj.flights.toJson,
     ))
 
     override def read(json: JsValue): FlightJsonResponse = throw new Exception("Not implemented")

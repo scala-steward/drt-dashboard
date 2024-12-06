@@ -7,9 +7,11 @@ import org.slf4j.LoggerFactory
 import spray.json._
 import uk.gov.homeoffice.drt.auth.Roles.ApiQueueAccess
 import uk.gov.homeoffice.drt.authentication.User
+import uk.gov.homeoffice.drt.model.CrunchMinute
 import uk.gov.homeoffice.drt.ports.PortCode
+import uk.gov.homeoffice.drt.ports.Queues.Queue
+import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.routes.services.AuthByRole
-import uk.gov.homeoffice.drt.services.api.v1.QueueExport.PortQueuesJson
 import uk.gov.homeoffice.drt.services.api.v1.serialiser.QueueApiV1JsonFormats
 import uk.gov.homeoffice.drt.time.{SDate, SDateLike}
 
@@ -20,7 +22,15 @@ import scala.util.{Failure, Success}
 object QueueApiV1Routes extends DefaultJsonProtocol with QueueApiV1JsonFormats {
   private val log = LoggerFactory.getLogger(getClass)
 
-  case class QueueJsonResponse(startTime: SDateLike, endTime: SDateLike, slotSizeMinutes: Int, ports: Seq[PortQueuesJson])
+  case class QueueJson(queue: Queue, incomingPax: Int, maxWaitMinutes: Int)
+
+  object QueueJson {
+    def apply(cm: CrunchMinute): QueueJson = QueueJson(cm.queue, cm.paxLoad.toInt, cm.waitTime)
+  }
+
+  case class SlotJson(slotStartTime: SDateLike, portCode: PortCode, terminal: Terminal, queues: Iterable[QueueJson])
+
+  case class QueueJsonResponse(periodStart: SDateLike, periodEnd: SDateLike, slotSizeMinutes: Int, slots: Seq[SlotJson])
 
   def apply(enabledPorts: Iterable[PortCode],
             dateRangeJsonForPortsAndSlotSize: (Seq[PortCode], Int) => (SDateLike, SDateLike) => Future[QueueJsonResponse]): Route =
@@ -29,7 +39,7 @@ object QueueApiV1Routes extends DefaultJsonProtocol with QueueApiV1JsonFormats {
         pathEnd(
           headerValueByName("X-Forwarded-Email") { email =>
             headerValueByName("X-Forwarded-Groups") { groups =>
-              parameters("start", "end", "period-minutes".optional) { (startStr, endStr, maybePeriodMinutes) =>
+              parameters("start", "end", "slot-size-minutes".optional) { (startStr, endStr, maybePeriodMinutes) =>
                 val defaultSlotSizeMinutes = 15
                 val slotSize = maybePeriodMinutes.map(_.toInt).getOrElse(defaultSlotSizeMinutes)
                 val user = User.fromRoles(email, groups)

@@ -8,27 +8,15 @@ import uk.gov.homeoffice.drt.ports.Queues.Queue
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.ports.{PortCode, Queues}
-import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.QueueJsonResponse
+import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.{SlotJson, QueueJson, QueueJsonResponse}
 import uk.gov.homeoffice.drt.time.MilliDate.MillisSinceEpoch
-import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike, UtcDate}
+import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
 
 import scala.concurrent.{ExecutionContext, Future}
 
 object QueueExport {
 
   private val defaultSlotSize = 15
-
-  case class QueueJson(queue: Queue, incomingPax: Int, maxWaitMinutes: Int)
-
-  object QueueJson {
-    def apply(cm: CrunchMinute): QueueJson = QueueJson(cm.queue, cm.paxLoad.toInt, cm.waitTime)
-  }
-
-  case class PeriodJson(startTime: SDateLike, queues: Iterable[QueueJson])
-
-  case class TerminalQueuesJson(terminal: Terminal, periods: Iterable[PeriodJson])
-
-  case class PortQueuesJson(portCode: PortCode, terminals: Iterable[TerminalQueuesJson])
 
   def queues(queuesForPortAndDatesAndSlotSize: (PortCode, Terminal, LocalDate, LocalDate) => Source[CrunchMinute, NotUsed])
             (implicit ec: ExecutionContext, mat: Materializer): (Seq[PortCode], Int) => (SDateLike, SDateLike) => Future[QueueJsonResponse] =
@@ -49,25 +37,24 @@ object QueueExport {
 
                   val byMinute = terminalMinutesByMinute(minsInRange, terminal)
                   val grouped = groupCrunchMinutesBy(groupSize)(byMinute, terminal, Queues.queueOrder)
-                  val periodJsons = grouped.map {
+                  grouped.map {
                     case (minute, queueMinutes) =>
                       val queues = queueMinutes.map(QueueJson.apply)
-                      PeriodJson(SDate(minute), queues)
+                      SlotJson(SDate(minute), portCode, terminal, queues)
                   }
-                  TerminalQueuesJson(terminal, periodJsons)
                 }
             }
 
           Future
             .sequence(eventualPortQueueSlots)
-            .map(PortQueuesJson(portCode, _))
+            .map(_.flatten)
         }
-        .runWith(Sink.seq)
+        .runWith(Sink.fold(Seq.empty[SlotJson])(_ ++ _))
         .map(QueueJsonResponse(start, end, slotSize, _))
     }
 
-  def terminalMinutesByMinute[T <: MinuteLike[_, _]](minutes: Seq[T],
-                                                     terminalName: Terminal): Seq[(MillisSinceEpoch, Seq[T])] =
+  private def terminalMinutesByMinute[T <: MinuteLike[_, _]](minutes: Seq[T],
+                                                             terminalName: Terminal): Seq[(MillisSinceEpoch, Seq[T])] =
     minutes
       .filter(_.terminal == terminalName)
       .groupBy(_.minute)

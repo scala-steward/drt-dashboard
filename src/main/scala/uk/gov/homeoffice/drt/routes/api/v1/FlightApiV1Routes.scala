@@ -5,22 +5,55 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import org.slf4j.LoggerFactory
 import spray.json._
+import uk.gov.homeoffice.drt.arrivals.Arrival
 import uk.gov.homeoffice.drt.auth.Roles.ApiFlightAccess
 import uk.gov.homeoffice.drt.authentication.User
-import uk.gov.homeoffice.drt.ports.PortCode
+import uk.gov.homeoffice.drt.ports.{FeedSource, PortCode}
 import uk.gov.homeoffice.drt.routes.services.AuthByRole
-import uk.gov.homeoffice.drt.services.api.v1.FlightExport.PortFlightsJson
+import uk.gov.homeoffice.drt.services.AirportInfoService
 import uk.gov.homeoffice.drt.services.api.v1.serialiser.FlightApiV1JsonFormats
 import uk.gov.homeoffice.drt.time.{SDate, SDateLike}
 
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 
 object FlightApiV1Routes extends DefaultJsonProtocol with FlightApiV1JsonFormats {
   private val log = LoggerFactory.getLogger(getClass)
 
-  case class FlightJsonResponse(startTime: SDateLike, endTime: SDateLike, ports: Seq[PortFlightsJson])
+  case class FlightJson(arrivalPortCode: String,
+                        arrivalTerminal: String,
+                        code: String,
+                        originPortIata: String,
+                        originPortName: String,
+                        scheduledTime: Long,
+                        estimatedLandingTime: Option[Long],
+                        actualChocksTime: Option[Long],
+                        estimatedPcpStartTime: Option[Long],
+                        estimatedPcpEndTime: Option[Long],
+                        estimatedPaxCount: Option[Int],
+                        status: String,
+                       )
+
+  object FlightJson {
+    def apply(portCode: PortCode, ar: Arrival)
+             (implicit sourceOrderPreference: List[FeedSource]): FlightJson = FlightJson(
+      arrivalPortCode = portCode.iata,
+      arrivalTerminal = ar.Terminal.toString,
+      code = ar.flightCodeString,
+      originPortIata = ar.Origin.iata,
+      originPortName = AirportInfoService.airportInfo(ar.Origin).map(_.airportName).getOrElse("n/a"),
+      scheduledTime = ar.Scheduled,
+      estimatedLandingTime = ar.Estimated,
+      actualChocksTime = ar.ActualChox,
+      estimatedPcpStartTime = Try(ar.pcpRange(sourceOrderPreference).min).toOption,
+      estimatedPcpEndTime = Try(ar.pcpRange(sourceOrderPreference).max).toOption,
+      estimatedPaxCount = ar.bestPcpPaxEstimate(sourceOrderPreference),
+      status = ar.displayStatus.description,
+    )
+  }
+
+  case class FlightJsonResponse(periodStart: SDateLike, periodEnd: SDateLike, flights: Seq[FlightJson])
 
   def apply(enabledPorts: Iterable[PortCode],
             dateRangeJsonForPorts: Seq[PortCode] => (SDateLike, SDateLike) => Future[FlightJsonResponse]): Route =
