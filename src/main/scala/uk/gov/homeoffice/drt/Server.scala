@@ -162,11 +162,11 @@ object Server {
             .mapConcat(identity)
       }
 
-      val flightsStream: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[ApiFlightWithSplits, NotUsed] =
+      val uniqueFlightsStreamByDate = FlightDao().uniqueFlightsForDatesAndTerminals(db.run)
+
+      val uniqueFlightsStream: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[ApiFlightWithSplits, NotUsed] =
         (portCode, sourceOrder, start, end, terminals) =>
-          FlightDao()
-            .uniqueFlightsForDatesAndTerminals(db.run)(portCode, sourceOrder, start, end, terminals)
-            .mapConcat(identity)
+          uniqueFlightsStreamByDate(portCode, sourceOrder, start, end, terminals).mapConcat(identity)
 
       val routes: Route = concat(
         pathPrefix("api") {
@@ -174,7 +174,7 @@ object Server {
             pathPrefix("v1") {
               concat(
                 QueueApiV1Routes(config.enabledPorts, QueueExport.queues(queuesForPortAndDatesAndSlotSize)),
-                FlightApiV1Routes(config.enabledPorts, FlightExport.flights(flightsStream)),
+                FlightApiV1Routes(config.enabledPorts, FlightExport.flights(uniqueFlightsStream)),
                 AuthApiV1Routes(keyCloakAuth.getToken),
               )
             },
