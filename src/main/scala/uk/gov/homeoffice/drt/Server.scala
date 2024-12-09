@@ -166,7 +166,7 @@ object Server {
 
       val uniqueFlightsStream: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[ApiFlightWithSplits, NotUsed] =
         (portCode, sourceOrder, start, end, terminals) =>
-          uniqueFlightsStreamByDate(portCode, sourceOrder, start, end, terminals).mapConcat(identity)
+          uniqueFlightsStreamByDate(portCode, sourceOrder, start, end, terminals)
 
       val routes: Route = concat(
         pathPrefix("api") {
