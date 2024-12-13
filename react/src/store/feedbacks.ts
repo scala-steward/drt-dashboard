@@ -21,7 +21,7 @@ export const useUserFeedbacks = (requestedAt : number) => {
 
   useEffect(() => {
     const fetch = async () => axios
-      .get(`${ApiClient.feedBacksEndpoint}`)
+      .get(`${ApiClient.feedbackEndpoint}`)
       .then(res => setUserFeedbacks(res.data as UserFeedback[]))
       .catch(err => {
         console.log('Failed to get health check pauses: ' + err)

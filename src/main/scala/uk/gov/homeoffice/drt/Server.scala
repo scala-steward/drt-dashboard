@@ -17,7 +17,9 @@ import akka.util.Timeout
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.arrivals.ApiFlightWithSplits
 import uk.gov.homeoffice.drt.db._
-import uk.gov.homeoffice.drt.db.dao.{FlightDao, QueueSlotDao, UserFeedbackDao}
+import uk.gov.homeoffice.drt.db.dao.{BorderCrossingDao, FlightDao, QueueSlotDao, UserFeedbackDao}
+import uk.gov.homeoffice.drt.db.serialisers.BorderCrossingSerialiser
+import uk.gov.homeoffice.drt.db.tables.{BorderCrossing, GateType}
 import uk.gov.homeoffice.drt.healthchecks._
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuth
 import uk.gov.homeoffice.drt.model.CrunchMinute
@@ -168,6 +170,12 @@ object Server {
         (portCode, sourceOrder, start, end, terminals) =>
           uniqueFlightsStreamByDate(portCode, sourceOrder, start, end, terminals)
 
+      val insertBx: (PortCode, Terminal, GateType, Iterable[BorderCrossing]) => Future[Int] =
+        (pc, t, gt, rows) => {
+          val insert = BorderCrossingDao.replaceHours(pc)
+          db.run(insert(t, gt, rows.map(BorderCrossingSerialiser.toRow(_, SDate.now().millisSinceEpoch))))
+        }
+
       val routes: Route = concat(
         pathPrefix("api") {
           concat(
@@ -191,6 +199,7 @@ object Server {
             DropInRegisterRoutes(dropInRegistrationDao),
             FeedbackRoutes(userFeedbackDao),
             ExportConfigRoutes(httpClient, config.enabledPorts),
+            BorderCrossingRoutes(insertBx)
           )
         },
         indexRoutes,

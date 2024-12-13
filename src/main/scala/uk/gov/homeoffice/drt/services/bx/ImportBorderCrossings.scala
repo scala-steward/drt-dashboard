@@ -4,8 +4,7 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
 import org.apache.poi.ss.usermodel.{DataFormatter, Row, Sheet, WorkbookFactory}
 import org.slf4j.LoggerFactory
-import uk.gov.homeoffice.drt.db.serialisers.BorderCrossingSerialiser
-import uk.gov.homeoffice.drt.db.tables.{BorderCrossing, BorderCrossingRow, GateType}
+import uk.gov.homeoffice.drt.db.tables.{BorderCrossing, GateType}
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.time.{DateRange, SDate, UtcDate}
@@ -22,7 +21,7 @@ object ImportBorderCrossings {
   private val cellOffset = 2
   private val dateStartOffset = 4
 
-  def apply(replaceHoursForPortTerminal: (PortCode, Terminal, GateType, Iterable[BorderCrossingRow]) => Future[Int])
+  def apply(replaceHoursForPortTerminal: (PortCode, Terminal, GateType, Iterable[BorderCrossing]) => Future[Int])
            (implicit mat: Materializer): String => Future[Int] =
     filePath => {
       val file = new File(filePath)
@@ -73,15 +72,14 @@ object ImportBorderCrossings {
                                 terminal: String,
                                 date: UtcDate,
                                 cellStr: String,
-                                replaceHoursForPortTerminal: (PortCode, Terminal, GateType, Iterable[BorderCrossingRow]) => Future[Int],
+                                replaceHoursForPortTerminal: (PortCode, Terminal, GateType, Iterable[BorderCrossing]) => Future[Int],
                                ): Future[Int] = {
     Try(cellStr.toDouble.toInt).map { count =>
       (date, count)
     } match {
       case Success((date, count)) =>
         val crossing = BorderCrossing(PortCode(portCode), Terminal(terminal), date, GateType(gateType), hour, count)
-        val row = BorderCrossingSerialiser.toRow(crossing, SDate.now().millisSinceEpoch)
-        replaceHoursForPortTerminal(PortCode(portCode), Terminal(terminal), GateType(gateType), Seq(row))
+        replaceHoursForPortTerminal(PortCode(portCode), Terminal(terminal), GateType(gateType), Seq(crossing))
       case Failure(exception) =>
         log.error(s"Failed to parse count for $portCode, $terminal, $date, $gateType, $hour", exception)
         Future.successful(0)

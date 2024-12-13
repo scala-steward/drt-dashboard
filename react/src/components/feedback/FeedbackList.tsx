@@ -85,7 +85,7 @@ export function FeedbackList() {
           sx={{maxWidth: '350px'}}
           startIcon={<FileDownloadIcon/>}
           component={MuiLink}
-          href={`${ApiClient.feedBacksEndpoint}/export`}
+          href={`${ApiClient.feedbackEndpoint}/export`}
           target="_blank"
           onClick={() => setRequestedAt(moment().valueOf())}
         > Download feedback responses</Button>
