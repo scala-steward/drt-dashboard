@@ -6,9 +6,11 @@ import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.stream.Materializer
 import org.slf4j.LoggerFactory
+import uk.gov.homeoffice.drt.auth.Roles.ManageUsers
 import uk.gov.homeoffice.drt.db.tables.{BorderCrossing, GateType}
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
+import uk.gov.homeoffice.drt.routes.services.AuthByRole
 import uk.gov.homeoffice.drt.services.bx.ImportBorderCrossings
 
 import java.io.File
@@ -30,17 +32,19 @@ object BorderCrossingRoutes {
     val importFile: String => Future[Int] = ImportBorderCrossings(replaceHoursForPortTerminal)
 
     pathPrefix("border-crossing") {
-      withRequestTimeout(2.minutes) {
-        storeUploadedFile("excel", tempDestination) {
-          case (_, file) =>
-            val eventualDone = importFile(file.getPath)
+      AuthByRole(ManageUsers) {
+        withRequestTimeout(2.minutes) {
+          storeUploadedFile("excel", tempDestination) {
+            case (_, file) =>
+              val eventualDone = importFile(file.getPath)
 
-            onComplete(eventualDone) {
-              case Success(insertCount) => complete("""{"inserted": """ + insertCount + """}""")
-              case Failure(error) =>
-                log.error(s"Error importing border crossings: ${error.getMessage}")
-                complete(StatusCodes.InternalServerError)
-            }
+              onComplete(eventualDone) {
+                case Success(insertCount) => complete("""{"inserted": """ + insertCount + """}""")
+                case Failure(error) =>
+                  log.error(s"Error importing border crossings: ${error.getMessage}")
+                  complete(StatusCodes.InternalServerError)
+              }
+          }
         }
       }
     }
