@@ -35,8 +35,8 @@ class ImportBorderCrossingsTest extends AnyWordSpec with Matchers with BeforeAnd
     "import the BX data" in {
       val replaceHoursForPortTerminal: (PortCode, Terminal, GateType, Iterable[BorderCrossingRow]) => Future[Int] = {
         (portCode, terminal, gateType, rows) =>
-          TestDatabase.run(BorderCrossingDao.replaceHours(portCode)(terminal, gateType, rows))
-            .map(_.getOrElse(0))
+          val insert = BorderCrossingDao.replaceHours(portCode)
+          TestDatabase.run(insert(terminal, gateType, rows))
       }
 
       val importFile = ImportBorderCrossings(replaceHoursForPortTerminal)

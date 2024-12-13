@@ -37,7 +37,7 @@ object BorderCrossingRoutes {
   def apply(replaceHoursForPortTerminal: (PortCode, Terminal, GateType, Iterable[BorderCrossingRow]) => Future[Int])
            (implicit mat: Materializer, ec: ExecutionContext): Route = {
 
-    val importFile: String => Future[Done] = ImportBorderCrossings(replaceHoursForPortTerminal)
+    val importFile: String => Future[Int] = ImportBorderCrossings(replaceHoursForPortTerminal)
 
     pathPrefix("border-crossing") {
       storeUploadedFile("csv", tempDestination) {
