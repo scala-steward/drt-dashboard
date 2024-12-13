@@ -34,11 +34,10 @@ object BorderCrossingRoutes {
   def tempDestination(fileInfo: FileInfo): File =
     Files.createTempFile(fileInfo.fileName, ".tmp").toFile
 
-  def apply(replaceHoursForPortTerminal: (PortCode, Terminal, GateType, Iterable[BorderCrossingRow]) => Future[Unit])
+  def apply(replaceHoursForPortTerminal: (PortCode, Terminal, GateType, Iterable[BorderCrossingRow]) => Future[Int])
            (implicit mat: Materializer, ec: ExecutionContext): Route = {
 
-    val importFile: String => Future[Done] =
-      filePath => ImportBorderCrossings(filePath, replaceHoursForPortTerminal)
+    val importFile: String => Future[Done] = ImportBorderCrossings(replaceHoursForPortTerminal)
 
     pathPrefix("border-crossing") {
       storeUploadedFile("csv", tempDestination) {
@@ -64,10 +63,10 @@ class BorderCrossingRoutesSpec extends AnyWordSpec with Matchers with ScalatestR
 
   val fileContent: ByteString = ByteString(Files.readAllBytes(Paths.get("src/test/resources/bx-example.xlsx")))
 
-  val replaceHoursForPortTerminal: (PortCode, Terminal, GateType, Iterable[BorderCrossingRow]) => Future[Unit] =
+  val replaceHoursForPortTerminal: (PortCode, Terminal, GateType, Iterable[BorderCrossingRow]) => Future[Int] =
     (pc, t, gt, rows) => {
       probeRow.ref ! (pc, t, gt, rows)
-      Future.successful(())
+      Future.successful(rows.size)
     }
 
   def tempDestination(fileInfo: FileInfo): File =
