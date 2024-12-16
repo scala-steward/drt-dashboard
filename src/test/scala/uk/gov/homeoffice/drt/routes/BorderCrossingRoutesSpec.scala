@@ -2,7 +2,9 @@ package uk.gov.homeoffice.drt.routes
 
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.Multipart.FormData
+import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.model.{ContentTypes, HttpEntity, Multipart, StatusCodes}
+import akka.http.scaladsl.server.AuthorizationFailedRejection
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.http.scaladsl.testkit.ScalatestRouteTest
 import akka.stream.Materializer
@@ -47,14 +49,27 @@ class BorderCrossingRoutesSpec extends AnyWordSpec with Matchers with ScalatestR
 
   "BorderCrossingRoutes" should {
     "upload a file" in {
-      Post("/border-crossing", multipartForm) ~> BorderCrossingRoutes(replaceHoursForPortTerminal) ~> check {
-        List(
-          BorderCrossing(PortCode("ABZ"), T1, UtcDate(2024, 7, 1), Pcp, 0, 5),
-          BorderCrossing(PortCode("BHX"), T2, UtcDate(2024, 7, 2), EGate, 10, 280),
-        )
-          .map(checkRow)
-        status shouldEqual StatusCodes.OK
-      }
+      Post("/border-crossing", multipartForm) ~>
+        RawHeader("X-Forwarded-Groups", "manage-users") ~>
+        RawHeader("X-Forwarded-Email", "my@email.com") ~>
+        BorderCrossingRoutes(replaceHoursForPortTerminal) ~>
+        check {
+          List(
+            BorderCrossing(PortCode("ABZ"), T1, UtcDate(2024, 7, 1), Pcp, 0, 5),
+            BorderCrossing(PortCode("BHX"), T2, UtcDate(2024, 7, 2), EGate, 10, 280),
+          )
+            .map(checkRow)
+          status shouldEqual StatusCodes.OK
+        }
+    }
+    "reject a request without the ManageUsers role" in {
+      Post("/border-crossing", multipartForm) ~>
+        RawHeader("X-Forwarded-Groups", "") ~>
+        RawHeader("X-Forwarded-Email", ")") ~>
+        BorderCrossingRoutes(replaceHoursForPortTerminal) ~>
+        check {
+          rejection should ===(AuthorizationFailedRejection)
+        }
     }
   }
 
