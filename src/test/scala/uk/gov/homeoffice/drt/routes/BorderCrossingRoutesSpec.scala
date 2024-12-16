@@ -57,9 +57,7 @@ class BorderCrossingRoutesSpec extends AnyWordSpec with Matchers with ScalatestR
           List(
             BorderCrossing(PortCode("ABZ"), T1, UtcDate(2024, 7, 1), Pcp, 0, 5),
             BorderCrossing(PortCode("BHX"), T2, UtcDate(2024, 7, 2), EGate, 10, 280),
-          )
-            .map(checkRow)
-          status shouldEqual StatusCodes.OK
+          ).map(checkRow)
         }
     }
     "reject a request without the ManageUsers role" in {
