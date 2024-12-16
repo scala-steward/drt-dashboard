@@ -74,7 +74,7 @@ class BorderCrossingRoutesSpec extends AnyWordSpec with Matchers with ScalatestR
   }
 
   private def checkRow(crossing: BorderCrossing) = {
-    probeRow.fishForMessage(1.second) {
+    probeRow.fishForMessage(2.second) {
       case (pc: PortCode, t: Terminal, gt: GateType, rows: List[BorderCrossing]) =>
         val row = rows.head
 

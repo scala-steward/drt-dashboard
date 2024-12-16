@@ -13,7 +13,7 @@ object AuthByRole {
       rolesHeader <- ctx.request.getHeader("X-Forwarded-Groups").asScala
       emailHeader <- ctx.request.getHeader("X-Forwarded-Email").asScala
     } yield User.fromRoles(emailHeader.value(), rolesHeader.value())) match {
-      case Some(user) =>user.hasRole(role)
+      case Some(user) => user.hasRole(role)
       case None => false
     }
   })
