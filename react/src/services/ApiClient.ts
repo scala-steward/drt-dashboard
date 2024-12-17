@@ -34,11 +34,13 @@ export default class ApiClient implements IApiClient {
   public static exportEndpoint = "/api/export"
   public static exportStatusEndpoint = "/api/export/status"
 
-  public static feedBacksEndpoint = "/api/feedback";
+  public static feedbackEndpoint = "/api/feedback"
 
-  public static exportConfigEndpoint = "/api/export-config";
+  public static exportConfigEndpoint = "/api/export-config"
 
-  public static passengerTotalsEndpoint = "/api/passengers/";
+  public static passengerTotalsEndpoint = "/api/passengers/"
+
+  public static borderCrossingEndpoint = "/api/border-crossing"
 
 
   public fetchData(userEndPoint: string, handleResponse: (r: AxiosResponse) => void) {

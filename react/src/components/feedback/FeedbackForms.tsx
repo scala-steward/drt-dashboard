@@ -307,7 +307,7 @@ export function FeedbackForms() {
             }
           }
 
-          axios.post(ApiClient.feedBacksEndpoint, feedbackData)
+          axios.post(ApiClient.feedbackEndpoint, feedbackData)
             .then(response => handleResponse(response))
             .then(data => {
               console.log(data);

@@ -30,6 +30,7 @@ import NationalDashboard from "./components/regionalpressure/NationalDashboard"
 import {Header, BottomBar, AccessibilityStatement} from 'drt-react';
 import {adminMenuItems} from './components/Navigation';
 import {AirportNameIndex, getAirportByCode} from './airports';
+import BorderCrossingImport from "./components/BorderCrossingImport";
 
 const StyledContainer = styled(Container)(() => ({
   textAlign: 'left',
@@ -57,7 +58,7 @@ export const App = () => {
       label:'National Dashboard',
       link: '/national-pressure'
     },
-    ...availablePorts.map(portCode => { 
+    ...availablePorts.map(portCode => {
       let domain = hasConfig && config.values.domain ? config.values.domain : 'drt-preprod'
       return {
         label: `${portCode} (${AirportNameIndex[portCode]})`,
@@ -132,13 +133,14 @@ export const App = () => {
             <Route path={"/"} element={<Home config={config.values} user={user.profile}/>}/>
             <Route path={"/accessibility/:scrollSection"} element={<AccessibilityStatementWrapper/>}/>
             <Route path={"/access-requests"} element={<AccessRequests/>}/>
-            <Route path={"/users"} element={<UsersList/>}/>
+            <Route path={"/alerts"} element={<Alerts regions={config.values.portsByRegion} user={user.profile}/>}/>
+            <Route path={"/border-crossing-import"} element={<BorderCrossingImport/>}/>
             <Route path={"/download"} element={<DownloadManager config={config.values} user={user.profile}/>}/>
+            <Route path={"/export-config"} element={<ExportConfig/>}/>
             <Route path={"/national-pressure"}
                    element={<NationalDashboard config={config.values} user={user.profile}/>}/>
             <Route path={"/national-pressure/:region"}
                    element={<RegionalDashboard config={config.values} user={user.profile}/>}/>
-            <Route path={"/alerts"} element={<Alerts regions={config.values.portsByRegion} user={user.profile}/>}/>
             <Route path={"/region/:regionName"} element={<RegionPage user={user.profile} config={config.values}/>}/>
             <Route path={"/feature-guides"}>
               <Route path={""} element={<FeatureGuideList/>}/>
@@ -156,7 +158,7 @@ export const App = () => {
             <Route path={"/health-check-pauses"} element={<HealthCheckEditor/>}/>
             <Route path={"/feedback/:feedbackType/:abVersion"} element={<FeedbackForms/>}/>
             <Route path={"/user-feedback"} element={<FeedbackList/>}/>
-            <Route path={"/export-config"} element={<ExportConfig/>}/>
+            <Route path={"/users"} element={<UsersList/>}/>
           </Routes>
         </StyledContainer>
       </div>
