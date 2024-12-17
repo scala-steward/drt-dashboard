@@ -5,6 +5,9 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import {styled} from "@mui/material/styles";
 import axios from "axios";
 import ApiClient from "../services/ApiClient";
+import {Helmet} from "react-helmet";
+import {adminPageTitleSuffix} from "../utils/common";
+import PageContentWrapper from "./PageContentWrapper";
 
 const BorderCrossingImport = () => {
   const [uploading, setUploading] = React.useState(false)
@@ -35,31 +38,37 @@ const BorderCrossingImport = () => {
   }
 
   return (
-    <Box>
-      <h1>Border Crossing Import</h1>
-      <p>Upload an excel file here. The spreadsheet must contain a sheet named 'Data Response', and be in an expected format</p>
-      <FormControl>
-        <Button
-          component="label"
-          role={undefined}
-          variant="contained"
-          tabIndex={-1}
-          startIcon={<CloudUploadIcon />}
-          disabled={uploading}
-        >
-          Upload file
-          <VisuallyHiddenInput
-            type="file"
-            onChange={event => {
-              event.target.files && uploadFile(event.target.files[0])
-              event.target.value = ''
-            }}
-          />
-        </Button>
-        {uploading && <p>Uploading & processing data. Please be patient as this may take a minute.</p>}
-        {finished && <p>File uploaded. {insertCount} records found</p>}
-      </FormControl>
-    </Box>
+    <PageContentWrapper>
+      <Helmet>
+        <title>Border-crossing import {adminPageTitleSuffix}</title>
+      </Helmet>
+      <Box>
+        <h1>Border Crossing Import</h1>
+        <p>Upload an excel file here. The spreadsheet must contain a sheet named 'Data Response', and be in an expected
+          format</p>
+        <FormControl>
+          <Button
+            component="label"
+            role={undefined}
+            variant="contained"
+            tabIndex={-1}
+            startIcon={<CloudUploadIcon/>}
+            disabled={uploading}
+          >
+            Upload file
+            <VisuallyHiddenInput
+              type="file"
+              onChange={event => {
+                event.target.files && uploadFile(event.target.files[0])
+                event.target.value = ''
+              }}
+            />
+          </Button>
+          {uploading && <p>Uploading & processing data. Please be patient as this may take a minute.</p>}
+          {finished && <p>File uploaded. {insertCount} records found</p>}
+        </FormControl>
+      </Box>
+    </PageContentWrapper>
   )
 }
 
