@@ -15,6 +15,7 @@ import uk.gov.homeoffice.drt.services.bx.ImportBorderCrossings
 
 import java.io.File
 import java.nio.file.Files
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success}
@@ -36,7 +37,12 @@ object BorderCrossingRoutes {
         withRequestTimeout(2.minutes) {
           storeUploadedFile("excel", tempDestination) {
             case (_, file) =>
-              val eventualDone = importFile(file.getPath)
+              val eventualDone = importFile(file.getPath).map { insertCount =>
+                log.info(s"Imported $insertCount border crossings")
+                if (file.delete()) log.info("Temporary file deleted")
+                else log.error(s"Failed to delete temporary file ${file.getPath}")
+                insertCount
+              }
 
               onComplete(eventualDone) {
                 case Success(insertCount) => complete("""{"inserted": """ + insertCount + """}""")

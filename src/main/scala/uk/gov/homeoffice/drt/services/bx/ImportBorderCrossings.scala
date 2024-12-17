@@ -171,7 +171,7 @@ object ImportBorderCrossings {
   private def getDrtPortAndTerminal(bxPort: String, bxTerminal: String): (String, String) =
     bxToDrtPortAndTerminal.keys
       .find {
-        case (p, t) => bxPort.contains(p) && (bxTerminal.contains(t) || t.isEmpty)
+        case (p, t) => bxPort.indexOf(p) == 0 && (bxTerminal.contains(t) || t.isEmpty)
       }
       .map(bxToDrtPortAndTerminal)
       .getOrElse(throw new Exception(s"Port not found for $bxPort, $bxTerminal"))
