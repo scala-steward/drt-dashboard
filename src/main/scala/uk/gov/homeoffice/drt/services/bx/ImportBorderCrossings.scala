@@ -90,18 +90,23 @@ object ImportBorderCrossings {
     fromMonthRow.dropWhile { row =>
       val cells = row.cellIterator().asScala.toIndexedSeq
 
-      if (cells.size < 2) {
+      if (cells.size < (cellOffset + 2)) {
         false
       } else {
-        val cellMatch1 = formatter.formatCellValue(cells(0)) == "Port"
-        val cellMatch2 = formatter.formatCellValue(cells(1)) == "Terminal"
+        val cellMatch1 = formatter.formatCellValue(cells(cellOffset + 0)) == "Port"
+        val cellMatch2 = formatter.formatCellValue(cells(cellOffset + 1)) == "Terminal"
         !(cellMatch1 && cellMatch2)
       }
     }
   }
 
   private def extractMonthAndYear(formatter: DataFormatter, fromMonthRow: Iterator[Row]): (String, String) = {
-    fromMonthRow.next().cellIterator().asScala.toSeq.headOption match {
+    val maybeContentCell = fromMonthRow
+      .next().cellIterator().asScala.toSeq
+      .drop(cellOffset)
+      .headOption
+
+    maybeContentCell match {
       case Some(cell) =>
         formatter.formatCellValue(cell) match {
           case monthYearRegex(month, year) =>
