@@ -103,7 +103,7 @@ object ImportBorderCrossings {
   private def extractMonthAndYear(formatter: DataFormatter, fromMonthRow: Iterator[Row]): (String, String) = {
     val maybeContentCell = fromMonthRow
       .next().cellIterator().asScala.toSeq
-      .drop(cellOffset)
+      .dropWhile(_.getColumnIndex < cellOffset)
       .headOption
 
     maybeContentCell match {
@@ -115,7 +115,7 @@ object ImportBorderCrossings {
             throw new Exception("Month and year not found")
         }
       case None =>
-        throw new Exception("Month and year not found")
+        throw new Exception("Month and year not found - no cells found")
     }
   }
 
