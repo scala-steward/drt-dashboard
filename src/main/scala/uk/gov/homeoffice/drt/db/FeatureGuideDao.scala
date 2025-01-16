@@ -26,7 +26,7 @@ class FeatureGuideTable(tag: Tag) extends Table[FeatureGuideRow](tag, "feature_g
 }
 
 
-case class FeatureGuideDao(db: Database) {
+case class FeatureGuideDao(db: CentralDatabase) {
   val FeatureGuideTable = TableQuery[FeatureGuideTable]
 
   private def getCurrentTime = new Timestamp(new DateTime().getMillis)

@@ -37,7 +37,7 @@ class FeedbackRoutesSpec extends Specification
   val stringToLocalDateTime: String => Instant = dateString => Instant.parse(dateString)
 
   override def before: Future[Unit] = {
-    Await.ready(TestDatabase.db.run(DBIO.seq(TestDatabase.userFeedbackTable.schema.dropIfExists,
+    Await.ready(TestDatabase.run(DBIO.seq(TestDatabase.userFeedbackTable.schema.dropIfExists,
       TestDatabase.userFeedbackTable.schema.createIfNotExists)), 5.second)
   }
 
@@ -60,7 +60,7 @@ class FeedbackRoutesSpec extends Specification
   def userFeedbackRoute(userFeedbackDao: UserFeedbackDao): Route = FeedbackRoutes(userFeedbackDao)
 
   "get list of user feedbacks" >> {
-    val userFeedbackDao: UserFeedbackDao = UserFeedbackDao(TestDatabase.db)
+    val userFeedbackDao: UserFeedbackDao = UserFeedbackDao(TestDatabase)
     val feedbackData = FeedbackData(feedbackType = "banner",
       aORbTest = "A",
       question_1 = "test",
@@ -82,7 +82,7 @@ class FeedbackRoutesSpec extends Specification
   }
 
   "save user feedback Data" >> {
-    val userFeedbackDao: UserFeedbackDao = UserFeedbackDao(TestDatabase.db)
+    val userFeedbackDao: UserFeedbackDao = UserFeedbackDao(TestDatabase)
     val feedbackData = FeedbackData(feedbackType = "banner",
       aORbTest = "A",
       question_1 = "test",
@@ -103,7 +103,7 @@ class FeedbackRoutesSpec extends Specification
   }
 
   "export user feedback Data" >> {
-    val userFeedbackDao: UserFeedbackDao = UserFeedbackDao(TestDatabase.db)
+    val userFeedbackDao: UserFeedbackDao = UserFeedbackDao(TestDatabase)
     val feedbackData = FeedbackData(feedbackType = "banner",
       aORbTest = "A",
       question_1 = "test",

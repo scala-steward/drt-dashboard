@@ -13,7 +13,7 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import slick.dbio.DBIO
-import slick.jdbc.JdbcBackend.Database
+import slick.jdbc.PostgresProfile.api._
 import uk.gov.homeoffice.drt.MockHttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
 import uk.gov.homeoffice.drt.db.{AppDatabase, TestDatabase}
@@ -22,7 +22,6 @@ import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
 
 import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
-import slick.jdbc.PostgresProfile.api._
 
 
 class LegacyExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest with BeforeAndAfter {
@@ -32,11 +31,9 @@ class LegacyExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRou
 
   implicit val csvStreaming: CsvEntityStreamingSupport = EntityStreamingSupport.csv()
 
-  lazy val db: Database = Database.forConfig("h2-db")
-
   before {
     val schema = TestDatabase.regionExportTable.schema
-    Await.ready(db.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
+    Await.ready(TestDatabase.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
   }
 
   val csv: String =

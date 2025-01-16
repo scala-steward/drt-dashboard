@@ -7,24 +7,22 @@ import slick.jdbc.PostgresProfile.api._
 
 import java.sql.Timestamp
 import java.time.Instant
-import scala.concurrent.Await
+import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.DurationInt
 
 class UserAccessRequestDaoSpec extends Specification with BeforeEach {
   sequential
 
-  lazy val db = TestDatabase.db
-
-  override protected def before = {
+  override protected def before: Future[Unit] = {
     Await.ready(
-      db.run(DBIO.seq(
+      TestDatabase.run(DBIO.seq(
         TestDatabase.userAccessRequestsTable.schema.dropIfExists,
         TestDatabase.userAccessRequestsTable.schema.createIfNotExists)
       ), 2.second)
   }
 
-  def getUserAccessRequest(requestTime: Timestamp) = {
+  def getUserAccessRequest(requestTime: Timestamp): UserAccessRequest = {
     UserAccessRequest(email = "test@test.com",
       portsRequested = "",
       allPorts = false,
@@ -41,7 +39,7 @@ class UserAccessRequestDaoSpec extends Specification with BeforeEach {
 
   "UserAccessRequestDao list" >> {
     "should return a list of user Access Requested" >> {
-      val userAccessRequestDao = UserAccessRequestDao(TestDatabase.db)
+      val userAccessRequestDao = UserAccessRequestDao(TestDatabase)
       val userAccessRequest = getUserAccessRequest(new Timestamp(Instant.now().minusSeconds(60).toEpochMilli))
 
       Await.result(userAccessRequestDao.insertOrUpdate(userAccessRequest), 1.second)

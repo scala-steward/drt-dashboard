@@ -36,7 +36,7 @@ object UserTracking {
   def apply(serverConfig: ServerConfig, timerInitialDelay: FiniteDuration, maxSize: Int, notifications: EmailNotifications): Behavior[Command] =
     Behaviors.setup { context: ActorContext[Command] =>
       implicit val ec: ExecutionContextExecutor = context.executionContext
-      val userService: UserService = UserService(UserDao(ProdDatabase.db))
+      val userService: UserService = UserService(UserDao(ProdDatabase))
 
       Behaviors.withTimers(timers => new UserTracking(
         serverConfig,

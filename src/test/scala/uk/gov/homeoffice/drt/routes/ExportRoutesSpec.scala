@@ -59,11 +59,9 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
 
   implicit val csvStreaming: CsvEntityStreamingSupport = EntityStreamingSupport.csv()
 
-  lazy val db: Database = Database.forConfig("h2-db")
-
   before {
     val schema = TestDatabase.exportTable.schema
-    Await.ready(db.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
+    Await.ready(TestDatabase.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
   }
 
   val arrivalsResponse: String =

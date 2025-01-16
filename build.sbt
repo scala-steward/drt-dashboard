@@ -1,9 +1,9 @@
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v1000"
+lazy val drtLibVersion = "v202501016_1"
 lazy val drtCiriumVersion = "203"
-lazy val akkaHttpVersion = "10.5.3"
-lazy val akkaVersion = "2.8.5"
+lazy val akkaHttpVersion = "10.7.0"
+lazy val akkaVersion = "2.10.0"
 lazy val jodaTimeVersion = "2.12.5"
 lazy val scalaLoggingVersion = "3.9.5"
 lazy val logBackClassicVersion = "1.4.13"
@@ -15,7 +15,7 @@ lazy val janinoVersion = "3.1.11"
 lazy val jacksonDatabindVersion = "2.15.3"
 lazy val notificationsJavaClientVersion = "4.1.1-RELEASE"
 lazy val scalaCsvVersion = "1.3.10"
-lazy val slickVersion = "3.4.1"
+lazy val slickVersion = "3.5.2"
 lazy val awsJava2SdkVersion = "2.21.40"
 lazy val postgresqlVersion = "42.7.2"
 lazy val mockitoVersion = "4.6.1"
@@ -25,7 +25,7 @@ lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
       organization := "uk.gov.homeoffice.drt",
-      scalaVersion := "2.13.12"
+      scalaVersion := "2.13.15"
     )),
 
     version := sys.env.getOrElse("DRONE_BUILD_NUMBER", sys.env.getOrElse("BUILD_ID", "DEV")),
@@ -66,10 +66,13 @@ lazy val root = (project in file(".")).
       "org.mockito" % "mockito-core" % mockitoVersion % Test,
     ),
 
-    resolvers += "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/",
-    resolvers += "Artifactory Realm release local" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-release-local/",
-    resolvers += "Spring Lib Release Repository" at "https://repo.spring.io/libs-release/",
-    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    resolvers ++= Seq(
+      "Akka library repository".at("https://repo.akka.io/maven"),
+      "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/",
+      "Artifactory Realm release local" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-release-local/",
+      "Spring Lib Release Repository" at "https://repo.spring.io/libs-release/",
+      "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    ),
 
     dockerExposedPorts ++= Seq(8081),
 

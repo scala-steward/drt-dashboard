@@ -44,13 +44,13 @@ class UserRoutesSpec extends Specification
   val stringToLocalDateTime: String => Instant = dateString => Instant.parse(dateString)
   val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), Map(PortCode("NCL") -> Seq(T1)), "someDomain.com", "test@test.com")
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
-  val userDao: UserDao = UserDao(TestDatabase.db)
+  val userDao: UserDao = UserDao(TestDatabase)
   val tableName = "user_route_test"
 
   override protected def before: Any = {
     val userTable = TestDatabase.userTable.schema
     val accessRequestTable = TestDatabase.userAccessRequestsTable.schema
-    Await.ready(TestDatabase.db.run(DBIO.seq(
+    Await.ready(TestDatabase.run(DBIO.seq(
       userTable.dropIfExists,
       userTable.create,
       accessRequestTable.dropIfExists,
@@ -119,8 +119,8 @@ class UserRoutesSpec extends Specification
   }
 
   "User api" >> {
-    val userService = UserService(UserDao(TestDatabase.db))
-    val userRequestService: UserRequestService = UserRequestService(UserAccessRequestDao(TestDatabase.db))
+    val userService = UserService(UserDao(TestDatabase))
+    val userRequestService: UserRequestService = UserRequestService(UserAccessRequestDao(TestDatabase))
     val routes = userRoutes(userService, userRequestService)
 
     "Given a uri accessed by a user with an email but no port access, I should see an empty port list and their email address in JSON" >> {

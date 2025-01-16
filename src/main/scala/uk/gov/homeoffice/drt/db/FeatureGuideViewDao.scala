@@ -6,6 +6,7 @@ import slick.lifted.ProvenShape
 import upickle.default._
 
 import java.sql.Timestamp
+import scala.concurrent.Future
 
 case class FeatureGuideViewRow(email: String, fileId: Int, viewTime: Timestamp)
 
@@ -22,11 +23,10 @@ class FeatureGuideViewTable(tag: Tag) extends Table[FeatureGuideViewRow](tag, "f
 
 }
 
-case class FeatureGuideViewDao(db: Database) {
+case class FeatureGuideViewDao(db: CentralDatabase) {
+  private val userFeatureView = TableQuery[FeatureGuideViewTable]
 
-  val userFeatureView = TableQuery[FeatureGuideViewTable]
-
-  def deleteViewForFeature(featureId: String) = {
+  def deleteViewForFeature(featureId: String): Future[Int] = {
     val deleteAction = userFeatureView.filter(_.featureGuideId === featureId.toInt).delete
     db.run(deleteAction)
   }

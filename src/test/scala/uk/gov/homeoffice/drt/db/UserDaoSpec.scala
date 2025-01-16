@@ -14,18 +14,16 @@ import scala.concurrent.{Await, ExecutionContext}
 class UserDaoSpec extends Specification with BeforeEach {
   sequential
 
-  lazy val db: Database = Database.forConfig("h2-db")
-
   override protected def before: Any = {
     val schema = TestDatabase.userTable.schema
-    Await.ready(db.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
+    Await.ready(TestDatabase.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
   }
 
   private val numberOfInactivityDays = 60
   private val deactivateAfterWarningDays = 7
   val secondsInADay: Int = 24 * 60 * 60
 
-  val userDao = UserDao(TestDatabase.db)
+  val userDao = UserDao(TestDatabase)
 
   val userActive1: UserRow = UserRow(
     id = "user1",

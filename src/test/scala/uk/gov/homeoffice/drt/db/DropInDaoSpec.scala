@@ -12,11 +12,9 @@ import scala.concurrent.duration.DurationInt
 
 class DropInDaoSpec extends Specification with BeforeEach {
 
-  lazy val db = TestDatabase.db
-
   override protected def before: Any = {
     Await.ready(
-      db.run(DBIO.seq(
+      TestDatabase.run(DBIO.seq(
         TestDatabase.dropInTable.schema.dropIfExists,
         TestDatabase.dropInTable.schema.createIfNotExists)
       ), 2.second)
@@ -24,7 +22,7 @@ class DropInDaoSpec extends Specification with BeforeEach {
 
   "DropInDao" >> {
     "should return the dropIns created" >> {
-      val dropInDao = new DropInDao(TestDatabase.db)
+      val dropInDao = new DropInDao(TestDatabase)
       Await.result(dropInDao.getFutureDropIns, 1.second).size mustEqual 0
 
       val startTime = new Timestamp(Instant.now().minusSeconds(60).toEpochMilli)

@@ -20,10 +20,10 @@ object DropInReminder {
   def apply(serverConfig: ServerConfig, timerInitialDelay: FiniteDuration, maxSize: Int, notifications: EmailNotifications): Behavior[DropInCommand] =
     Behaviors.setup { context: ActorContext[DropInCommand] =>
       implicit val ec: ExecutionContextExecutor = context.executionContext
-      val dropInService: DropInService = new DropInService(DropInDao(ProdDatabase.db),
-        DropInRegistrationDao(ProdDatabase.db),
-        UserService(UserDao(ProdDatabase.db)),
-        UserRequestService(UserAccessRequestDao(ProdDatabase.db)), serverConfig.teamEmail)
+      val dropInService: DropInService = new DropInService(DropInDao(ProdDatabase),
+        DropInRegistrationDao(ProdDatabase),
+        UserService(UserDao(ProdDatabase)),
+        UserRequestService(UserAccessRequestDao(ProdDatabase)), serverConfig.teamEmail)
 
       Behaviors.withTimers(timers => new DropInReminder(
         notifications,
