@@ -57,7 +57,7 @@ lazy val root = (project in file(".")).
       "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
       "org.postgresql" % "postgresql" % postgresqlVersion,
 
-      "com.h2database" % "h2" % "2.2.224" % Test,
+      "com.h2database" % "h2" % "2.3.232" % Test,
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
