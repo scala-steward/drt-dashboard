@@ -17,7 +17,7 @@ lazy val notificationsJavaClientVersion = "4.1.1-RELEASE"
 lazy val scalaCsvVersion = "1.4.1"
 lazy val slickVersion = "3.4.1"
 lazy val awsJava2SdkVersion = "2.21.46"
-lazy val postgresqlVersion = "42.7.2"
+lazy val postgresqlVersion = "42.7.5"
 lazy val mockitoVersion = "4.11.0"
 lazy val poiScalaVersion ="0.24"
 
