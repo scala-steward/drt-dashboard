@@ -10,7 +10,7 @@ platform:
 steps:
   - name: Build and test front end
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.3.0a
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.4.0-alpha-16
     environment:
       CI: false
     commands:
@@ -24,7 +24,7 @@ steps:
 
   - name: Copy front end to resources
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt:latest
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.4.0-alpha-16
     commands:
       - pwd && rm -rf ./src/main/resources/frontend
       - pwd && mv ./react/build ./src/main/resources/frontend
@@ -36,7 +36,7 @@ steps:
 
   - name: Unit tests
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt:latest
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.4.0-alpha-16
     commands:
       - /root/entrypoint.sh
       - sbt -mem 2048 test
@@ -52,7 +52,7 @@ steps:
 
   - name: Build docker image
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt:latest
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.4.0-alpha-16
     commands:
       - /root/entrypoint.sh
       - sbt docker:stage
@@ -89,7 +89,7 @@ steps:
 
   - name: Code coverage report
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt:latest
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.4.0-alpha-16
     commands:
       - /root/entrypoint.sh
       - sbt -mem 4096 --error coverage test | true
@@ -109,7 +109,7 @@ steps:
 
   - name: Scapegoat
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt:latest
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.4.0-alpha-16
     commands:
       - /root/entrypoint.sh
       - sbt scapegoat | true
@@ -129,7 +129,7 @@ steps:
 
   - name: Dependency check
     pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt:latest
+    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.4.0-alpha-16
     commands:
       - /root/entrypoint.sh
       - sbt -mem 4096 dependencyCheck
