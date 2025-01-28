@@ -1,6 +1,6 @@
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v202501016_1"
+lazy val drtLibVersion = "v1066"
 lazy val drtCiriumVersion = "203"
 lazy val akkaHttpVersion = "10.7.0"
 lazy val akkaVersion = "2.10.0"
