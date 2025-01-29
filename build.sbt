@@ -1,9 +1,11 @@
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v1066"
+lazy val drtLibVersion = "v1069"
+lazy val akkaVersion = "2.9.5" // last version with license key requirement
+lazy val akkaHttpVersion = "10.6.3" // last version dependent on akka 2.9.5
+lazy val slickVersion = "3.5.2"
+
 lazy val drtCiriumVersion = "203"
-lazy val akkaHttpVersion = "10.7.0"
-lazy val akkaVersion = "2.10.0"
 lazy val jodaTimeVersion = "2.12.7"
 lazy val scalaLoggingVersion = "3.9.5"
 lazy val logBackClassicVersion = "1.4.14"
@@ -15,7 +17,6 @@ lazy val janinoVersion = "3.1.11"
 lazy val jacksonDatabindVersion = "2.16.1"
 lazy val notificationsJavaClientVersion = "5.2.1-RELEASE"
 lazy val scalaCsvVersion = "1.4.1"
-lazy val slickVersion = "3.5.2"
 lazy val awsJava2SdkVersion = "2.21.46"
 lazy val postgresqlVersion = "42.7.5"
 lazy val mockitoVersion = "4.11.0"
