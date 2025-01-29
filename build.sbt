@@ -39,6 +39,7 @@ lazy val root = (project in file(".")).
       "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-http-caching" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+      "com.typesafe.akka" %% "akka-pki" % akkaVersion,
       "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
