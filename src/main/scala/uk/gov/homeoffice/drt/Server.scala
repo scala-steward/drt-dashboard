@@ -130,12 +130,12 @@ object Server {
 
       val defaultQueueSlotMinutes = 15
       val urls = Urls(config.rootDomain, config.useHttps)
-      val userRequestService = UserRequestService(UserAccessRequestDao(ProdDatabase.db))
-      val userService = UserService(UserDao(ProdDatabase.db))
-      val dropInDao = DropInDao(ProdDatabase.db)
-      val dropInRegistrationDao = DropInRegistrationDao(ProdDatabase.db)
-      val userFeedbackDao = UserFeedbackDao(ProdDatabase.db)
-      val featureGuideService = FeatureGuideService(FeatureGuideDao(ProdDatabase.db), FeatureGuideViewDao(ProdDatabase.db))
+      val userRequestService = UserRequestService(UserAccessRequestDao(ProdDatabase))
+      val userService = UserService(UserDao(ProdDatabase))
+      val dropInDao = DropInDao(ProdDatabase)
+      val dropInRegistrationDao = DropInRegistrationDao(ProdDatabase)
+      val userFeedbackDao = UserFeedbackDao(ProdDatabase)
+      val featureGuideService = FeatureGuideService(FeatureGuideDao(ProdDatabase), FeatureGuideViewDao(ProdDatabase))
 
       val (exportUploader, exportDownloader) = S3Service.s3FileUploaderAndDownloader(config, config.exportsFolderPrefix)
       val (featureUploader, featureDownloader) = S3Service.s3FileUploaderAndDownloader(config, config.featureFolderPrefix)

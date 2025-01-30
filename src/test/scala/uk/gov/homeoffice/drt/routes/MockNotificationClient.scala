@@ -1,22 +1,24 @@
 package uk.gov.homeoffice.drt.routes
 
-import uk.gov.service.notify.{ LetterResponse, Notification, NotificationClientApi, NotificationList, ReceivedTextMessageList, SendEmailResponse, SendLetterResponse, SendSmsResponse, Template, TemplateList, TemplatePreview }
+import uk.gov.service.notify.{LetterResponse, Notification, NotificationClientApi, NotificationList, ReceivedTextMessageList, SendEmailResponse, SendLetterResponse, SendSmsResponse, Template, TemplateList, TemplatePreview}
 
-import java.io.{ File, InputStream }
+import java.io.{File, InputStream}
+import java.net.URI
 import java.util
 import java.util.UUID
 
 class MockNotificationClient extends NotificationClientApi {
 
   def response(
-    notificationId: String = "",
-    reference: String = "",
-    templateId: String = "templateId",
-    templateVersion: String = "2",
-    templateUri: String = "uri",
-    body: String = "body",
-    subject: String = "subject",
-    fromEmail: String = "") = {
+                notificationId: String = "",
+                reference: String = "",
+                templateId: String = "templateId",
+                templateVersion: String = "2",
+                templateUri: String = "uri",
+                body: String = "body",
+                subject: String = "subject",
+                fromEmail: String = "",
+              ): String = {
     s"""{"id":"${UUID.randomUUID()}",
        | "notificationId":"$notificationId",
        | "reference":"$reference",
@@ -68,4 +70,7 @@ class MockNotificationClient extends NotificationClientApi {
   override def generateTemplatePreview(templateId: String, personalisation: util.Map[String, AnyRef]): TemplatePreview = ???
 
   override def getReceivedTextMessages(olderThanId: String): ReceivedTextMessageList = ???
+
+  override def sendEmail(templateId: String, emailAddress: String, personalisation: util.Map[String, _], reference: String, emailReplyToId: String, oneClickUnsubscribeURL: URI): SendEmailResponse =
+    new SendEmailResponse(response(templateId = templateId, fromEmail = emailAddress, reference = reference))
 }

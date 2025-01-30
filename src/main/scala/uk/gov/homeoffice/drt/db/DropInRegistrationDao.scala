@@ -28,7 +28,7 @@ class DropInRegistrationTable(tag: Tag) extends Table[DropInRegistrationRow](tag
 }
 
 
-case class DropInRegistrationDao(db: Database) {
+case class DropInRegistrationDao(db: CentralDatabase) {
   val dropInRegistrationTable = TableQuery[DropInRegistrationTable]
 
   private def getCurrentTime = new Timestamp(new DateTime().getMillis)

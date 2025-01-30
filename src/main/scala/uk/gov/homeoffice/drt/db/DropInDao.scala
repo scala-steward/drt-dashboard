@@ -61,7 +61,7 @@ object DropInDao {
   def getEndTime(endTime: Timestamp): String = getUKStringDate(endTime, timeFormatter)
 }
 
-case class DropInDao(db: Database) {
+case class DropInDao(db: CentralDatabase) {
   val dropInTable = TableQuery[DropInTable]
 
   private def getCurrentTime = new Timestamp(new DateTime().getMillis)

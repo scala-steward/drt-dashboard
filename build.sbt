@@ -1,25 +1,28 @@
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v1000"
+lazy val drtLibVersion = "v1072"
+
+lazy val akkaVersion = "2.9.5" // last version with license key requirement
+lazy val akkaHttpVersion = "10.6.3" // last version dependent on akka 2.9.5
+lazy val slickVersion = "3.5.2"
+
 lazy val drtCiriumVersion = "203"
-lazy val akkaHttpVersion = "10.5.3"
-lazy val akkaVersion = "2.8.5"
 lazy val jodaTimeVersion = "2.12.7"
 lazy val scalaLoggingVersion = "3.9.5"
 lazy val logBackClassicVersion = "1.4.14"
-lazy val scalaTagsVersion = "0.12.0"
+lazy val scalaTagsVersion = "0.13.1"
 lazy val specs2Version = "4.20.9"
 lazy val logBackJsonVersion = "0.1.5"
 lazy val scalaTestVersion = "3.2.19"
 lazy val janinoVersion = "3.1.11"
-lazy val jacksonDatabindVersion = "2.15.4"
-lazy val notificationsJavaClientVersion = "4.1.1-RELEASE"
+lazy val jacksonDatabindVersion = "2.16.1"
+lazy val notificationsJavaClientVersion = "5.2.1-RELEASE"
 lazy val scalaCsvVersion = "1.4.1"
-lazy val slickVersion = "3.4.1"
 lazy val awsJava2SdkVersion = "2.21.46"
-lazy val postgresqlVersion = "42.7.2"
+lazy val postgresqlVersion = "42.7.5"
 lazy val mockitoVersion = "4.11.0"
-lazy val poiScalaVersion ="0.24"
+lazy val poiScalaVersion ="0.25"
+lazy val h2Version = "2.3.232"
 
 lazy val root = (project in file(".")).
   settings(
@@ -37,6 +40,7 @@ lazy val root = (project in file(".")).
       "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-http-caching" % akkaHttpVersion,
       "com.typesafe.akka" %% "akka-stream" % akkaVersion,
+      "com.typesafe.akka" %% "akka-pki" % akkaVersion,
       "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
@@ -57,7 +61,7 @@ lazy val root = (project in file(".")).
       "com.typesafe.slick" %% "slick-hikaricp" % slickVersion,
       "org.postgresql" % "postgresql" % postgresqlVersion,
 
-      "com.h2database" % "h2" % "2.3.232" % Test,
+      "com.h2database" % "h2" % h2Version % Test,
       "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
       "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
       "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
@@ -66,10 +70,13 @@ lazy val root = (project in file(".")).
       "org.mockito" % "mockito-core" % mockitoVersion % Test,
     ),
 
-    resolvers += "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/",
-    resolvers += "Artifactory Realm release local" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-release-local/",
-    resolvers += "Spring Lib Release Repository" at "https://repo.spring.io/libs-release/",
-    resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    resolvers ++= Seq(
+      "Akka library repository".at("https://repo.akka.io/maven"),
+      "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/",
+      "Artifactory Realm release local" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-release-local/",
+      "Spring Lib Release Repository" at "https://repo.spring.io/libs-release/",
+      "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    ),
 
     dockerExposedPorts ++= Seq(8081),
 

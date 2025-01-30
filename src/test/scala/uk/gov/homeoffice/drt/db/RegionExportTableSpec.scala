@@ -4,7 +4,6 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.wordspec.AnyWordSpec
 import slick.jdbc.H2Profile.api._
-import slick.jdbc.JdbcBackend.Database
 import uk.gov.homeoffice.drt.models.RegionExport
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate}
 
@@ -14,11 +13,9 @@ import scala.concurrent.{Await, ExecutionContextExecutor}
 class RegionExportTableTest extends AnyWordSpec with BeforeAndAfter {
   implicit val ec: ExecutionContextExecutor = scala.concurrent.ExecutionContext.global
 
-  lazy val db: Database = Database.forConfig("h2-db")
-
   before {
     val schema = RegionExportQueries.regionExports.schema
-    Await.ready(db.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
+    Await.ready(TestDatabase.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
   }
 
   val regionExportUser1North = RegionExport("user1-email@somewhere.com", "North", LocalDate(2020, 1, 1), LocalDate(2020, 1, 2), "pending", SDate(1L))
@@ -31,7 +28,7 @@ class RegionExportTableTest extends AnyWordSpec with BeforeAndAfter {
       val get = RegionExportQueries.get(regionExportUser1North.email, regionExportUser1North.region, regionExportUser1North.createdAt.millisSinceEpoch)
       val getAll = RegionExportQueries.getAll(regionExportUser1North.email, regionExportUser1North.region)
 
-      val result = db.run(for {
+      val result = TestDatabase.run(for {
         _ <- insert
         g <- get
         ga <- getAll
@@ -46,7 +43,7 @@ class RegionExportTableTest extends AnyWordSpec with BeforeAndAfter {
       val get = RegionExportQueries.get(regionExportUser1North.email, regionExportUser1North.region, regionExportUser1North.createdAt.millisSinceEpoch)
       val getAll = RegionExportQueries.getAll(regionExportUser1North.email, regionExportUser1North.region)
 
-      val result = db.run(for {
+      val result = TestDatabase.run(for {
         _ <- insert1
         _ <- insert2
         _ <- insert3

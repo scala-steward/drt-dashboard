@@ -25,8 +25,6 @@ class DropInServiceSpec extends SpecificationLike with BeforeEach {
 
   sequential
 
-  lazy val db = TestDatabase.db
-
   implicit val sys: ActorSystem = ActorSystem("testActorSystem", ConfigFactory.empty())
 
   val teamEmail = "test@test.com"
@@ -34,7 +32,7 @@ class DropInServiceSpec extends SpecificationLike with BeforeEach {
 
   override protected def before: Any = {
     Await.ready(
-      db.run(DBIO.seq(
+      TestDatabase.run(DBIO.seq(
         TestDatabase.userTable.schema.dropIfExists,
         TestDatabase.userTable.schema.createIfNotExists,
         TestDatabase.userAccessRequestsTable.schema.dropIfExists,
@@ -114,10 +112,10 @@ class DropInServiceSpec extends SpecificationLike with BeforeEach {
   }
 
   def runScenario(createdAt: String, registeredForDropIn: Boolean, resendCheck: Boolean) = {
-    val dropInDao = DropInDao(TestDatabase.db)
-    val dropInRegistrationDao = DropInRegistrationDao(TestDatabase.db)
-    val userService = UserService(UserDao(TestDatabase.db))
-    val userRequestService = UserRequestService(UserAccessRequestDao(TestDatabase.db))
+    val dropInDao = DropInDao(TestDatabase)
+    val dropInRegistrationDao = DropInRegistrationDao(TestDatabase)
+    val userService = UserService(UserDao(TestDatabase))
+    val userRequestService = UserRequestService(UserAccessRequestDao(TestDatabase))
     val dropInService: DropInService = new DropInService(dropInDao,
       dropInRegistrationDao,
       userService,

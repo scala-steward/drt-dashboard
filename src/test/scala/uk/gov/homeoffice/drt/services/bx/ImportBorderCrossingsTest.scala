@@ -7,7 +7,6 @@ import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import slick.dbio.DBIO
 import slick.jdbc.H2Profile.api._
-import slick.jdbc.JdbcBackend.Database
 import uk.gov.homeoffice.drt.db.TestDatabase
 import uk.gov.homeoffice.drt.db.dao.BorderCrossingDao
 import uk.gov.homeoffice.drt.db.serialisers.BorderCrossingSerialiser
@@ -25,11 +24,9 @@ class ImportBorderCrossingsTest extends AnyWordSpec with Matchers with BeforeAnd
   implicit val mat: Materializer = Materializer(system)
   implicit val ec: ExecutionContext = mat.executionContext
 
-  val db: Database = Database.forConfig("h2-db")
-
   before {
     val schema = BorderCrossingDao.table.schema
-    Await.ready(db.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
+    Await.ready(TestDatabase.run(DBIO.seq(schema.dropIfExists, schema.create)), 1.second)
   }
 
   "BxImporter" should {

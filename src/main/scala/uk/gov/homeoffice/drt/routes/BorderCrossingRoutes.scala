@@ -47,7 +47,7 @@ object BorderCrossingRoutes {
               onComplete(eventualDone) {
                 case Success(insertCount) => complete("""{"inserted": """ + insertCount + """}""")
                 case Failure(error) =>
-                  log.error(s"Error importing border crossings: ${error.getMessage}")
+                  log.error(s"Error importing border crossings: ${error.getMessage}", error)
                   complete(StatusCodes.InternalServerError)
               }
           }

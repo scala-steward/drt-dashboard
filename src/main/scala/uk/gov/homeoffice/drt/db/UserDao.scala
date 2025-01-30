@@ -60,7 +60,7 @@ trait IUserDao {
 
 }
 
-case class UserDao(db: Database) extends IUserDao {
+case class UserDao(db: CentralDatabase) extends IUserDao {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
   val userTable: TableQuery[UserTable] = TableQuery[UserTable]

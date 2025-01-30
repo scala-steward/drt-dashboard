@@ -5,8 +5,6 @@ import slick.lifted.{ProvenShape, TableQuery, Tag}
 import spray.json.RootJsonFormat
 import uk.gov.homeoffice.drt.authentication.AccessRequest
 
-import java.sql.Timestamp
-import java.time.{Duration, Instant, LocalDateTime, ZoneOffset}
 import scala.concurrent.{ExecutionContext, Future}
 
 trait UserAccessRequestJsonSupport extends DateTimeJsonSupport {
@@ -84,7 +82,7 @@ trait IUserAccessRequestDao {
 
 }
 
-case class UserAccessRequestDao(db: Database) extends IUserAccessRequestDao {
+case class UserAccessRequestDao(db: CentralDatabase) extends IUserAccessRequestDao {
   val userAccessRequests: TableQuery[UserAccessRequestsTable] = TableQuery[UserAccessRequestsTable]
 
   def insertOrUpdate(userAccessRequest: UserAccessRequest): Future[Int] = {
