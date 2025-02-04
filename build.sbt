@@ -7,7 +7,7 @@ lazy val akkaHttpVersion = "10.6.3" // last version dependent on akka 2.9.5
 lazy val slickVersion = "3.5.2"
 
 lazy val drtCiriumVersion = "203"
-lazy val jodaTimeVersion = "2.12.7"
+lazy val jodaTimeVersion = "2.13.1"
 lazy val scalaLoggingVersion = "3.9.5"
 lazy val logBackClassicVersion = "1.4.14"
 lazy val scalaTagsVersion = "0.13.1"
