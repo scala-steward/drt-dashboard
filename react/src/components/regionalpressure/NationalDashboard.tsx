@@ -29,11 +29,13 @@ interface NationalDashboardProps {
 }
 
 const NationalDashboard = ({config, user, status}: NationalDashboardProps) => {
+  const userPortsByRegion: PortRegion[] = config.portsByRegion
+    .map(region => {
+      const userPorts: string[] = user.ports.filter(p => region.ports.includes(p));
+      return {...region, ports: userPorts} as PortRegion
+    })
+    .filter(r => r.ports.length > 0)
 
-  let userPortsByRegion: PortRegion[] = config.portsByRegion.map(region => {
-    const userPorts: string[] = user.ports.filter(p => region.ports.includes(p));
-    return {...region, ports: userPorts} as PortRegion
-  }).filter(r => r.ports.length > 0)
   const availablePorts = config.ports.map(port => port.iata);
 
   return <PageContentWrapper>

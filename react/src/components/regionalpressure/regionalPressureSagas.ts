@@ -17,6 +17,7 @@ export type RequestPaxTotalsType = {
   historicStart: string,
   historicEnd: string,
 };
+
 export type PortTerminal = {
   port: string,
   ports: string[],
@@ -33,17 +34,16 @@ export type TerminalDataPoint = {
   portCode: string,
   queueCounts: QueueCount[],
   regionName: string,
-  totalPcpPax: number, 
+  totalPcpPax: number,
   terminalName?: string,
 };
-
 
 export type ExportableDataPoint = {
   date: string,
   hour: number,
   portCode: string,
   regionName: string,
-  totalPcpPax: number, 
+  totalPcpPax: number,
   terminalName?: string,
   EEA?: number,
   nonEEA?:number,
@@ -63,11 +63,11 @@ type APIResponse = {
 }
 
 export const requestPaxTotals = (
-  userPorts: string[], 
-  availablePorts: string[], 
+  userPorts: string[],
+  availablePorts: string[],
   searchType: string,
-   startDate: string, 
-   endDate: string, 
+   startDate: string,
+   endDate: string,
    isExport: boolean,
    historicStart: string,
    historicEnd: string,
@@ -100,13 +100,13 @@ const createExportableDatapoints = (datapoints: TerminalDataPoint[]) :Exportable
       hour: datapoint.hour,
       portCode: datapoint.portCode,
       regionName: datapoint.regionName,
-      totalPcpPax: datapoint.totalPcpPax, 
+      totalPcpPax: datapoint.totalPcpPax,
       terminalName: datapoint.terminalName,
       EEA: datapoint.queueCounts[0]?.count || 0,
       eGates: datapoint.queueCounts[1]?.count || 0,
       nonEEA: datapoint.queueCounts[2]?.count || 0,
     })
-  }); 
+  });
   return flattenedCurrent
 }
 
@@ -136,8 +136,9 @@ export function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
     let historic: TerminalDataPoint[];
     let currentResponse: APIResponse;
     let historicResponse: APIResponse;
-    if (window.location.hostname.includes('localhost')) {
+    if (window.location.hostname.includes('localhost') && false) {
       //stub all data for local development
+      console.log(`Using local stub data`)
       current =  StubService.generatePortPaxSeries(fStart, fEnd, interval, 'region', action.availablePorts)
       historic = StubService.generatePortPaxSeries(fHistoricStart, fHistoricEnd, interval, 'region', action.availablePorts)
     } else {
@@ -164,8 +165,6 @@ export function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
     }
 
     if (action.isExport) {
-
-
       const currentCSV = generateCsv({})(createExportableDatapoints(current));
       const historicCSV = generateCsv({})(createExportableDatapoints(historic));
       download({})(currentCSV);
@@ -177,7 +176,7 @@ export function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
       const portTotals: PortTotals = {};
       const historicPortData: PortsObject = {};
       const historicPortTotals: PortTotals = {};
-  
+
       current!.forEach((datapoint) => {
         const portIndex = datapoint.terminalName ? `${datapoint.portCode}-${datapoint.terminalName}` : datapoint.portCode;
         datapoint.queueCounts!.forEach(passengerCount => {
@@ -187,7 +186,7 @@ export function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
           portData[portIndex].push(datapoint)
             : portData[portIndex] = [datapoint]
       })
-  
+
       historic!.forEach((datapoint) => {
         const portIndex = datapoint.terminalName ? `${datapoint.portCode}-${datapoint.terminalName}` : datapoint.portCode;
         datapoint.queueCounts!.forEach(passengerCount => {
@@ -197,7 +196,7 @@ export function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
           historicPortData[portIndex].push(datapoint)
             : historicPortData[portIndex] = [datapoint]
       })
-      
+
       yield(put(setRegionalDashboardState({
         portData,
         portTotals,

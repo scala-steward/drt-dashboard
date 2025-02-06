@@ -22,7 +22,7 @@ import scala.util.{Failure, Success}
 object PassengerRoutes {
   private val log = org.slf4j.LoggerFactory.getLogger(getClass)
 
-  def apply(summaryProvider: (LocalDate, LocalDate, Granularity, Option[Terminal]) => PortCode => Source[(Map[Queue, Int], Int, Option[Any]), NotUsed])
+  def apply(summaryProvider: (LocalDate, LocalDate, Granularity, Option[Terminal]) => PortCode => Source[(Map[Queue, Int], Int, Int, Option[Any]), NotUsed])
            (implicit ec: ExecutionContext, mat: Materializer): Route =
     pathPrefix("passengers" / Segment / Segment) {
       case (startDate, endDate) =>
@@ -43,7 +43,7 @@ object PassengerRoutes {
                                 startDate: String,
                                 endDate: String,
                                 maybeTerminal: Option[String],
-                                summaryProvider: (LocalDate, LocalDate, Granularity, Option[Terminal]) => PortCode => Source[(Map[Queue, Int], Int, Option[Any]), NotUsed],
+                                summaryProvider: (LocalDate, LocalDate, Granularity, Option[Terminal]) => PortCode => Source[(Map[Queue, Int], Int, Int, Option[Any]), NotUsed],
                                )
                                (implicit ec: ExecutionContext, mat: Materializer): Route = {
     get {
@@ -85,19 +85,19 @@ object PassengerRoutes {
   }
 
   private def sourceToContent(contentType: ContentType,
-                              portResult: Source[(PortCode, (Map[Queue, Int], Int, Option[Any])), NotUsed],
+                              portResult: Source[(PortCode, (Map[Queue, Int], Int, Int, Option[Any])), NotUsed],
                               maybeTerminal: Option[String],
                              )
                              (implicit mat: Materializer, ec: ExecutionContext): Future[String] = {
     if (contentType == ContentTypes.`text/csv(UTF-8)`)
       portResult.runFold("") {
-        case (acc, (portCode, (queues, capacity, x))) => acc + passengersCsvRow(portCode, maybeTerminal, queues, capacity, x)
+        case (acc, (portCode, (queues, capacity, bx, x))) => acc + passengersCsvRow(portCode, maybeTerminal, queues, capacity, x)
       }
     else {
       import uk.gov.homeoffice.drt.jsonformats.PassengersSummaryFormat._
       portResult
         .runFold(PassengersSummaries.empty) {
-          case (acc, (portCode, (queues, capacity, x))) => acc ++ Seq(passengersJson(portCode, maybeTerminal, queues, capacity, x))
+          case (acc, (portCode, (queues, capacity, bx, x))) => acc ++ Seq(passengersJson(portCode, maybeTerminal, queues, capacity, x))
         }
         .map(_.summaries.toJson.compactPrint)
     }
