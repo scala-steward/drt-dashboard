@@ -3,7 +3,7 @@ import {connect} from 'react-redux'
 import {RootState} from '../../store/redux';
 import { useNavigate } from 'react-router';
 import { Button, ButtonGroup } from '@mui/material';
-import { TerminalDataPoint } from './regionalPressureSagas';
+import {paxByGateType, TerminalDataPoint} from './regionalPressureSagas';
 import { mkConfig, generateCsv, download } from "export-to-csv";
 import { PortsObject } from './regionalPressureSagas';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
@@ -24,31 +24,38 @@ type ExportDataPoint = {
   date: string,
   portCode: string,
   regionName: string,
-  totalPcpPax: number, 
   terminalName?: string,
-  EEA: number,
-  eGates: number,
-  nonEEA: number,
+  drtTotalPax: number,
+  drtEgatePax: number,
+  drtDeskPax: number,
+  bxTotalPax: number,
+  bxEgatePax: number,
+  bXDeskPax: number,
 }
 
 const results_to_array = (data: PortsObject, is_hourly: boolean) => {
-  let data_rows: ExportDataPoint[] = []
+  const data_rows: ExportDataPoint[] = []
   Object.keys(data).map((port: string) => {
     data[port].map((portDataPoint: TerminalDataPoint) => {
 
-      let date = is_hourly ? 
+      const [drtEgatePax, drtDeskPax] = paxByGateType(portDataPoint.drtQueueCounts)
+      const [bxEgatePax, bXDeskPax] = paxByGateType(portDataPoint.bxQueueCounts)
+
+      const date = is_hourly ?
         moment(portDataPoint.date).add(portDataPoint.hour, 'hours').format('YYYY-MM-DD HH:mm') :
         portDataPoint.date
 
-      let exportDataPoint: ExportDataPoint = {
+      const exportDataPoint: ExportDataPoint = {
         date,
         portCode: portDataPoint.portCode || '',
         regionName: portDataPoint.regionName || '',
-        totalPcpPax: portDataPoint.totalPcpPax || 0,
         terminalName: portDataPoint.terminalName || '',
-        EEA: portDataPoint.queueCounts![0]?.count || 0,
-        eGates: portDataPoint.queueCounts![1]?.count || 0,
-        nonEEA: portDataPoint.queueCounts![2]?.count || 0,
+        drtTotalPax: drtEgatePax + drtDeskPax,
+        bxTotalPax: bxEgatePax + bXDeskPax,
+        drtEgatePax: drtEgatePax,
+        bxEgatePax: bxEgatePax,
+        drtDeskPax: drtDeskPax,
+        bXDeskPax: bXDeskPax,
       }
       data_rows.push(exportDataPoint)
     })
@@ -56,14 +63,13 @@ const results_to_array = (data: PortsObject, is_hourly: boolean) => {
   return data_rows
 }
 
-
 const RegionalPressureExport = ({portData, historicPortData, granularity}: RegionalPressureExportProps) => {
 
   const navigate = useNavigate();
   const is_hourly = granularity === 'hour'
 
-  const csvConfig = mkConfig({ 
-    useKeysAsHeaders: true 
+  const csvConfig = mkConfig({
+    useKeysAsHeaders: true
   });
 
   const handleExport = () => {
@@ -74,26 +80,26 @@ const RegionalPressureExport = ({portData, historicPortData, granularity}: Regio
   }
 
   return <ButtonGroup sx={{width: '100%'}}>
-    <Button 
-      fullWidth 
-      startIcon={<ArrowDownward />} 
-      variant="outlined" 
-      sx={{backgroundColor: '#fff'}} 
+    <Button
+      fullWidth
+      startIcon={<ArrowDownward />}
+      variant="outlined"
+      sx={{backgroundColor: '#fff'}}
       onClick={handleExport}>Export</Button>
-    <Button 
-      fullWidth 
-      startIcon={<BrowserUpdatedIcon />} 
-      variant="outlined" 
-      sx={{backgroundColor: '#fff'}} 
+    <Button
+      fullWidth
+      startIcon={<BrowserUpdatedIcon />}
+      variant="outlined"
+      sx={{backgroundColor: '#fff'}}
       onClick={() => navigate('/download')}>Download Manager</Button>
     </ButtonGroup>
 }
 
 
 const mapState = (state: RootState) => {
-  return { 
-    portData: state.pressureDashboard?.portData,
-    historicPortData: state.pressureDashboard?.historicPortData,
+  return {
+    portData: state.pressureDashboard?.currentHourlyPaxByPort,
+    historicPortData: state.pressureDashboard?.historicHourlyPaxByPort,
     granularity: state.pressureDashboard?.interval,
    };
 }

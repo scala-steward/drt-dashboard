@@ -195,14 +195,14 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
       </CardContent>
     </Card>
   )
-  
+
 }
 
 
 const mapState = (state: RootState) => {
-  return { 
-    portTotals: state.pressureDashboard?.portTotals,
-    historicPortTotals: state.pressureDashboard?.historicPortTotals,
+  return {
+    portTotals: state.pressureDashboard?.currentTotalPaxByPort,
+    historicPortTotals: state.pressureDashboard?.historicTotalPaxByPort,
    };
 }
 

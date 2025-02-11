@@ -33,17 +33,17 @@ class PassengerRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteT
     "stn",
     None,
     2,
-    1,
     Map(Queues.EeaDesk -> 1),
+    Map(Queues.EeaDesk -> 3),
     None,
     None
   )
 
-  val mockSummary: (LocalDate, LocalDate, Granularity, Option[Terminal]) => PortCode => Source[(Map[Queue, Int], Int, Option[Any]), NotUsed] =
+  val mockSummary: (LocalDate, LocalDate, Granularity, Option[Terminal]) => PortCode => Source[(Map[Queue, Int], Int, Map[Queue, Int], Option[Any]), NotUsed] =
     (_, _, granularity, maybeTerminal) => _ => {
       probeGranularity.ref ! granularity
       probeTerminal.ref ! maybeTerminal
-      Source.single((Map(Queues.EeaDesk -> 1), 2, None))
+      Source.single((Map(Queues.EeaDesk -> 1), 2, Map(Queues.EeaDesk -> 3), None))
     }
 
   "PassengerRoutes" should {

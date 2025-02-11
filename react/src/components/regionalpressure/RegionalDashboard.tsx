@@ -1,49 +1,46 @@
 import * as React from 'react';
-import { connect } from 'react-redux';
-import { UserProfile } from "../../model/User";
-import { useParams } from 'react-router';
+import {connect} from 'react-redux';
+import {useParams} from 'react-router';
 import pattern from 'patternomaly'
 import {
   Alert,
   Box,
-  Grid,
+  Button,
   Card,
   CardContent,
   CardHeader,
-  Button,
-  IconButton,
-  Stack,
+  Checkbox,
   FormControl,
+  FormControlLabel,
   FormGroup,
   FormLabel,
-  FormControlLabel,
-  Checkbox,
-  useMediaQuery,
-  Theme
+  Grid,
+  IconButton,
+  Stack,
+  Theme,
+  useMediaQuery
 } from "@mui/material";
-import { Link } from 'react-router-dom';
-import { ConfigValues } from "../../model/Config";
-import { RootState } from '../../store/redux';
+import {Link} from 'react-router-dom';
+import {ConfigValues} from "../../model/Config";
+import {RootState} from '../../store/redux';
 import drtTheme from '../../drtTheme';
-import { Chart } from 'react-chartjs-2'; 
-import {
-  Chart as ChartJS,
-  registerables,
-} from 'chart.js';
+import {Chart} from 'react-chartjs-2';
+import {Chart as ChartJS, registerables,} from 'chart.js';
 import 'chartjs-adapter-moment';
 import moment from 'moment';
-ChartJS.register(...registerables);
-import { ArrowBack } from '@mui/icons-material';
-import { TerminalDataPoint } from './regionalPressureSagas';
+import {ArrowBack} from '@mui/icons-material';
+import {TerminalDataPoint, totalFromQueues} from './regionalPressureSagas';
 import RegionalPressureDates from './RegionalPressureDates';
 import RegionalPressureForm from './RegionalPressureForm';
 import RegionalPressureExport from './RegionalPressureExport';
 
+ChartJS.register(...registerables);
+
 
 interface RegionalDashboardProps {
   config: ConfigValues;
-  user: UserProfile;
-  title?: string;
+  // user: UserProfile;
+  // title?: string;
   interval?: string;
   type: string;
   portData: {
@@ -188,7 +185,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                                 formattedPaxPercent = new Intl.NumberFormat("en-US", {
                                   signDisplay: "exceptZero",
                                   maximumSignificantDigits: 2
-                                
+
                                 }).format(percentage);
                                 percentage = isNaN(percentage) ? 0 : percentage;
                               }
@@ -206,7 +203,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                                   return [` ${date.format(dateFormat)}: ${context.parsed.y.toLocaleString()} pax`]
                                 case 'Historical pax':
                                   return [` ${historicDate.format(dateFormat)}: ${context.parsed.y.toLocaleString()} pax`]
-                                default: 
+                                default:
                                   return [` ${date.format(dateFormat)}: ${context.parsed.y.toLocaleString()} pax`]
                               }
                             }
@@ -298,7 +295,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                             }
                             return {
                               x: pointDate.format('MM/DD/YYYY HH:mm'),
-                              y: datapoint.totalPcpPax,
+                              y: totalFromQueues(datapoint.drtQueueCounts),
                             }
                           })
                         },
@@ -321,7 +318,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                               }
                               return {
                                 x: paxDate.format('MM/DD/YYYY HH:mm'),
-                                y: datapoint.totalPcpPax,
+                                y: totalFromQueues(datapoint.bxQueueCounts),
                               }
                           }),
                         }
@@ -347,8 +344,8 @@ const mapState = (state: RootState) => {
     errors: state.pressureDashboard?.errors,
     startDate: state.pressureDashboard?.start,
     endDate: state.pressureDashboard?.end,
-    portData: state.pressureDashboard?.portData,
-    historicPortData: state.pressureDashboard?.historicPortData,
+    portData: state.pressureDashboard?.currentHourlyPaxByPort,
+    historicPortData: state.pressureDashboard?.historicHourlyPaxByPort,
     interval: state.pressureDashboard?.interval,
     type: state.pressureDashboard?.type,
   };

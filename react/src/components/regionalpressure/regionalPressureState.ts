@@ -11,16 +11,16 @@ interface RegionalPressureState {
   historicStart: string,
   historicEnd: string,
   interval: string,
-  portData: {
+  currentHourlyPaxByPort: {
     [key: string] : TerminalDataPoint[]
   },
-  portTotals: {
+  currentTotalPaxByPort: {
     [key: string] : number
   }
-  historicPortData: {
+  historicHourlyPaxByPort: {
     [key: string] : TerminalDataPoint[]
   },
-  historicPortTotals: {
+  historicTotalPaxByPort: {
     [key: string] : number
   }
 }
@@ -31,16 +31,16 @@ type SetStatePayload = {
   start: string,
   end: string,
   interval: string,
-  portData: {
+  currentHourlyPaxByPort: {
     [key: string] : TerminalDataPoint[]
   },
-  portTotals: {
+  currentTotalPaxByPort: {
     [key: string] : number
   },
-  historicPortData: {
+  historicHourlyPaxByPort: {
     [key: string] : TerminalDataPoint[]
   },
-  historicPortTotals: {
+  historicTotalPaxByPort: {
     [key: string] : number
   },
   historicStart: string,
@@ -51,10 +51,10 @@ const regionalPressureSlice = createSlice({
   name: 'regionalPressure',
   initialState: {
     status: '',
-    portData: {},
-    portTotals: {},
-    historicPortData: {},
-    historicPortTotals: {},
+    currentHourlyPaxByPort: {},
+    currentTotalPaxByPort: {},
+    historicHourlyPaxByPort: {},
+    historicTotalPaxByPort: {},
     errors: [],
     type: "single",
     start: new Date().toString(),
@@ -68,10 +68,10 @@ const regionalPressureSlice = createSlice({
       state.status = action.payload;
     },
     setRegionalDashboardState: (state: RegionalPressureState, action: PayloadAction<SetStatePayload>) => {
-      state.portData = {...action.payload.portData}
-      state.portTotals = {...action.payload.portTotals}
-      state.historicPortData = {...action.payload.historicPortData}
-      state.historicPortTotals = {...action.payload.historicPortTotals}
+      state.currentHourlyPaxByPort = {...action.payload.currentHourlyPaxByPort}
+      state.currentTotalPaxByPort = {...action.payload.currentTotalPaxByPort}
+      state.historicHourlyPaxByPort = {...action.payload.historicHourlyPaxByPort}
+      state.historicTotalPaxByPort = {...action.payload.historicTotalPaxByPort}
       state.type = action.payload.type;
       state.start = action.payload.start;
       state.end = action.payload.end;

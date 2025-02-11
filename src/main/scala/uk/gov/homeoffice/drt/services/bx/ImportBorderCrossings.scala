@@ -17,7 +17,7 @@ import scala.util.{Failure, Success, Try}
 object ImportBorderCrossings {
   private val log = LoggerFactory.getLogger(getClass)
 
-  private val monthYearRegex = """.+Gate Type and Hour between 01 ([a-zA-Z]+) ([0-9]{4}).+""".r
+  private val monthYearRegex = """.*Gate Type and Hour between 01 ([a-zA-Z]+) ([0-9]{4}).*""".r
   private val cellOffset = 2
   private val dateStartOffset = 4
 
@@ -27,18 +27,20 @@ object ImportBorderCrossings {
       val file = new File(filePath)
       val workbook = WorkbookFactory.create(file)
 
-      val sheet = workbook.iterator().asScala.find(_.getSheetName == "Data Response").getOrElse(throw new Exception("Sheet not found"))
+      val sheet = workbook.iterator().asScala.toSeq.find(_.getSheetName == "Data Response").getOrElse(throw new Exception("Sheet not found"))
       val formatter: DataFormatter = new DataFormatter()
 
       val fromMonthRow = findMonthRow(sheet, formatter)
       val (month, year) = extractMonthAndYear(formatter, fromMonthRow)
+      log.info(s"Found month: $month, year: $year")
       val fromHeadingsRow = findHeadingsRow(fromMonthRow, formatter)
+      log.info(s"Found headings row: ${fromHeadingsRow.head.cellIterator().asScala.toSeq.map(c => formatter.formatCellValue(c)).mkString(", ")}")
 
       val startDate = SDate(f"$year-${SDate.monthsOfTheYear.indexOf(month) + 1}%02d-01")
       val endDate = startDate.addMonths(1).addDays(-1)
       val dateRange = DateRange(startDate.toUtcDate, endDate.toUtcDate)
 
-      Source(fromHeadingsRow.drop(1).toSeq)
+      Source(fromHeadingsRow.drop(1))
         .flatMapConcat { row =>
           Try {
             val bxPort = formatter.formatCellValue(row.getCell(cellOffset + 0))
@@ -86,23 +88,24 @@ object ImportBorderCrossings {
     }
   }
 
-  private def findHeadingsRow(fromMonthRow: Iterator[Row], formatter: DataFormatter): Iterator[Row] = {
+  private def findHeadingsRow(fromMonthRow: Seq[Row], formatter: DataFormatter): Seq[Row] = {
     fromMonthRow.dropWhile { row =>
       val cells = row.cellIterator().asScala.toIndexedSeq
 
       if (cells.size < (cellOffset + 2)) {
         false
       } else {
-        val cellMatch1 = formatter.formatCellValue(cells(cellOffset + 0)) == "Port"
-        val cellMatch2 = formatter.formatCellValue(cells(cellOffset + 1)) == "Terminal"
-        !(cellMatch1 && cellMatch2)
+        val cell1 = formatter.formatCellValue(cells(cellOffset + 0))
+        val cell2 = formatter.formatCellValue(cells(cellOffset + 1))
+        log.info(s"Looking for headings row: ${row.getRowNum}: $cell1, $cell2 (from ${cells.map(c => formatter.formatCellValue(c)).mkString(", ")})")
+        !(cell1 == "Port" && cell2 == "Terminal")
       }
     }
   }
 
-  private def extractMonthAndYear(formatter: DataFormatter, fromMonthRow: Iterator[Row]): (String, String) = {
+  private def extractMonthAndYear(formatter: DataFormatter, fromMonthRow: Seq[Row]): (String, String) = {
     val maybeContentCell = fromMonthRow
-      .next().cellIterator().asScala.toSeq
+      .head.cellIterator().asScala.toSeq
       .dropWhile(_.getColumnIndex < cellOffset)
       .headOption
 
@@ -119,11 +122,13 @@ object ImportBorderCrossings {
     }
   }
 
-  private def findMonthRow(sheet: Sheet, formatter: DataFormatter): Iterator[Row] = {
-    sheet.iterator().asScala.dropWhile { row =>
-      !row.cellIterator().asScala.exists { cell =>
+  private def findMonthRow(sheet: Sheet, formatter: DataFormatter): Seq[Row] = {
+    sheet.iterator().asScala.toSeq.dropWhile { row =>
+      !row.cellIterator().asScala.toSeq.exists { cell =>
+        log.info(s"Looking for month row: ${row.getRowNum}: ${formatter.formatCellValue(cell)}")
         formatter.formatCellValue(cell) match {
           case monthYearRegex(_, _) =>
+            log.info(s"Found month row: ${row.getRowNum}: ${formatter.formatCellValue(cell)}")
             true
           case _ =>
             false

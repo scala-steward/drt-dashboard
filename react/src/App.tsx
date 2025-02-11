@@ -140,7 +140,7 @@ export const App = () => {
             <Route path={"/national-pressure"}
                    element={<NationalDashboard config={config.values} user={user.profile}/>}/>
             <Route path={"/national-pressure/:region"}
-                   element={<RegionalDashboard config={config.values} user={user.profile}/>}/>
+                   element={<RegionalDashboard config={config.values}/>}/>
             <Route path={"/region/:regionName"} element={<RegionPage user={user.profile} config={config.values}/>}/>
             <Route path={"/feature-guides"}>
               <Route path={""} element={<FeatureGuideList/>}/>

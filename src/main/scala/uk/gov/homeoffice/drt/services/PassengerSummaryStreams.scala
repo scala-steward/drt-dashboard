@@ -32,15 +32,15 @@ object PassengerSummaryStreams {
 
 case class PassengerSummaryStreams(db: AppDatabase)
                                   (implicit ec: ExecutionContext) {
-  val streamForGranularity: (LocalDate, LocalDate, Granularity, Option[Terminal]) => PortCode => Source[(Map[Queue, Int], Int, Int, Option[Any]), NotUsed] =
+  val streamForGranularity: (LocalDate, LocalDate, Granularity, Option[Terminal]) => PortCode => Source[(Map[Queue, Int], Int, Map[Queue, Int], Option[Any]), NotUsed] =
     (start, end, granularity, maybeTerminal) => portCode => {
-      val queueTotals = PassengersHourlyDao.queueTotalsForPortAndDate(portCode.iata, maybeTerminal.map(_.toString))
+      val drtQueueTotals = PassengersHourlyDao.queueTotalsForPortAndDate(portCode.iata, maybeTerminal.map(_.toString))
       val capacityTotals = CapacityHourlyDao.totalForPortAndDate(portCode.iata, maybeTerminal.map(_.toString))
-      val bxTotals = BorderCrossingDao.totalForPortAndDate(portCode.iata, maybeTerminal.map(_.toString))
+      val bxQueueTotals = BorderCrossingDao.queueTotalsForPortAndDate(portCode.iata, maybeTerminal.map(_.toString))
 
-      val queueTotalsQueryForDate: LocalDate => Future[Map[Queue, Int]] = date => db.run(queueTotals(date))
+      val queueTotalsQueryForDate: LocalDate => Future[Map[Queue, Int]] = date => db.run(drtQueueTotals(date))
       val capacityTotalsForDate: LocalDate => Future[Int] = date => db.run(capacityTotals(date))
-      val bxTotalsForDate: LocalDate => Future[Int] = date => db.run(bxTotals(date))
+      val bxTotalsForDate: LocalDate => Future[Map[Queue, Int]] = date => db.run(bxQueueTotals(date))
 
       val stream = granularity match {
         case Hourly =>
@@ -59,8 +59,7 @@ case class PassengerSummaryStreams(db: AppDatabase)
       stream(start, end)
     }
 
-
-  private val hourlyStream: (LocalDate => Future[Map[Long, Map[Queue, Int]]], LocalDate => Future[Map[Long, Int]], LocalDate => Future[Map[Long, Int]]) => (LocalDate, LocalDate) => Source[(Map[Queue, Int], Int, Int, Option[Long]), NotUsed] =
+  private val hourlyStream: (LocalDate => Future[Map[Long, Map[Queue, Int]]], LocalDate => Future[Map[Long, Int]], LocalDate => Future[Map[Long, Map[Queue, Int]]]) => (LocalDate, LocalDate) => Source[(Map[Queue, Int], Int, Map[Queue, Int], Option[Long]), NotUsed] =
     (queueHourlyForDate, capacityHourlyForDate, bxHourlyForDate) => (start, end) =>
       Source(DateRange(start, end))
         .mapAsync(1) { date =>
@@ -74,16 +73,18 @@ case class PassengerSummaryStreams(db: AppDatabase)
           }
         }
         .mapAsync(1) {
-          case (date, hourlyCaps, hourlyBx) =>
+          case (date, hourlyCaps, bxQueueCounts) =>
             queueHourlyForDate(date).map {
               _.toSeq.sortBy(_._1).map {
-                case (hour, queueCounts) => (queueCounts, hourlyCaps.getOrElse(hour, 0), hourlyBx.getOrElse(hour, 0), Option(hour))
+                case (hour, drtQueueCounts) =>
+                  val bxQueueCountsForHour = bxQueueCounts.getOrElse(hour, Map.empty)
+                  (drtQueueCounts, hourlyCaps.getOrElse(hour, 0), bxQueueCountsForHour, Option(hour))
               }
             }
         }
         .mapConcat(identity)
 
-  private val dailyStream: (LocalDate => Future[Map[Queue, Int]], LocalDate => Future[Int], LocalDate => Future[Int]) => (LocalDate, LocalDate) => Source[(Map[Queue, Int], Int, Int, Option[LocalDate]), NotUsed] =
+  private val dailyStream: (LocalDate => Future[Map[Queue, Int]], LocalDate => Future[Int], LocalDate => Future[Map[Queue, Int]]) => (LocalDate, LocalDate) => Source[(Map[Queue, Int], Int, Map[Queue, Int], Option[LocalDate]), NotUsed] =
     (queueTotalsForDate, capacityTotalForDate, bxTotalForDate) => (start, end) =>
       Source(DateRange(start, end))
         .mapAsync(1)(date => capacityTotalForDate(date).map(capacity => (date, capacity)))
@@ -94,7 +95,7 @@ case class PassengerSummaryStreams(db: AppDatabase)
           queueTotalsForDate(date).map(queueCounts => (queueCounts, cap, bx, Option(date)))
         }
 
-  private val totalsStream: (LocalDate => Future[Map[Queue, Int]], LocalDate => Future[Int], LocalDate => Future[Int]) => (LocalDate, LocalDate) => Source[(Map[Queue, Int], Int, Int, Option[LocalDate]), NotUsed] =
+  private val totalsStream: (LocalDate => Future[Map[Queue, Int]], LocalDate => Future[Int], LocalDate => Future[Map[Queue, Int]]) => (LocalDate, LocalDate) => Source[(Map[Queue, Int], Int, Map[Queue, Int], Option[LocalDate]), NotUsed] =
     (queueTotalsForDate, capacityTotalForDate, bxTotalForDate) => (start, end) =>
       Source(DateRange(start, end))
         .mapAsync(1)(date => capacityTotalForDate(date).map(capacity => (date, capacity)))
@@ -104,17 +105,21 @@ case class PassengerSummaryStreams(db: AppDatabase)
         .mapAsync(1) { case (date, cap, bx) =>
           queueTotalsForDate(date).map(queues => (queues, cap, bx))
         }
-        .fold((Map[Queue, Int](), 0, 0)) {
-          case ((qAcc, capAcc, bxAcc), (queueCounts, capacity, bx)) =>
-            val newQAcc = qAcc ++ queueCounts.map {
-              case (queue, count) =>
-                queue -> (qAcc.getOrElse(queue, 0) + count)
-            }
+        .fold((Map.empty[Queue, Int], 0, Map.empty[Queue, Int])) {
+          case ((qAcc, capAcc, bxAcc), (drtQueueCounts, capacity, bxQueueCounts)) =>
+            val newQAcc: Map[Queue, Int] = addQueueCounts(qAcc, drtQueueCounts)
             val newCapAcc = capAcc + capacity
-            val newBxAcc = bxAcc + bx
+            val newBxAcc = addQueueCounts(bxAcc, bxQueueCounts)
             (newQAcc, newCapAcc, newBxAcc)
         }
         .map { case (queueCounts, cap, bx) =>
           (queueCounts, cap, bx, None)
         }
+
+  private def addQueueCounts(qAcc: Map[Queue, Int], queueCounts: Map[Queue, Int]): Map[Queue, Int] =
+    qAcc ++ queueCounts.map {
+      case (queue, count) =>
+        queue -> (qAcc.getOrElse(queue, 0) + count)
+    }
+
 }
