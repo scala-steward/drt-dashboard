@@ -1,17 +1,17 @@
 import * as React from 'react';
 import {connect} from 'react-redux'
 import {RootState} from '../../store/redux';
-import { useNavigate } from 'react-router';
-import { Button, ButtonGroup } from '@mui/material';
+import {useNavigate} from 'react-router';
+import {Button, ButtonGroup} from '@mui/material';
 import {paxByGateType, TerminalDataPoint} from './regionalPressureSagas';
-import { mkConfig, generateCsv, download } from "export-to-csv";
-import { PortsObject } from './regionalPressureSagas';
+import {mkConfig, generateCsv, download} from "export-to-csv";
+import {PortsObject} from './regionalPressureSagas';
 import ArrowDownward from '@mui/icons-material/ArrowDownward';
 import BrowserUpdatedIcon from '@mui/icons-material/BrowserUpdated';
 import moment from 'moment';
 
 interface RegionalPressureExportProps {
-  granularity: string,
+  granularity: 'hour' | 'day',
   portData: {
     [key: string]: TerminalDataPoint[]
   };
@@ -21,7 +21,8 @@ interface RegionalPressureExportProps {
 }
 
 type ExportDataPoint = {
-  date: string,
+  forecastDate: string,
+  historicDate: string,
   portCode: string,
   regionName: string,
   terminalName?: string,
@@ -30,69 +31,88 @@ type ExportDataPoint = {
   drtDeskPax: number,
   bxTotalPax: number,
   bxEgatePax: number,
-  bXDeskPax: number,
+  bxDeskPax: number,
 }
 
-const results_to_array = (data: PortsObject, is_hourly: boolean) => {
-  const data_rows: ExportDataPoint[] = []
-  Object.keys(data).map((port: string) => {
-    data[port].map((portDataPoint: TerminalDataPoint) => {
+const constructCsvRows = (forecast: PortsObject, historic: PortsObject, granularity: 'hour' | 'day') => {
+  const rows: ExportDataPoint[] = []
+  Object.keys(forecast).map((port: string) => {
+    forecast[port]
+      .filter((portDataPoint) => !portDataPoint.terminalName)
+      .map((portDataPoint, index) => {
+        const historicDataPoint = historic[port][index]
+        const [drtEgatePax, drtDeskPax] = paxByGateType(portDataPoint.drtQueueCounts)
+        const [bxEgatePax, bxDeskPax] = paxByGateType(historicDataPoint.bxQueueCounts)
 
-      const [drtEgatePax, drtDeskPax] = paxByGateType(portDataPoint.drtQueueCounts)
-      const [bxEgatePax, bXDeskPax] = paxByGateType(portDataPoint.bxQueueCounts)
+        const date = granularity === 'hour' ?
+          moment(portDataPoint.date).add(portDataPoint.hour, 'hours').format('HH:mm DD-MM-YYYY') :
+          moment(portDataPoint.date).format('DD-MM-YYYY')
 
-      const date = is_hourly ?
-        moment(portDataPoint.date).add(portDataPoint.hour, 'hours').format('YYYY-MM-DD HH:mm') :
-        portDataPoint.date
+        const historicDate = granularity === 'hour' ?
+          moment(historicDataPoint.date).add(historicDataPoint.hour, 'hours').format('HH:mm DD-MM-YYYY') :
+          moment(historicDataPoint.date).format('DD-MM-YYYY')
 
-      const exportDataPoint: ExportDataPoint = {
-        date,
-        portCode: portDataPoint.portCode || '',
-        regionName: portDataPoint.regionName || '',
-        terminalName: portDataPoint.terminalName || '',
-        drtTotalPax: drtEgatePax + drtDeskPax,
-        bxTotalPax: bxEgatePax + bXDeskPax,
-        drtEgatePax: drtEgatePax,
-        bxEgatePax: bxEgatePax,
-        drtDeskPax: drtDeskPax,
-        bXDeskPax: bXDeskPax,
-      }
-      data_rows.push(exportDataPoint)
-    })
+        const exportDataPoint: ExportDataPoint = {
+          forecastDate: date,
+          historicDate,
+          portCode: portDataPoint.portCode || '',
+          regionName: portDataPoint.regionName || '',
+          drtTotalPax: drtEgatePax + drtDeskPax,
+          drtEgatePax: drtEgatePax,
+          drtDeskPax: drtDeskPax,
+          bxTotalPax: bxEgatePax + bxDeskPax,
+          bxEgatePax: bxEgatePax,
+          bxDeskPax: bxDeskPax,
+        }
+        rows.push(exportDataPoint)
+      })
   })
-  return data_rows
+
+  console.log(JSON.stringify(rows))
+
+  return rows
 }
 
 const RegionalPressureExport = ({portData, historicPortData, granularity}: RegionalPressureExportProps) => {
-
   const navigate = useNavigate();
-  const is_hourly = granularity === 'hour'
 
   const csvConfig = mkConfig({
-    useKeysAsHeaders: true
+    filename: `regional-pressure-export`,
+    useKeysAsHeaders: false,
+    columnHeaders: [
+      {key: 'forecastDate', displayLabel: 'Forecast date'},
+      {key: 'historicDate', displayLabel: 'Historical date'},
+      {key: 'portCode', displayLabel: 'Port code'},
+      {key: 'regionName', displayLabel: 'Region name'},
+      {key: 'drtTotalPax', displayLabel: 'DRT total pax'},
+      {key: 'drtEgatePax', displayLabel: 'DRT e-gate pax'},
+      {key: 'drtDeskPax', displayLabel: 'DRT desk pax'},
+      {key: 'bxTotalPax', displayLabel: 'BX total pax'},
+      {key: 'bxEgatePax', displayLabel: 'BX e-gate pax'},
+      {key: 'bxDeskPax', displayLabel: 'BX desk pax'},
+    ]
   });
 
   const handleExport = () => {
-    const current_rows: ExportDataPoint[] = results_to_array(portData, is_hourly)
-    const historic_rows: ExportDataPoint[] = results_to_array(historicPortData, is_hourly)
-    const csv = generateCsv(csvConfig)([...historic_rows, ...current_rows]);
+    const csvRows: ExportDataPoint[] = constructCsvRows(portData, historicPortData, granularity)
+    const csv = generateCsv(csvConfig)(csvRows);
     download(csvConfig)(csv)
   }
 
   return <ButtonGroup sx={{width: '100%'}}>
     <Button
       fullWidth
-      startIcon={<ArrowDownward />}
+      startIcon={<ArrowDownward/>}
       variant="outlined"
       sx={{backgroundColor: '#fff'}}
       onClick={handleExport}>Export</Button>
     <Button
       fullWidth
-      startIcon={<BrowserUpdatedIcon />}
+      startIcon={<BrowserUpdatedIcon/>}
       variant="outlined"
       sx={{backgroundColor: '#fff'}}
       onClick={() => navigate('/download')}>Download Manager</Button>
-    </ButtonGroup>
+  </ButtonGroup>
 }
 
 
@@ -101,7 +121,7 @@ const mapState = (state: RootState) => {
     portData: state.pressureDashboard?.currentHourlyPaxByPort,
     historicPortData: state.pressureDashboard?.historicHourlyPaxByPort,
     granularity: state.pressureDashboard?.interval,
-   };
+  };
 }
 
 export default connect(mapState)(RegionalPressureExport);

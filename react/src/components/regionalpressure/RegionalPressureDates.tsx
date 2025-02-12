@@ -15,15 +15,15 @@ const RegionalPressureDates = ({start, end, historicStart, historicEnd}: Regiona
   return (
     <>
       <p style={{lineHeight: 1.2, margin: '0 0 1em 0'}}>
-        <strong>Pax from selected date: </strong>{ moment(start).format('dddd D MMM YYYY') }
+        <strong>Forecast arrivals: </strong>{ moment(start).format('dddd D MMM YYYY') }
         { start != end &&
-          <span> to { moment(end).format('dddd D MMM YYYY') }</span> 
+          <span> to { moment(end).format('dddd D MMM YYYY') }</span>
         }
       </p>
       <p>
-        <strong>Pax from previous year: </strong> { moment(historicStart).format('dddd D MMM YYYY') }
+        <strong>Historical arrivals (from Border Crossings): </strong> { moment(historicStart).format('dddd D MMM YYYY') }
         { start != end &&
-          <span> to { moment(historicEnd).format('dddd D MMM YYYY') }</span> 
+          <span> to { moment(historicEnd).format('dddd D MMM YYYY') }</span>
         }
       </p>
     </>
@@ -31,7 +31,7 @@ const RegionalPressureDates = ({start, end, historicStart, historicEnd}: Regiona
 }
 
 const mapState = (state: RootState) => {
-  return { 
+  return {
     start: state.pressureDashboard?.start,
     end: state.pressureDashboard?.end,
     historicStart: state.pressureDashboard?.historicStart,

@@ -10,7 +10,7 @@ interface RegionalPressureState {
   end: string,
   historicStart: string,
   historicEnd: string,
-  interval: string,
+  interval: 'hour' | 'day',
   currentHourlyPaxByPort: {
     [key: string] : TerminalDataPoint[]
   },
@@ -30,7 +30,7 @@ type SetStatePayload = {
   type: string,
   start: string,
   end: string,
-  interval: string,
+  interval: 'hour' | 'day',
   currentHourlyPaxByPort: {
     [key: string] : TerminalDataPoint[]
   },
@@ -56,12 +56,12 @@ const regionalPressureSlice = createSlice({
     historicHourlyPaxByPort: {},
     historicTotalPaxByPort: {},
     errors: [],
-    type: "single",
+    type: 'single',
     start: new Date().toString(),
     end: new Date().toString(),
     historicStart: new Date().toString(),
     historicEnd: new Date().toString(),
-    interval: "daily",
+    interval: 'day',
   } as RegionalPressureState,
   reducers: {
     setStatus: (state: RegionalPressureState, action: PayloadAction<string>) => {

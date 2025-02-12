@@ -89,13 +89,13 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
                     signDisplay: "exceptZero",
                     maximumFractionDigits: 0
                 }).format(context.parsed.r);
-                return `${arrivals.toLocaleString()} pax (${value}%)`
+                return `${arrivals.toLocaleString()} foreacst pax (${value}%)`
               }
           }
         },
       },
       {
-        label: 'Previous year',
+        label: 'Historical arrivals (from Border Crossings)',
         data: historic_zero,
         backgroundColor: 'transparent',
         borderColor: drtTheme.palette.grey[800],

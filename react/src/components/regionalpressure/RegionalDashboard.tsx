@@ -127,6 +127,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
           </Stack>
         </Grid>
         {regionPorts && regionPorts.map((port: string) => {
+          const linkPort = port.includes("LHR") ? 'lhr' : port
           const portName = port.replace("-", ' ')
           return visiblePorts.includes(port) && portData[port] && (
             <Grid key={port} item xs={6}>
@@ -134,7 +135,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                 <CardHeader
                   title={portName}
                   action={
-                    <Button variant="contained" href={`http://${port}.drt.homeoffice.gov.uk`}>View {portName} arrivals</Button>
+                    <Button variant="contained" href={`http://${linkPort}.drt.homeoffice.gov.uk`}>View {portName} arrivals</Button>
                   }
                 />
                 <CardContent>
@@ -266,7 +267,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                     data={{
                       datasets: [
                         {
-                          label: `Pax arrivals`,
+                          label: `Forecast arrivals`,
                           type: 'line',
                           backgroundColor: [
                             pattern.draw('diagonal', '#C94900'),
@@ -300,7 +301,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                           })
                         },
                         {
-                          label: `Historical pax`,
+                          label: `Historical arrivals`,
                           type: 'line',
                           borderColor: drtTheme.palette.grey[800],
                           borderDash: [5, 5],
