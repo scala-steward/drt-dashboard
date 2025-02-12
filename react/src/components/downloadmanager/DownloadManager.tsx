@@ -1,5 +1,5 @@
-import * as React from 'react';
-import {connect, MapDispatchToProps} from 'react-redux';
+import * as React from 'react'
+import {connect, MapDispatchToProps} from 'react-redux'
 import {
   Alert,
   AlertTitle,
@@ -11,26 +11,25 @@ import {
   Radio,
   RadioGroup,
   SelectChangeEvent,
-  TextField,
-} from "@mui/material";
+} from "@mui/material"
 
-import {DatePicker} from '@mui/x-date-pickers/DatePicker';
-import moment, {Moment} from 'moment';
-import DownloadPorts from './DownloadPorts';
-import DownloadModal from './DownloadModal';
+import {DatePicker} from '@mui/x-date-pickers/DatePicker'
+import moment, {Moment} from 'moment'
+import DownloadPorts from './DownloadPorts'
+import DownloadModal from './DownloadModal'
 
-import {checkDownloadStatus, PortTerminal, requestDownload} from './downloadManagerSagas';
-import {RootState} from '../../store/redux';
-import {UserProfile} from "../../model/User";
-import {ConfigValues, PortRegion} from "../../model/Config";
-import {FormError} from '../../services/ValidationService';
-import {Helmet} from "react-helmet";
-import {adminPageTitleSuffix} from "../../utils/common";
-import PageContentWrapper from '../PageContentWrapper';
+import {checkDownloadStatus, PortTerminal, requestDownload} from './downloadManagerSagas'
+import {RootState} from '../../store/redux'
+import {UserProfile} from "../../model/User"
+import {ConfigValues, PortRegion} from "../../model/Config"
+import {FormError} from '../../services/ValidationService'
+import {Helmet} from "react-helmet"
+import {adminPageTitleSuffix} from "../../utils/common"
+import PageContentWrapper from '../PageContentWrapper'
 
 interface DownloadDates {
-  start: Moment;
-  end: Moment;
+  start: Moment
+  end: Moment
 }
 
 interface ErrorFieldMapping {
@@ -38,14 +37,14 @@ interface ErrorFieldMapping {
 }
 
 interface DownloadManagerProps {
-  status: string;
-  createdAt: string;
-  downloadUrl: string;
-  user: UserProfile;
-  config: ConfigValues;
-  errors: FormError[];
-  requestDownload: (ports: PortTerminal[], exportType: string, startDate: Moment, endDate: Moment) => void;
-  checkDownloadStatus: (createdAt: string) => void;
+  status: string
+  createdAt: string
+  downloadUrl: string
+  user: UserProfile
+  config: ConfigValues
+  errors: FormError[]
+  requestDownload: (ports: PortTerminal[], exportType: string, startDate: Moment, endDate: Moment) => void
+  checkDownloadStatus: (createdAt: string) => void
 }
 
 const DownloadManager = ({
@@ -58,40 +57,40 @@ const DownloadManager = ({
                            config,
                            checkDownloadStatus
                          }: DownloadManagerProps) => {
-  const [modalOpen, setModalOpen] = React.useState<boolean>(false);
-  const [selectedPorts, setSelectedPorts] = React.useState<string[]>([]);
+  const [modalOpen, setModalOpen] = React.useState<boolean>(false)
+  const [selectedPorts, setSelectedPorts] = React.useState<string[]>([])
   const [dates, setDate] = React.useState<DownloadDates>({
     start: moment(),
     end: moment(),
-  });
-  const [exportType, setExportType] = React.useState<string>('passengers-port');
-  const [daily, setDaily] = React.useState<boolean>(false);
+  })
+  const [exportType, setExportType] = React.useState<string>('passengers-port')
+  const [daily, setDaily] = React.useState<boolean>(false)
 
   const isRccRegion = (regionName: string) => {
     return user.roles.includes("rcc:" + regionName.toLowerCase())
   }
 
   const errorFieldMapping: ErrorFieldMapping = {}
-  errors.forEach((error: FormError) => errorFieldMapping[error.field] = true);
+  errors.forEach((error: FormError) => errorFieldMapping[error.field] = true)
 
-  let interval: { current: ReturnType<typeof setInterval> | null | any } = React.useRef(null);
+  let interval: { current: ReturnType<typeof setInterval> | null | any } = React.useRef(null)
 
   React.useEffect(() => {
     if (createdAt && status === 'preparing') {
       setModalOpen(true)
       interval.current = setInterval(() => {
-        checkDownloadStatus(createdAt);
-      }, 2000);
+        checkDownloadStatus(createdAt)
+      }, 2000)
     } else if (status === 'failed') {
       setModalOpen(true)
     }
     return () => {
-      clearInterval(interval.current);
-    };
+      clearInterval(interval.current)
+    }
   }, [createdAt, status, setModalOpen])
 
   const userPortsByRegion: PortRegion[] = config.portsByRegion.map(region => {
-    const userPorts: string[] = user.ports.filter(p => region.ports.includes(p));
+    const userPorts: string[] = user.ports.filter(p => region.ports.includes(p))
     return {...region, ports: userPorts} as PortRegion
   }).filter(r => r.ports.length > 0 || isRccRegion(r.name))
 
@@ -99,47 +98,47 @@ const DownloadManager = ({
     setDate({
       ...dates,
       [type]: date
-    });
+    })
   }
 
   const handleModalClose = () => {
-    clearInterval(interval.current);
+    clearInterval(interval.current)
     setModalOpen(false)
   }
 
   const handleExportTypeChange = (event: React.ChangeEvent<HTMLInputElement>, exportType: string) => {
-    setExportType(exportType);
+    setExportType(exportType)
   }
 
   const handlePortChange = (event: SelectChangeEvent<typeof selectedPorts>) => {
     const {
       target: {value},
-    } = event;
-    setSelectedPorts(typeof value === 'string' ? value.split(',') : value);
-  };
+    } = event
+    setSelectedPorts(typeof value === 'string' ? value.split(',') : value)
+  }
 
   const handleRemovePort = (port: string) => {
     setSelectedPorts(selectedPorts.filter(p => p !== port))
-  };
+  }
 
   const handlePortCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const {
       target: {name},
-    } = event;
-    setSelectedPorts(selectedPorts.includes(name) ? selectedPorts.filter(port => port !== name) : [...selectedPorts, name]);
+    } = event
+    setSelectedPorts(selectedPorts.includes(name) ? selectedPorts.filter(port => port !== name) : [...selectedPorts, name])
   }
 
   const handlePortCheckboxGroupChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const {
       target: {name, checked},
-    } = event;
+    } = event
     const region = userPortsByRegion.filter(region => region.name === name)[0]
     if (checked) {
       // add all in region
       const newSelection = [...selectedPorts, ...region.ports]
       const deduped = newSelection.filter((element, index) => {
-        return newSelection.indexOf(element) === index;
-      });
+        return newSelection.indexOf(element) === index
+      })
       setSelectedPorts(deduped)
     } else {
       // remove any selected from region
@@ -148,7 +147,10 @@ const DownloadManager = ({
   }
 
   const disablePassengerExportType = (): boolean => {
-    return (exportType == 'arrivals') || (Math.abs(dates.start.diff(dates.end, 'days')) < 1)
+    const cleanStart = moment(dates.start.format('YYYY-MM-DD'))
+    const cleanEnd = moment(dates.end.format('YYYY-MM-DD'))
+    const rangeInDays = cleanStart.diff(cleanEnd, 'days')
+    return (exportType == 'arrivals') || (Math.abs(rangeInDays) == 0)
   }
 
   const handleSubmit = (): void => {
@@ -158,14 +160,14 @@ const DownloadManager = ({
         port: port.iata,
         terminals: port.terminals
       }
-    });
+    })
 
     let exportString = exportType
     if (daily && exportString !== 'arrivals') {
       exportString = `${exportString}-daily`
     }
 
-    requestDownload(portsWithTerminals, exportString, dates.start, dates.end);
+    requestDownload(portsWithTerminals, exportString, dates.start, dates.end)
   }
 
   return <PageContentWrapper>
@@ -187,11 +189,8 @@ const DownloadManager = ({
         <Box>
           <h3>Date Range</h3>
           <DatePicker
-            slots={{
-              textField: TextField
-            }}
             slotProps={{
-              textField: {error: !!errorFieldMapping.startDate}
+              textField: {error: errorFieldMapping.startDate}
             }}
             label="Start"
             sx={{backgroundColor: '#fff', marginRight: '10px'}}
@@ -199,11 +198,8 @@ const DownloadManager = ({
             onChange={(newValue: Moment | null) => onDateChange('start', newValue)}/>
 
           <DatePicker
-            slots={{
-              textField: TextField
-            }}
             slotProps={{
-              textField: {error: !!errorFieldMapping.endDate}
+              textField: {error: errorFieldMapping.endDate}
             }}
             label="End"
             sx={{backgroundColor: '#fff'}}
@@ -212,7 +208,7 @@ const DownloadManager = ({
         </Box>
 
         <DownloadPorts
-          error={!!errorFieldMapping.ports}
+          error={errorFieldMapping.ports}
           handlePortChange={handlePortChange}
           handlePortCheckboxChange={handlePortCheckboxChange}
           handlePortCheckboxGroupChange={handlePortCheckboxGroupChange}
@@ -263,18 +259,18 @@ const mapState = (state: RootState) => {
     createdAt: state.downloadManager?.createdAt,
     downloadUrl: state.downloadManager?.downloadLink,
     errors: state.downloadManager?.errors,
-  };
+  }
 }
 
 const mapDispatch = (dispatch: MapDispatchToProps<any, DownloadManagerProps>) => {
   return {
     checkDownloadStatus: (createdAt: string) => {
-      dispatch(checkDownloadStatus(createdAt));
+      dispatch(checkDownloadStatus(createdAt))
     },
     requestDownload: (ports: PortTerminal[], exportType: string, startDate: Moment, endDate: Moment) => {
       dispatch(requestDownload(ports, exportType, startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD')))
     },
-  };
-};
+  }
+}
 
-export default connect(mapState, mapDispatch)(DownloadManager);
+export default connect(mapState, mapDispatch)(DownloadManager)
