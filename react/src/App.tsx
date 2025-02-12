@@ -55,16 +55,18 @@ export const App = () => {
 
   const portMenuItems = [
     {
-      label:'National Dashboard',
+      label: 'National Dashboard',
       link: '/national-pressure'
     },
-    ...availablePorts.map(portCode => {
-      let domain = hasConfig && config.values.domain ? config.values.domain : 'drt-preprod'
-      return {
-        label: `${portCode} (${AirportNameIndex[portCode]})`,
-        link: `https://${portCode.toLowerCase()}.${domain}`,
-      }
-    })
+    ...availablePorts
+      .sort((p1, p2) => p1 < p2 ? -1 : 1)
+      .map(portCode => {
+        let domain = hasConfig && config.values.domain ? config.values.domain : 'drt-preprod'
+        return {
+          label: `${portCode} (${AirportNameIndex[portCode]})`,
+          link: `https://${portCode.toLowerCase()}.${domain}`,
+        }
+      })
   ]
 
   useEffect(() => {
@@ -79,7 +81,7 @@ export const App = () => {
   }, [])
 
   const routingFunction = (path: string) => {
-    if (path.substring(0,4) == 'http') {
+    if (path.substring(0, 4) == 'http') {
       window.location.href = path
     } else {
       navigate(path);
