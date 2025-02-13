@@ -12,10 +12,10 @@ import moment from 'moment';
 
 interface RegionalPressureExportProps {
   granularity: string,
-  portData: {
+  forecastData: {
     [key: string]: TerminalDataPoint[]
   };
-  historicPortData: {
+  historicData: {
     [key: string]: TerminalDataPoint[]
   };
 }
@@ -24,7 +24,7 @@ type ExportDataPoint = {
   date: string,
   portCode: string,
   regionName: string,
-  totalPcpPax: number, 
+  totalPcpPax: number,
   terminalName?: string,
   EEA: number,
   eGates: number,
@@ -36,7 +36,7 @@ const results_to_array = (data: PortsObject, is_hourly: boolean) => {
   Object.keys(data).map((port: string) => {
     data[port].map((portDataPoint: TerminalDataPoint) => {
 
-      let date = is_hourly ? 
+      let date = is_hourly ?
         moment(portDataPoint.date).add(portDataPoint.hour, 'hours').format('YYYY-MM-DD HH:mm') :
         portDataPoint.date
 
@@ -57,43 +57,43 @@ const results_to_array = (data: PortsObject, is_hourly: boolean) => {
 }
 
 
-const RegionalPressureExport = ({portData, historicPortData, granularity}: RegionalPressureExportProps) => {
+const RegionalPressureExport = ({forecastData, historicData, granularity}: RegionalPressureExportProps) => {
 
   const navigate = useNavigate();
   const is_hourly = granularity === 'hour'
 
-  const csvConfig = mkConfig({ 
-    useKeysAsHeaders: true 
+  const csvConfig = mkConfig({
+    useKeysAsHeaders: true
   });
 
   const handleExport = () => {
-    const current_rows: ExportDataPoint[] = results_to_array(portData, is_hourly)
-    const historic_rows: ExportDataPoint[] = results_to_array(historicPortData, is_hourly)
+    const current_rows: ExportDataPoint[] = results_to_array(forecastData, is_hourly)
+    const historic_rows: ExportDataPoint[] = results_to_array(historicData, is_hourly)
     const csv = generateCsv(csvConfig)([...historic_rows, ...current_rows]);
     download(csvConfig)(csv)
   }
 
   return <ButtonGroup sx={{width: '100%'}}>
-    <Button 
-      fullWidth 
-      startIcon={<ArrowDownward />} 
-      variant="outlined" 
-      sx={{backgroundColor: '#fff'}} 
+    <Button
+      fullWidth
+      startIcon={<ArrowDownward />}
+      variant="outlined"
+      sx={{backgroundColor: '#fff'}}
       onClick={handleExport}>Export</Button>
-    <Button 
-      fullWidth 
-      startIcon={<BrowserUpdatedIcon />} 
-      variant="outlined" 
-      sx={{backgroundColor: '#fff'}} 
+    <Button
+      fullWidth
+      startIcon={<BrowserUpdatedIcon />}
+      variant="outlined"
+      sx={{backgroundColor: '#fff'}}
       onClick={() => navigate('/download')}>Download Manager</Button>
     </ButtonGroup>
 }
 
 
 const mapState = (state: RootState) => {
-  return { 
-    portData: state.pressureDashboard?.portData,
-    historicPortData: state.pressureDashboard?.historicPortData,
+  return {
+    forecastData: state.pressureDashboard?.forecastData,
+    historicData: state.pressureDashboard?.historicData,
     granularity: state.pressureDashboard?.interval,
    };
 }

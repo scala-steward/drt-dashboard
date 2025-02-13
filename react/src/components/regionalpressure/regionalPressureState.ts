@@ -5,42 +5,44 @@ import { TerminalDataPoint } from './regionalPressureSagas'
 interface RegionalPressureState {
   status: string,
   errors: FormError[],
-  type: string,
-  start: string,
-  end: string,
+  singleOrRange: 'single' | 'range',
+  comparisonType: 'previousYear' | 'custom',
+  interval: string,
+  forecastStart: string,
+  forecastEnd: string,
   historicStart: string,
   historicEnd: string,
-  interval: string,
-  portData: {
+  forecastData: {
     [key: string] : TerminalDataPoint[]
   },
-  portTotals: {
+  forecastTotals: {
     [key: string] : number
   }
-  historicPortData: {
+  historicData: {
     [key: string] : TerminalDataPoint[]
   },
-  historicPortTotals: {
+  historicTotals: {
     [key: string] : number
   }
 }
 
 type SetStatePayload = {
   status: string,
-  type: string,
-  start: string,
-  end: string,
+  singleOrRange: 'single' | 'range',
+  comparisonType: 'previousYear' | 'custom',
   interval: string,
-  portData: {
+  forecastStart: string,
+  forecastEnd: string,
+  forecastData: {
     [key: string] : TerminalDataPoint[]
   },
-  portTotals: {
+  forecastTotals: {
     [key: string] : number
   },
-  historicPortData: {
+  historicData: {
     [key: string] : TerminalDataPoint[]
   },
-  historicPortTotals: {
+  historicTotals: {
     [key: string] : number
   },
   historicStart: string,
@@ -51,32 +53,34 @@ const regionalPressureSlice = createSlice({
   name: 'regionalPressure',
   initialState: {
     status: '',
-    portData: {},
-    portTotals: {},
-    historicPortData: {},
-    historicPortTotals: {},
     errors: [],
-    type: "single",
-    start: new Date().toString(),
-    end: new Date().toString(),
+    singleOrRange: 'single',
+    comparisonType: 'previousYear',
+    interval: 'daily',
+    forecastData: {},
+    forecastTotals: {},
+    historicData: {},
+    historicTotals: {},
+    forecastStart: new Date().toString(),
+    forecastEnd: new Date().toString(),
     historicStart: new Date().toString(),
     historicEnd: new Date().toString(),
-    interval: "daily",
   } as RegionalPressureState,
   reducers: {
     setStatus: (state: RegionalPressureState, action: PayloadAction<string>) => {
       state.status = action.payload;
     },
     setRegionalDashboardState: (state: RegionalPressureState, action: PayloadAction<SetStatePayload>) => {
-      state.portData = {...action.payload.portData}
-      state.portTotals = {...action.payload.portTotals}
-      state.historicPortData = {...action.payload.historicPortData}
-      state.historicPortTotals = {...action.payload.historicPortTotals}
-      state.type = action.payload.type;
-      state.start = action.payload.start;
-      state.end = action.payload.end;
-      state.interval = action.payload.interval;
       state.status = action.payload.status;
+      state.singleOrRange = action.payload.singleOrRange;
+      state.comparisonType = action.payload.comparisonType;
+      state.interval = action.payload.interval;
+      state.forecastData = {...action.payload.forecastData}
+      state.forecastTotals = {...action.payload.forecastTotals}
+      state.historicData = {...action.payload.historicData}
+      state.historicTotals = {...action.payload.historicTotals}
+      state.forecastStart = action.payload.forecastStart;
+      state.forecastEnd = action.payload.forecastEnd;
       state.historicStart = action.payload.historicStart;
       state.historicEnd = action.payload.historicEnd;
     },
