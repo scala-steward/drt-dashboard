@@ -1,7 +1,7 @@
-import * as React from 'react';
-import { connect } from 'react-redux';
-import { UserProfile } from "../../model/User";
-import { useParams } from 'react-router';
+import * as React from 'react'
+import { connect } from 'react-redux'
+import { UserProfile } from "../../model/User"
+import { useParams } from 'react-router'
 import pattern from 'patternomaly'
 import {
   Alert,
@@ -20,63 +20,61 @@ import {
   Checkbox,
   useMediaQuery,
   Theme
-} from "@mui/material";
-import { Link } from 'react-router-dom';
-import { ConfigValues } from "../../model/Config";
-import { RootState } from '../../store/redux';
-import drtTheme from '../../drtTheme';
-import { Chart } from 'react-chartjs-2'; 
+} from "@mui/material"
+import { Link } from 'react-router-dom'
+import { ConfigValues } from "../../model/Config"
+import { RootState } from '../../store/redux'
+import drtTheme from '../../drtTheme'
+import { Chart } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
   registerables,
-} from 'chart.js';
-import 'chartjs-adapter-moment';
-import moment from 'moment';
-ChartJS.register(...registerables);
-import { ArrowBack } from '@mui/icons-material';
-import { TerminalDataPoint } from './regionalPressureSagas';
-import RegionalPressureDates from './RegionalPressureDates';
-import RegionalPressureForm from './RegionalPressureForm';
-import RegionalPressureExport from './RegionalPressureExport';
+} from 'chart.js'
+import 'chartjs-adapter-moment'
+import moment from 'moment'
+ChartJS.register(...registerables)
+import { ArrowBack } from '@mui/icons-material'
+import { TerminalDataPoint } from './regionalPressureSagas'
+import RegionalPressureDates from './RegionalPressureDates'
+import RegionalPressureForm from './RegionalPressureForm'
+import RegionalPressureExport from './RegionalPressureExport'
 
 
 interface RegionalDashboardProps {
-  config: ConfigValues;
-  user: UserProfile;
-  title?: string;
-  interval?: string;
-  type: string;
-  portData: {
+  config: ConfigValues
+  user: UserProfile
+  title?: string
+  interval?: string
+  forecastData: {
     [key: string]: TerminalDataPoint[]
-  };
-  historicPortData: {
+  }
+  historicData: {
     [key: string]: TerminalDataPoint[]
-  };
+  }
 }
 
-const RegionalDashboard = ({ config, portData, historicPortData, interval, type }: RegionalDashboardProps) => {
-  const { region } = useParams() || '';
-  let regionPorts = config.portsByRegion.filter((r) => r.name.toLowerCase() === region!.toLowerCase())[0].ports;
-  let title = `${region} Region`;
+const RegionalDashboard = ({ config, forecastData, historicData, interval }: RegionalDashboardProps) => {
+  const { region } = useParams() || ''
+  let regionPorts = config.portsByRegion.filter((r) => r.name.toLowerCase() === region!.toLowerCase())[0].ports
+  let title = `${region} Region`
   let portLabel = 'Airports:'
   if (region === 'heathrow') {
     title = 'Heathrow'
     portLabel == 'Aiport terminals:'
-    regionPorts = ['LHR-T2', 'LHR-T3', 'LHR-T4', 'LHR-T5'];
+    regionPorts = ['LHR-T2', 'LHR-T3', 'LHR-T4', 'LHR-T5']
   }
-  regionPorts.sort();
+  regionPorts.sort()
 
+  const [visiblePorts, setVisiblePorts] = React.useState<string[]>([...regionPorts])
+  const availablePorts = config.ports.map(port => port.iata)
+  const timeUnits = interval
 
-  const [visiblePorts, setVisiblePorts] = React.useState<string[]>([...regionPorts]);
-  const availablePorts = config.ports.map(port => port.iata);
-  const timeUnits = interval;
-
-  const is_mobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
+  const is_mobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'))
 
   const handleTogglePort = (port: string) => {
     if (visiblePorts.includes(port)) {
-      const newPorts = [...visiblePorts];
-      newPorts.splice(visiblePorts.indexOf(port), 1);
+      const newPorts = [...visiblePorts]
+      newPorts.splice(visiblePorts.indexOf(port), 1)
       setVisiblePorts(newPorts)
     } else {
       setVisiblePorts([
@@ -97,7 +95,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
         </Grid>
       </Grid>
       <Grid>
-        <RegionalPressureForm ports={regionPorts} type={type} availablePorts={availablePorts} />
+        <RegionalPressureForm ports={regionPorts} availablePorts={availablePorts} />
       </Grid>
       <Grid container spacing={2} justifyItems={'stretch'} sx={{ mb: 2 }}>
         <Grid item xs={10}>
@@ -131,7 +129,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
         </Grid>
         {regionPorts && regionPorts.map((port: string) => {
           const portName = port.replace("-", ' ')
-          return visiblePorts.includes(port) && portData[port] && (
+          return visiblePorts.includes(port) && forecastData[port] && (
             <Grid key={port} item xs={6}>
               <Card>
                 <CardHeader
@@ -188,16 +186,16 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                                 formattedPaxPercent = new Intl.NumberFormat("en-US", {
                                   signDisplay: "exceptZero",
                                   maximumSignificantDigits: 2
-                                
-                                }).format(percentage);
-                                percentage = isNaN(percentage) ? 0 : percentage;
+
+                                }).format(percentage)
+                                percentage = isNaN(percentage) ? 0 : percentage
                               }
                               return [`${formattedPaxPercent}% pax expected at ${port}`]
                             },
                             label: function(context) : string[] {
                               let date = moment(context.parsed.x)
-                              let dateFormat = timeUnits == 'hour' ? 'h:mm a ddd D MMM YYYY ' : 'ddd D MMM YYYY';
-                              const historicDate = moment(historicPortData[port][context.dataIndex]?.date) || moment();
+                              let dateFormat = timeUnits == 'hour' ? 'h:mm a ddd D MMM YYYY ' : 'ddd D MMM YYYY'
+                              const historicDate = moment(historicData[port][context.dataIndex]?.date) || moment()
                               if (interval == 'hour') {
                                 historicDate.add(context.dataIndex, 'hours')
                               }
@@ -206,7 +204,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                                   return [` ${date.format(dateFormat)}: ${context.parsed.y.toLocaleString()} pax`]
                                 case 'Historical pax':
                                   return [` ${historicDate.format(dateFormat)}: ${context.parsed.y.toLocaleString()} pax`]
-                                default: 
+                                default:
                                   return [` ${date.format(dateFormat)}: ${context.parsed.y.toLocaleString()} pax`]
                               }
                             }
@@ -260,9 +258,9 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                           // Override the fit function
                           (chart.legend as any).fit = function fit() {
                             // Call original function and bind scope in order to use `this` correctly inside it
-                            originalFit.bind(chart.legend)();
-                            this.height += 20;
-                          };
+                            originalFit.bind(chart.legend)()
+                            this.height += 20
+                          }
                         }
                       }
                     ]}
@@ -291,7 +289,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                             target: '1',
                             below: 'transparent',
                           },
-                          data: portData[port].map((datapoint: TerminalDataPoint) => {
+                          data: forecastData[port].map((datapoint: TerminalDataPoint) => {
                             const pointDate = moment(datapoint.date)
                             if (interval === 'hour') {
                               pointDate.add(datapoint.hour, 'hours')
@@ -314,8 +312,8 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                           pointHoverBorderWidth: 3,
                           pointBackgroundColor: '#ffffff',
                           pointHoverBackgroundColor: '#ffffff',
-                          data: historicPortData[port].map((datapoint: TerminalDataPoint, index: number) => {
-                              const paxDate = moment(portData[port][index]?.date) || moment();
+                          data: historicData[port].map((datapoint: TerminalDataPoint, index: number) => {
+                              const paxDate = moment(forecastData[port][index]?.date) || moment()
                               if (interval === 'hour') {
                                 paxDate.add(datapoint.hour, 'hours')
                               }
@@ -345,13 +343,10 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
 const mapState = (state: RootState) => {
   return {
     errors: state.pressureDashboard?.errors,
-    startDate: state.pressureDashboard?.start,
-    endDate: state.pressureDashboard?.end,
-    portData: state.pressureDashboard?.portData,
-    historicPortData: state.pressureDashboard?.historicPortData,
+    forecastData: state.pressureDashboard?.forecastData,
+    historicData: state.pressureDashboard?.historicData,
     interval: state.pressureDashboard?.interval,
-    type: state.pressureDashboard?.type,
-  };
+  }
 }
 
-export default connect(mapState)(RegionalDashboard);
+export default connect(mapState)(RegionalDashboard)

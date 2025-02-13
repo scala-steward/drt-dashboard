@@ -23,14 +23,10 @@ interface NationalDashboardProps {
   config: ConfigValues;
   errors: FormError[];
   status: string;
-  type?: string;
-  start?: string;
-  end?: string;
 }
 
 const NationalDashboard = ({config, user, status}: NationalDashboardProps) => {
-
-  let userPortsByRegion: PortRegion[] = config.portsByRegion.map(region => {
+  const userPortsByRegion: PortRegion[] = config.portsByRegion.map(region => {
     const userPorts: string[] = user.ports.filter(p => region.ports.includes(p));
     return {...region, ports: userPorts} as PortRegion
   }).filter(r => r.ports.length > 0)
@@ -46,7 +42,7 @@ const NationalDashboard = ({config, user, status}: NationalDashboardProps) => {
         <Typography variant='h3' component='h2'>Compare pax arrivals</Typography>
       </Box>
 
-      <RegionalPressureForm ports={user.ports} availablePorts={availablePorts} type="single"/>
+      <RegionalPressureForm ports={user.ports} availablePorts={availablePorts}/>
 
       {status === 'loading' && <Grid container justifyContent={"center"}>
         <Grid item sx={{p: 4}}>
@@ -79,9 +75,6 @@ const NationalDashboard = ({config, user, status}: NationalDashboardProps) => {
 const mapState = (state: RootState) => {
   return {
     errors: state.pressureDashboard?.errors,
-    type: state.pressureDashboard?.type,
-    startDate: state.pressureDashboard?.start,
-    endDate: state.pressureDashboard?.end,
     status: state.pressureDashboard?.status,
   };
 }

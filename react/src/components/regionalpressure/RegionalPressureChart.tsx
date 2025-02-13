@@ -40,10 +40,10 @@ ChartJS.register(
 interface RegionalPressureChartProps {
   regionName: string;
   portCodes: string[];
-  portTotals: {
+  forecastTotals: {
     [key: string]: number
   };
-  historicPortTotals: {
+  historicTotals: {
     [key: string]: number
   };
 }
@@ -52,11 +52,11 @@ const doesExceed = (forecast: number): boolean => {
   return forecast > 0
 }
 
-const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortTotals}: RegionalPressureChartProps) => {
+const RegionalPressureChart = ({regionName, portCodes, forecastTotals, historicTotals}: RegionalPressureChartProps) => {
   const theme = useTheme();
 
   const forecasts = [...portCodes].map((portCode) => {
-    return (portTotals[portCode] - historicPortTotals[portCode]) / (historicPortTotals[portCode]) * 100
+    return (forecastTotals[portCode] - historicTotals[portCode]) / (historicTotals[portCode]) * 100
   })
   const historic_zero = [...portCodes].map(() => 0);
 
@@ -83,7 +83,7 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
           callbacks: {
               label: function(context: TooltipItem<ChartType>) {
                 const port = context.label;
-                const arrivals = portTotals[port];
+                const arrivals = forecastTotals[port];
                 const value = new Intl.NumberFormat("en-US", {
                     style: 'decimal',
                     signDisplay: "exceptZero",
@@ -111,7 +111,7 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
           callbacks: {
               label: function(context: TooltipItem<ChartType>) {
                 const port = context.label;
-                const arrivals = historicPortTotals[port];
+                const arrivals = historicTotals[port];
                 return `${arrivals.toLocaleString()} historical pax`
               }
           }
@@ -195,14 +195,18 @@ const RegionalPressureChart = ({regionName, portCodes, portTotals, historicPortT
       </CardContent>
     </Card>
   )
-  
+
 }
 
 
 const mapState = (state: RootState) => {
-  return { 
-    portTotals: state.pressureDashboard?.portTotals,
-    historicPortTotals: state.pressureDashboard?.historicPortTotals,
+  return {
+    forecastTotals: state.pressureDashboard?.forecastTotals,
+    historicTotals: state.pressureDashboard?.historicTotals,
+    forecastStart: state.pressureDashboard?.forecastStart,
+    forecastEnd: state.pressureDashboard?.forecastEnd,
+    historicStart: state.pressureDashboard?.historicStart,
+    historicEnd: state.pressureDashboard?.historicEnd,
    };
 }
 
