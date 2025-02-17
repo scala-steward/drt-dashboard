@@ -3,9 +3,10 @@ import {connect, MapDispatchToProps} from 'react-redux'
 import {RootState} from '../../store/redux'
 import {FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup} from '@mui/material'
 import {DatePicker} from '@mui/x-date-pickers/DatePicker'
-import {getHistoricDateByDay, requestPaxTotals} from './regionalPressureSagas'
+import {requestPaxTotals} from './regionalPressureSagas'
 import moment, {Moment} from 'moment'
 import {ErrorFieldMapping, FormError} from '../../services/ValidationService'
+import {getHistoricDateByDay} from "./regionalPressureState";
 
 interface RegionalPressureFormProps {
   errors: FormError[]
