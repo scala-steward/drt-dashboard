@@ -1,6 +1,14 @@
 import {createSlice, PayloadAction} from '@reduxjs/toolkit'
-import { FormError } from '../../services/ValidationService'
-import { TerminalDataPoint } from './regionalPressureSagas'
+import {FormError} from '../../services/ValidationService'
+import {TerminalDataPoint} from './regionalPressureSagas'
+import moment, {Moment} from "moment/moment";
+
+export const getHistoricDateByDay: (date: Moment) => Moment = (date: Moment) => {
+  return moment(date)
+    .subtract(1, 'year')
+    .isoWeek(date.isoWeek())
+    .isoWeekday(date.isoWeekday())
+}
 
 interface RegionalPressureState {
   status: string,
@@ -49,6 +57,8 @@ type SetStatePayload = {
   historicEnd: string,
 }
 
+const historicStart = () => getHistoricDateByDay(moment())
+
 const regionalPressureSlice = createSlice({
   name: 'regionalPressure',
   initialState: {
@@ -63,8 +73,8 @@ const regionalPressureSlice = createSlice({
     historicTotals: {},
     forecastStart: new Date().toString(),
     forecastEnd: new Date().toString(),
-    historicStart: new Date().toString(),
-    historicEnd: new Date().toString(),
+    historicStart: historicStart().format('YYYY-MM-DD'),
+    historicEnd: historicStart().format('YYYY-MM-DD'),
   } as RegionalPressureState,
   reducers: {
     setStatus: (state: RegionalPressureState, action: PayloadAction<string>) => {

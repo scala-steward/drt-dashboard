@@ -1,7 +1,7 @@
 import {call, put, takeEvery} from 'redux-saga/effects'
 import {setRegionalDashboardState, setStatus} from './regionalPressureState'
 import StubService from '../../services/stub-service'
-import moment, {Moment} from 'moment'
+import moment from 'moment/moment'
 import ApiClient from '../../services/ApiClient'
 import axios from 'axios'
 import {download, generateCsv} from "export-to-csv"
@@ -84,12 +84,6 @@ export const requestPaxTotals = (
   }
 }
 
-export function getHistoricDateByDay(date: Moment): Moment {
-  return moment(date)
-    .subtract(1, 'year')
-    .isoWeek(date.isoWeek())
-    .isoWeekday(date.isoWeekday())
-}
 
 const createExportableDatapoints = (datapoints: TerminalDataPoint[]): ExportableDataPoint[] => {
   let flattenedCurrent: ExportableDataPoint[] = []
