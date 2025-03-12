@@ -3,20 +3,23 @@ import {connect, MapDispatchToProps} from 'react-redux'
 import {RootState} from '../../store/redux'
 import {FormControl, FormControlLabel, FormLabel, Grid, Radio, RadioGroup} from '@mui/material'
 import {DatePicker} from '@mui/x-date-pickers/DatePicker'
-import {getHistoricDateByDay, requestPaxTotals} from './regionalPressureSagas'
+import {requestPaxTotals} from './regionalPressureSagas'
 import moment, {Moment} from 'moment'
 import {ErrorFieldMapping, FormError} from '../../services/ValidationService'
+import {getHistoricDateByDay} from "./regionalPressureState";
 
 interface RegionalPressureFormProps {
   errors: FormError[]
   ports: string[]
-  availablePorts: string[],
-  type?: string,
-  comparison?: string,
-  start: string
-  end: string
+  availablePorts: string[]
+  singleOrRange: 'single' | 'range'
+  initialComparisonType: 'previousYear' | 'custom',
+  forecastStart: string
+  forecastEnd: string
+  historicStart: string
+  historicEnd: string
   status: string
-  requestRegion: (ports: string[], availablePorts: string[], searchType: string, startDate: string, endDate: string, isExport: boolean, historicStart: string, historicEnd: string) => void
+  requestRegion: (ports: string[], availablePorts: string[], singleOrRange: 'single' | 'range', comparisonType: 'previousYear' | 'custom', forecastStart: string, forecastEnd: string, isExport: boolean, historicStart: string, historicEnd: string) => void
 }
 
 interface RegionalPressureDatesState {
@@ -28,21 +31,23 @@ const RegionalPressureForm = ({
                                 ports,
                                 errors,
                                 availablePorts,
-                                start,
-                                type,
-                                comparison,
-                                end,
+                                forecastStart,
+                                forecastEnd,
+                                historicStart,
+                                historicEnd,
+                                singleOrRange,
+                                initialComparisonType,
                                 requestRegion
                               }: RegionalPressureFormProps) => {
-  const [searchType, setSearchType] = React.useState<string>(type || 'single')
-  const [comparisonType, setComparisonType] = React.useState<string>(comparison || 'previousYear')
-  const [forecastDates, setForecastForecastDates] = React.useState<RegionalPressureDatesState>({
-    start: moment(start),
-    end: moment(end),
+  const [searchType, setSearchType] = React.useState<'single' | 'range'>(singleOrRange)
+  const [comparisonType, setComparisonType] = React.useState<'previousYear' | 'custom'>(initialComparisonType)
+  const [forecastDates, setForecastDates] = React.useState<RegionalPressureDatesState>({
+    start: moment(forecastStart),
+    end: moment(forecastEnd),
   })
   const [historicDates, setHistoricDates] = React.useState<RegionalPressureDatesState>({
-    start: getHistoricDateByDay(forecastDates.start),
-    end: getHistoricDateByDay(forecastDates.end),
+    start: moment(historicStart),
+    end: moment(historicEnd),
   })
   const errorFieldMapping: ErrorFieldMapping = {}
   errors.forEach((error: FormError) => errorFieldMapping[error.field] = true)
@@ -52,6 +57,7 @@ const RegionalPressureForm = ({
       ports,
       availablePorts,
       searchType,
+      comparisonType,
       forecastDates.start.format('YYYY-MM-DD'),
       forecastDates.end.format('YYYY-MM-DD'),
       false,
@@ -61,12 +67,14 @@ const RegionalPressureForm = ({
   }, [])
 
   const handleSearchTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchType(event.target.value)
+    const singleOrRange = event.target.value as 'single' | 'range';
+    setSearchType(singleOrRange)
     event.preventDefault()
     requestRegion(
       ports,
       availablePorts,
-      event.target.value,
+      singleOrRange,
+      comparisonType,
       forecastDates.start.format('YYYY-MM-DD'),
       forecastDates.end.format('YYYY-MM-DD'),
       false,
@@ -75,13 +83,13 @@ const RegionalPressureForm = ({
     )
   }
 
-  const handleDateChange = (type: 'start' | 'end', date: Moment) => {
+  const handleDateChange = (type: string, date: Moment) => {
     const forecastStart = type == 'start' ? date : forecastDates.start
     const forecastEnd = type == 'end' ? date : forecastDates.end
     const historicStart = comparisonType == 'previousYear' ? getHistoricDateByDay(forecastStart) : historicDates.start
     const historicEnd = comparisonType == 'previousYear' ? getHistoricDateByDay(forecastEnd) : historicDates.end
 
-    setForecastForecastDates({
+    setForecastDates({
       start: forecastStart,
       end: forecastEnd
     })
@@ -95,6 +103,7 @@ const RegionalPressureForm = ({
       ports,
       availablePorts,
       searchType,
+      comparisonType,
       forecastStart.format('YYYY-MM-DD'),
       forecastEnd.format('YYYY-MM-DD'),
       false,
@@ -116,7 +125,7 @@ const RegionalPressureForm = ({
       historicDates.end :
       getHistoricDateByDay(forecastDates.end)
 
-    setComparisonType(event.target.value)
+    setComparisonType(event.target.value as 'previousYear' | 'custom')
     setHistoricDates({
       start: historicStart,
       end: historicEnd
@@ -126,6 +135,7 @@ const RegionalPressureForm = ({
       ports,
       availablePorts,
       searchType,
+      comparisonType,
       forecastDates.start.format('YYYY-MM-DD'),
       forecastDates.end.format('YYYY-MM-DD'),
       false,
@@ -134,9 +144,9 @@ const RegionalPressureForm = ({
     )
   }
 
-  const handleComparisonDateChange = (type: 'start' | 'end', comparisonDate: Moment) => {
-    const duration = moment.duration(forecastDates.end.diff(forecastDates.start)).asDays()
-    const comparisonEnd = moment(comparisonDate).add(duration, 'days')
+  const handleComparisonDateChange = (type: string, comparisonDate: Moment) => {
+    const duration = moment.duration(forecastDates.end.diff(forecastDates.start)).asHours()
+    const comparisonEnd = moment(comparisonDate).add(duration, 'hours')
 
     setHistoricDates({
       start: comparisonDate,
@@ -147,6 +157,7 @@ const RegionalPressureForm = ({
       ports,
       availablePorts,
       searchType,
+      comparisonType,
       forecastDates.start.format('YYYY-MM-DD'),
       forecastDates.end.format('YYYY-MM-DD'),
       false,
@@ -249,23 +260,28 @@ const mapDispatch = (dispatch: MapDispatchToProps<any, RegionalPressureFormProps
     requestRegion: (
       userPorts: string[],
       availablePorts: string[],
-      searchType: string,
+      singleOrRange: 'single' | 'range',
+      initialComparisonType: 'previousYear' | 'custom',
       startDate: string,
       endDate: string,
       isExport: boolean,
       historicStart: string,
       historicEnd: string,
     ) => {
-      dispatch(requestPaxTotals(userPorts, availablePorts, searchType, startDate, endDate, isExport, historicStart, historicEnd))
+      dispatch(requestPaxTotals(userPorts, availablePorts, singleOrRange, initialComparisonType, startDate, endDate, isExport, historicStart, historicEnd))
     }
   }
 }
 
 const mapState = (state: RootState) => {
   return {
-    start: state.pressureDashboard?.start,
-    end: state.pressureDashboard?.end,
     errors: state.pressureDashboard?.errors,
+    singleOrRange: state.pressureDashboard?.singleOrRange,
+    initialComparisonType: state.pressureDashboard?.comparisonType,
+    forecastStart: state.pressureDashboard?.forecastStart,
+    forecastEnd: state.pressureDashboard?.forecastEnd,
+    historicStart: state.pressureDashboard?.historicStart,
+    historicEnd: state.pressureDashboard?.historicEnd,
     status: state.pressureDashboard?.status,
   }
 }

@@ -12,10 +12,10 @@ import moment from 'moment';
 
 interface RegionalPressureExportProps {
   granularity: 'hour' | 'day',
-  portData: {
+  forecastHourlyPaxByPort: {
     [key: string]: TerminalDataPoint[]
   };
-  historicPortData: {
+  historicHourlyPaxByPort: {
     [key: string]: TerminalDataPoint[]
   };
 }
@@ -43,6 +43,7 @@ const constructCsvRows = (forecast: PortsObject, historic: PortsObject, granular
         const historicDataPoint = historic[port][index]
         const [drtEgatePax, drtDeskPax] = paxByGateType(portDataPoint.drtQueueCounts)
         const [bxEgatePax, bxDeskPax] = paxByGateType(historicDataPoint.bxQueueCounts)
+
 
         const date = granularity === 'hour' ?
           moment(portDataPoint.date).add(portDataPoint.hour, 'hours').format('HH:mm DD-MM-YYYY') :
@@ -73,7 +74,8 @@ const constructCsvRows = (forecast: PortsObject, historic: PortsObject, granular
   return rows
 }
 
-const RegionalPressureExport = ({portData, historicPortData, granularity}: RegionalPressureExportProps) => {
+const RegionalPressureExport = ({forecastHourlyPaxByPort, historicHourlyPaxByPort, granularity}: RegionalPressureExportProps) => {
+
   const navigate = useNavigate();
 
   const csvConfig = mkConfig({
@@ -94,7 +96,7 @@ const RegionalPressureExport = ({portData, historicPortData, granularity}: Regio
   });
 
   const handleExport = () => {
-    const csvRows: ExportDataPoint[] = constructCsvRows(portData, historicPortData, granularity)
+    const csvRows: ExportDataPoint[] = constructCsvRows(forecastHourlyPaxByPort, historicHourlyPaxByPort, granularity)
     const csv = generateCsv(csvConfig)(csvRows);
     download(csvConfig)(csv)
   }
@@ -102,13 +104,13 @@ const RegionalPressureExport = ({portData, historicPortData, granularity}: Regio
   return <ButtonGroup sx={{width: '100%'}}>
     <Button
       fullWidth
-      startIcon={<ArrowDownward/>}
+      startIcon={<ArrowDownward />}
       variant="outlined"
       sx={{backgroundColor: '#fff'}}
       onClick={handleExport}>Export</Button>
     <Button
       fullWidth
-      startIcon={<BrowserUpdatedIcon/>}
+      startIcon={<BrowserUpdatedIcon />}
       variant="outlined"
       sx={{backgroundColor: '#fff'}}
       onClick={() => navigate('/download')}>Download Manager</Button>
@@ -118,8 +120,8 @@ const RegionalPressureExport = ({portData, historicPortData, granularity}: Regio
 
 const mapState = (state: RootState) => {
   return {
-    portData: state.pressureDashboard?.currentHourlyPaxByPort,
-    historicPortData: state.pressureDashboard?.historicHourlyPaxByPort,
+    forecastHourlyPaxByPort: state.pressureDashboard?.forecastHourlyPaxByPort,
+    historicHourlyPaxByPort: state.pressureDashboard?.historicHourlyPaxByPort,
     granularity: state.pressureDashboard?.interval,
   };
 }

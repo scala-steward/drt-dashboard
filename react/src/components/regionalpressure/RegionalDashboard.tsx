@@ -39,41 +39,38 @@ ChartJS.register(...registerables);
 
 interface RegionalDashboardProps {
   config: ConfigValues;
-  // user: UserProfile;
-  // title?: string;
   interval?: string;
-  type: string;
-  portData: {
+  // type: string;
+  forecastHourlyPaxByPort: {
     [key: string]: TerminalDataPoint[]
-  };
-  historicPortData: {
+  }
+  historicHourlyPaxByPort: {
     [key: string]: TerminalDataPoint[]
-  };
+  }
 }
 
-const RegionalDashboard = ({ config, portData, historicPortData, interval, type }: RegionalDashboardProps) => {
-  const { region } = useParams() || '';
-  let regionPorts = config.portsByRegion.filter((r) => r.name.toLowerCase() === region!.toLowerCase())[0].ports;
-  let title = `${region} Region`;
+const RegionalDashboard = ({ config, forecastHourlyPaxByPort, historicHourlyPaxByPort, interval }: RegionalDashboardProps) => {
+  const { region } = useParams() || ''
+  let regionPorts = config.portsByRegion.filter((r) => r.name.toLowerCase() === region!.toLowerCase())[0].ports
+  let title = `${region} Region`
   let portLabel = 'Airports:'
   if (region === 'heathrow') {
     title = 'Heathrow'
     portLabel == 'Aiport terminals:'
-    regionPorts = ['LHR-T2', 'LHR-T3', 'LHR-T4', 'LHR-T5'];
+    regionPorts = ['LHR-T2', 'LHR-T3', 'LHR-T4', 'LHR-T5']
   }
-  regionPorts.sort();
+  regionPorts.sort()
 
+  const [visiblePorts, setVisiblePorts] = React.useState<string[]>([...regionPorts])
+  const availablePorts = config.ports.map(port => port.iata)
+  const timeUnits = interval
 
-  const [visiblePorts, setVisiblePorts] = React.useState<string[]>([...regionPorts]);
-  const availablePorts = config.ports.map(port => port.iata);
-  const timeUnits = interval;
-
-  const is_mobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'));
+  const is_mobile = useMediaQuery((theme: Theme) => theme.breakpoints.down('md'))
 
   const handleTogglePort = (port: string) => {
     if (visiblePorts.includes(port)) {
-      const newPorts = [...visiblePorts];
-      newPorts.splice(visiblePorts.indexOf(port), 1);
+      const newPorts = [...visiblePorts]
+      newPorts.splice(visiblePorts.indexOf(port), 1)
       setVisiblePorts(newPorts)
     } else {
       setVisiblePorts([
@@ -94,7 +91,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
         </Grid>
       </Grid>
       <Grid>
-        <RegionalPressureForm ports={regionPorts} type={type} availablePorts={availablePorts} />
+        <RegionalPressureForm ports={regionPorts} availablePorts={availablePorts} />
       </Grid>
       <Grid container spacing={2} justifyItems={'stretch'} sx={{ mb: 2 }}>
         <Grid item xs={10}>
@@ -129,7 +126,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
         {regionPorts && regionPorts.map((port: string) => {
           const linkPort = port.includes("LHR") ? 'lhr' : port
           const portName = port.replace("-", ' ')
-          return visiblePorts.includes(port) && portData[port] && (
+          return visiblePorts.includes(port) && forecastHourlyPaxByPort[port] && (
             <Grid key={port} item xs={6}>
               <Card>
                 <CardHeader
@@ -194,8 +191,8 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                             },
                             label: function(context) : string[] {
                               let date = moment(context.parsed.x)
-                              let dateFormat = timeUnits == 'hour' ? 'h:mm a ddd D MMM YYYY ' : 'ddd D MMM YYYY';
-                              const historicDate = moment(historicPortData[port][context.dataIndex]?.date) || moment();
+                              let dateFormat = timeUnits == 'hour' ? 'h:mm a ddd D MMM YYYY ' : 'ddd D MMM YYYY'
+                              const historicDate = moment(historicHourlyPaxByPort[port][context.dataIndex]?.date) || moment()
                               if (interval == 'hour') {
                                 historicDate.add(context.dataIndex, 'hours')
                               }
@@ -258,9 +255,9 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                           // Override the fit function
                           (chart.legend as any).fit = function fit() {
                             // Call original function and bind scope in order to use `this` correctly inside it
-                            originalFit.bind(chart.legend)();
-                            this.height += 20;
-                          };
+                            originalFit.bind(chart.legend)()
+                            this.height += 20
+                          }
                         }
                       }
                     ]}
@@ -289,7 +286,7 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                             target: '1',
                             below: 'transparent',
                           },
-                          data: portData[port].map((datapoint: TerminalDataPoint) => {
+                          data: forecastHourlyPaxByPort[port].map((datapoint: TerminalDataPoint) => {
                             const pointDate = moment(datapoint.date)
                             if (interval === 'hour') {
                               pointDate.add(datapoint.hour, 'hours')
@@ -312,8 +309,8 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
                           pointHoverBorderWidth: 3,
                           pointBackgroundColor: '#ffffff',
                           pointHoverBackgroundColor: '#ffffff',
-                          data: historicPortData[port].map((datapoint: TerminalDataPoint, index: number) => {
-                              const paxDate = moment(portData[port][index]?.date) || moment();
+                          data: historicHourlyPaxByPort[port].map((datapoint: TerminalDataPoint, index: number) => {
+                              const paxDate = moment(forecastHourlyPaxByPort[port][index]?.date) || moment()
                               if (interval === 'hour') {
                                 paxDate.add(datapoint.hour, 'hours')
                               }
@@ -343,13 +340,10 @@ const RegionalDashboard = ({ config, portData, historicPortData, interval, type 
 const mapState = (state: RootState) => {
   return {
     errors: state.pressureDashboard?.errors,
-    startDate: state.pressureDashboard?.start,
-    endDate: state.pressureDashboard?.end,
-    portData: state.pressureDashboard?.currentHourlyPaxByPort,
-    historicPortData: state.pressureDashboard?.historicHourlyPaxByPort,
+    forecastHourlyPaxByPort: state.pressureDashboard?.forecastHourlyPaxByPort,
+    historicHourlyPaxByPort: state.pressureDashboard?.historicHourlyPaxByPort,
     interval: state.pressureDashboard?.interval,
-    type: state.pressureDashboard?.type,
-  };
+  }
 }
 
-export default connect(mapState)(RegionalDashboard);
+export default connect(mapState)(RegionalDashboard)

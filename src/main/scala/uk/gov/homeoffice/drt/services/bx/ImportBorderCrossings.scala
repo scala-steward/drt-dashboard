@@ -76,7 +76,7 @@ object ImportBorderCrossings {
                                 cellStr: String,
                                 replaceHoursForPortTerminal: (PortCode, Terminal, GateType, Iterable[BorderCrossing]) => Future[Int],
                                ): Future[Int] = {
-    Try(cellStr.toDouble.toInt).map { count =>
+    Try(cellStr.replace(",", "").toDouble.toInt).map { count =>
       (date, count)
     } match {
       case Success((date, count)) =>
@@ -125,7 +125,6 @@ object ImportBorderCrossings {
   private def findMonthRow(sheet: Sheet, formatter: DataFormatter): Seq[Row] = {
     sheet.iterator().asScala.toSeq.dropWhile { row =>
       !row.cellIterator().asScala.toSeq.exists { cell =>
-        log.info(s"Looking for month row: ${row.getRowNum}: ${formatter.formatCellValue(cell)}")
         formatter.formatCellValue(cell) match {
           case monthYearRegex(_, _) =>
             log.info(s"Found month row: ${row.getRowNum}: ${formatter.formatCellValue(cell)}")

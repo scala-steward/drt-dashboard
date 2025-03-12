@@ -1,27 +1,23 @@
 import {call, put, takeEvery} from 'redux-saga/effects'
 import {setRegionalDashboardState, setStatus} from './regionalPressureState'
 import StubService from '../../services/stub-service'
-import moment, {Moment} from 'moment'
+import moment from 'moment/moment'
 import ApiClient from '../../services/ApiClient'
 import axios from 'axios'
 import {download, generateCsv} from "export-to-csv"
 
 export type RequestPaxTotalsType = {
   type: "REQUEST_PAX_TOTALS",
-  searchType: string,
+  singleOrRange: 'single' | 'range',
+  comparisonType: 'previousYear' | 'custom',
   userPorts: string[],
   availablePorts: string[],
-  startDate: string,
-  endDate: string,
+  forecastStart: string,
+  forecastEnd: string,
   isExport: boolean,
   historicStart: string,
   historicEnd: string,
 }
-
-// export type PortTerminal = {
-//   port: string,
-//   ports: string[],
-// }
 
 export type QueueCount = {
   queueName: string,
@@ -37,6 +33,7 @@ export type TerminalDataPoint = {
   regionName: string,
   terminalName?: string,
 }
+
 
 export type ExportableDataPoint = {
   date: string,
@@ -65,7 +62,8 @@ type APIResponse = {
 export const requestPaxTotals = (
   userPorts: string[],
   availablePorts: string[],
-  searchType: string,
+  singleOrRange: 'single' | 'range',
+  comparisonType: 'previousYear' | 'custom',
   startDate: string,
   endDate: string,
   isExport: boolean,
@@ -74,23 +72,18 @@ export const requestPaxTotals = (
 ): RequestPaxTotalsType => {
   return {
     "type": "REQUEST_PAX_TOTALS",
-    searchType,
+    singleOrRange,
+    comparisonType,
     userPorts,
     availablePorts,
-    startDate,
-    endDate,
+    forecastStart: startDate,
+    forecastEnd: endDate,
     isExport,
     historicStart,
     historicEnd,
   }
 }
 
-export function getHistoricDateByDay(date: Moment): Moment {
-  return moment(date)
-    .subtract(1, 'year')
-    .isoWeek(date.isoWeek())
-    .isoWeekday(date.isoWeekday())
-}
 
 const createExportableDataPoints = (dataPoints: TerminalDataPoint[]): ExportableDataPoint[] => {
   let flattenedCurrent: ExportableDataPoint[] = []
@@ -161,30 +154,23 @@ export function totalFromQueues(dp: QueueCount[]) {
 export function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
   try {
     yield(put(setStatus('loading')))
-    const start = moment(action.startDate)
-    const end = action.searchType === 'single' ? start : moment(action.endDate).endOf('day')
+    const start = moment(action.forecastStart)
+    const end = action.singleOrRange === 'single' ? start : moment(action.forecastEnd).endOf('day')
     const historicStart = moment(action.historicStart)
-    const historicEnd = action.searchType === 'single' ? historicStart : moment(action.historicEnd).endOf('day')
+    const historicEnd = action.singleOrRange === 'single' ? historicStart : moment(action.historicEnd).endOf('day')
 
-    console.log(`Start: ${start}`)
-    console.log(`End: ${end}`)
-    console.log(`Historic Start: ${historicStart}`)
-    console.log(`Historic End: ${historicEnd}`)
-    console.log(`======================================`)
-
-    const duration = moment.duration(end.diff(start)).asHours()
-    const interval = duration >= 48 ? 'daily' : 'hourly'
-
-    const fStart = start.format('YYYY-MM-DD')
-    const fEnd = end.format('YYYY-MM-DD')
+    const forecastStart = start.format('YYYY-MM-DD')
+    const forecastEnd = end.format('YYYY-MM-DD')
     const fHistoricStart = historicStart.format('YYYY-MM-DD')
     const fHistoricEnd = historicEnd.format('YYYY-MM-DD')
+    const duration = moment.duration(end.diff(start)).asHours()
+    const interval = duration >= 48 ? 'daily' : 'hourly'
 
     const useStub = process.env.REACT_APP_USE_STUB === 'true'
 
     const fetchPaxData = useStub ? StubService.generatePortPaxSeries : getPaxData
 
-    const current: TerminalDataPoint[] = yield fetchPaxData(fStart, fEnd, interval, action.availablePorts)
+    const current: TerminalDataPoint[] = yield fetchPaxData(forecastStart, forecastEnd, interval, action.availablePorts)
     const historic: TerminalDataPoint[] = yield fetchPaxData(fHistoricStart, fHistoricEnd, interval, action.availablePorts)
 
     if (action.isExport) {
@@ -194,18 +180,19 @@ export function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
       yield(put(setStatus('done')))
     } else {
 
-      const [currentHourlyPaxByPort, currentTotalPaxByPort] = parseDataPoints(current, (dp) => totalFromQueues(dp.drtQueueCounts))
+      const [forecastHourlyPaxByPort, forecastTotalPaxByPort] = parseDataPoints(current, (dp) => totalFromQueues(dp.drtQueueCounts))
       const [historicHourlyPaxByPort, historicTotalPaxByPort] = parseDataPoints(historic, (dp) => totalFromQueues(dp.bxQueueCounts))
 
       yield(put(setRegionalDashboardState({
-        currentHourlyPaxByPort: currentHourlyPaxByPort,
-        currentTotalPaxByPort: currentTotalPaxByPort,
+        forecastHourlyPaxByPort: forecastHourlyPaxByPort,
+        forecastTotalPaxByPort: forecastTotalPaxByPort,
         historicHourlyPaxByPort: historicHourlyPaxByPort,
         historicTotalPaxByPort: historicTotalPaxByPort,
-        type: action.searchType,
-        start: fStart,
-        end: fEnd,
+        singleOrRange: action.singleOrRange,
+        comparisonType: action.comparisonType,
         interval: duration >= 48 ? 'day' : 'hour',
+        forecastStart: forecastStart,
+        forecastEnd: forecastEnd,
         status: 'done',
         historicStart: fHistoricStart,
         historicEnd: fHistoricEnd,
