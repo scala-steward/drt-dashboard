@@ -40,7 +40,6 @@ ChartJS.register(...registerables);
 interface RegionalDashboardProps {
   config: ConfigValues;
   interval?: string;
-  // type: string;
   forecastHourlyPaxByPort: {
     [key: string]: TerminalDataPoint[]
   }

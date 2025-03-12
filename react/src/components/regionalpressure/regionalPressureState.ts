@@ -9,7 +9,7 @@ export const getHistoricDateByDay: (date: Moment) => Moment = (date: Moment) => 
 
   const dayOfTheWeekDifference = inputDate.day() - oneYearAgo.day();
   const diffForNearestSameDayOfTheWeek = dayOfTheWeekDifference >= -3 ? dayOfTheWeekDifference : dayOfTheWeekDifference + 7;
-  
+
   return oneYearAgo.add(diffForNearestSameDayOfTheWeek, 'days')
 }
 

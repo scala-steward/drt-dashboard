@@ -69,8 +69,6 @@ const constructCsvRows = (forecast: PortsObject, historic: PortsObject, granular
       })
   })
 
-  console.log(JSON.stringify(rows))
-
   return rows
 }
 
