@@ -8,7 +8,9 @@ export const getHistoricDateByDay: (date: Moment) => Moment = (date: Moment) => 
   const oneYearAgo = inputDate.clone().subtract(1, 'year');
 
   const dayOfTheWeekDifference = inputDate.day() - oneYearAgo.day();
-  return oneYearAgo.add(dayOfTheWeekDifference, 'days')
+  const diffForNearestSameDayOfTheWeek = dayOfTheWeekDifference >= -3 ? dayOfTheWeekDifference : dayOfTheWeekDifference + 7;
+  
+  return oneYearAgo.add(diffForNearestSameDayOfTheWeek, 'days')
 }
 
 interface RegionalPressureState {
