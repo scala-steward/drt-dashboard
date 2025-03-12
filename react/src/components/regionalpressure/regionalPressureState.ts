@@ -1,13 +1,14 @@
 import {createSlice, PayloadAction} from '@reduxjs/toolkit'
 import {FormError} from '../../services/ValidationService'
 import {TerminalDataPoint} from './regionalPressureSagas'
-import moment, {Moment} from "moment/moment";
+import moment, {Moment} from "moment";
 
 export const getHistoricDateByDay: (date: Moment) => Moment = (date: Moment) => {
-  return moment(date)
-    .subtract(1, 'year')
-    .isoWeek(date.isoWeek())
-    .isoWeekday(date.isoWeekday())
+  const inputDate = moment(date);
+  const oneYearAgo = inputDate.clone().subtract(1, 'year');
+
+  const dayOfTheWeekDifference = inputDate.day() - oneYearAgo.day();
+  return oneYearAgo.add(dayOfTheWeekDifference, 'days')
 }
 
 interface RegionalPressureState {

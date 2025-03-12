@@ -84,7 +84,7 @@ const RegionalPressureForm = ({
   }
 
   const handleDateChange = (type: string, date: Moment) => {
-    const forecastStart = type == 'start' ? date : forecastDates.start
+    const forecastStart: Moment = type == 'start' ? date : forecastDates.start
     const forecastEnd = type == 'end' ? date : forecastDates.end
     const historicStart = comparisonType == 'previousYear' ? getHistoricDateByDay(forecastStart) : historicDates.start
     const historicEnd = comparisonType == 'previousYear' ? getHistoricDateByDay(forecastEnd) : historicDates.end
