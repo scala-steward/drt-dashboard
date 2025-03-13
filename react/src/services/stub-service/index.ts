@@ -2,11 +2,12 @@ import moment from "moment";
 import { TerminalDataPoint } from '../../components/regionalpressure/regionalPressureSagas';
 
 interface IStubService {
-  generatePortPaxSeries: (start: string, end: string, interval: string, region: string, portCode: string[]) => TerminalDataPoint[]
+  generatePortPaxSeries: (start: string, end: string, interval: string, portCode: string[]) => TerminalDataPoint[]
 }
 
 class StubService implements IStubService {
-  public generatePortPaxSeries(start: string, end: string, interval: string, region: string, portCodes: string[]) {
+  public generatePortPaxSeries(start: string, end: string, interval: string, portCodes: string[]) {
+    console.log(`Generating stub data for ${start} to ${end} with ${interval} interval`)
     const startDate = moment(start);
     const endDate = moment(end).add(1, 'day');
     const duration = moment.duration(endDate.diff(startDate));
@@ -31,17 +32,32 @@ class StubService implements IStubService {
         break;
     }
     const results: TerminalDataPoint[] = []
-    portCodes.forEach((portCode) => { 
+    portCodes.forEach((portCode) => {
       for (let index = 0; index < durationInterval; index++) {
         const intervalDate = moment(startDate).add(index, momentUnit as moment.unitOfTime.DurationConstructor)
+
         const EEAPax = Math.floor(randomRange * Math.random())
         const eGatePax = Math.floor(randomRange * Math.random())
         const nonEEApax = Math.floor(randomRange * Math.random())
+
+        const bxEgatePax = Math.floor(randomRange * Math.random())
+        const bxDeskPax = Math.floor(randomRange * Math.random())
+
         results.push({
+          bxQueueCounts: [
+            {
+              queueName: "EGate",
+              count: bxEgatePax
+            },
+            {
+              queueName: "QueueDesk",
+              count: bxDeskPax
+            }
+          ],
           date: intervalDate.startOf('day').format('YYYY-MM-DD'),
           hour: index,
           portCode: portCode,
-          queueCounts: [
+          drtQueueCounts: [
             {
               queueName: "EEA",
               count: EEAPax
@@ -55,8 +71,7 @@ class StubService implements IStubService {
               count: nonEEApax
             }
           ],
-          regionName: region,
-          totalPcpPax: EEAPax + eGatePax + nonEEApax,
+          regionName: 'some-region',
         })
       }
     })

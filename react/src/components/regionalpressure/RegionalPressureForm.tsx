@@ -84,7 +84,7 @@ const RegionalPressureForm = ({
   }
 
   const handleDateChange = (type: string, date: Moment) => {
-    const forecastStart = type == 'start' ? date : forecastDates.start
+    const forecastStart: Moment = type == 'start' ? date : forecastDates.start
     const forecastEnd = type == 'end' ? date : forecastDates.end
     const historicStart = comparisonType == 'previousYear' ? getHistoricDateByDay(forecastStart) : historicDates.start
     const historicEnd = comparisonType == 'previousYear' ? getHistoricDateByDay(forecastEnd) : historicDates.end
@@ -171,7 +171,7 @@ const RegionalPressureForm = ({
       <Grid container spacing={2} justifyItems={'stretch'} sx={{mb: 2}}>
         <Grid item xs={12}>
           <FormControl>
-            <FormLabel id="date-label">Select date</FormLabel>
+            <FormLabel id="date-label">Select date for forecast arrivals</FormLabel>
             <RadioGroup
               row
               aria-labelledby="date-label"
@@ -211,7 +211,8 @@ const RegionalPressureForm = ({
       <Grid container spacing={2} justifyItems={'stretch'} sx={{mb: 2}}>
         <Grid item xs={12}>
           <FormControl>
-            <FormLabel id="date-label">Select comparison date</FormLabel>
+            <FormLabel id="date-label">Select comparison date for historical arrivals (from Border
+              Crossings)</FormLabel>
             <RadioGroup
               row
               aria-labelledby="date-label"

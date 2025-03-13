@@ -40,10 +40,10 @@ ChartJS.register(
 interface RegionalPressureChartProps {
   regionName: string;
   portCodes: string[];
-  forecastTotals: {
+  forecastTotalPaxByPort: {
     [key: string]: number
   };
-  historicTotals: {
+  historicTotalPaxByPort: {
     [key: string]: number
   };
 }
@@ -52,11 +52,11 @@ const doesExceed = (forecast: number): boolean => {
   return forecast > 0
 }
 
-const RegionalPressureChart = ({regionName, portCodes, forecastTotals, historicTotals}: RegionalPressureChartProps) => {
+const RegionalPressureChart = ({regionName, portCodes, forecastTotalPaxByPort, historicTotalPaxByPort}: RegionalPressureChartProps) => {
   const theme = useTheme();
 
   const forecasts = [...portCodes].map((portCode) => {
-    return (forecastTotals[portCode] - historicTotals[portCode]) / (historicTotals[portCode]) * 100
+    return (forecastTotalPaxByPort[portCode] - historicTotalPaxByPort[portCode]) / (historicTotalPaxByPort[portCode]) * 100
   })
   const historic_zero = [...portCodes].map(() => 0);
 
@@ -83,19 +83,19 @@ const RegionalPressureChart = ({regionName, portCodes, forecastTotals, historicT
           callbacks: {
               label: function(context: TooltipItem<ChartType>) {
                 const port = context.label;
-                const arrivals = forecastTotals[port];
+                const arrivals = forecastTotalPaxByPort[port];
                 const value = new Intl.NumberFormat("en-US", {
                     style: 'decimal',
                     signDisplay: "exceptZero",
                     maximumFractionDigits: 0
                 }).format(context.parsed.r);
-                return `${arrivals.toLocaleString()} pax (${value}%)`
+                return `${arrivals.toLocaleString()} foreacst pax (${value}%)`
               }
           }
         },
       },
       {
-        label: 'Previous year',
+        label: 'Historical arrivals (from Border Crossings)',
         data: historic_zero,
         backgroundColor: 'transparent',
         borderColor: drtTheme.palette.grey[800],
@@ -111,7 +111,7 @@ const RegionalPressureChart = ({regionName, portCodes, forecastTotals, historicT
           callbacks: {
               label: function(context: TooltipItem<ChartType>) {
                 const port = context.label;
-                const arrivals = historicTotals[port];
+                const arrivals = historicTotalPaxByPort[port];
                 return `${arrivals.toLocaleString()} historical pax`
               }
           }
@@ -201,8 +201,8 @@ const RegionalPressureChart = ({regionName, portCodes, forecastTotals, historicT
 
 const mapState = (state: RootState) => {
   return {
-    forecastTotals: state.pressureDashboard?.forecastTotals,
-    historicTotals: state.pressureDashboard?.historicTotals,
+    forecastTotalPaxByPort: state.pressureDashboard?.forecastTotalPaxByPort,
+    historicTotalPaxByPort: state.pressureDashboard?.historicTotalPaxByPort,
     forecastStart: state.pressureDashboard?.forecastStart,
     forecastEnd: state.pressureDashboard?.forecastEnd,
     historicStart: state.pressureDashboard?.historicStart,

@@ -3,7 +3,7 @@ package uk.gov.homeoffice.drt.routes
 import akka.actor.typed.ActorSystem
 import akka.http.scaladsl.model.Multipart.FormData
 import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, Multipart, StatusCodes}
+import akka.http.scaladsl.model.{ContentTypes, HttpEntity, Multipart}
 import akka.http.scaladsl.server.AuthorizationFailedRejection
 import akka.http.scaladsl.server.directives.FileInfo
 import akka.http.scaladsl.testkit.ScalatestRouteTest
@@ -12,6 +12,7 @@ import akka.testkit.TestProbe
 import akka.util.ByteString
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
+import uk.gov.homeoffice.drt.db.tables.GateTypes.{EGate, Pcp}
 import uk.gov.homeoffice.drt.db.tables._
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Terminals.{T1, T2, Terminal}

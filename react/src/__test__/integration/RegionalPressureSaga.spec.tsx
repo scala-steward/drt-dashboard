@@ -1,4 +1,4 @@
-import moment from "moment/moment";
+import moment from "moment";
 import {getHistoricDateByDay} from "../../components/regionalpressure/regionalPressureState";
 
 describe('Regional Pressure Sagas: Calculates the same day the of the previous year', () => {

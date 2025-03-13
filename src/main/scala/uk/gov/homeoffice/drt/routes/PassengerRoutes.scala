@@ -22,7 +22,7 @@ import scala.util.{Failure, Success}
 object PassengerRoutes {
   private val log = org.slf4j.LoggerFactory.getLogger(getClass)
 
-  def apply(summaryProvider: (LocalDate, LocalDate, Granularity, Option[Terminal]) => PortCode => Source[(Map[Queue, Int], Int, Option[Any]), NotUsed])
+  def apply(summaryProvider: (LocalDate, LocalDate, Granularity, Option[Terminal]) => PortCode => Source[(Map[Queue, Int], Int, Map[Queue, Int], Option[Any]), NotUsed])
            (implicit ec: ExecutionContext, mat: Materializer): Route =
     pathPrefix("passengers" / Segment / Segment) {
       case (startDate, endDate) =>
@@ -43,7 +43,7 @@ object PassengerRoutes {
                                 startDate: String,
                                 endDate: String,
                                 maybeTerminal: Option[String],
-                                summaryProvider: (LocalDate, LocalDate, Granularity, Option[Terminal]) => PortCode => Source[(Map[Queue, Int], Int, Option[Any]), NotUsed],
+                                summaryProvider: (LocalDate, LocalDate, Granularity, Option[Terminal]) => PortCode => Source[(Map[Queue, Int], Int, Map[Queue, Int], Option[Any]), NotUsed],
                                )
                                (implicit ec: ExecutionContext, mat: Materializer): Route = {
     get {
@@ -85,31 +85,34 @@ object PassengerRoutes {
   }
 
   private def sourceToContent(contentType: ContentType,
-                              portResult: Source[(PortCode, (Map[Queue, Int], Int, Option[Any])), NotUsed],
+                              portResult: Source[(PortCode, (Map[Queue, Int], Int, Map[Queue, Int], Option[Any])), NotUsed],
                               maybeTerminal: Option[String],
                              )
                              (implicit mat: Materializer, ec: ExecutionContext): Future[String] = {
     if (contentType == ContentTypes.`text/csv(UTF-8)`)
       portResult.runFold("") {
-        case (acc, (portCode, (queues, capacity, x))) => acc + passengersCsvRow(portCode, maybeTerminal, queues, capacity, x)
+        case (acc, (portCode, (queues, capacity, bx, maybeDateOrDateHour))) => acc + passengersCsvRow(portCode, maybeTerminal, queues, capacity, bx, maybeDateOrDateHour)
       }
     else {
       import uk.gov.homeoffice.drt.jsonformats.PassengersSummaryFormat._
       portResult
         .runFold(PassengersSummaries.empty) {
-          case (acc, (portCode, (queues, capacity, x))) => acc ++ Seq(passengersJson(portCode, maybeTerminal, queues, capacity, x))
+          case (acc, (portCode, (queues, capacity, bx, x))) => acc ++ Seq(passengersJson(portCode, maybeTerminal, queues, capacity, bx, x))
         }
         .map(_.summaries.toJson.compactPrint)
     }
   }
 
-  private def passengersCsvRow[T]: (PortCode, Option[String], Map[Queue, Int], Int, Option[T]) => String =
-    (portCode, maybeTerminal, queueCounts, capacity, maybeDateOrDateHour) => {
+  private def passengersCsvRow[T]: (PortCode, Option[String], Map[Queue, Int], Int, Map[Queue, Int], Option[T]) => String =
+    (portCode, maybeTerminal, drtQueueCounts, capacity, bxQueueCounts, maybeDateOrDateHour) => {
       val regionName = PortRegion.fromPort(portCode).name
       val portCodeStr = portCode.toString
-      val totalPcpPax = queueCounts.values.sum
-      val queueCells = Queues.queueOrder
-        .map(queue => queueCounts.getOrElse(queue, 0).toString)
+      val totalPcpPax = drtQueueCounts.values.sum
+      val drtQueueCells = Queues.queueOrder
+        .map(queue => drtQueueCounts.getOrElse(queue, 0).toString)
+        .mkString(",")
+      val bxQueueCells = Queues.queueOrder
+        .map(queue => bxQueueCounts.getOrElse(queue, 0).toString)
         .mkString(",")
 
       val dateStr = maybeDateOrDateHour.map {
@@ -118,17 +121,16 @@ object PassengerRoutes {
       }
       maybeTerminal match {
         case Some(terminal) =>
-          (dateStr.toList ++ List(regionName, portCodeStr, terminal, capacity, totalPcpPax, queueCells)).mkString(",") + "\n"
+          (dateStr.toList ++ List(regionName, portCodeStr, terminal, capacity, totalPcpPax, drtQueueCells, bxQueueCells)).mkString(",") + "\n"
         case None =>
-          (dateStr.toList ++ List(regionName, portCodeStr, capacity, totalPcpPax, queueCells)).mkString(",") + "\n"
+          (dateStr.toList ++ List(regionName, portCodeStr, capacity, totalPcpPax, drtQueueCells, bxQueueCells)).mkString(",") + "\n"
       }
     }
 
-  private def passengersJson[T]: (PortCode, Option[String], Map[Queue, Int], Int, Option[T]) => PassengersSummary =
-    (portCode, maybeTerminal, queueCounts, capacity, maybeDateOrDateHour) => {
+  private def passengersJson[T]: (PortCode, Option[String], Map[Queue, Int], Int, Map[Queue, Int], Option[T]) => PassengersSummary =
+    (portCode, maybeTerminal, drtQueueCounts, capacity, bxQueueCounts, maybeDateOrDateHour) => {
       val regionName = PortRegion.fromPort(portCode).name
       val portCodeStr = portCode.toString
-      val totalPcpPax = queueCounts.values.sum
       val (maybeDate, maybeHour) = maybeDateOrDateHour match {
         case Some(date: LocalDate) => (Option(date), None)
         case Some(date: Long) =>
@@ -136,6 +138,6 @@ object PassengerRoutes {
           (Option(sdate.toLocalDate), Option(sdate.getHours))
         case _ => (None, None)
       }
-      PassengersSummary(regionName, portCodeStr, maybeTerminal, capacity, totalPcpPax, queueCounts, maybeDate, maybeHour)
+      PassengersSummary(regionName, portCodeStr, maybeTerminal, capacity, drtQueueCounts, bxQueueCounts, maybeDate, maybeHour)
     }
 }

@@ -1,13 +1,16 @@
 import {createSlice, PayloadAction} from '@reduxjs/toolkit'
 import {FormError} from '../../services/ValidationService'
 import {TerminalDataPoint} from './regionalPressureSagas'
-import moment, {Moment} from "moment/moment";
+import moment, {Moment} from "moment";
 
 export const getHistoricDateByDay: (date: Moment) => Moment = (date: Moment) => {
-  return moment(date)
-    .subtract(1, 'year')
-    .isoWeek(date.isoWeek())
-    .isoWeekday(date.isoWeekday())
+  const inputDate = moment(date);
+  const oneYearAgo = inputDate.clone().subtract(1, 'year');
+
+  const dayOfTheWeekDifference = inputDate.day() - oneYearAgo.day();
+  const diffForNearestSameDayOfTheWeek = dayOfTheWeekDifference >= -3 ? dayOfTheWeekDifference : dayOfTheWeekDifference + 7;
+
+  return oneYearAgo.add(diffForNearestSameDayOfTheWeek, 'days')
 }
 
 interface RegionalPressureState {
@@ -15,21 +18,21 @@ interface RegionalPressureState {
   errors: FormError[],
   singleOrRange: 'single' | 'range',
   comparisonType: 'previousYear' | 'custom',
-  interval: string,
   forecastStart: string,
   forecastEnd: string,
   historicStart: string,
   historicEnd: string,
-  forecastData: {
+  interval: 'hour' | 'day',
+  forecastHourlyPaxByPort: {
     [key: string] : TerminalDataPoint[]
   },
-  forecastTotals: {
+  forecastTotalPaxByPort: {
     [key: string] : number
   }
-  historicData: {
+  historicHourlyPaxByPort: {
     [key: string] : TerminalDataPoint[]
   },
-  historicTotals: {
+  historicTotalPaxByPort: {
     [key: string] : number
   }
 }
@@ -38,19 +41,19 @@ type SetStatePayload = {
   status: string,
   singleOrRange: 'single' | 'range',
   comparisonType: 'previousYear' | 'custom',
-  interval: string,
+  interval: 'day' | 'hour',
   forecastStart: string,
   forecastEnd: string,
-  forecastData: {
+  forecastHourlyPaxByPort: {
     [key: string] : TerminalDataPoint[]
   },
-  forecastTotals: {
+  forecastTotalPaxByPort: {
     [key: string] : number
   },
-  historicData: {
+  historicHourlyPaxByPort: {
     [key: string] : TerminalDataPoint[]
   },
-  historicTotals: {
+  historicTotalPaxByPort: {
     [key: string] : number
   },
   historicStart: string,
@@ -63,14 +66,14 @@ const regionalPressureSlice = createSlice({
   name: 'regionalPressure',
   initialState: {
     status: '',
+    forecastHourlyPaxByPort: {},
+    forecastTotalPaxByPort: {},
+    historicHourlyPaxByPort: {},
+    historicTotalPaxByPort: {},
     errors: [],
     singleOrRange: 'single',
     comparisonType: 'previousYear',
-    interval: 'daily',
-    forecastData: {},
-    forecastTotals: {},
-    historicData: {},
-    historicTotals: {},
+    interval: 'day',
     forecastStart: new Date().toString(),
     forecastEnd: new Date().toString(),
     historicStart: historicStart().format('YYYY-MM-DD'),
@@ -81,14 +84,14 @@ const regionalPressureSlice = createSlice({
       state.status = action.payload;
     },
     setRegionalDashboardState: (state: RegionalPressureState, action: PayloadAction<SetStatePayload>) => {
+      state.forecastHourlyPaxByPort = {...action.payload.forecastHourlyPaxByPort}
+      state.forecastTotalPaxByPort = {...action.payload.forecastTotalPaxByPort}
+      state.historicHourlyPaxByPort = {...action.payload.historicHourlyPaxByPort}
+      state.historicTotalPaxByPort = {...action.payload.historicTotalPaxByPort}
+      state.interval = action.payload.interval;
       state.status = action.payload.status;
       state.singleOrRange = action.payload.singleOrRange;
       state.comparisonType = action.payload.comparisonType;
-      state.interval = action.payload.interval;
-      state.forecastData = {...action.payload.forecastData}
-      state.forecastTotals = {...action.payload.forecastTotals}
-      state.historicData = {...action.payload.historicData}
-      state.historicTotals = {...action.payload.historicTotals}
       state.forecastStart = action.payload.forecastStart;
       state.forecastEnd = action.payload.forecastEnd;
       state.historicStart = action.payload.historicStart;

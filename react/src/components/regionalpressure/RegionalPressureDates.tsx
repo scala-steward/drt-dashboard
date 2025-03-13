@@ -15,13 +15,13 @@ const RegionalPressureDates = ({forecastStart, forecastEnd, historicStart, histo
   return (
     <>
       <p style={{lineHeight: 1.2, margin: '0 0 1em 0'}}>
-        <strong>Pax from selected date: </strong>{ moment(forecastStart).format('dddd D MMM YYYY') }
+        <strong>Forecast arrivals: </strong>{ moment(forecastStart).format('dddd D MMM YYYY') }
         { forecastStart != forecastEnd &&
           <span> to { moment(forecastEnd).format('dddd D MMM YYYY') }</span>
         }
       </p>
       <p>
-        <strong>Pax from previous year: </strong> { moment(historicStart).format('dddd D MMM YYYY') }
+        <strong>Historical arrivals: </strong> { moment(historicStart).format('dddd D MMM YYYY') }
         { forecastStart != forecastEnd &&
           <span> to { moment(historicEnd).format('dddd D MMM YYYY') }</span>
         }

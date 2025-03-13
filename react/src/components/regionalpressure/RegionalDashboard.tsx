@@ -1,59 +1,54 @@
-import * as React from 'react'
-import { connect } from 'react-redux'
-import { UserProfile } from "../../model/User"
-import { useParams } from 'react-router'
+import * as React from 'react';
+import {connect} from 'react-redux';
+import {useParams} from 'react-router';
 import pattern from 'patternomaly'
 import {
   Alert,
   Box,
-  Grid,
+  Button,
   Card,
   CardContent,
   CardHeader,
-  Button,
-  IconButton,
-  Stack,
+  Checkbox,
   FormControl,
+  FormControlLabel,
   FormGroup,
   FormLabel,
-  FormControlLabel,
-  Checkbox,
-  useMediaQuery,
-  Theme
-} from "@mui/material"
-import { Link } from 'react-router-dom'
-import { ConfigValues } from "../../model/Config"
-import { RootState } from '../../store/redux'
-import drtTheme from '../../drtTheme'
-import { Chart } from 'react-chartjs-2'
-import {
-  Chart as ChartJS,
-  registerables,
-} from 'chart.js'
-import 'chartjs-adapter-moment'
-import moment from 'moment'
-ChartJS.register(...registerables)
-import { ArrowBack } from '@mui/icons-material'
-import { TerminalDataPoint } from './regionalPressureSagas'
-import RegionalPressureDates from './RegionalPressureDates'
-import RegionalPressureForm from './RegionalPressureForm'
-import RegionalPressureExport from './RegionalPressureExport'
+  Grid,
+  IconButton,
+  Stack,
+  Theme,
+  useMediaQuery
+} from "@mui/material";
+import {Link} from 'react-router-dom';
+import {ConfigValues} from "../../model/Config";
+import {RootState} from '../../store/redux';
+import drtTheme from '../../drtTheme';
+import {Chart} from 'react-chartjs-2';
+import {Chart as ChartJS, registerables,} from 'chart.js';
+import 'chartjs-adapter-moment';
+import moment from 'moment';
+import {ArrowBack} from '@mui/icons-material';
+import {TerminalDataPoint, totalFromQueues} from './regionalPressureSagas';
+import RegionalPressureDates from './RegionalPressureDates';
+import RegionalPressureForm from './RegionalPressureForm';
+import RegionalPressureExport from './RegionalPressureExport';
+
+ChartJS.register(...registerables);
 
 
 interface RegionalDashboardProps {
-  config: ConfigValues
-  user: UserProfile
-  title?: string
-  interval?: string
-  forecastData: {
+  config: ConfigValues;
+  interval?: string;
+  forecastHourlyPaxByPort: {
     [key: string]: TerminalDataPoint[]
   }
-  historicData: {
+  historicHourlyPaxByPort: {
     [key: string]: TerminalDataPoint[]
   }
 }
 
-const RegionalDashboard = ({ config, forecastData, historicData, interval }: RegionalDashboardProps) => {
+const RegionalDashboard = ({ config, forecastHourlyPaxByPort, historicHourlyPaxByPort, interval }: RegionalDashboardProps) => {
   const { region } = useParams() || ''
   let regionPorts = config.portsByRegion.filter((r) => r.name.toLowerCase() === region!.toLowerCase())[0].ports
   let title = `${region} Region`
@@ -128,14 +123,15 @@ const RegionalDashboard = ({ config, forecastData, historicData, interval }: Reg
           </Stack>
         </Grid>
         {regionPorts && regionPorts.map((port: string) => {
+          const linkPort = port.includes("LHR") ? 'lhr' : port
           const portName = port.replace("-", ' ')
-          return visiblePorts.includes(port) && forecastData[port] && (
+          return visiblePorts.includes(port) && forecastHourlyPaxByPort[port] && (
             <Grid key={port} item xs={6}>
               <Card>
                 <CardHeader
                   title={portName}
                   action={
-                    <Button variant="contained" href={`http://${port}.drt.homeoffice.gov.uk`}>View {portName} arrivals</Button>
+                    <Button variant="contained" href={`http://${linkPort}.drt.homeoffice.gov.uk`}>View {portName} arrivals</Button>
                   }
                 />
                 <CardContent>
@@ -187,15 +183,15 @@ const RegionalDashboard = ({ config, forecastData, historicData, interval }: Reg
                                   signDisplay: "exceptZero",
                                   maximumSignificantDigits: 2
 
-                                }).format(percentage)
-                                percentage = isNaN(percentage) ? 0 : percentage
+                                }).format(percentage);
+                                percentage = isNaN(percentage) ? 0 : percentage;
                               }
                               return [`${formattedPaxPercent}% pax expected at ${port}`]
                             },
                             label: function(context) : string[] {
                               let date = moment(context.parsed.x)
                               let dateFormat = timeUnits == 'hour' ? 'h:mm a ddd D MMM YYYY ' : 'ddd D MMM YYYY'
-                              const historicDate = moment(historicData[port][context.dataIndex]?.date) || moment()
+                              const historicDate = moment(historicHourlyPaxByPort[port][context.dataIndex]?.date) || moment()
                               if (interval == 'hour') {
                                 historicDate.add(context.dataIndex, 'hours')
                               }
@@ -267,7 +263,7 @@ const RegionalDashboard = ({ config, forecastData, historicData, interval }: Reg
                     data={{
                       datasets: [
                         {
-                          label: `Pax arrivals`,
+                          label: `Forecast arrivals`,
                           type: 'line',
                           backgroundColor: [
                             pattern.draw('diagonal', '#C94900'),
@@ -289,19 +285,19 @@ const RegionalDashboard = ({ config, forecastData, historicData, interval }: Reg
                             target: '1',
                             below: 'transparent',
                           },
-                          data: forecastData[port].map((datapoint: TerminalDataPoint) => {
+                          data: forecastHourlyPaxByPort[port].map((datapoint: TerminalDataPoint) => {
                             const pointDate = moment(datapoint.date)
                             if (interval === 'hour') {
                               pointDate.add(datapoint.hour, 'hours')
                             }
                             return {
                               x: pointDate.format('MM/DD/YYYY HH:mm'),
-                              y: datapoint.totalPcpPax,
+                              y: totalFromQueues(datapoint.drtQueueCounts),
                             }
                           })
                         },
                         {
-                          label: `Historical pax`,
+                          label: `Historical arrivals`,
                           type: 'line',
                           borderColor: drtTheme.palette.grey[800],
                           borderDash: [5, 5],
@@ -312,14 +308,14 @@ const RegionalDashboard = ({ config, forecastData, historicData, interval }: Reg
                           pointHoverBorderWidth: 3,
                           pointBackgroundColor: '#ffffff',
                           pointHoverBackgroundColor: '#ffffff',
-                          data: historicData[port].map((datapoint: TerminalDataPoint, index: number) => {
-                              const paxDate = moment(forecastData[port][index]?.date) || moment()
+                          data: historicHourlyPaxByPort[port].map((datapoint: TerminalDataPoint, index: number) => {
+                              const paxDate = moment(forecastHourlyPaxByPort[port][index]?.date) || moment()
                               if (interval === 'hour') {
                                 paxDate.add(datapoint.hour, 'hours')
                               }
                               return {
                                 x: paxDate.format('MM/DD/YYYY HH:mm'),
-                                y: datapoint.totalPcpPax,
+                                y: totalFromQueues(datapoint.bxQueueCounts),
                               }
                           }),
                         }
@@ -343,8 +339,8 @@ const RegionalDashboard = ({ config, forecastData, historicData, interval }: Reg
 const mapState = (state: RootState) => {
   return {
     errors: state.pressureDashboard?.errors,
-    forecastData: state.pressureDashboard?.forecastData,
-    historicData: state.pressureDashboard?.historicData,
+    forecastHourlyPaxByPort: state.pressureDashboard?.forecastHourlyPaxByPort,
+    historicHourlyPaxByPort: state.pressureDashboard?.historicHourlyPaxByPort,
     interval: state.pressureDashboard?.interval,
   }
 }

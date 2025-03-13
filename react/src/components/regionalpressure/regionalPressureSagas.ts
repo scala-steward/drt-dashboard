@@ -1,7 +1,7 @@
 import {call, put, takeEvery} from 'redux-saga/effects'
 import {setRegionalDashboardState, setStatus} from './regionalPressureState'
 import StubService from '../../services/stub-service'
-import moment from 'moment/moment'
+import moment from 'moment'
 import ApiClient from '../../services/ApiClient'
 import axios from 'axios'
 import {download, generateCsv} from "export-to-csv"
@@ -25,12 +25,12 @@ export type QueueCount = {
 }
 
 export type TerminalDataPoint = {
+  bxQueueCounts: QueueCount[],
   date: string,
   hour: number,
   portCode: string,
-  queueCounts: QueueCount[],
+  drtQueueCounts: QueueCount[],
   regionName: string,
-  totalPcpPax: number,
   terminalName?: string,
 }
 
@@ -40,11 +40,11 @@ export type ExportableDataPoint = {
   hour: number,
   portCode: string,
   regionName: string,
-  totalPcpPax: number,
   terminalName?: string,
-  EEA?: number,
-  nonEEA?: number,
-  eGates?: number,
+  drtEgatePax?: number,
+  drtDeskPax?: number,
+  bxEgatePax?: number,
+  bXDeskPax?: number,
 }
 
 export type PortsObject = {
@@ -85,22 +85,70 @@ export const requestPaxTotals = (
 }
 
 
-const createExportableDatapoints = (datapoints: TerminalDataPoint[]): ExportableDataPoint[] => {
+const createExportableDataPoints = (dataPoints: TerminalDataPoint[]): ExportableDataPoint[] => {
   let flattenedCurrent: ExportableDataPoint[] = []
-  datapoints!.forEach((datapoint) => {
+  dataPoints!.forEach((datapoint) => {
+    const [drtEgatePax, drtDeskPax] = paxByGateType(datapoint.drtQueueCounts)
+    const [bxEgatePax, bXDeskPax] = paxByGateType(datapoint.bxQueueCounts)
+
     flattenedCurrent.push({
       date: datapoint.date,
       hour: datapoint.hour,
       portCode: datapoint.portCode,
       regionName: datapoint.regionName,
-      totalPcpPax: datapoint.totalPcpPax,
       terminalName: datapoint.terminalName,
-      EEA: datapoint.queueCounts[0]?.count || 0,
-      eGates: datapoint.queueCounts[1]?.count || 0,
-      nonEEA: datapoint.queueCounts[2]?.count || 0,
+      drtEgatePax: drtEgatePax,
+      drtDeskPax: drtDeskPax,
+      bxEgatePax: bxEgatePax,
+      bXDeskPax: bXDeskPax,
     })
   })
   return flattenedCurrent
+}
+
+export function paxByGateType(counts: QueueCount[]): number[] {
+  const egatePax = counts.filter((q) => q.queueName === 'EGate').map((q) => q.count).reduce((a, b) => a + b, 0)
+  const deskPax = counts.filter((q) => q.queueName !== 'EGate').map((q) => q.count).reduce((a, b) => a + b, 0)
+  return [egatePax, deskPax]
+}
+
+function* getPaxData(fStart: string, fEnd: string, interval: string, ports: string[]) {
+  const currentResponse: APIResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${fStart}/${fEnd}?granularity=${interval}&port-codes=${ports.join()}`)
+  const current = currentResponse.data as TerminalDataPoint[]
+
+  if (ports.includes('LHR')) {
+    const LHRT2: APIResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${fStart}/${fEnd}/T2?granularity=${interval}&port-codes=LHR`)
+    const LHRT3: APIResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${fStart}/${fEnd}/T3?granularity=${interval}&port-codes=LHR`)
+    const LHRT4: APIResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${fStart}/${fEnd}/T4?granularity=${interval}&port-codes=LHR`)
+    const LHRT5: APIResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${fStart}/${fEnd}/T5?granularity=${interval}&port-codes=LHR`)
+
+    return [...current, ...LHRT2.data, ...LHRT3.data, ...LHRT4.data, ...LHRT5.data]
+  } else {
+    return current
+  }
+}
+
+const parseDataPoints: (dataPoints: TerminalDataPoint[], paxNumber: (dp: TerminalDataPoint) => number) => [PortsObject, PortTotals] =
+  (dataPoints, paxNumber) => {
+    let totalPaxByPort: PortTotals = {}
+    let hourlyPaxByPort: PortsObject = {}
+
+    dataPoints.forEach((datapoint) => {
+      const portIndex = datapoint.terminalName ? `${datapoint.portCode}-${datapoint.terminalName}` : datapoint.portCode
+
+      totalPaxByPort[portIndex] = totalPaxByPort[portIndex] ? totalPaxByPort[portIndex] + paxNumber(datapoint) : paxNumber(datapoint)
+
+      hourlyPaxByPort[portIndex] ?
+        hourlyPaxByPort[portIndex].push(datapoint) :
+        hourlyPaxByPort[portIndex] = [datapoint]
+    })
+
+    return [hourlyPaxByPort, totalPaxByPort]
+  }
+
+
+export function totalFromQueues(dp: QueueCount[]) {
+  return dp.map((q) => q.count).reduce((a, b) => a + b, 0);
 }
 
 export function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
@@ -111,86 +159,38 @@ export function* handleRequestPaxTotals(action: RequestPaxTotalsType) {
     const historicStart = moment(action.historicStart)
     const historicEnd = action.singleOrRange === 'single' ? historicStart : moment(action.historicEnd).endOf('day')
 
-    const duration = moment.duration(end.diff(start)).asHours()
-    const interval = duration >= 48 ? 'daily' : 'hourly'
-
     const forecastStart = start.format('YYYY-MM-DD')
     const forecastEnd = end.format('YYYY-MM-DD')
     const fHistoricStart = historicStart.format('YYYY-MM-DD')
     const fHistoricEnd = historicEnd.format('YYYY-MM-DD')
+    const duration = moment.duration(end.diff(start)).asHours()
+    const interval = duration >= 48 ? 'daily' : 'hourly'
 
-    let current: TerminalDataPoint[]
-    let historic: TerminalDataPoint[]
-    let currentResponse: APIResponse
-    let historicResponse: APIResponse
-    if (window.location.hostname.includes('localhost')) {
-      //stub all data for local development
-      current = StubService.generatePortPaxSeries(forecastStart, forecastEnd, interval, 'region', action.availablePorts)
-      historic = StubService.generatePortPaxSeries(fHistoricStart, fHistoricEnd, interval, 'region', action.availablePorts)
-    } else {
-      currentResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${forecastStart}/${forecastEnd}?granularity=${interval}&port-codes=${action.availablePorts.join()}`)
-      historicResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${fHistoricStart}/${fHistoricEnd}?granularity=${interval}&port-codes=${action.availablePorts.join()}`)
+    const useStub = process.env.REACT_APP_USE_STUB === 'true'
 
-      current = currentResponse.data
-      historic = historicResponse.data
+    const fetchPaxData = useStub ? StubService.generatePortPaxSeries : getPaxData
 
-      if (action.availablePorts.includes('LHR')) {
-        const LHRT2: APIResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${forecastStart}/${forecastEnd}/T2?granularity=${interval}&port-codes=LHR`)
-        const LHRT3: APIResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${forecastStart}/${forecastEnd}/T3?granularity=${interval}&port-codes=LHR`)
-        const LHRT4: APIResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${forecastStart}/${forecastEnd}/T4?granularity=${interval}&port-codes=LHR`)
-        const LHRT5: APIResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${forecastStart}/${forecastEnd}/T5?granularity=${interval}&port-codes=LHR`)
-
-        const LHRT2Historic: APIResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${fHistoricStart}/${fHistoricEnd}/T2?granularity=${interval}&port-codes=LHR`)
-        const LHRT3Historic: APIResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${fHistoricStart}/${fHistoricEnd}/T3?granularity=${interval}&port-codes=LHR`)
-        const LHRT4Historic: APIResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${fHistoricStart}/${fHistoricEnd}/T4?granularity=${interval}&port-codes=LHR`)
-        const LHRT5Historic: APIResponse = yield call(axios.get, `${ApiClient.passengerTotalsEndpoint}${fHistoricStart}/${fHistoricEnd}/T5?granularity=${interval}&port-codes=LHR`)
-
-        current = [...current, ...LHRT2.data, ...LHRT3.data, ...LHRT4.data, ...LHRT5.data]
-        historic = [...historic, ...LHRT2Historic.data, ...LHRT3Historic.data, ...LHRT4Historic.data, ...LHRT5Historic.data]
-      }
-    }
+    const current: TerminalDataPoint[] = yield fetchPaxData(forecastStart, forecastEnd, interval, action.availablePorts)
+    const historic: TerminalDataPoint[] = yield fetchPaxData(fHistoricStart, fHistoricEnd, interval, action.availablePorts)
 
     if (action.isExport) {
-      const currentCSV = generateCsv({})(createExportableDatapoints(current))
-      const historicCSV = generateCsv({})(createExportableDatapoints(historic))
-      download({})(currentCSV)
-      download({})(historicCSV)
+      [current, historic].map((data) => {
+        download({})(generateCsv({})(createExportableDataPoints(data)))
+      })
       yield(put(setStatus('done')))
     } else {
 
-      const forecastData: PortsObject = {}
-      const forecastTotals: PortTotals = {}
-      const historicData: PortsObject = {}
-      const historicTotals: PortTotals = {}
-
-      current!.forEach((datapoint) => {
-        const portIndex = datapoint.terminalName ? `${datapoint.portCode}-${datapoint.terminalName}` : datapoint.portCode
-        datapoint.queueCounts!.forEach(passengerCount => {
-          forecastTotals[portIndex] = (forecastTotals[portIndex] ? forecastTotals[portIndex] : 0) + passengerCount.count
-        })
-        forecastData[portIndex] ?
-          forecastData[portIndex].push(datapoint)
-          : forecastData[portIndex] = [datapoint]
-      })
-
-      historic!.forEach((datapoint) => {
-        const portIndex = datapoint.terminalName ? `${datapoint.portCode}-${datapoint.terminalName}` : datapoint.portCode
-        datapoint.queueCounts!.forEach(passengerCount => {
-          historicTotals[portIndex] = (historicTotals[portIndex] ? historicTotals[portIndex] : 0) + passengerCount.count
-        })
-        historicData[portIndex] ?
-          historicData[portIndex].push(datapoint)
-          : historicData[portIndex] = [datapoint]
-      })
+      const [forecastHourlyPaxByPort, forecastTotalPaxByPort] = parseDataPoints(current, (dp) => totalFromQueues(dp.drtQueueCounts))
+      const [historicHourlyPaxByPort, historicTotalPaxByPort] = parseDataPoints(historic, (dp) => totalFromQueues(dp.bxQueueCounts))
 
       yield(put(setRegionalDashboardState({
+        forecastHourlyPaxByPort: forecastHourlyPaxByPort,
+        forecastTotalPaxByPort: forecastTotalPaxByPort,
+        historicHourlyPaxByPort: historicHourlyPaxByPort,
+        historicTotalPaxByPort: historicTotalPaxByPort,
         singleOrRange: action.singleOrRange,
         comparisonType: action.comparisonType,
         interval: duration >= 48 ? 'day' : 'hour',
-        forecastData: forecastData,
-        forecastTotals: forecastTotals,
-        historicData: historicData,
-        historicTotals: historicTotals,
         forecastStart: forecastStart,
         forecastEnd: forecastEnd,
         status: 'done',

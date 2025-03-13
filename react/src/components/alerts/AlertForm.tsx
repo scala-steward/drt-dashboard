@@ -15,7 +15,7 @@ import {
 import {Alert} from "./ViewAlerts"
 import {UserProfile} from "../../model/User";
 import ApiClient from "../../services/ApiClient";
-import {Moment} from "moment/moment";
+import {Moment} from "moment";
 import {PortsByRegionCheckboxes} from "../PortsByRegionCheckboxes";
 import {PortRegion} from "../../model/Config";
 
