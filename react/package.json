@@ -37,7 +37,7 @@
     "@types/validator": "^13.11.7",
     "@typescript-eslint/eslint-plugin": "^8.3.0",
     "@typescript-eslint/parser": "^8.3.0",
-    "axios": "1.7.8",
+    "axios": "^1.8.2",
     "chart.js": "^4.4.1",
     "chartjs-adapter-moment": "^1.0.1",
     "date-fns": "^2.29.1",
@@ -104,7 +104,7 @@
     "jest": "^29.7.0",
     "msw": "^0.22.0",
     "react-test-renderer": "18.2.0",
-    "ts-jest": "^29.1.2"
+    "ts-jest": "^29.2.6"
   },
   "jest": {
     "collectCoverageFrom": [
@@ -142,7 +142,8 @@
     "moduleNameMapper": {
       "^react-native$": "react-native-web",
       "^.+\\.module\\.(css|sass|scss)$": "identity-obj-proxy",
-      "react-markdown": "<rootDir>/node_modules/react-markdown/react-markdown.min.js"
+      "react-markdown": "<rootDir>/node_modules/react-markdown/react-markdown.min.js",
+      "^axios$": "axios/dist/node/axios.cjs"
     }
   },
   "packageManager": "yarn@4.4.1"
