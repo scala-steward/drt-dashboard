@@ -8,9 +8,9 @@ import uk.gov.homeoffice.drt.ports.Queues.Queue
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.ports.{PortCode, Queues}
-import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.{SlotJson, QueueJson, QueueJsonResponse}
+import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.{QueueJson, QueueJsonResponse, SlotJson}
 import uk.gov.homeoffice.drt.time.MilliDate.MillisSinceEpoch
-import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
+import uk.gov.homeoffice.drt.time.{SDate, SDateLike, UtcDate}
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -18,13 +18,13 @@ object QueueExport {
 
   private val defaultSlotSize = 15
 
-  def queues(queuesForPortAndDatesAndSlotSize: (PortCode, Terminal, LocalDate, LocalDate) => Source[CrunchMinute, NotUsed])
+  def queues(queuesForPortAndDatesAndSlotSize: (PortCode, Terminal, UtcDate, UtcDate) => Source[CrunchMinute, NotUsed])
             (implicit ec: ExecutionContext, mat: Materializer): (Seq[PortCode], Int) => (SDateLike, SDateLike) => Future[QueueJsonResponse] =
     (portCodes, slotSize) => (start, end) => {
       if (slotSize % defaultSlotSize != 0) throw new IllegalArgumentException(s"Slot size must be a multiple of $defaultSlotSize minutes. Got $slotSize")
       val groupSize = slotSize / defaultSlotSize
 
-      val dates = Set(start.toLocalDate, end.toLocalDate)
+      val dates = Set(start.toUtcDate, end.toUtcDate)
 
       Source(portCodes)
         .mapAsync(1) { portCode =>
