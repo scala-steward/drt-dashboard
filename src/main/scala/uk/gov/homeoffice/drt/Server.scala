@@ -32,7 +32,7 @@ import uk.gov.homeoffice.drt.routes.api.v1.{AuthApiV1Routes, FlightApiV1Routes, 
 import uk.gov.homeoffice.drt.services.api.v1.{FlightExport, QueueExport}
 import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{PassengerSummaryStreams, UserRequestService, UserService}
-import uk.gov.homeoffice.drt.time.{LocalDate, SDate}
+import uk.gov.homeoffice.drt.time.{LocalDate, SDate, UtcDate}
 import uk.gov.homeoffice.drt.uploadTraining.FeatureGuideService
 
 import scala.concurrent.duration.DurationInt
@@ -156,7 +156,7 @@ object Server {
 
       val keyCloakAuth = KeyCloakAuth(config.keycloakTokenUrl, config.keycloakClientId, config.keycloakClientSecret, sendHttpRequest)
 
-      val queuesForPortAndDatesAndSlotSize: (PortCode, Terminal, LocalDate, LocalDate) => Source[CrunchMinute, NotUsed] = {
+      val queuesForPortAndDatesAndSlotSize: (PortCode, Terminal, UtcDate, UtcDate) => Source[CrunchMinute, NotUsed] = {
         (port, terminal, start, end) =>
           QueueSlotDao()
             .queueSlotsForDateRange(port, defaultQueueSlotMinutes, db.run)(start, end, Seq(terminal))
