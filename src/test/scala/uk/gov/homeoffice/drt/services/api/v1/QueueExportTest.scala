@@ -66,7 +66,7 @@ class QueueExportTest extends AnyWordSpec with Matchers {
       val system = ActorSystem("QueueExportSpec")
       implicit val mat: Materializer = Materializer(system)
 
-      val source: (PortCode, Terminal, LocalDate, LocalDate) => Source[CrunchMinute, NotUsed] = (_: PortCode, _: Terminal, _: LocalDate, _: LocalDate) => {
+      val source: (PortCode, Terminal, UtcDate, UtcDate) => Source[CrunchMinute, NotUsed] = (_: PortCode, _: Terminal, _: UtcDate, _: UtcDate) => {
         Source(List(
           CrunchMinute(T1, EeaDesk, start.addMinutes(-15).millisSinceEpoch, 10d, 0d, 0, 0, None, None, None, None, None, None, None),
           CrunchMinute(T1, NonEeaDesk, start.addMinutes(-15).millisSinceEpoch, 12d, 0d, 0, 0, None, None, None, None, None, None, None),
