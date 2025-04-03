@@ -1,9 +1,9 @@
 package uk.gov.homeoffice.drt
 
-import akka.http.scaladsl.model._
-import akka.stream.scaladsl.Source
-import akka.testkit.TestProbe
-import akka.util.ByteString
+import org.apache.pekko.http.scaladsl.model._
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.testkit.TestProbe
+import org.apache.pekko.util.ByteString
 
 import scala.concurrent.{ExecutionContext, Future}
 

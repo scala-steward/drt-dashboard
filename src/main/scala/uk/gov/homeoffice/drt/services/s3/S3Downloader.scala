@@ -1,8 +1,8 @@
 package uk.gov.homeoffice.drt.services.s3
 
-import akka.stream.IOResult
-import akka.stream.scaladsl.{Source, StreamConverters}
-import akka.util.ByteString
+import org.apache.pekko.stream.IOResult
+import org.apache.pekko.stream.scaladsl.{Source, StreamConverters}
+import org.apache.pekko.util.ByteString
 import software.amazon.awssdk.core.async.AsyncResponseTransformer
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.model.{GetObjectRequest, GetObjectResponse}

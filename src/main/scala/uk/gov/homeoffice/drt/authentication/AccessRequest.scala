@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.drt.authentication
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json.{DefaultJsonProtocol, RootJsonFormat}
 
 case class AccessRequest(agreeDeclaration: Boolean,

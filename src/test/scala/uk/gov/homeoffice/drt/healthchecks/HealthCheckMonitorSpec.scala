@@ -1,8 +1,8 @@
 package uk.gov.homeoffice.drt.healthchecks
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.testkit.{ImplicitSender, TestKit, TestProbe}
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse}
+import org.apache.pekko.testkit.{ImplicitSender, TestKit, TestProbe}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike

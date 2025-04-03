@@ -1,12 +1,12 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.StatusCodes.InternalServerError
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
-import akka.stream.Materializer
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.model.StatusCodes.InternalServerError
+import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse, StatusCodes}
+import org.apache.pekko.http.scaladsl.server.Directives._
+import org.apache.pekko.http.scaladsl.server.Route
+import org.apache.pekko.stream.Materializer
 import org.joda.time.DateTime
 import org.slf4j.{Logger, LoggerFactory}
 import spray.json.enrichAny

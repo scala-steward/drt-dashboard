@@ -1,8 +1,8 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.directives.MethodDirectives.get
+import org.apache.pekko.http.scaladsl.server.Directives._
+import org.apache.pekko.http.scaladsl.server.Route
+import org.apache.pekko.http.scaladsl.server.directives.MethodDirectives.get
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt._
 import uk.gov.homeoffice.drt.alerts.MultiPortAlertJsonSupport

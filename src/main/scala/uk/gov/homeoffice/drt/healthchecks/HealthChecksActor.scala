@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.healthchecks
 
-import akka.actor.typed.ActorRef
-import akka.actor.typed.scaladsl.Behaviors
+import org.apache.pekko.actor.typed.ActorRef
+import org.apache.pekko.actor.typed.scaladsl.Behaviors
 import uk.gov.homeoffice.drt.healthchecks.alarms.{AlarmActive, AlarmInactive, AlarmState}
 import uk.gov.homeoffice.drt.ports.PortCode
 

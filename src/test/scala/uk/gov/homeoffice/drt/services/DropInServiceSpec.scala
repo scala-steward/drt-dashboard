@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.drt.services
 
-import akka.actor.ActorSystem
+import org.apache.pekko.actor.ActorSystem
 import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat

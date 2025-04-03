@@ -1,8 +1,8 @@
 package uk.gov.homeoffice.drt.healthchecks
 
-import akka.http.scaladsl.model.{HttpRequest, HttpResponse}
-import akka.stream.Materializer
-import akka.stream.scaladsl.{Sink, Source}
+import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse}
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.{Sink, Source}
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.Dashboard
 import uk.gov.homeoffice.drt.ports.PortCode

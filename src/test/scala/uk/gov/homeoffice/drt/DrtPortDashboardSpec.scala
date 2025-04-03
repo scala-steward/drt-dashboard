@@ -1,10 +1,10 @@
 package uk.gov.homeoffice.drt
 
-import akka.actor.ActorSystem
-import akka.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpResponse }
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.ActorMaterializer
-import akka.testkit.TestKit
+import org.apache.pekko.actor.ActorSystem
+import org.apache.pekko.http.scaladsl.model.{ ContentTypes, HttpEntity, HttpResponse }
+import org.apache.pekko.http.scaladsl.unmarshalling.Unmarshal
+import org.apache.pekko.stream.ActorMaterializer
+import org.apache.pekko.testkit.TestKit
 import com.typesafe.config.ConfigFactory
 import org.specs2.mutable.SpecificationLike
 import org.specs2.specification.AfterEach

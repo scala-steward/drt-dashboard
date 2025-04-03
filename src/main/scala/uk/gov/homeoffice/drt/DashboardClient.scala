@@ -1,10 +1,10 @@
 package uk.gov.homeoffice.drt
 
-import akka.actor.ClassicActorSystemProvider
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.client.RequestBuilding.{ Delete, Get, Post }
-import akka.http.scaladsl.model.HttpHeader.ParsingResult.Ok
-import akka.http.scaladsl.model._
+import org.apache.pekko.actor.ClassicActorSystemProvider
+import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.client.RequestBuilding.{ Delete, Get, Post }
+import org.apache.pekko.http.scaladsl.model.HttpHeader.ParsingResult.Ok
+import org.apache.pekko.http.scaladsl.model._
 import uk.gov.homeoffice.drt.auth.Roles.Role
 
 import scala.concurrent.Future

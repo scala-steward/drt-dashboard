@@ -1,9 +1,9 @@
 package uk.gov.homeoffice.drt.healthchecks
 
-import akka.actor.typed.scaladsl.AskPattern.Askable
-import akka.actor.{ActorSystem, typed}
-import akka.testkit.{ImplicitSender, TestKit}
-import akka.util.Timeout
+import org.apache.pekko.actor.typed.scaladsl.AskPattern.Askable
+import org.apache.pekko.actor.{ActorSystem, typed}
+import org.apache.pekko.testkit.{ImplicitSender, TestKit}
+import org.apache.pekko.util.Timeout
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -25,7 +25,7 @@ class HealthChecksActorSpec
 
   implicit val ec: ExecutionContext = system.dispatcher
   implicit val timeout: Timeout = new Timeout(1.second)
-  val typedSystem: typed.ActorSystem[Nothing] = akka.actor.typed.ActorSystem.wrap(system)
+  val typedSystem: typed.ActorSystem[Nothing] = org.apache.pekko.actor.typed.ActorSystem.wrap(system)
 
   implicit val scheduler: typed.Scheduler = typedSystem.scheduler
 

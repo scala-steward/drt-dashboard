@@ -1,11 +1,11 @@
 package uk.gov.homeoffice.drt.routes.api.v1
 
-import akka.actor.typed.ActorSystem
-import akka.http.javadsl.server.AuthorizationFailedRejection
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.stream.Materializer
-import akka.testkit.TestProbe
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.http.javadsl.server.AuthorizationFailedRejection
+import org.apache.pekko.http.scaladsl.model.headers.RawHeader
+import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.testkit.TestProbe
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import spray.json.enrichAny

@@ -1,8 +1,8 @@
 package uk.gov.homeoffice.drt.alerts
 
-import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model.HttpResponse
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import org.apache.pekko.http.scaladsl.model.HttpResponse
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.{Logger, LoggerFactory}
 import spray.json.{DefaultJsonProtocol, RootJsonFormat, enrichAny}

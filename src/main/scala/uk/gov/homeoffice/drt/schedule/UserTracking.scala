@@ -1,10 +1,10 @@
 package uk.gov.homeoffice.drt.schedule
 
-import akka.actor
-import akka.actor.typed.scaladsl.AskPattern.Askable
-import akka.actor.typed.scaladsl.{ActorContext, Behaviors, TimerScheduler}
-import akka.actor.typed.{ActorRef, Behavior, Scheduler}
-import akka.util.Timeout
+import org.apache.pekko.actor
+import org.apache.pekko.actor.typed.scaladsl.AskPattern.Askable
+import org.apache.pekko.actor.typed.scaladsl.{ActorContext, Behaviors, TimerScheduler}
+import org.apache.pekko.actor.typed.{ActorRef, Behavior, Scheduler}
+import org.apache.pekko.util.Timeout
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.ServerConfig
 import uk.gov.homeoffice.drt.db.{ProdDatabase, UserDao, UserRow}

@@ -1,11 +1,11 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.NotUsed
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
-import akka.stream.Materializer
-import akka.stream.scaladsl.Source
+import org.apache.pekko.NotUsed
+import org.apache.pekko.http.scaladsl.model._
+import org.apache.pekko.http.scaladsl.server.Directives._
+import org.apache.pekko.http.scaladsl.server.Route
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
 import spray.json.enrichAny
 import uk.gov.homeoffice.drt.model.{PassengersSummaries, PassengersSummary}
 import uk.gov.homeoffice.drt.ports.Queues.Queue

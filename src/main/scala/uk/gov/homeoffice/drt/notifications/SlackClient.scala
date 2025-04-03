@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.notifications
 
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest, HttpResponse}
-import akka.stream.Materializer
+import org.apache.pekko.http.scaladsl.model.{ContentTypes, HttpEntity, HttpMethods, HttpRequest, HttpResponse}
+import org.apache.pekko.stream.Materializer
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
 

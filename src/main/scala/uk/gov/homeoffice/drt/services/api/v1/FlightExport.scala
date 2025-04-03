@@ -1,8 +1,8 @@
 package uk.gov.homeoffice.drt.services.api.v1
 
-import akka.NotUsed
-import akka.stream.Materializer
-import akka.stream.scaladsl.{Sink, Source}
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.{Sink, Source}
 import uk.gov.homeoffice.drt.Server.paxFeedSourceOrder
 import uk.gov.homeoffice.drt.arrivals.ApiFlightWithSplits
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal

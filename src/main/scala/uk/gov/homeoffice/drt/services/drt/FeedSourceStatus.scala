@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.drt.services.drt
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import spray.json.{ DefaultJsonProtocol, RootJsonFormat }
 
 case class FeedSourceStatus(feedSource: String, feedStatuses: FeedStatuses)

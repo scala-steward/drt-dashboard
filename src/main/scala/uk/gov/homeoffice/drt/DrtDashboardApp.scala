@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.drt
 
-import akka.actor.typed.ActorSystem
+import org.apache.pekko.actor.typed.ActorSystem
 import com.typesafe.config.ConfigFactory
 import uk.gov.homeoffice.drt.notifications.{EmailClientImpl, EmailNotifications}
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs

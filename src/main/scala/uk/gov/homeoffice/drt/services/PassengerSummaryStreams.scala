@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.services
 
-import akka.NotUsed
-import akka.stream.scaladsl.Source
+import org.apache.pekko.NotUsed
+import org.apache.pekko.stream.scaladsl.Source
 import uk.gov.homeoffice.drt.db.AppDatabase
 import uk.gov.homeoffice.drt.db.dao.{BorderCrossingDao, CapacityHourlyDao, PassengersHourlyDao}
 import uk.gov.homeoffice.drt.ports.PortCode

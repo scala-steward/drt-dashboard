@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.drt.services.s3
 
-import akka.stream.Materializer
+import org.apache.pekko.stream.Materializer
 import software.amazon.awssdk.auth.credentials.{AwsBasicCredentials, StaticCredentialsProvider}
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient

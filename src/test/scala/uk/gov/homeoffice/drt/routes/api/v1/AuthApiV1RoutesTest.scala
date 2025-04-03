@@ -1,9 +1,9 @@
 package uk.gov.homeoffice.drt.routes.api.v1
 
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
-import akka.http.scaladsl.marshalling.Marshal
-import akka.http.scaladsl.model.MessageEntity
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+import org.apache.pekko.http.scaladsl.marshalling.Marshal
+import org.apache.pekko.http.scaladsl.model.MessageEntity
+import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.concurrent.ScalaFutures.convertScalaFuture
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec

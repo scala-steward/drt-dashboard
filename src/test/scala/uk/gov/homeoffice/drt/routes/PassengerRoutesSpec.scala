@@ -1,12 +1,12 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.NotUsed
-import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import akka.testkit.TestProbe
+import org.apache.pekko.NotUsed
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.http.scaladsl.model.headers.RawHeader
+import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.testkit.TestProbe
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import spray.json.DefaultJsonProtocol.immSeqFormat

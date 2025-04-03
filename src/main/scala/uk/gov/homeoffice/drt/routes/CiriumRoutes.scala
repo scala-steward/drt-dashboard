@@ -1,13 +1,13 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.actor.{ActorSystem, ClassicActorSystemProvider}
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
-import akka.http.scaladsl.server.Directives.{pathEnd, pathPrefix}
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.directives.MethodDirectives.get
-import akka.http.scaladsl.server.directives.RouteDirectives.complete
-import akka.http.scaladsl.unmarshalling.Unmarshal
-import akka.stream.Materializer
+import org.apache.pekko.actor.{ActorSystem, ClassicActorSystemProvider}
+import org.apache.pekko.http.scaladsl.model.{ContentTypes, HttpEntity, HttpResponse}
+import org.apache.pekko.http.scaladsl.server.Directives.{pathEnd, pathPrefix}
+import org.apache.pekko.http.scaladsl.server.Route
+import org.apache.pekko.http.scaladsl.server.directives.MethodDirectives.get
+import org.apache.pekko.http.scaladsl.server.directives.RouteDirectives.complete
+import org.apache.pekko.http.scaladsl.unmarshalling.Unmarshal
+import org.apache.pekko.stream.Materializer
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.cirium.services.health.CiriumAppHealthSummary
 import uk.gov.homeoffice.drt.DashboardClient

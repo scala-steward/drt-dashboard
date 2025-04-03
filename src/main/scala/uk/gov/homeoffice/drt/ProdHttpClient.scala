@@ -1,9 +1,9 @@
 package uk.gov.homeoffice.drt
 
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model._
-import akka.http.scaladsl.model.headers.Accept
-import akka.stream.Materializer
+import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.model._
+import org.apache.pekko.http.scaladsl.model.headers.Accept
+import org.apache.pekko.stream.Materializer
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.DashboardClient._
 import uk.gov.homeoffice.drt.auth.Roles
