@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.routes.api.v1
 
-import akka.http.scaladsl.model.HttpRequest
-import akka.testkit.TestProbe
+import org.apache.pekko.http.scaladsl.model.HttpRequest
+import org.apache.pekko.testkit.TestProbe
 
 import scala.concurrent.duration.DurationInt
 

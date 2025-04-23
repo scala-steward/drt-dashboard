@@ -1,15 +1,15 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.model.Multipart.FormData
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.model.{ContentTypes, HttpEntity, Multipart}
-import akka.http.scaladsl.server.AuthorizationFailedRejection
-import akka.http.scaladsl.server.directives.FileInfo
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.stream.Materializer
-import akka.testkit.TestProbe
-import akka.util.ByteString
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.http.scaladsl.model.Multipart.FormData
+import org.apache.pekko.http.scaladsl.model.headers.RawHeader
+import org.apache.pekko.http.scaladsl.model.{ContentTypes, HttpEntity, Multipart}
+import org.apache.pekko.http.scaladsl.server.AuthorizationFailedRejection
+import org.apache.pekko.http.scaladsl.server.directives.FileInfo
+import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.testkit.TestProbe
+import org.apache.pekko.util.ByteString
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import uk.gov.homeoffice.drt.db.tables.GateTypes.{EGate, Pcp}

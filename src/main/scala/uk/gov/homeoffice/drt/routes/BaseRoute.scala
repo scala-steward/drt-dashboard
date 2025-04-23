@@ -1,8 +1,8 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.server.Directives.{complete, onComplete}
-import akka.http.scaladsl.server.{Route, StandardRoute}
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.server.Directives.{complete, onComplete}
+import org.apache.pekko.http.scaladsl.server.{Route, StandardRoute}
 import org.slf4j.{Logger, LoggerFactory}
 
 import scala.concurrent.Future

@@ -1,10 +1,10 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.headers.{ Location, RawHeader }
-import akka.http.scaladsl.server.Directives.complete
-import akka.http.scaladsl.server.{ Route, StandardRoute }
-import akka.http.scaladsl.testkit.Specs2RouteTest
+import org.apache.pekko.http.scaladsl.model.StatusCodes
+import org.apache.pekko.http.scaladsl.model.headers.{ Location, RawHeader }
+import org.apache.pekko.http.scaladsl.server.Directives.complete
+import org.apache.pekko.http.scaladsl.server.{ Route, StandardRoute }
+import org.apache.pekko.http.scaladsl.testkit.Specs2RouteTest
 import com.typesafe.config.{ Config, ConfigFactory }
 import org.specs2.mutable.Specification
 import uk.gov.homeoffice.drt.Urls

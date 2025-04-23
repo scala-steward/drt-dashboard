@@ -1,6 +1,6 @@
 package uk.gov.homeoffice.drt.authentication
 
-import akka.http.scaladsl.testkit.Specs2RouteTest
+import org.apache.pekko.http.scaladsl.testkit.Specs2RouteTest
 import org.specs2.mutable.Specification
 import spray.json._
 

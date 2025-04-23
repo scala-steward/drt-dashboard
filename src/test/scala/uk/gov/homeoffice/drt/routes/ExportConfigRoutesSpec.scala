@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.http.scaladsl.model.{ContentType, MediaTypes}
-import akka.http.scaladsl.testkit.ScalatestRouteTest
+import org.apache.pekko.http.scaladsl.model.{ContentType, MediaTypes}
+import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import uk.gov.homeoffice.drt.MockHttpClient

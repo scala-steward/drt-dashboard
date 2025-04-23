@@ -1,14 +1,14 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.actor.testkit.typed.scaladsl.TestProbe
-import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.testkit.ScalatestRouteTest
-import akka.stream.Materializer
-import akka.stream.scaladsl.Source
-import akka.util.ByteString
-import akka.{Done, NotUsed}
+import org.apache.pekko.actor.testkit.typed.scaladsl.TestProbe
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.http.scaladsl.common.{CsvEntityStreamingSupport, EntityStreamingSupport}
+import org.apache.pekko.http.scaladsl.model.headers.RawHeader
+import org.apache.pekko.http.scaladsl.testkit.ScalatestRouteTest
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.stream.scaladsl.Source
+import org.apache.pekko.util.ByteString
+import org.apache.pekko.{Done, NotUsed}
 import org.scalatest.BeforeAndAfter
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
@@ -59,7 +59,7 @@ class LegacyExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRou
   val nowYYYYMMDDHHmmss = "20220802000000"
   val nowProvider: () => SDateLike = () => now
 
-  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+  import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
   import uk.gov.homeoffice.drt.json.LegacyRegionExportJsonFormats._
   implicit val testDb: AppDatabase = TestDatabase
 

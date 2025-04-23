@@ -1,12 +1,13 @@
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v1099"
+lazy val drtLibVersion = "v1122"
+lazy val drtCiriumVersion = "v339"
 
-lazy val akkaVersion = "2.9.5" // last version with license key requirement
-lazy val akkaHttpVersion = "10.6.3" // last version dependent on akka 2.9.5
+lazy val pekkoVersion = "1.1.3"
+lazy val pekkoHttpVersion = "1.1.0"
+
 lazy val slickVersion = "3.5.2"
 
-lazy val drtCiriumVersion = "203"
 lazy val jodaTimeVersion = "2.12.7"
 lazy val scalaLoggingVersion = "3.9.5"
 lazy val logBackClassicVersion = "1.4.14"
@@ -36,12 +37,12 @@ lazy val root = (project in file(".")).
     credentials += Credentials(Path.userHome / ".ivy2" / ".credentials"),
     dockerBaseImage := "openjdk:11-jre-slim-buster",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor-typed" % akkaVersion,
-      "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
-      "com.typesafe.akka" %% "akka-http-caching" % akkaHttpVersion,
-      "com.typesafe.akka" %% "akka-stream" % akkaVersion,
-      "com.typesafe.akka" %% "akka-pki" % akkaVersion,
-      "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
+      "org.apache.pekko" %% "pekko-actor-typed" % pekkoVersion,
+      "org.apache.pekko" %% "pekko-http" % pekkoHttpVersion,
+      "org.apache.pekko" %% "pekko-http-caching" % pekkoHttpVersion,
+      "org.apache.pekko" %% "pekko-stream" % pekkoVersion,
+      "org.apache.pekko" %% "pekko-pki" % pekkoVersion,
+      "org.apache.pekko" %% "pekko-http-spray-json" % pekkoHttpVersion,
       "joda-time" % "joda-time" % jodaTimeVersion,
       "com.typesafe.scala-logging" %% "scala-logging" % scalaLoggingVersion,
       "ch.qos.logback" % "logback-classic" % logBackClassicVersion % Runtime,
@@ -62,16 +63,15 @@ lazy val root = (project in file(".")).
       "org.postgresql" % "postgresql" % postgresqlVersion,
 
       "com.h2database" % "h2" % h2Version % Test,
-      "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpVersion % Test,
-      "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % Test,
-      "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion % Test,
+      "org.apache.pekko" %% "pekko-http-testkit" % pekkoHttpVersion % Test,
+      "org.apache.pekko" %% "pekko-stream-testkit" % pekkoVersion % Test,
+      "org.apache.pekko" %% "pekko-actor-testkit-typed" % pekkoVersion % Test,
       "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
       "org.specs2" %% "specs2-core" % specs2Version % Test,
       "org.mockito" % "mockito-core" % mockitoVersion % Test,
     ),
 
     resolvers ++= Seq(
-      "Akka library repository".at("https://repo.akka.io/maven"),
       "Artifactory Release Realm" at "https://artifactory.digital.homeoffice.gov.uk/",
       "Artifactory Realm release local" at "https://artifactory.digital.homeoffice.gov.uk/artifactory/libs-release-local/",
       "Spring Lib Release Repository" at "https://repo.spring.io/libs-release/",

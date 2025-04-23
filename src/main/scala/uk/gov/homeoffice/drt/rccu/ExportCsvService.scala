@@ -1,8 +1,8 @@
 package uk.gov.homeoffice.drt.rccu
 
-import akka.http.scaladsl.model.StatusCodes.OK
-import akka.stream.Materializer
-import akka.util.ByteString
+import org.apache.pekko.http.scaladsl.model.StatusCodes.OK
+import org.apache.pekko.stream.Materializer
+import org.apache.pekko.util.ByteString
 import org.slf4j.{Logger, LoggerFactory}
 import uk.gov.homeoffice.drt.exports.{DailyExportType, ExportType}
 import uk.gov.homeoffice.drt.ports.PortCode

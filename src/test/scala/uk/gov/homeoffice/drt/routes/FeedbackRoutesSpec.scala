@@ -1,13 +1,13 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.actor.testkit.typed.scaladsl.ActorTestKit
-import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model.headers.{RawHeader, `Content-Disposition`}
-import akka.http.scaladsl.model.{ContentTypes, StatusCodes}
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.testkit.Specs2RouteTest
-import akka.stream.Materializer
+import org.apache.pekko.actor.testkit.typed.scaladsl.ActorTestKit
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import org.apache.pekko.http.scaladsl.model.headers.{RawHeader, `Content-Disposition`}
+import org.apache.pekko.http.scaladsl.model.{ContentTypes, StatusCodes}
+import org.apache.pekko.http.scaladsl.server.Route
+import org.apache.pekko.http.scaladsl.testkit.Specs2RouteTest
+import org.apache.pekko.stream.Materializer
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.specs2.mutable.Specification
 import org.specs2.specification.BeforeEach

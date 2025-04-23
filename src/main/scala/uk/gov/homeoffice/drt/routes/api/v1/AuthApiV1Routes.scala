@@ -1,8 +1,8 @@
 package uk.gov.homeoffice.drt.routes.api.v1
 
-import akka.http.scaladsl.model.StatusCodes.InternalServerError
-import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
+import org.apache.pekko.http.scaladsl.model.StatusCodes.InternalServerError
+import org.apache.pekko.http.scaladsl.server.Directives._
+import org.apache.pekko.http.scaladsl.server.Route
 import org.slf4j.{Logger, LoggerFactory}
 import spray.json.RootJsonFormat
 import uk.gov.homeoffice.drt.db

@@ -1,7 +1,7 @@
 package uk.gov.homeoffice.drt.routes.services
 
-import akka.http.scaladsl.server.Directive0
-import akka.http.scaladsl.server.Directives.authorize
+import org.apache.pekko.http.scaladsl.server.Directive0
+import org.apache.pekko.http.scaladsl.server.Directives.authorize
 import uk.gov.homeoffice.drt.auth.Roles.Role
 import uk.gov.homeoffice.drt.authentication.User
 

@@ -1,12 +1,12 @@
 package uk.gov.homeoffice.drt.routes
 
-import akka.actor.testkit.typed.scaladsl.ActorTestKit
-import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-import akka.http.scaladsl.model.StatusCodes.OK
-import akka.http.scaladsl.model.headers.RawHeader
-import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.testkit.Specs2RouteTest
+import org.apache.pekko.actor.testkit.typed.scaladsl.ActorTestKit
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
+import org.apache.pekko.http.scaladsl.model.StatusCodes.OK
+import org.apache.pekko.http.scaladsl.model.headers.RawHeader
+import org.apache.pekko.http.scaladsl.server.Route
+import org.apache.pekko.http.scaladsl.testkit.Specs2RouteTest
 import com.typesafe.config.{Config, ConfigFactory}
 import org.joda.time.DateTime
 import org.specs2.mutable.Specification

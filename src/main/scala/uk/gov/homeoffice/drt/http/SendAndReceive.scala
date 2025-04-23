@@ -1,8 +1,8 @@
 package uk.gov.homeoffice.drt.http
 
-import akka.actor.typed.ActorSystem
-import akka.http.scaladsl.Http
-import akka.http.scaladsl.model.{ HttpRequest, HttpResponse }
+import org.apache.pekko.actor.typed.ActorSystem
+import org.apache.pekko.http.scaladsl.Http
+import org.apache.pekko.http.scaladsl.model.{ HttpRequest, HttpResponse }
 
 import scala.concurrent.Future
 
