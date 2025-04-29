@@ -41,7 +41,7 @@
     "chart.js": "^4.4.1",
     "chartjs-adapter-moment": "^1.0.1",
     "date-fns": "^2.29.1",
-    "drt-react": "UKHomeOffice/drt-react#1.6.8",
+    "drt-react": "UKHomeOffice/drt-react#1.7.13",
     "eslint": "^8.57.0",
     "export-to-csv": "^1.2.4",
     "formik": "^2.4.5",
