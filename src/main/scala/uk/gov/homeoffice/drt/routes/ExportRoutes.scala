@@ -23,7 +23,6 @@ import uk.gov.homeoffice.drt.notifications.templates.DownloadManagerTemplates
 import uk.gov.homeoffice.drt.persistence.ExportPersistence
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
-import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.rccu.ExportCsvService
 import uk.gov.homeoffice.drt.rccu.ExportCsvService.getUri
 import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike}
