@@ -87,25 +87,25 @@ steps:
       - Build docker image
       - Copy front end to resources
 
-  - name: Code coverage report
-    pull: if-not-exists
-    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.4.0-debian12-jdk17-node20
-    commands:
-      - /root/entrypoint.sh
-      - sbt -mem 4096 --error coverage test | true
-      - sbt coverageReport
-    environment:
-      ARTIFACTORY_PASSWORD:
-        from_secret: ARTIFACTORY_PASSWORD
-      ARTIFACTORY_USERNAME: drt_ci
-      ENV_LOG_LEVEL: ERROR
-    when:
-      event:
-        - push
-      branch:
-        - leader
-    depends_on:
-      - Unit tests
+#  - name: Code coverage report
+#    pull: if-not-exists
+#    image: quay.io/ukhomeofficedigital/scala-sbt-nodejs:v1.4.0-debian12-jdk17-node20
+#    commands:
+#      - /root/entrypoint.sh
+#      - sbt -mem 4096 --error coverage test | true
+#      - sbt coverageReport
+#    environment:
+#      ARTIFACTORY_PASSWORD:
+#        from_secret: ARTIFACTORY_PASSWORD
+#      ARTIFACTORY_USERNAME: drt_ci
+#      ENV_LOG_LEVEL: ERROR
+#    when:
+#      event:
+#        - push
+#      branch:
+#        - leader
+#    depends_on:
+#      - Publish app
 
   - name: Scapegoat
     pull: if-not-exists
@@ -125,7 +125,8 @@ steps:
       branch:
         - leader
     depends_on:
-      - Code coverage report
+#      - Code coverage report
+      - Publish app
 
   - name: Dependency check
     pull: if-not-exists
