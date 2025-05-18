@@ -6,7 +6,7 @@ lazy val drtCiriumVersion = "v339"
 lazy val pekkoVersion = "1.1.3"
 lazy val pekkoHttpVersion = "1.1.0"
 
-lazy val slickVersion = "3.5.2"
+lazy val slickVersion = "3.6.1"
 
 lazy val jodaTimeVersion = "2.12.7"
 lazy val scalaLoggingVersion = "3.9.5"
