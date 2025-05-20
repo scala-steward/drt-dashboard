@@ -3,7 +3,7 @@ package uk.gov.homeoffice.drt.services.api.v1
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.{Sink, Source}
-import uk.gov.homeoffice.drt.model.{CrunchMinute, MinuteLike}
+import uk.gov.homeoffice.drt.models.{CrunchMinute, MinuteLike}
 import uk.gov.homeoffice.drt.ports.Queues.Queue
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
