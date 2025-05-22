@@ -1,6 +1,6 @@
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v1139"
+lazy val drtLibVersion = "v1142"
 lazy val drtCiriumVersion = "v339"
 
 lazy val pekkoVersion = "1.1.3"

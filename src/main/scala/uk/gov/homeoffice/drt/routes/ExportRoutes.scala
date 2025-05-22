@@ -59,12 +59,20 @@ object ExportRoutes {
            )
            (implicit ec: ExecutionContext, mat: Materializer): Route = {
     lazy val exportCsvService = RestExportCsvService(httpClient)
+    val flightsWithManifestsForPortDatesSource: (PortCode, LocalDate, LocalDate) => Source[(Seq[ApiFlightWithSplits], VoyageManifests), NotUsed] = {
+      (portCode, startDate, endDate) =>
+        flightsProvider(portCode, startDate, endDate).mapAsync(1) { case (_, flights) =>
+          val sortedFlights = flights.toSeq.sortBy(_.apiFlight.PcpTime.getOrElse(0L))
+          addLiveManifestsForFlights(portCode, sortedFlights, manifestProvider)
+        }
+    }
+
     pathPrefix("export") {
       headerValueByName("X-Forwarded-Email") { email =>
         concat(
           pathEnd(
             post(entity(as[ExportRequest]) { exportRequest =>
-              handleExport(upload, exportPersistence, exportCsvService, email, exportRequest, now, emailClient, rootUrl, teamEmail, rootUrl, manifestProvider, flightsProvider, feedSourceOrder)
+              handleExport(upload, exportPersistence, exportCsvService, email, exportRequest, now, emailClient, rootUrl, teamEmail, rootUrl, flightsWithManifestsForPortDatesSource, feedSourceOrder)
             })
           ),
           get {
@@ -134,8 +142,7 @@ object ExportRoutes {
                            rootDomain: String,
                            teamEmail: String,
                            rootUrl: String,
-                           manifestProvider: UniqueArrivalKey => Future[Option[VoyageManifest]],
-                           flightsProvider: (PortCode, LocalDate, LocalDate) => Source[(UtcDate, Iterable[ApiFlightWithSplits]), NotUsed],
+                           flightsWithManifestsForPortDatesSource: (PortCode, LocalDate, LocalDate) => Source[(Seq[ApiFlightWithSplits], VoyageManifests), NotUsed],
                            feedSourceOrder: PortCode => List[FeedSource],
                           )
                           (implicit ec: ExecutionContext, mat: Materializer): StandardRoute = {
@@ -157,7 +164,11 @@ object ExportRoutes {
             val portSourceOrder = feedSourceOrder(portCode)
             val terminals = AirportConfigs.confByPort.get(portCode).map(_.terminals).getOrElse(Seq.empty).toSeq
             val fwsExport = FlightsWithSplitsMultiRegionExportImpl(exportRequest.startDate, exportRequest.endDate, portCode, terminals, portSourceOrder)
-            requestToCsvStream(fwsExport, portCode, manifestProvider, flightsProvider)
+            val flightsWithManifestsSource = flightsWithManifestsForPortDatesSource(portCode, exportRequest.startDate, exportRequest.endDate)
+
+            fwsExport
+              .csvStream(flightsWithManifestsSource)
+              .map(s => ByteString(s, "UTF-8"))
           }
       case _ =>
         restExportStream(exportRequest, restExportCsvService)
@@ -202,20 +213,6 @@ object ExportRoutes {
             }
       }
   }
-
-  private def requestToCsvStream(`export`: FlightsWithSplitsExport,
-                                 portCode: PortCode,
-                                 manifestProvider: UniqueArrivalKey => Future[Option[VoyageManifest]],
-                                 flightsProvider: (PortCode, LocalDate, LocalDate) => Source[(UtcDate, Iterable[ApiFlightWithSplits]), NotUsed],
-                                )
-                                (implicit ec: ExecutionContext, mat: Materializer): Source[ByteString, NotUsed] =
-    export
-      .csvStream(flightsProvider(portCode, `export`.start, `export`.end).mapAsync(1) { case (d, flights) =>
-        val sortedFlights = flights.toSeq.sortBy(_.apiFlight.PcpTime.getOrElse(0L))
-        addLiveManifestsForFlights(portCode, sortedFlights, manifestProvider)
-      })
-      .map(s => ByteString(s, "UTF-8"))
-
 
   private def addLiveManifestsForFlights(portCode: PortCode,
                                          flights: Seq[ApiFlightWithSplits],
