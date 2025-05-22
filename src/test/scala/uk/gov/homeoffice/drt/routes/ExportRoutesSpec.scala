@@ -13,7 +13,6 @@ import org.scalatest.BeforeAndAfter
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 import slick.dbio.DBIO
-import slick.jdbc.JdbcBackend.Database
 import slick.jdbc.PostgresProfile.api._
 import uk.gov.homeoffice.drt.MockHttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
@@ -97,7 +96,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
       val request = ExportRoutes.ExportRequest(Arrivals, exportPorts, LocalDate(2022, 8, 2), LocalDate(2022, 8, 3))
       Post("/export", request) ~>
         RawHeader("X-Forwarded-Email", "someone@somewhere.com") ~>
-        ExportRoutes(mockHttpClient(arrivalsResponse), mockUploader, mockDownloader, MockExportPersistence(None), nowProvider, MockEmailClient(emailProbe.ref), "https://test.com", "team-email@zyx.com") ~>
+        ExportRoutes(mockHttpClient(arrivalsResponse), mockUploader, mockDownloader, MockExportPersistence(None), nowProvider, MockEmailClient(emailProbe.ref), "https://test.com", "team-email@zyx.com", _ => Future.successful(None), (_, _, _) => Source.empty, _ => List.empty) ~>
         check {
           uploadProbe.expectMessage((s"$nowYYYYMMDDHHmmss-2022-08-02-to-2022-08-03.csv", heathrowRegionPortTerminalData))
           emailProbe.expectMessage(("620271a3-888f-4d60-9f2a-dc3702699ae2", "someone@somewhere.com", Map("download_link" -> s"https://test.com/api/export/${now.millisSinceEpoch}")))
@@ -112,7 +111,7 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
       val export = Export("email", "", LocalDate(2020, 6, 6), LocalDate(2020, 7, 6), "complete", createdAt)
       Get(s"/export/status/${export.createdAt.millisSinceEpoch}") ~>
         RawHeader("X-Forwarded-Email", "someone@somewhere.com") ~>
-        ExportRoutes(mockHttpClient(arrivalsResponse), mockUploader, mockDownloader, MockExportPersistence(Option(export)), nowProvider, MockEmailClient(emailProbe.ref), "https://test.com", "team-email@zyx.com") ~>
+        ExportRoutes(mockHttpClient(arrivalsResponse), mockUploader, mockDownloader, MockExportPersistence(Option(export)), nowProvider, MockEmailClient(emailProbe.ref), "https://test.com", "team-email@zyx.com", _ => Future.successful(None), (_, _, _) => Source.empty, _ => List.empty) ~>
         check {
           responseAs[String] should ===(s"""{"status": "${export.status}"}""")
         }
@@ -121,9 +120,5 @@ class ExportRoutesSpec extends AnyWordSpec with Matchers with ScalatestRouteTest
 
   def heathrowRegionPortTerminalData: String =
     s"""${ArrivalExportHeadings.regionalExportHeadings}
-       |flight1,information,row
-       |flight2,information,row
-       |flight1,information,row
-       |flight2,information,row
        |""".stripMargin
 }

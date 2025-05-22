@@ -12,7 +12,7 @@ import uk.gov.homeoffice.drt.{Dashboard, HttpClient}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object ExportCsvService {
+object RestExportCsvService {
   def getUri(exportType: ExportType, start: LocalDate, end: LocalDate, portCode: PortCode, maybeTerminal: Option[Terminal]): String = {
     val granularity = exportType match {
       case _: DailyExportType => "daily"
@@ -26,7 +26,7 @@ object ExportCsvService {
   }
 }
 
-case class ExportCsvService(httpClient: HttpClient) {
+case class RestExportCsvService(httpClient: HttpClient) {
 
   val log: Logger = LoggerFactory.getLogger(getClass)
 

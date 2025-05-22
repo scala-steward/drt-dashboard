@@ -17,16 +17,17 @@ import org.apache.pekko.util.Timeout
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.arrivals.ApiFlightWithSplits
 import uk.gov.homeoffice.drt.db._
-import uk.gov.homeoffice.drt.db.dao.{BorderCrossingDao, FlightDao, QueueSlotDao, UserFeedbackDao}
+import uk.gov.homeoffice.drt.db.dao.{ApiManifestProvider, BorderCrossingDao, FlightDao, QueueSlotDao, UserFeedbackDao}
 import uk.gov.homeoffice.drt.db.serialisers.BorderCrossingSerialiser
 import uk.gov.homeoffice.drt.db.tables.{BorderCrossing, GateType}
 import uk.gov.homeoffice.drt.healthchecks._
 import uk.gov.homeoffice.drt.keycloak.KeyCloakAuth
-import uk.gov.homeoffice.drt.model.CrunchMinute
+import uk.gov.homeoffice.drt.models.CrunchMinute
 import uk.gov.homeoffice.drt.notifications._
 import uk.gov.homeoffice.drt.persistence.{ExportPersistenceImpl, ScheduledHealthCheckPausePersistenceImpl}
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports._
+import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.routes._
 import uk.gov.homeoffice.drt.routes.api.v1.{AuthApiV1Routes, FlightApiV1Routes, QueueApiV1Routes}
 import uk.gov.homeoffice.drt.services.api.v1.{FlightExport, QueueExport}
@@ -176,8 +177,27 @@ object Server {
           db.run(insert(t, gt, rows.map(BorderCrossingSerialiser.toRow(_, SDate.now().millisSinceEpoch))))
         }
 
+      val flightsProvider: (PortCode, LocalDate, LocalDate) => Source[(UtcDate, Seq[ApiFlightWithSplits]), NotUsed] =
+        (portCode, start, end) => {
+          val terminals = AirportConfigs.confByPort.get(portCode).map(_.terminals).getOrElse(Seq.empty).toSeq
+          FlightDao().flightsForPcpDateRange(portCode, paxFeedSourceOrder(portCode), db.run)(start, end, terminals)
+        }
+
       val routes: Route = concat(
         pathPrefix("api") {
+          val exportRoutes = ExportRoutes(
+            httpClient,
+            exportUploader.upload,
+            exportDownloader.download,
+            ExportPersistenceImpl(db),
+            now,
+            emailClient,
+            urls.rootUrl,
+            config.teamEmail,
+            ApiManifestProvider(db),
+            flightsProvider,
+            paxFeedSourceOrder
+          )
           concat(
             pathPrefix("v1") {
               concat(
@@ -190,7 +210,7 @@ object Server {
             CiriumRoutes(config.ciriumDataUri),
             ConfigRoutes(config.clientConfig),
             LegacyExportRoutes(httpClient, exportUploader.upload, exportDownloader.download, now),
-            ExportRoutes(httpClient, exportUploader.upload, exportDownloader.download, ExportPersistenceImpl(db), now, emailClient, urls.rootUrl, config.teamEmail),
+            exportRoutes,
             UserRoutes(config.clientConfig, userService, userRequestService, notifications, config.keycloakUrl),
             FeatureGuideRoutes(featureGuideService, featureUploader, featureDownloader),
             AlertsRoutes(),

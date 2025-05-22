@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory
 import spray.json._
 import uk.gov.homeoffice.drt.auth.Roles.ApiQueueAccess
 import uk.gov.homeoffice.drt.authentication.User
-import uk.gov.homeoffice.drt.model.CrunchMinute
+import uk.gov.homeoffice.drt.models.CrunchMinute
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Queues.Queue
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
