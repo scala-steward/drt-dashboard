@@ -2,6 +2,7 @@ import React from 'react';
 import {Field, Form, Formik} from 'formik';
 import {
   Button,
+  Checkbox,
   FormControl,
   FormControlLabel,
   FormLabel,
@@ -34,7 +35,7 @@ export function FeedbackForms() {
 
   const {feedbackType = ''} = useParams<{ feedbackType?: string }>();
   const {abVersion = ''} = useParams<{ abVersion?: string }>();
-  const [currentQuestion, setCurrentQuestion] = React.useState(1);
+  const [currentQuestion, setCurrentQuestion] = React.useState(0);
   const [error, setError] = React.useState(false);
   const [question1, setQuestion1] = React.useState('');
   const [question2, setQuestion2] = React.useState('');
@@ -43,6 +44,42 @@ export function FeedbackForms() {
   const [question5, setQuestion5] = React.useState('');
   const [errorText, setErrorText] = React.useState('');
   const [negativeQuality, setNegativeQuality] = React.useState(false);
+  const [isConfirmed, setIsConfirmed] = React.useState(false);
+  const handleConfirmation = () => {
+    if (isConfirmed) {
+      setCurrentQuestion(1);
+    }
+  };
+
+  const confirmationStep = (
+    <Stack spacing={2} sx={{ width: '67%' }}>
+      <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#111224'}}>
+        Please Note:
+      </Typography>
+      <Typography sx={{ color: '#111224'}}>
+        As you're logged into DRT, the feedback you provide will be attributed to your Home Office email address.
+        This means the DRT team will know that it's your response. However, your feedback will not be shared wider,
+        and no one in your line management chain will know what you said.
+      </Typography>
+      <FormControlLabel
+        control={
+          <Checkbox
+            checked={isConfirmed}
+            onChange={(e) => setIsConfirmed(e.target.checked)}
+          />
+        }
+        label="I confirm I am aware my feedback submission will not be anonymous to the DRT team"
+      />
+      <Button
+        variant="outlined"
+        disabled={!isConfirmed}
+        onClick={handleConfirmation}
+        sx={{maxWidth: '200px', marginTop: '10px' , backgroundColor: drtTheme.palette.success.main, color: '#ffffff', '&:hover': {backgroundColor: drtTheme.palette.success.dark}}}
+      >
+        Confirm and continue
+      </Button>
+    </Stack>
+  );
 
   const questionOneForm = (
     <Formik
@@ -402,10 +439,10 @@ export function FeedbackForms() {
       <title>Feedback {customerPageTitleSuffix}</title>
     </Helmet>
     <Stack>
-      <Typography variant="h2" sx={{color: drtTheme.palette.primary.main, padding: "10px 0px"}}>
-        DRT Feedback
+      <Typography variant="h2" sx={{color: drtTheme.palette.primary.main, padding: "10px 0px", width: "67%"}}>
+        {currentQuestion === 0 ? "Providing feedback on Dynamic response tool (DRT)" : "DRT Feedback"}
       </Typography>
-      {displayQuestion()}
+      {currentQuestion === 0 ? confirmationStep : displayQuestion()}
     </Stack>
   </>
 }
