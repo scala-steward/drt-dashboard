@@ -3,7 +3,7 @@ import sbt.Keys.resolvers
 lazy val drtLibVersion = "v1142"
 lazy val drtCiriumVersion = "v339"
 
-lazy val pekkoVersion = "1.1.3"
+lazy val pekkoVersion = "1.1.5"
 lazy val pekkoHttpVersion = "1.1.0"
 
 lazy val slickVersion = "3.5.2"
