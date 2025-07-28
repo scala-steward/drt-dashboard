@@ -135,7 +135,6 @@ steps:
       - /root/entrypoint.sh
       - sbt -Dlog4j2.level=info dependencyCheck
     environment:
-      NVD_BASE_URL: http://nvdmirror:8008
       ARTIFACTORY_PASSWORD:
         from_secret: ARTIFACTORY_PASSWORD
       ARTIFACTORY_USERNAME: drt_ci
@@ -182,9 +181,4 @@ steps:
       - Publish app
       - Unit tests
 
-services:
-  - name: NVD mirror service
-    image: sspringett/nvdmirror
-    ports:
-      - 8008
 ...
