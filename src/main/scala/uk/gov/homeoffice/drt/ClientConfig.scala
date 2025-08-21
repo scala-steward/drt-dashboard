@@ -4,7 +4,7 @@ import spray.json.{DefaultJsonProtocol, JsObject, JsValue, RootJsonFormat, enric
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 
-case class ClientConfig(portsByRegion: Iterable[PortRegion], ports: Map[PortCode, Seq[Terminal]], domain: String, teamEmail: String)
+case class ClientConfig(portsByRegion: Iterable[PortRegion], terminalsByPortForDate: () => Map[PortCode, Seq[Terminal]], domain: String, teamEmail: String)
 
 trait ClientConfigJsonFormats extends DefaultJsonProtocol {
   implicit object ClientConfigJsonFormat extends RootJsonFormat[ClientConfig] {
@@ -15,11 +15,11 @@ trait ClientConfigJsonFormats extends DefaultJsonProtocol {
         .map { r =>
           JsObject(Map(
             "name" -> r.name.toJson,
-            "ports" -> r.ports.filter(p => obj.ports.contains(p)).map(_.iata).toJson,
+            "ports" -> r.ports.filter(p => obj.terminalsByPortForDate().contains(p)).map(_.iata).toJson,
           ))
         }
         .toJson,
-      "ports" -> obj.ports.map {
+      "ports" -> obj.terminalsByPortForDate().map {
         case (portCode, terminals) => JsObject(Map(
           "iata" -> portCode.iata.toJson,
           "terminals" -> terminals.map(_.toString).toJson

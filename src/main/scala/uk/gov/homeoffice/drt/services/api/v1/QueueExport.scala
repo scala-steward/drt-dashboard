@@ -9,6 +9,7 @@ import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.ports.{PortCode, Queues}
 import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.{QueueJson, QueueJsonResponse, SlotJson}
+import uk.gov.homeoffice.drt.service.QueueConfig
 import uk.gov.homeoffice.drt.time.MilliDate.MillisSinceEpoch
 import uk.gov.homeoffice.drt.time.{SDate, SDateLike, UtcDate}
 
@@ -28,8 +29,8 @@ object QueueExport {
 
       Source(portCodes)
         .mapAsync(1) { portCode =>
-          val eventualPortQueueSlots = AirportConfigs.confByPort(portCode)
-            .terminals.map { terminal =>
+          val terminals = AirportConfigs.confByPort(portCode).terminalsForDateRange(start.toLocalDate, end.toLocalDate)
+          val eventualPortQueueSlots = terminals.map { terminal =>
               queuesForPortAndDatesAndSlotSize(portCode, terminal, dates.min, dates.max)
                 .runWith(Sink.seq)
                 .map { mins: Seq[CrunchMinute] =>

@@ -21,6 +21,7 @@ import uk.gov.homeoffice.drt.models.RegionExport
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.rccu.LegacyExportCsvService
+import uk.gov.homeoffice.drt.service.QueueConfig
 import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
@@ -118,7 +119,7 @@ object LegacyExportRoutes {
 
       val stream = Source(portRegion.ports.toList.sortBy(_.iata))
         .map { port =>
-          AirportConfigs.confByPort.get(port).map(config => (port.iata, config.terminals))
+          AirportConfigs.confByPort.get(port).map(config => (port.iata, config.terminalsForDateRange(exportRequest.startDate, exportRequest.endDate)))
         }
         .mapConcat {
           case Some((portStr, terminals)) => terminals.map(t => (portStr, t))

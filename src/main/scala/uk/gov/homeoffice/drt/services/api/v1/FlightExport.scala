@@ -9,6 +9,7 @@ import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.ports.{FeedSource, PortCode}
 import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.{FlightJson, FlightJsonResponse}
+import uk.gov.homeoffice.drt.service.QueueConfig
 import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -17,11 +18,15 @@ object FlightExport {
   def flights(flightsForDatesAndTerminals: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[ApiFlightWithSplits, NotUsed])
              (implicit ec: ExecutionContext, mat: Materializer): Seq[PortCode] => (SDateLike, SDateLike) => Future[FlightJsonResponse] =
     portCodes => (start, end) => {
-      val dates = Set(start.toLocalDate, end.toLocalDate)
+      val startLocal = start.toLocalDate
+      val endLocal = end.toLocalDate
+
+      val dates = Set(startLocal, endLocal)
 
       Source(portCodes)
         .mapAsync(1) { portCode =>
-          val eventualPortFlights = AirportConfigs.confByPort(portCode).terminals.map { terminal =>
+          val terminals = AirportConfigs.confByPort(portCode).terminalsForDateRange(startLocal, endLocal)
+          val eventualPortFlights = terminals.map { terminal =>
             implicit val sourceOrder: List[FeedSource] = paxFeedSourceOrder(portCode)
 
             flightsForDatesAndTerminals(portCode, sourceOrder, dates.min, dates.max, Seq(terminal))

@@ -21,7 +21,7 @@ class ConfigRoutesSpec extends Specification with Specs2RouteTest with ClientCon
   private val config: Config = ConfigFactory.load()
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
 
-  val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), Map(PortCode("NCL") -> Seq(T1)), "somedomain.com", "test@test.com")
+  val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), () => Map(PortCode("NCL") -> Seq(T1)), "somedomain.com", "test@test.com")
   val routes: Route = ConfigRoutes(clientConfig)
   "Given an api request for config, I should see a JSON response containing the config passed to ApiRoutes" >> {
     Get("/config") ~>

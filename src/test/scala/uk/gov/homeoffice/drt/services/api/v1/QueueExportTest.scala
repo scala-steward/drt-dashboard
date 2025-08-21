@@ -10,8 +10,8 @@ import uk.gov.homeoffice.drt.models.CrunchMinute
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Queues.{EGate, EeaDesk, NonEeaDesk}
 import uk.gov.homeoffice.drt.ports.Terminals.{T1, Terminal}
-import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.{SlotJson, QueueJson, QueueJsonResponse}
-import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike, UtcDate}
+import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.{QueueJson, QueueJsonResponse, SlotJson}
+import uk.gov.homeoffice.drt.time.{SDate, SDateLike, UtcDate}
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -91,14 +91,14 @@ class QueueExportTest extends AnyWordSpec with Matchers {
           Seq(
             SlotJson(start, PortCode("STN"), T1,
               Seq(
-                QueueJson(EGate, 14, 0),
                 QueueJson(EeaDesk, 10, 0),
+                QueueJson(EGate, 14, 0),
                 QueueJson(NonEeaDesk, 12, 0),
               )),
             SlotJson(start.addMinutes(15), PortCode("STN"), T1,
               Seq(
-                QueueJson(EGate, 14, 0),
                 QueueJson(EeaDesk, 10, 0),
+                QueueJson(EGate, 14, 0),
                 QueueJson(NonEeaDesk, 12, 0),
               ))
           )

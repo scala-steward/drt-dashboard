@@ -30,6 +30,7 @@ import uk.gov.homeoffice.drt.ports._
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.routes._
 import uk.gov.homeoffice.drt.routes.api.v1.{AuthApiV1Routes, FlightApiV1Routes, QueueApiV1Routes}
+import uk.gov.homeoffice.drt.service.QueueConfig
 import uk.gov.homeoffice.drt.services.api.v1.{FlightExport, QueueExport}
 import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{PassengerSummaryStreams, UserRequestService, UserService}
@@ -71,12 +72,12 @@ case class ServerConfig(host: String,
                         drtS3BucketName: String,
                         exportsFolderPrefix: String,
                         featureFolderPrefix: String,
-                        portTerminals: Map[PortCode, Seq[Terminal]],
+                        portTerminals: LocalDate => Map[PortCode, Seq[Terminal]],
                         healthCheckFrequencyMinutes: Int,
                         enabledPorts: Seq[PortCode],
                         slackUrl: String
                        ) {
-  val clientConfig: ClientConfig = ClientConfig(portRegions, portTerminals, rootDomain, teamEmail)
+  val clientConfig: ClientConfig = ClientConfig(portRegions, () => portTerminals(SDate.now().toLocalDate), rootDomain, teamEmail)
   val keyClockConfig: KeyCloakConfig = KeyCloakConfig(keycloakUrl, keycloakTokenUrl, keycloakClientId, keycloakClientSecret)
 }
 
@@ -179,7 +180,7 @@ object Server {
 
       val flightsProvider: (PortCode, LocalDate, LocalDate) => Source[(UtcDate, Seq[ApiFlightWithSplits]), NotUsed] =
         (portCode, start, end) => {
-          val terminals = AirportConfigs.confByPort.get(portCode).map(_.terminals).getOrElse(Seq.empty).toSeq
+          val terminals = AirportConfigs.confByPort.get(portCode).map(_.terminalsForDateRange(start, end)).getOrElse(Seq.empty).toSeq
           FlightDao().flightsForPcpDateRange(portCode, paxFeedSourceOrder(portCode), db.run)(start, end, terminals)
         }
 
@@ -320,8 +321,9 @@ object Server {
     val recordResponse = (port: PortCode, response: HealthCheckResponse[_]) =>
       healthChecksActor.ask(replyTo => HealthChecksActor.PortHealthCheckResponse(port, response, replyTo))
 
-    log.info(s"Starting health check monitor for ports ${serverConfig.portTerminals.keys.mkString(", ")}")
-    val monitor = HealthCheckMonitor(makeRequest, recordResponse, serverConfig.portTerminals.keys, healthChecks)
+    val portCodes = serverConfig.enabledPorts
+    log.info(s"Starting health check monitor for ports ${portCodes.mkString(", ")}")
+    val monitor = HealthCheckMonitor(makeRequest, recordResponse, portCodes, healthChecks)
     val pausesProvider = CheckScheduledPauses.pausesProvider(ScheduledHealthCheckPausePersistenceImpl(db, () => SDate.now()))
     val pauseIsActive = CheckScheduledPauses.activePauseChecker(pausesProvider)
     object Check extends Runnable {
