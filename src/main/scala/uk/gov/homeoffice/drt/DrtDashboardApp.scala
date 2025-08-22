@@ -1,11 +1,12 @@
 package uk.gov.homeoffice.drt
 
-import org.apache.pekko.actor.typed.ActorSystem
 import com.typesafe.config.ConfigFactory
+import org.apache.pekko.actor.typed.ActorSystem
 import uk.gov.homeoffice.drt.notifications.{EmailClientImpl, EmailNotifications}
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.ports.{PortCode, PortRegion}
 import uk.gov.homeoffice.drt.schedule.{DropInNotification, DropInReminder, UserTracking}
+import uk.gov.homeoffice.drt.time.LocalDate
 import uk.gov.service.notify.NotificationClient
 
 import scala.concurrent.duration.DurationInt
@@ -18,7 +19,7 @@ object DrtDashboardApp extends App {
     case portList => portList.toUpperCase.split(",").map(PortCode(_)).toSeq
   }
 
-  private val portTerminals = AirportConfigs.confByPort.view.filterKeys(enabledPorts.contains).mapValues(_.terminals.toSeq).toMap
+  private val portTerminals = (date: LocalDate) => AirportConfigs.confByPort.view.filterKeys(enabledPorts.contains).mapValues(_.terminalsForDate(date).toSeq).toMap
 
   val serverConfig = ServerConfig(
     host = config.getString("server.host"),

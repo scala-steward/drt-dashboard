@@ -17,11 +17,15 @@ object FlightExport {
   def flights(flightsForDatesAndTerminals: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[ApiFlightWithSplits, NotUsed])
              (implicit ec: ExecutionContext, mat: Materializer): Seq[PortCode] => (SDateLike, SDateLike) => Future[FlightJsonResponse] =
     portCodes => (start, end) => {
-      val dates = Set(start.toLocalDate, end.toLocalDate)
+      val startLocal = start.toLocalDate
+      val endLocal = end.toLocalDate
+
+      val dates = Set(startLocal, endLocal)
 
       Source(portCodes)
         .mapAsync(1) { portCode =>
-          val eventualPortFlights = AirportConfigs.confByPort(portCode).terminals.map { terminal =>
+          val terminals = AirportConfigs.confByPort(portCode).terminalsForDateRange(startLocal, endLocal)
+          val eventualPortFlights = terminals.map { terminal =>
             implicit val sourceOrder: List[FeedSource] = paxFeedSourceOrder(portCode)
 
             flightsForDatesAndTerminals(portCode, sourceOrder, dates.min, dates.max, Seq(terminal))

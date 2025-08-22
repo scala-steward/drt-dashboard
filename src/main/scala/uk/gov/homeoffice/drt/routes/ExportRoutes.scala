@@ -27,7 +27,8 @@ import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.ports.{FeedSource, PortCode}
 import uk.gov.homeoffice.drt.rccu.RestExportCsvService
 import uk.gov.homeoffice.drt.rccu.RestExportCsvService.getUri
-import uk.gov.homeoffice.drt.services.exports.{FlightsWithSplitsExport, FlightsWithSplitsMultiRegionExportImpl}
+import uk.gov.homeoffice.drt.service.QueueConfig
+import uk.gov.homeoffice.drt.services.exports.FlightsWithSplitsMultiRegionExportImpl
 import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike, UtcDate}
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -162,7 +163,7 @@ object ExportRoutes {
           .flatMap { exportPort =>
             val portCode = PortCode(exportPort.port)
             val portSourceOrder = feedSourceOrder(portCode)
-            val terminals = AirportConfigs.confByPort.get(portCode).map(_.terminals).getOrElse(Seq.empty).toSeq
+            val terminals = AirportConfigs.confByPort.get(portCode).map(_.terminalsForDateRange(exportRequest.startDate, exportRequest.endDate)).getOrElse(Seq.empty).toSeq
             val fwsExport = FlightsWithSplitsMultiRegionExportImpl(exportRequest.startDate, exportRequest.endDate, portCode, terminals, portSourceOrder)
             val flightsWithManifestsSource = flightsWithManifestsForPortDatesSource(portCode, exportRequest.startDate, exportRequest.endDate)
 

@@ -15,8 +15,8 @@ import org.apache.pekko.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
-import uk.gov.homeoffice.drt.json.LegacyRegionExportJsonFormats._
 import uk.gov.homeoffice.drt.db.{AppDatabase, RegionExportQueries}
+import uk.gov.homeoffice.drt.json.LegacyRegionExportJsonFormats._
 import uk.gov.homeoffice.drt.models.RegionExport
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
@@ -118,7 +118,7 @@ object LegacyExportRoutes {
 
       val stream = Source(portRegion.ports.toList.sortBy(_.iata))
         .map { port =>
-          AirportConfigs.confByPort.get(port).map(config => (port.iata, config.terminals))
+          AirportConfigs.confByPort.get(port).map(config => (port.iata, config.terminalsForDateRange(exportRequest.startDate, exportRequest.endDate)))
         }
         .mapConcat {
           case Some((portStr, terminals)) => terminals.map(t => (portStr, t))

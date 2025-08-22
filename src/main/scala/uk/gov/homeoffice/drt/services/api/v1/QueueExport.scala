@@ -28,8 +28,8 @@ object QueueExport {
 
       Source(portCodes)
         .mapAsync(1) { portCode =>
-          val eventualPortQueueSlots = AirportConfigs.confByPort(portCode)
-            .terminals.map { terminal =>
+          val terminals = AirportConfigs.confByPort(portCode).terminalsForDateRange(start.toLocalDate, end.toLocalDate)
+          val eventualPortQueueSlots = terminals.map { terminal =>
               queuesForPortAndDatesAndSlotSize(portCode, terminal, dates.min, dates.max)
                 .runWith(Sink.seq)
                 .map { mins: Seq[CrunchMinute] =>

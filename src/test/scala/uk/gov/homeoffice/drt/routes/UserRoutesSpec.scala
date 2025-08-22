@@ -42,7 +42,7 @@ class UserRoutesSpec extends Specification
   implicit val sys: ActorSystem[Nothing] = testKit.system
   private val config: Config = ConfigFactory.load()
   val stringToLocalDateTime: String => Instant = dateString => Instant.parse(dateString)
-  val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), Map(PortCode("NCL") -> Seq(T1)), "someDomain.com", "test@test.com")
+  val clientConfig: ClientConfig = ClientConfig(Seq(PortRegion.North), () => Map(PortCode("NCL") -> Seq(T1)), "someDomain.com", "test@test.com")
   val apiKey: String = config.getString("dashboard.notifications.gov-notify-api-key")
   val userDao: UserDao = UserDao(TestDatabase)
   val tableName = "user_route_test"
