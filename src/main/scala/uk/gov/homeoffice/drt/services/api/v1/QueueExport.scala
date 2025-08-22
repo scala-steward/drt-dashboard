@@ -9,7 +9,6 @@ import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.ports.{PortCode, Queues}
 import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.{QueueJson, QueueJsonResponse, SlotJson}
-import uk.gov.homeoffice.drt.service.QueueConfig
 import uk.gov.homeoffice.drt.time.MilliDate.MillisSinceEpoch
 import uk.gov.homeoffice.drt.time.{SDate, SDateLike, UtcDate}
 

@@ -15,13 +15,12 @@ import org.apache.pekko.util.ByteString
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.HttpClient
 import uk.gov.homeoffice.drt.arrivals.ArrivalExportHeadings
-import uk.gov.homeoffice.drt.json.LegacyRegionExportJsonFormats._
 import uk.gov.homeoffice.drt.db.{AppDatabase, RegionExportQueries}
+import uk.gov.homeoffice.drt.json.LegacyRegionExportJsonFormats._
 import uk.gov.homeoffice.drt.models.RegionExport
 import uk.gov.homeoffice.drt.ports.PortRegion
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.rccu.LegacyExportCsvService
-import uk.gov.homeoffice.drt.service.QueueConfig
 import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike}
 
 import scala.concurrent.{ExecutionContext, ExecutionContextExecutor, Future}
