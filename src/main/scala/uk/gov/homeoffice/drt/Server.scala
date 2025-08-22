@@ -17,7 +17,7 @@ import org.apache.pekko.util.Timeout
 import org.slf4j.LoggerFactory
 import uk.gov.homeoffice.drt.arrivals.ApiFlightWithSplits
 import uk.gov.homeoffice.drt.db._
-import uk.gov.homeoffice.drt.db.dao.{ApiManifestProvider, BorderCrossingDao, FlightDao, QueueSlotDao, UserFeedbackDao}
+import uk.gov.homeoffice.drt.db.dao._
 import uk.gov.homeoffice.drt.db.serialisers.BorderCrossingSerialiser
 import uk.gov.homeoffice.drt.db.tables.{BorderCrossing, GateType}
 import uk.gov.homeoffice.drt.healthchecks._
@@ -30,7 +30,6 @@ import uk.gov.homeoffice.drt.ports._
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.routes._
 import uk.gov.homeoffice.drt.routes.api.v1.{AuthApiV1Routes, FlightApiV1Routes, QueueApiV1Routes}
-import uk.gov.homeoffice.drt.service.QueueConfig
 import uk.gov.homeoffice.drt.services.api.v1.{FlightExport, QueueExport}
 import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{PassengerSummaryStreams, UserRequestService, UserService}
