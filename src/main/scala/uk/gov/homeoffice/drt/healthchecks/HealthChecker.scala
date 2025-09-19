@@ -23,10 +23,7 @@ object HealthChecker {
       .mapAsync(healthChecks.size) { check =>
         val uri = maybePort match {
           case Some(port) => Dashboard.drtInternalUriForPortCode(port) + check.url
-          case None =>
-            val url = Dashboard.drtInternalUri + check.url
-            println(s"dash url: $url")
-            url
+          case None => Dashboard.drtInternalUri + check.url
         }
         val headers = check.httpHeaders.map {
           case (name, value) => RawHeader(name, value)
