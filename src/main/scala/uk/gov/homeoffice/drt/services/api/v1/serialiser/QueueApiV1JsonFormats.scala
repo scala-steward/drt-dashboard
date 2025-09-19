@@ -2,7 +2,8 @@ package uk.gov.homeoffice.drt.services.api.v1.serialiser
 
 import spray.json._
 import uk.gov.homeoffice.drt.ports.Queues.Queue
-import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.{SlotJson, QueueJson, QueueJsonResponse}
+import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.{QueueJson, QueueJsonResponse, SlotJson}
+import uk.gov.homeoffice.drt.time.SDateLike
 
 trait QueueApiV1JsonFormats extends DefaultJsonProtocol with CommonJsonFormats {
   implicit object QueueJsonFormat extends RootJsonFormat[Queue] {
@@ -29,6 +30,15 @@ trait QueueApiV1JsonFormats extends DefaultJsonProtocol with CommonJsonFormats {
       ))
     }
 
-    override def read(json: JsValue): QueueJsonResponse = throw new Exception("Not implemented")
+    override def read(json: JsValue): QueueJsonResponse = json match {
+      case JsObject(fields) =>
+        QueueJsonResponse(
+          periodStart = fields("periodStart").convertTo[SDateLike],
+          periodEnd = fields("periodEnd").convertTo[SDateLike],
+          slotSizeMinutes = fields("periodLengthMinutes").convertTo[Int],
+          slots = fields("periods").convertTo[Seq[SlotJson]],
+        )
+      case unexpected => throw new Exception(s"Failed to parse QueueJsonResponse. Expected JsObject. Got ${unexpected.getClass}")
+    }
   }
 }

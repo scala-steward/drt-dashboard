@@ -1,6 +1,10 @@
 package uk.gov.homeoffice.drt.healthchecks
 
-import uk.gov.homeoffice.drt.time.SDateLike
+import spray.json._
+import uk.gov.homeoffice.drt.ports.PortCode
+import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.QueueJsonResponse
+import uk.gov.homeoffice.drt.services.api.v1.serialiser.QueueApiV1JsonFormats
+import uk.gov.homeoffice.drt.time.{SDate, SDateLike}
 
 import scala.concurrent.duration.FiniteDuration
 import scala.util.{Failure, Success, Try}
@@ -11,14 +15,17 @@ trait HealthCheck[A] {
   def description: String
   def url: String
   val parseResponse: String => HealthCheckResponse[A]
+  def httpHeaders: Map[String, String] = Map.empty
 
   def failure: HealthCheckResponse[A]
 }
 
-trait JsonHealthCheck extends HealthCheck[Boolean] {
+trait JsonHealthCheck[T] extends HealthCheck[Boolean] {
+  def serialise: String => T
   override val parseResponse: String => HealthCheckResponse[Boolean] =
     str => {
-      val isPass = str == "OK"
+      val trySerialise = Try(serialise(str)).map(_ => true)
+      val isPass = trySerialise.getOrElse(false)
       BooleanHealthCheckResponse(priority, name, Success(Option(isPass)), Option(isPass))
     }
 
@@ -38,7 +45,7 @@ trait PercentageHealthCheck extends HealthCheck[Double] {
         case _ => Try(Option(str.toDouble))
       }
       val maybeIsPass = value.toOption.flatten.map(_ >= passThresholdPercentage)
-      log.info(s"HealthCheck $name got response: $str, value: $value, maybeIsPass: $maybeIsPass")
+      log.info(s"HealthCheck '$name' got response: $str, value: $value, maybeIsPass: $maybeIsPass")
 
       PercentageHealthCheckResponse(priority, name, value, maybeIsPass)
     }
@@ -47,11 +54,24 @@ trait PercentageHealthCheck extends HealthCheck[Double] {
     PercentageHealthCheckResponse(priority, name, Failure(new Exception("Failed to parse response")), None)
 }
 
-case class QueuesApiV1HealthCheck(now: () => SDateLike) extends JsonHealthCheck {
+case class QueuesApiV1HealthCheck(now: () => SDateLike, portCodes: Iterable[PortCode]) extends JsonHealthCheck[QueueJsonResponse] with QueueApiV1JsonFormats {
   override val priority: IncidentPriority = Priority1
   override val name: String = "Queues API v1"
   override def description: String = s"Queues API v1 is reachable and responding with valid json"
-  override def url: String = s"/health-check/queues-api-v1/${now().toISOString}"
+
+  private def todayAt(hour: Int): SDateLike = SDate(now().toUtcDate).addHours(hour)
+  private val startHour = 13
+  private val endHour = 14
+  private val start: SDateLike = todayAt(startHour)
+  private val end: SDateLike = todayAt(endHour)
+  override def url: String = s"/api/v1/queues?start=${start.toISOString}&end=${end.toISOString}"
+
+  override def httpHeaders: Map[String, String] = Map(
+    "X-Forwarded-Email" -> "health-check",
+    "X-Forwarded-Groups" -> (portCodes.map(_.iata).toSeq :+ "api-queue-access").mkString(",")
+  )
+
+  override def serialise: String => QueueJsonResponse = _.parseJson.convertTo[QueueJsonResponse]
 }
 
 case class ApiHealthCheck(hoursBeforeNow: Int, hoursAfterNow: Int, minimumFlights: Int, passThresholdPercentage: Int, now: () => SDateLike) extends PercentageHealthCheck {

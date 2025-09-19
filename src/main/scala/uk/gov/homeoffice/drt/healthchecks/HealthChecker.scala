@@ -1,5 +1,6 @@
 package uk.gov.homeoffice.drt.healthchecks
 
+import org.apache.pekko.http.scaladsl.model.headers.RawHeader
 import org.apache.pekko.http.scaladsl.model.{HttpRequest, HttpResponse}
 import org.apache.pekko.stream.Materializer
 import org.apache.pekko.stream.scaladsl.{Sink, Source}
@@ -22,9 +23,15 @@ object HealthChecker {
       .mapAsync(healthChecks.size) { check =>
         val uri = maybePort match {
           case Some(port) => Dashboard.drtInternalUriForPortCode(port) + check.url
-          case None => Dashboard.drtInternalUri + check.url
+          case None =>
+            val url = Dashboard.drtInternalUri + check.url
+            println(s"dash url: $url")
+            url
         }
-        val request = HttpRequest(uri = uri)
+        val headers = check.httpHeaders.map {
+          case (name, value) => RawHeader(name, value)
+        }.toSeq
+        val request = HttpRequest(uri = uri, headers = headers)
         val startTime = System.currentTimeMillis()
         makeRequest(request)
           .flatMap { response =>

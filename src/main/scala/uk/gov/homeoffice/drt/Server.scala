@@ -95,8 +95,8 @@ object Server {
     ApiHealthCheck(hoursBeforeNow = 2, hoursAfterNow = 1, minimumFlights = 4, passThresholdPercentage = 50, SDate.now),
     ArrivalLandingTimesHealthCheck(windowLength = 2.hours, buffer = 20, minimumFlights = 3, passThresholdPercentage = 50, SDate.now),
   )
-  val dashboardHealthChecks: Seq[HealthCheck[_]] = Seq(
-    QueuesApiV1HealthCheck(SDate.now),
+  def dashboardHealthChecks(ports: Iterable[PortCode]): Seq[HealthCheck[_]] = Seq(
+    QueuesApiV1HealthCheck(SDate.now, ports),
   )
 
   private val nonMlPaxPorts = Set("ABZ", "EXT", "HUY", "INV", "LHR", "MME", "NQY", "NWI", "PIK", "SEN")
@@ -325,7 +325,8 @@ object Server {
 
     val portCodes = serverConfig.enabledPorts
     log.info(s"Starting health check monitor for ports ${portCodes.mkString(", ")}")
-    val performHealthChecks = HealthChecksRunner(makeRequest, recordPortResponse, portHealthChecks)
+    val performPortHealthChecks = HealthChecksRunner(makeRequest, recordPortResponse, portHealthChecks)
+    val performDashboardHealthChecks = HealthChecksRunner(makeRequest, recordPortResponse, dashboardHealthChecks(serverConfig.enabledPorts))
     val pausesProvider = CheckScheduledPauses.pausesProvider(ScheduledHealthCheckPausePersistenceImpl(db, () => SDate.now()))
     val pauseIsActive = CheckScheduledPauses.activePauseChecker(pausesProvider)
     object Check extends Runnable {
@@ -335,12 +336,12 @@ object Server {
             log.info("Health check monitor paused")
           else {
             log.info("Health check monitor running")
-            performHealthChecks(Option(portCodes))
-            performHealthChecks(None)
+            performPortHealthChecks(Option(portCodes))
+            performDashboardHealthChecks(None)
           }
         }
       }
     }
-    system.scheduler.scheduleWithFixedDelay(30.seconds, serverConfig.healthCheckFrequencyMinutes.minutes)(Check)
+    system.scheduler.scheduleWithFixedDelay(5.seconds, serverConfig.healthCheckFrequencyMinutes.minutes)(Check)
   }
 }
