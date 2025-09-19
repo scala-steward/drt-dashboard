@@ -3,7 +3,7 @@ package uk.gov.homeoffice.drt.healthchecks
 import uk.gov.homeoffice.drt.time.SDateLike
 
 import scala.concurrent.duration.FiniteDuration
-import scala.util.{Failure, Try}
+import scala.util.{Failure, Success, Try}
 
 trait HealthCheck[A] {
   val priority: IncidentPriority
@@ -13,6 +13,17 @@ trait HealthCheck[A] {
   val parseResponse: String => HealthCheckResponse[A]
 
   def failure: HealthCheckResponse[A]
+}
+
+trait JsonHealthCheck extends HealthCheck[Boolean] {
+  override val parseResponse: String => HealthCheckResponse[Boolean] =
+    str => {
+      val isPass = str == "OK"
+      BooleanHealthCheckResponse(priority, name, Success(Option(isPass)), Option(isPass))
+    }
+
+  override def failure: HealthCheckResponse[Boolean] =
+    BooleanHealthCheckResponse(priority, name, Failure(new Exception("Failed to parse response")), None)
 }
 
 trait PercentageHealthCheck extends HealthCheck[Double] {
@@ -34,6 +45,13 @@ trait PercentageHealthCheck extends HealthCheck[Double] {
 
   override def failure: HealthCheckResponse[Double] =
     PercentageHealthCheckResponse(priority, name, Failure(new Exception("Failed to parse response")), None)
+}
+
+case class QueuesApiV1HealthCheck(now: () => SDateLike) extends JsonHealthCheck {
+  override val priority: IncidentPriority = Priority1
+  override val name: String = "Queues API v1"
+  override def description: String = s"Queues API v1 is reachable and responding with valid json"
+  override def url: String = s"/health-check/queues-api-v1/${now().toISOString}"
 }
 
 case class ApiHealthCheck(hoursBeforeNow: Int, hoursAfterNow: Int, minimumFlights: Int, passThresholdPercentage: Int, now: () => SDateLike) extends PercentageHealthCheck {

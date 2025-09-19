@@ -49,7 +49,7 @@ class PortHealthCheckSpec
     )
 
     "parse successful responses" in {
-      val responses = PortHealthCheck(PortCode("TST"), MockHttp.withResponse("50.5", "true"), healthChecks)
+      val responses = HealthChecker(Option(PortCode("TST")), MockHttp.withResponse("50.5", "true"), healthChecks)
 
       Await.result(responses, 1.second) should ===(Seq(
         PercentageHealthCheckResponse(Priority1, "API received", Success(Some(50.5)), Option(false)),
@@ -58,7 +58,7 @@ class PortHealthCheckSpec
       ))
     }
     "parse null responses" in {
-      val responses = PortHealthCheck(PortCode("TST"), MockHttp.withResponse("null", "null"), healthChecks)
+      val responses = HealthChecker(Option(PortCode("TST")), MockHttp.withResponse("null", "null"), healthChecks)
 
       Await.result(responses, 1.second) should ===(Seq(
         PercentageHealthCheckResponse(Priority1, "API received", Success(None), None),
@@ -67,7 +67,7 @@ class PortHealthCheckSpec
       ))
     }
     "handle failed responses" in {
-      val responses = PortHealthCheck(PortCode("TST"), MockHttp.withFailureResponse(), healthChecks)
+      val responses = HealthChecker(Option(PortCode("TST")), MockHttp.withFailureResponse(), healthChecks)
 
       Await.result(responses, 1.second).map(_.value.isFailure) should ===(Seq(true, true, true))
     }

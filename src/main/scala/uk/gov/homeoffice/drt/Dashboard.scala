@@ -129,4 +129,6 @@ object Dashboard {
 
   def drtInternalUriForPortCode(portCode: PortCode): String = s"http://${portCode.iata.toLowerCase}:9000"
 
+  def drtInternalUri: String = s"http://dashboard:8081"
+
 }

@@ -14,7 +14,7 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-class HealthCheckMonitorSpec
+class HealthChecksRunnerSpec
   extends TestKit(ActorSystem("MySpec"))
     with ImplicitSender
     with AnyWordSpecLike
@@ -48,8 +48,8 @@ class HealthCheckMonitorSpec
         Future.successful(AlarmInactive)
       }
       val ports = List(PortCode("TST"), PortCode("TST2"))
-      val healthCheckMonitor = HealthCheckMonitor(makeRequest, recordResponse, ports, healthChecks)
-      healthCheckMonitor()
+      val healthCheckMonitor = HealthChecksRunner(makeRequest, recordResponse, healthChecks)
+      healthCheckMonitor(Option(ports))
 
       requestTestProbe.expectMsgAllOf(
         ports.flatMap(port => Seq(

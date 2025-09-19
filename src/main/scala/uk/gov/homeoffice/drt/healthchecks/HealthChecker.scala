@@ -10,17 +10,20 @@ import uk.gov.homeoffice.drt.ports.PortCode
 import scala.concurrent.{ExecutionContext, Future}
 
 
-object PortHealthCheck {
+object HealthChecker {
   private val log = LoggerFactory.getLogger(getClass)
 
-  def apply(port: PortCode,
+  def apply(maybePort: Option[PortCode],
             makeRequest: HttpRequest => Future[HttpResponse],
-            healthChecks: Seq[HealthCheck[_ >: Double with Boolean <: AnyVal] with Serializable]
+            healthChecks: Seq[HealthCheck[_]]
            )
-           (implicit mat: Materializer, ec: ExecutionContext): Future[Seq[HealthCheckResponse[_ >: Double with Boolean <: AnyVal]]] = {
+           (implicit mat: Materializer, ec: ExecutionContext): Future[Seq[HealthCheckResponse[_]]] = {
     Source(healthChecks)
       .mapAsync(healthChecks.size) { check =>
-        val uri = Dashboard.drtInternalUriForPortCode(port) + check.url
+        val uri = maybePort match {
+          case Some(port) => Dashboard.drtInternalUriForPortCode(port) + check.url
+          case None => Dashboard.drtInternalUri + check.url
+        }
         val request = HttpRequest(uri = uri)
         val startTime = System.currentTimeMillis()
         makeRequest(request)
