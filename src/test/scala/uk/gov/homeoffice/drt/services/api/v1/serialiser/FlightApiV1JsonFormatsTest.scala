@@ -21,7 +21,7 @@ class FlightApiV1JsonFormatsTest extends AnyWordSpec with Matchers with QueueApi
 
     deserialised shouldEqual queue
   }
-  
+
   "jsonResponseFormat should serialise and deserialise correctly" in {
     val start = SDate("2024-10-20T10:00")
     val end = SDate("2024-10-20T12:00")

@@ -78,7 +78,7 @@ case class QueueApiV1HealthCheck(now: () => SDateLike, portCodes: Iterable[PortC
 case class FlightApiV1HealthCheck(now: () => SDateLike, portCodes: Iterable[PortCode]) extends JsonHealthCheck[FlightJsonResponse] with FlightApiV1JsonFormats {
   override val priority: IncidentPriority = Priority1
   override val name: String = "Flight API v1"
-  override def description: String = s"Queue API v1 is reachable and responding with valid json"
+  override def description: String = s"Flight API v1 is reachable and responding with valid json"
 
   private def todayAt(hour: Int): SDateLike = SDate(now().toUtcDate).addHours(hour)
   private val startHour = 13
@@ -89,7 +89,7 @@ case class FlightApiV1HealthCheck(now: () => SDateLike, portCodes: Iterable[Port
 
   override def httpHeaders: Map[String, String] = Map(
     "X-Forwarded-Email" -> "health-check",
-    "X-Forwarded-Groups" -> (portCodes.map(_.iata).toSeq :+ "api-queue-access").mkString(",")
+    "X-Forwarded-Groups" -> (portCodes.map(_.iata).toSeq :+ "api-flight-access").mkString(",")
   )
 
   override def serialise: String => FlightJsonResponse = _.parseJson.convertTo[FlightJsonResponse]
