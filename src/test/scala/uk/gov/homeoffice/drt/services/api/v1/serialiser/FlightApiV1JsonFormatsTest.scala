@@ -2,31 +2,26 @@ package uk.gov.homeoffice.drt.services.api.v1.serialiser
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
-import uk.gov.homeoffice.drt.ports.PortCode
-import uk.gov.homeoffice.drt.ports.Queues.EeaDesk
-import uk.gov.homeoffice.drt.ports.Terminals.T2
 import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.{FlightJson, FlightJsonResponse}
-import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.{QueueJson, SlotJson}
 import uk.gov.homeoffice.drt.time.SDate
 
 class FlightApiV1JsonFormatsTest extends AnyWordSpec with Matchers with QueueApiV1JsonFormats {
-  "QueueJsonFormat should serialise and deserialise correctly" in {
-    val queue = QueueJson(EeaDesk, 100, 10)
+  "FlightJsonFormat should serialise and deserialise correctly" in {
+    val queue = FlightJson("LHR", "T2", "BA123", "JFK", "John F. Kennedy International Airport",
+      SDate("2024-10-20T10:00").millisSinceEpoch,
+      Some(SDate("2024-10-20T10:05").millisSinceEpoch),
+      None,
+      None,
+      Some(SDate("2024-10-20T10:45").millisSinceEpoch),
+      Some(150),
+      "On Time"
+    )
     val json = queue.toJson
-    val deserialised = json.convertTo[QueueJson]
+    val deserialised = json.convertTo[FlightJson]
 
     deserialised shouldEqual queue
   }
-
-  "PeriodJsonFormat should serialise and deserialise correctly" in {
-    val start = SDate("2024-10-20T10:00")
-    val period = SlotJson(start, PortCode("LHR"), T2, Seq(QueueJson(EeaDesk, 100, 10)))
-    val json = period.toJson
-    val deserialised = json.convertTo[SlotJson]
-
-    deserialised shouldEqual period
-  }
-
+  
   "jsonResponseFormat should serialise and deserialise correctly" in {
     val start = SDate("2024-10-20T10:00")
     val end = SDate("2024-10-20T12:00")
