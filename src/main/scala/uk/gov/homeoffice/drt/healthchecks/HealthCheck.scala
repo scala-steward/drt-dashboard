@@ -2,8 +2,9 @@ package uk.gov.homeoffice.drt.healthchecks
 
 import spray.json._
 import uk.gov.homeoffice.drt.ports.PortCode
+import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.FlightJsonResponse
 import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.QueueJsonResponse
-import uk.gov.homeoffice.drt.services.api.v1.serialiser.QueueApiV1JsonFormats
+import uk.gov.homeoffice.drt.services.api.v1.serialiser.{FlightApiV1JsonFormats, QueueApiV1JsonFormats}
 import uk.gov.homeoffice.drt.time.{SDate, SDateLike}
 
 import scala.concurrent.duration.FiniteDuration
@@ -54,10 +55,10 @@ trait PercentageHealthCheck extends HealthCheck[Double] {
     PercentageHealthCheckResponse(priority, name, Failure(new Exception("Failed to parse response")), None)
 }
 
-case class QueuesApiV1HealthCheck(now: () => SDateLike, portCodes: Iterable[PortCode]) extends JsonHealthCheck[QueueJsonResponse] with QueueApiV1JsonFormats {
+case class QueueApiV1HealthCheck(now: () => SDateLike, portCodes: Iterable[PortCode]) extends JsonHealthCheck[QueueJsonResponse] with QueueApiV1JsonFormats {
   override val priority: IncidentPriority = Priority1
-  override val name: String = "Queues API v1"
-  override def description: String = s"Queues API v1 is reachable and responding with valid json"
+  override val name: String = "Queue API v1"
+  override def description: String = s"Queue API v1 is reachable and responding with valid json"
 
   private def todayAt(hour: Int): SDateLike = SDate(now().toUtcDate).addHours(hour)
   private val startHour = 13
@@ -72,6 +73,26 @@ case class QueuesApiV1HealthCheck(now: () => SDateLike, portCodes: Iterable[Port
   )
 
   override def serialise: String => QueueJsonResponse = _.parseJson.convertTo[QueueJsonResponse]
+}
+
+case class FlightApiV1HealthCheck(now: () => SDateLike, portCodes: Iterable[PortCode]) extends JsonHealthCheck[FlightJsonResponse] with FlightApiV1JsonFormats {
+  override val priority: IncidentPriority = Priority1
+  override val name: String = "Flight API v1"
+  override def description: String = s"Queue API v1 is reachable and responding with valid json"
+
+  private def todayAt(hour: Int): SDateLike = SDate(now().toUtcDate).addHours(hour)
+  private val startHour = 13
+  private val endHour = 14
+  private val start: SDateLike = todayAt(startHour)
+  private val end: SDateLike = todayAt(endHour)
+  override def url: String = s"/api/v1/flights?start=${start.toISOString}&end=${end.toISOString}"
+
+  override def httpHeaders: Map[String, String] = Map(
+    "X-Forwarded-Email" -> "health-check",
+    "X-Forwarded-Groups" -> (portCodes.map(_.iata).toSeq :+ "api-queue-access").mkString(",")
+  )
+
+  override def serialise: String => FlightJsonResponse = _.parseJson.convertTo[FlightJsonResponse]
 }
 
 case class ApiHealthCheck(hoursBeforeNow: Int, hoursAfterNow: Int, minimumFlights: Int, passThresholdPercentage: Int, now: () => SDateLike) extends PercentageHealthCheck {

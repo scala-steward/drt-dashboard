@@ -96,7 +96,8 @@ object Server {
     ArrivalLandingTimesHealthCheck(windowLength = 2.hours, buffer = 20, minimumFlights = 3, passThresholdPercentage = 50, SDate.now),
   )
   def dashboardHealthChecks(ports: Iterable[PortCode]): Seq[HealthCheck[_]] = Seq(
-    QueuesApiV1HealthCheck(SDate.now, ports),
+    QueueApiV1HealthCheck(SDate.now, ports),
+    FlightApiV1HealthCheck(SDate.now, ports),
   )
 
   private val nonMlPaxPorts = Set("ABZ", "EXT", "HUY", "INV", "LHR", "MME", "NQY", "NWI", "PIK", "SEN")
