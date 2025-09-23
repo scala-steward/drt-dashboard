@@ -1,8 +1,8 @@
 package uk.gov.homeoffice.drt.services.api.v1.serialiser
 
-import spray.json.{DefaultJsonProtocol, JsObject, JsValue, RootJsonFormat, enrichAny}
+import spray.json.{DefaultJsonProtocol, JsObject, JsString, JsValue, RootJsonFormat, enrichAny}
 import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.{FlightJson, FlightJsonResponse}
-import uk.gov.homeoffice.drt.time.SDate
+import uk.gov.homeoffice.drt.time.{SDate, SDateLike}
 
 trait FlightApiV1JsonFormats extends DefaultJsonProtocol with CommonJsonFormats {
   implicit object FlightJsonJsonFormat extends RootJsonFormat[FlightJson] {
@@ -25,21 +25,29 @@ trait FlightApiV1JsonFormats extends DefaultJsonProtocol with CommonJsonFormats 
     }
 
     override def read(json: JsValue): FlightJson = json match {
-      case JsObject(fields) => FlightJson(
-        fields.get("arrivalPortCode").map(_.convertTo[String]).getOrElse(""),
-        fields.get("arrivalTerminal").map(_.convertTo[String]).getOrElse(""),
-        fields.get("code").map(_.convertTo[String]).getOrElse(""),
-        fields.get("originPortIata").map(_.convertTo[String]).getOrElse(""),
-        fields.get("originPortName").map(_.convertTo[String]).getOrElse(""),
-        fields.get("scheduledTime").map(_.convertTo[Long]).getOrElse(0L),
-        fields.get("estimatedLandingTime").map(_.convertTo[Long]),
-        fields.get("actualChocksTime").map(_.convertTo[Long]),
-        fields.get("estimatedPcpStartTime").map(_.convertTo[Long]),
-        fields.get("estimatedPcpEndTime").map(_.convertTo[Long]),
-        fields.get("estimatedPcpPaxCount").map(_.convertTo[Int]),
-        fields.get("status").map(_.convertTo[String]).getOrElse(""),
-      )
+      case JsObject(fields) =>
+        FlightJson(
+          fields.get("arrivalPortCode").map(_.convertTo[String]).getOrElse(""),
+          fields.get("arrivalTerminal").map(_.convertTo[String]).getOrElse(""),
+          fields.get("code").map(_.convertTo[String]).getOrElse(""),
+          fields.get("originPortIata").map(_.convertTo[String]).getOrElse(""),
+          fields.get("originPortName").map(_.convertTo[String]).getOrElse(""),
+          fields.get("scheduledTime").map(st => SDate(st.convertTo[String]).millisSinceEpoch).getOrElse(0L),
+          maybeSinceUnixEpochFromString(fields.get("estimatedLandingTime")),
+          maybeSinceUnixEpochFromString(fields.get("actualChocksTime")),
+          maybeSinceUnixEpochFromString(fields.get("estimatedPcpStartTime")),
+          maybeSinceUnixEpochFromString(fields.get("estimatedPcpEndTime")),
+          fields.get("estimatedPcpPaxCount").map(_.convertTo[Int]),
+          fields.get("status").map(_.convertTo[String]).getOrElse(""),
+        )
       case unexpected => throw new Exception(s"Failed to parse FlightJson. Expected JsString. Got ${unexpected.getClass}")
+    }
+  }
+
+  private def maybeSinceUnixEpochFromString(maybeValue: Option[JsValue]) = {
+    maybeValue match {
+      case Some(JsString(s)) if s.nonEmpty => Some(SDate(s).millisSinceEpoch)
+      case _ => None
     }
   }
 
@@ -53,6 +61,14 @@ trait FlightApiV1JsonFormats extends DefaultJsonProtocol with CommonJsonFormats 
       "flights" -> obj.flights.toJson,
     ))
 
-    override def read(json: JsValue): FlightJsonResponse = throw new Exception("Not implemented")
+    override def read(json: JsValue): FlightJsonResponse = json match {
+      case JsObject(fields) =>
+        FlightJsonResponse(
+          periodStart = fields("periodStart").convertTo[SDateLike],
+          periodEnd = fields("periodEnd").convertTo[SDateLike],
+          flights = fields("flights").convertTo[Seq[FlightJson]],
+        )
+      case unexpected => throw new Exception(s"Failed to parse FlightJsonResponse. Expected JsObject. Got ${unexpected.getClass}")
+    }
   }
 }

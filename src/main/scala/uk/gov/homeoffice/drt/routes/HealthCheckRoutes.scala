@@ -26,11 +26,11 @@ trait HealthCheckJsonFormats extends DefaultJsonProtocol {
     override def write(obj: IncidentPriority): JsValue = obj.name.toJson
   }
 
-  implicit object HealthCheckJsonFormat extends RootJsonFormat[HealthCheck[_ >: Double with Boolean <: AnyVal] with Serializable] {
-    override def read(json: JsValue): HealthCheck[_ >: Double with Boolean <: AnyVal] with Serializable =
+  implicit object HealthCheckJsonFormat extends RootJsonFormat[HealthCheck[_]] {
+    override def read(json: JsValue): HealthCheck[_] =
       throw new NotImplementedError("Not implemented")
 
-    override def write(obj: HealthCheck[_ >: Double with Boolean <: AnyVal] with Serializable): JsValue =
+    override def write(obj: HealthCheck[_]): JsValue =
       JsObject(Map(
         "name" -> obj.name.toJson,
         "description" -> obj.description.toJson,
@@ -43,7 +43,7 @@ object HealthCheckRoutes extends HealthCheckAlarmJsonFormats with HealthCheckJso
   private val log = LoggerFactory.getLogger(getClass)
 
   def apply(getAlarmStatuses: () => Future[Map[PortCode, Map[String, Boolean]]],
-            healthChecks: Seq[HealthCheck[_ >: Double with Boolean <: AnyVal] with Serializable],
+            healthChecks: Seq[HealthCheck[_]],
             scheduledPausePersistence: ScheduledHealthCheckPausePersistence,
            )
            (implicit ec: ExecutionContextExecutor): Route = {
