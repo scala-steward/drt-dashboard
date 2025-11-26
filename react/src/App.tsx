@@ -101,7 +101,6 @@ export const App = () => {
     const scrollSection = params['scrollSection'] ? params['scrollSection'] : ''
     return (
       <AccessibilityStatement
-        accessibilityStatementUrl="/accessibility"
         teamEmail="your-team-email@example.com"
         sendReportProblemGaEvent={() => console.log('Report Problem')}
         scrollSection={scrollSection || ''}

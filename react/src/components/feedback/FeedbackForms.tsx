@@ -17,7 +17,7 @@ import Link from "@mui/material/Link";
 import axios, {AxiosResponse} from "axios";
 import {useParams} from "react-router-dom";
 import ApiClient from "../../services/ApiClient";
-import drtTheme from "../../drtTheme";
+import {drtTheme} from 'drt-react';
 import {customerPageTitleSuffix} from "../../utils/common";
 import {Helmet} from "react-helmet";
 
