@@ -1,3 +1,4 @@
+import net.nmoncho.sbt.dependencycheck.settings.AnalyzerSettings
 import sbt.Keys.resolvers
 
 lazy val drtLibVersion = "v1295"
@@ -83,6 +84,19 @@ lazy val root = (project in file(".")).
   )
   .enablePlugins(DockerPlugin)
   .enablePlugins(JavaAppPackaging)
+
+ThisBuild / dependencyCheckAnalyzers := dependencyCheckAnalyzers.value.copy(
+  ossIndex = AnalyzerSettings.OssIndex(
+    enabled = Some(false),
+    url = None,
+    batchSize = None,
+    requestDelay = None,
+    useCache = None,
+    warnOnlyOnRemoteErrors = None,
+    username = None,
+    password = None
+  )
+)
 
 Test / parallelExecution := false
 
