@@ -8,6 +8,7 @@ built using Create React App and communicates with the Scala backend via RESTful
 ## Scala Backend
 To run the backend enter the root of the codebase and run:
 
+```bash
 USE_PG_SSL=false \
 USE_PG_SSL_MODE=require \
 AWS_ACCESS_KEY_ID=xx \
@@ -26,7 +27,8 @@ KEY_CLOAK_PASSWORD= \
 NO_JSON_LOGGING= \
 ENABLED_PORTS=stn,lcy,ltn,nwi,sen,bhx,ema,lhr \
 SLACK_WEBHOOK_URL= \
-sbt run 
+sbt run
+``` 
 
 
 ## React Frontend
