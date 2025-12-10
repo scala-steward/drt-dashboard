@@ -10,7 +10,7 @@ To run the backend enter the root of the codebase and run:
 
 ```bash
 USE_PG_SSL=false \
-USE_PG_SSL_MODE=require \
+USE_PG_SSL_MODE=disable \
 AWS_ACCESS_KEY_ID=xx \
 AWS_SECRET_ACCESS_KEY=xx \
 AWS_S3_BUCKET=drt-local \
