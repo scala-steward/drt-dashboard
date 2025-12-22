@@ -1,4 +1,4 @@
-import net.nmoncho.sbt.dependencycheck.settings.AnalyzerSettings
+import net.nmoncho.sbt.dependencycheck.settings.{AnalyzerSettings, NvdApiSettings}
 import sbt.Keys.resolvers
 
 lazy val drtLibVersion = "v1364"
@@ -84,6 +84,10 @@ lazy val root = (project in file(".")).
   )
   .enablePlugins(DockerPlugin)
   .enablePlugins(JavaAppPackaging)
+
+val nvdAPIKey = sys.env.getOrElse("NVD_API_KEY", "")
+
+dependencyCheckNvdApi := NvdApiSettings(apiKey = nvdAPIKey)
 
 ThisBuild / dependencyCheckAnalyzers := dependencyCheckAnalyzers.value.copy(
   ossIndex = AnalyzerSettings.OssIndex(
