@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.drt.services.api.v1
+package uk.gov.homeoffice.drt.services.api.v1_1
 
 import org.apache.pekko.actor.ActorSystem
 import org.apache.pekko.stream.Materializer
@@ -9,7 +9,7 @@ import uk.gov.homeoffice.drt.ArrivalGenerator
 import uk.gov.homeoffice.drt.arrivals.ApiFlightWithSplits
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.{FeedSource, LiveFeedSource, PortCode}
-import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.{FlightJsonResponseV1, FlightJsonV1}
+import uk.gov.homeoffice.drt.routes.api.v1_1.FlightApiV1_1Routes.{FlightJsonResponseV1_1, FlightJsonV1_1}
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
 
 import scala.concurrent.duration.DurationInt
@@ -40,18 +40,18 @@ class FlightExportTest extends AnyWordSpec with Matchers {
           ).map(a => ApiFlightWithSplits(a, Set.empty))
         )
       }
-      val export = FlightExportV1.flights(source)
+      val export = FlightExportV1_1.flights(source)
       Await.result(export(Seq(PortCode("STN")))(startMinute, endMinute), 1.second) should ===(
-        FlightJsonResponseV1(
+        FlightJsonResponseV1_1(
           startMinute,
           endMinute,
           Seq(
-            FlightJsonV1("STN", "T1", "BA0002", "JFK", "John F Kennedy Intl", sched1.millisSinceEpoch,
+            FlightJsonV1_1("STN", "T1", "BA0002", "JFK", "John F Kennedy Intl", sched1.millisSinceEpoch,
               Option(sched1.addMinutes(1).millisSinceEpoch), Option(sched1.addMinutes(5).millisSinceEpoch),
-              Some(sched1.addMinutes(5).millisSinceEpoch), Some(sched1.addMinutes(9).millisSinceEpoch), Some(90), "On Chocks"),
-            FlightJsonV1("STN", "T1", "BA0003", "JFK", "John F Kennedy Intl", sched2.millisSinceEpoch,
+              Some(sched1.addMinutes(5).millisSinceEpoch), Some(sched1.addMinutes(9).millisSinceEpoch), Some(90), "On Chocks", Some(Map.empty)),
+            FlightJsonV1_1("STN", "T1", "BA0003", "JFK", "John F Kennedy Intl", sched2.millisSinceEpoch,
               None, None,
-              Some(sched2.addMinutes(5).millisSinceEpoch), Some(sched2.addMinutes(14).millisSinceEpoch), Some(190), "Scheduled"),
+              Some(sched2.addMinutes(5).millisSinceEpoch), Some(sched2.addMinutes(14).millisSinceEpoch), Some(190), "Scheduled", Some(Map.empty)),
           )
         )
       )

@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.drt.services.api.v1
+package uk.gov.homeoffice.drt.services.api.v1_1
 
 import org.apache.pekko.NotUsed
 import org.apache.pekko.actor.ActorSystem
@@ -10,7 +10,7 @@ import uk.gov.homeoffice.drt.models.CrunchMinute
 import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Queues.{EGate, EeaDesk, NonEeaDesk}
 import uk.gov.homeoffice.drt.ports.Terminals.{T1, Terminal}
-import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.{QueueJsonV1, QueueJsonResponseV1, SlotJsonV1}
+import uk.gov.homeoffice.drt.routes.api.v1_1.QueueApiV1_1Routes.{QueueJsonResponseV1_1, QueueJsonV1_1, SlotJsonV1_1}
 import uk.gov.homeoffice.drt.time.{SDate, SDateLike, UtcDate}
 
 import scala.concurrent.Await
@@ -42,7 +42,7 @@ class QueueExportTest extends AnyWordSpec with Matchers {
       ),
     )
 
-    val grouped = QueueExportV1.groupCrunchMinutesBy(2)(crunchMinutes, T1, Seq(EeaDesk, NonEeaDesk))
+    val grouped = QueueExportV1_1.groupCrunchMinutesBy(2)(crunchMinutes, T1, Seq(EeaDesk, NonEeaDesk))
 
     grouped should ===(Seq(
       min1.millisSinceEpoch -> Seq(
@@ -82,24 +82,24 @@ class QueueExportTest extends AnyWordSpec with Matchers {
           CrunchMinute(T1, EGate, start.addMinutes(30).millisSinceEpoch, 14d, 0d, 0, 0, None, None, None, None, None, None, None),
         ))
       }
-      val export = QueueExportV1.queues(source)
+      val export = QueueExportV1_1.queues(source)
       Await.result(export(Seq(PortCode("STN")), 15)(start, end), 1.second) should ===(
-        QueueJsonResponseV1(
+        QueueJsonResponseV1_1(
           start,
           end,
           15,
           Seq(
-            SlotJsonV1(start, PortCode("STN"), T1,
+            SlotJsonV1_1(start, PortCode("STN"), T1,
               Seq(
-                QueueJsonV1(EeaDesk, 10, 0),
-                QueueJsonV1(EGate, 14, 0),
-                QueueJsonV1(NonEeaDesk, 12, 0),
+                QueueJsonV1_1(EeaDesk, 10, 0),
+                QueueJsonV1_1(EGate, 14, 0),
+                QueueJsonV1_1(NonEeaDesk, 12, 0),
               )),
-            SlotJsonV1(start.addMinutes(15), PortCode("STN"), T1,
+            SlotJsonV1_1(start.addMinutes(15), PortCode("STN"), T1,
               Seq(
-                QueueJsonV1(EeaDesk, 10, 0),
-                QueueJsonV1(EGate, 14, 0),
-                QueueJsonV1(NonEeaDesk, 12, 0),
+                QueueJsonV1_1(EeaDesk, 10, 0),
+                QueueJsonV1_1(EGate, 14, 0),
+                QueueJsonV1_1(NonEeaDesk, 12, 0),
               ))
           )
         )

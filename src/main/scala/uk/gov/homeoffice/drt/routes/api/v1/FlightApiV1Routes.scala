@@ -21,23 +21,23 @@ import scala.util.{Failure, Success, Try}
 object FlightApiV1Routes extends DefaultJsonProtocol with FlightApiV1JsonFormats {
   private val log = LoggerFactory.getLogger(getClass)
 
-  case class FlightJson(arrivalPortCode: String,
-                        arrivalTerminal: String,
-                        code: String,
-                        originPortIata: String,
-                        originPortName: String,
-                        scheduledTime: Long,
-                        estimatedLandingTime: Option[Long],
-                        actualChocksTime: Option[Long],
-                        estimatedPcpStartTime: Option[Long],
-                        estimatedPcpEndTime: Option[Long],
-                        estimatedPaxCount: Option[Int],
-                        status: String,
+  case class FlightJsonV1(arrivalPortCode: String,
+                          arrivalTerminal: String,
+                          code: String,
+                          originPortIata: String,
+                          originPortName: String,
+                          scheduledTime: Long,
+                          estimatedLandingTime: Option[Long],
+                          actualChocksTime: Option[Long],
+                          estimatedPcpStartTime: Option[Long],
+                          estimatedPcpEndTime: Option[Long],
+                          estimatedPaxCount: Option[Int],
+                          status: String,
                        )
 
-  object FlightJson {
+  object FlightJsonV1 {
     def apply(portCode: PortCode, ar: Arrival)
-             (implicit sourceOrderPreference: List[FeedSource]): FlightJson = FlightJson(
+             (implicit sourceOrderPreference: List[FeedSource]): FlightJsonV1 = FlightJsonV1(
       arrivalPortCode = portCode.iata,
       arrivalTerminal = ar.Terminal.toString,
       code = ar.flightCodeString,
@@ -53,10 +53,10 @@ object FlightApiV1Routes extends DefaultJsonProtocol with FlightApiV1JsonFormats
     )
   }
 
-  case class FlightJsonResponse(periodStart: SDateLike, periodEnd: SDateLike, flights: Seq[FlightJson])
+  case class FlightJsonResponseV1(periodStart: SDateLike, periodEnd: SDateLike, flights: Seq[FlightJsonV1])
 
   def apply(enabledPorts: Iterable[PortCode],
-            dateRangeJsonForPorts: Seq[PortCode] => (SDateLike, SDateLike) => Future[FlightJsonResponse]): Route =
+            dateRangeJsonForPorts: Seq[PortCode] => (SDateLike, SDateLike) => Future[FlightJsonResponseV1]): Route =
     AuthByRole(ApiFlightAccess) {
       (get & path("flights")) {
         pathEnd(
