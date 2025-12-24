@@ -1,10 +1,12 @@
 package uk.gov.homeoffice.drt.services.api.v1_1.serialiser
 
 import spray.json.{DefaultJsonProtocol, JsObject, JsString, JsValue, RootJsonFormat, enrichAny}
-import uk.gov.homeoffice.drt.routes.api.v1_1.FlightApiV1_1Routes.{FlightJsonV1_1, FlightJsonResponseV1_1}
+import uk.gov.homeoffice.drt.routes.api.v1_1.FlightApiV1_1Routes.{FlightJsonResponseV1_1, FlightJsonV1_1, FlightQueuePaxCountJsonV1_1}
 import uk.gov.homeoffice.drt.time.{SDate, SDateLike}
 
 trait FlightApiV1_1JsonFormats extends DefaultJsonProtocol with CommonJsonFormatsV1_1 {
+  implicit val flightQueuePaxCountJsonFormat: RootJsonFormat[FlightQueuePaxCountJsonV1_1] = jsonFormat2(FlightQueuePaxCountJsonV1_1.apply)
+
   implicit object FlightJsonJsonFormat extends RootJsonFormat[FlightJsonV1_1] {
     override def write(obj: FlightJsonV1_1): JsValue = {
       val maybePax = obj.estimatedPaxCount.filter(_ > 0)
@@ -40,7 +42,7 @@ trait FlightApiV1_1JsonFormats extends DefaultJsonProtocol with CommonJsonFormat
           maybeSinceUnixEpochFromString(fields.get("estimatedPcpEndTime")),
           fields.get("estimatedPcpPaxCount").map(_.convertTo[Int]),
           fields.get("status").map(_.convertTo[String]).getOrElse(""),
-          fields.get("queuePaxCounts").map(_.convertTo[Map[String, Int]]),
+          fields.get("queuePaxCounts").map(_.convertTo[Seq[FlightQueuePaxCountJsonV1_1]]),
         )
       case unexpected => throw new Exception(s"Failed to parse FlightJson. Expected JsString. Got ${unexpected.getClass}")
     }

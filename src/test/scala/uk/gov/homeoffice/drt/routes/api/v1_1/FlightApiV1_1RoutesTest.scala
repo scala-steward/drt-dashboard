@@ -36,7 +36,7 @@ class FlightApiV1_1RoutesTest extends AnyWordSpec with Matchers with ScalatestRo
     Some(1600000000000L),
     Option(100),
     "scheduled",
-    Some(Map.empty),
+    Some(Seq.empty),
   )
 
   "Given a request for the flight status, I should see a JSON response containing the flight status" in {

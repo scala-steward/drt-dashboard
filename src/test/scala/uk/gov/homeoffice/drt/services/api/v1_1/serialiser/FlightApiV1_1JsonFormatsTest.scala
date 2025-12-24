@@ -15,7 +15,7 @@ class FlightApiV1_1JsonFormatsTest extends AnyWordSpec with Matchers with QueueA
       Some(SDate("2024-10-20T10:45").millisSinceEpoch),
       Some(150),
       "On Time",
-      Some(Map.empty),
+      Some(Seq.empty),
     )
     val json = queue.toJson
     val deserialised = json.convertTo[FlightJsonV1_1]
@@ -39,7 +39,7 @@ class FlightApiV1_1JsonFormatsTest extends AnyWordSpec with Matchers with QueueA
       estimatedPcpEndTime = Some(start.addMinutes(45).millisSinceEpoch),
       estimatedPaxCount = Some(150),
       status = "On Time",
-      queuePaxCounts = Some(Map.empty),
+      queuePaxCounts = Some(Seq.empty),
     )
     val response = FlightJsonResponseV1_1(start, end, Seq(flightJson))
     val json = response.toJson

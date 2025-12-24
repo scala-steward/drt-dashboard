@@ -1,6 +1,5 @@
 package uk.gov.homeoffice.drt.routes.api.v1_1
 
-import uk.gov.homeoffice.drt.ports.Queues
 import org.apache.pekko.http.scaladsl.model.StatusCodes.InternalServerError
 import org.apache.pekko.http.scaladsl.server.Directives._
 import org.apache.pekko.http.scaladsl.server.Route
@@ -9,7 +8,7 @@ import spray.json._
 import uk.gov.homeoffice.drt.arrivals.ApiFlightWithSplits
 import uk.gov.homeoffice.drt.auth.Roles.ApiFlightAccess
 import uk.gov.homeoffice.drt.authentication.User
-import uk.gov.homeoffice.drt.ports.{FeedSource, PortCode}
+import uk.gov.homeoffice.drt.ports.{FeedSource, PortCode, Queues}
 import uk.gov.homeoffice.drt.routes.services.AuthByRole
 import uk.gov.homeoffice.drt.services.AirportInfoService
 import uk.gov.homeoffice.drt.services.api.v1_1.serialiser.FlightApiV1_1JsonFormats
@@ -35,17 +34,19 @@ object FlightApiV1_1Routes extends DefaultJsonProtocol with FlightApiV1_1JsonFor
                             estimatedPcpEndTime: Option[Long],
                             estimatedPaxCount: Option[Int],
                             status: String,
-                            queuePaxCounts: Option[Map[String, Int]],
+                            queuePaxCounts: Option[Seq[FlightQueuePaxCountJsonV1_1]],
                        )
+
+  case class FlightQueuePaxCountJsonV1_1(queue: String, paxCount: Int)
 
   object FlightJsonV1_1 {
     def apply(portCode: PortCode, fws: ApiFlightWithSplits)
              (implicit sourceOrderPreference: List[FeedSource]): FlightJsonV1_1 = {
       val ar = fws.apiFlight
-      val queuePaxCounts: Option[Map[String, Int]] =
+      val queuePaxCounts: Option[Seq[FlightQueuePaxCountJsonV1_1]] =
         ApiSplitsToSplitRatio
           .paxPerQueueUsingBestSplitsAsRatio(fws, sourceOrderPreference)
-          .map(paxCounts => paxCounts.map { case (queue, count) => Queues.displayName(queue) -> count })
+          .map(_.map { case (queue, count) => FlightQueuePaxCountJsonV1_1(Queues.displayName(queue), count) }.toSeq)
       FlightJsonV1_1(
         arrivalPortCode = portCode.iata,
         arrivalTerminal = ar.Terminal.toString,

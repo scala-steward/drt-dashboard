@@ -13,7 +13,7 @@ import uk.gov.homeoffice.drt.ports.Queues.{EGate, EeaDesk}
 import uk.gov.homeoffice.drt.ports.SplitRatiosNs.SplitSources.ApiSplitsWithHistoricalEGateAndFTPercentages
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.{ApiPaxTypeAndQueueCount, FeedSource, LiveFeedSource, PortCode}
-import uk.gov.homeoffice.drt.routes.api.v1_1.FlightApiV1_1Routes.{FlightJsonResponseV1_1, FlightJsonV1_1}
+import uk.gov.homeoffice.drt.routes.api.v1_1.FlightApiV1_1Routes.{FlightJsonResponseV1_1, FlightJsonV1_1, FlightQueuePaxCountJsonV1_1}
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate, SDateLike}
 
 import scala.concurrent.duration.DurationInt
@@ -31,7 +31,7 @@ class FlightExportTest extends AnyWordSpec with Matchers {
 
   val egatePct = 0.75
   val eeaPct = 0.25
-  
+
   def splits(totalPax: Int): Splits = {
     Splits(
       Set(
@@ -64,10 +64,10 @@ class FlightExportTest extends AnyWordSpec with Matchers {
           Seq(
             FlightJsonV1_1("STN", "T1", "BA0002", "JFK", "John F Kennedy Intl", sched1.millisSinceEpoch,
               Option(sched1.addMinutes(1).millisSinceEpoch), Option(sched1.addMinutes(5).millisSinceEpoch),
-              Some(sched1.addMinutes(5).millisSinceEpoch), Some(sched1.addMinutes(9).millisSinceEpoch), Some(90), "On Chocks", Some(Map("e-Gates" -> 67, "EEA" -> 23))),
+              Some(sched1.addMinutes(5).millisSinceEpoch), Some(sched1.addMinutes(9).millisSinceEpoch), Some(90), "On Chocks", Some(Seq(FlightQueuePaxCountJsonV1_1("e-Gates", 67), FlightQueuePaxCountJsonV1_1("EEA", 23)))),
             FlightJsonV1_1("STN", "T1", "BA0003", "JFK", "John F Kennedy Intl", sched2.millisSinceEpoch,
               None, None,
-              Some(sched2.addMinutes(5).millisSinceEpoch), Some(sched2.addMinutes(14).millisSinceEpoch), Some(190), "Scheduled", Some(Map("e-Gates" -> 142, "EEA" -> 48))),
+              Some(sched2.addMinutes(5).millisSinceEpoch), Some(sched2.addMinutes(14).millisSinceEpoch), Some(190), "Scheduled", Some(Seq(FlightQueuePaxCountJsonV1_1("e-Gates", 142), FlightQueuePaxCountJsonV1_1("EEA", 48)))),
           )
         )
       )
