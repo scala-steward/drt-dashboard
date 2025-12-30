@@ -100,6 +100,9 @@ object Server {
   def dashboardHealthChecks(ports: Iterable[PortCode]): Seq[HealthCheck[_]] = Seq(
     QueueApiV1HealthCheck(SDate.now, ports),
     FlightApiV1HealthCheck(SDate.now, ports),
+
+    QueueApiV1_1HealthCheck(SDate.now, ports),
+    FlightApiV1_1HealthCheck(SDate.now, ports),
   )
 
   private val nonMlPaxPorts = Set("ABZ", "EXT", "HUY", "INV", "LHR", "MME", "NQY", "NWI", "PIK", "SEN")
