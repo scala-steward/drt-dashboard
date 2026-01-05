@@ -6,7 +6,7 @@ import uk.gov.homeoffice.drt.ports.PortCode
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.time.{SDate, SDateLike}
 
-trait CommonJsonFormats {
+trait CommonJsonFormatsV1 {
   implicit object SDateLikeISOJsonFormat extends RootJsonFormat[SDateLike] {
     override def read(json: JsValue): SDateLike = json match {
       case JsString(dateStr) => SDate(dateStr)

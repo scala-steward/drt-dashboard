@@ -30,7 +30,9 @@ import uk.gov.homeoffice.drt.ports._
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.routes._
 import uk.gov.homeoffice.drt.routes.api.v1.{AuthApiV1Routes, FlightApiV1Routes, QueueApiV1Routes}
-import uk.gov.homeoffice.drt.services.api.v1.{FlightExport, QueueExport}
+import uk.gov.homeoffice.drt.routes.api.v1_1.{AuthApiV1_1Routes, FlightApiV1_1Routes, QueueApiV1_1Routes}
+import uk.gov.homeoffice.drt.services.api.v1.{FlightExportV1, QueueExportV1}
+import uk.gov.homeoffice.drt.services.api.v1_1.{FlightExportV1_1, QueueExportV1_1}
 import uk.gov.homeoffice.drt.services.s3.S3Service
 import uk.gov.homeoffice.drt.services.{PassengerSummaryStreams, UserRequestService, UserService}
 import uk.gov.homeoffice.drt.time.{LocalDate, SDate, UtcDate}
@@ -98,6 +100,9 @@ object Server {
   def dashboardHealthChecks(ports: Iterable[PortCode]): Seq[HealthCheck[_]] = Seq(
     QueueApiV1HealthCheck(SDate.now, ports),
     FlightApiV1HealthCheck(SDate.now, ports),
+
+    QueueApiV1_1HealthCheck(SDate.now, ports),
+    FlightApiV1_1HealthCheck(SDate.now, ports),
   )
 
   private val nonMlPaxPorts = Set("ABZ", "EXT", "HUY", "INV", "LHR", "MME", "NQY", "NWI", "PIK", "SEN")
@@ -205,9 +210,16 @@ object Server {
           concat(
             pathPrefix("v1") {
               concat(
-                QueueApiV1Routes(config.enabledPorts, QueueExport.queues(queuesForPortAndDatesAndSlotSize)),
-                FlightApiV1Routes(config.enabledPorts, FlightExport.flights(uniqueFlightsStream)),
+                QueueApiV1Routes(config.enabledPorts, QueueExportV1.queues(queuesForPortAndDatesAndSlotSize)),
+                FlightApiV1Routes(config.enabledPorts, FlightExportV1.flights(uniqueFlightsStream)),
                 AuthApiV1Routes(keyCloakAuth.getToken),
+              )
+            },
+            pathPrefix("v1.1") {
+              concat(
+                QueueApiV1_1Routes(config.enabledPorts, QueueExportV1_1.queues(queuesForPortAndDatesAndSlotSize)),
+                FlightApiV1_1Routes(config.enabledPorts, FlightExportV1_1.flights(uniqueFlightsStream)),
+                AuthApiV1_1Routes(keyCloakAuth.getToken),
               )
             },
             PassengerRoutes(PassengerSummaryStreams(db).streamForGranularity),

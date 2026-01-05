@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.drt.routes.api.v1
+package uk.gov.homeoffice.drt.routes.api
 
 import org.apache.pekko.http.scaladsl.model.HttpRequest
 import org.apache.pekko.testkit.TestProbe

@@ -8,18 +8,18 @@ import uk.gov.homeoffice.drt.ports.Queues.Queue
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.ports.{PortCode, Queues}
-import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.{QueueJson, QueueJsonResponse, SlotJson}
+import uk.gov.homeoffice.drt.routes.api.v1.QueueApiV1Routes.{QueueJsonV1, QueueJsonResponseV1, SlotJsonV1}
 import uk.gov.homeoffice.drt.time.MilliDate.MillisSinceEpoch
 import uk.gov.homeoffice.drt.time.{SDate, SDateLike, UtcDate}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object QueueExport {
+object QueueExportV1 {
 
   private val defaultSlotSize = 15
 
   def queues(queuesForPortAndDatesAndSlotSize: (PortCode, Terminal, UtcDate, UtcDate) => Source[CrunchMinute, NotUsed])
-            (implicit ec: ExecutionContext, mat: Materializer): (Seq[PortCode], Int) => (SDateLike, SDateLike) => Future[QueueJsonResponse] =
+            (implicit ec: ExecutionContext, mat: Materializer): (Seq[PortCode], Int) => (SDateLike, SDateLike) => Future[QueueJsonResponseV1] =
     (portCodes, slotSize) => (start, end) => {
       if (slotSize % defaultSlotSize != 0) throw new IllegalArgumentException(s"Slot size must be a multiple of $defaultSlotSize minutes. Got $slotSize")
       val groupSize = slotSize / defaultSlotSize
@@ -39,8 +39,8 @@ object QueueExport {
                   val grouped = groupCrunchMinutesBy(groupSize)(byMinute, terminal, Queues.queueOrder)
                   grouped.map {
                     case (minute, queueMinutes) =>
-                      val queues = queueMinutes.map(QueueJson.apply)
-                      SlotJson(SDate(minute), portCode, terminal, queues)
+                      val queues = queueMinutes.map(QueueJsonV1.apply)
+                      SlotJsonV1(SDate(minute), portCode, terminal, queues)
                   }
                 }
             }
@@ -49,8 +49,8 @@ object QueueExport {
             .sequence(eventualPortQueueSlots)
             .map(_.flatten)
         }
-        .runWith(Sink.fold(Seq.empty[SlotJson])(_ ++ _))
-        .map(QueueJsonResponse(start, end, slotSize, _))
+        .runWith(Sink.fold(Seq.empty[SlotJsonV1])(_ ++ _))
+        .map(QueueJsonResponseV1(start, end, slotSize, _))
     }
 
   private def terminalMinutesByMinute[T <: MinuteLike[_, _]](minutes: Seq[T],

@@ -1,12 +1,14 @@
-package uk.gov.homeoffice.drt.services.api.v1.serialiser
+package uk.gov.homeoffice.drt.services.api.v1_1.serialiser
 
 import spray.json.{DefaultJsonProtocol, JsObject, JsString, JsValue, RootJsonFormat, enrichAny}
-import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.{FlightJsonResponseV1, FlightJsonV1}
+import uk.gov.homeoffice.drt.routes.api.v1_1.FlightApiV1_1Routes.{FlightJsonResponseV1_1, FlightJsonV1_1, FlightQueuePaxCountJsonV1_1}
 import uk.gov.homeoffice.drt.time.{SDate, SDateLike}
 
-trait FlightApiV1JsonFormats extends DefaultJsonProtocol with CommonJsonFormatsV1 {
-  implicit object FlightJsonJsonFormat extends RootJsonFormat[FlightJsonV1] {
-    override def write(obj: FlightJsonV1): JsValue = {
+trait FlightApiV1_1JsonFormats extends DefaultJsonProtocol with CommonJsonFormatsV1_1 {
+  implicit val flightQueuePaxCountJsonFormat: RootJsonFormat[FlightQueuePaxCountJsonV1_1] = jsonFormat2(FlightQueuePaxCountJsonV1_1.apply)
+
+  implicit object FlightJsonJsonFormat extends RootJsonFormat[FlightJsonV1_1] {
+    override def write(obj: FlightJsonV1_1): JsValue = {
       val maybePax = obj.estimatedPaxCount.filter(_ > 0)
       JsObject(
         "arrivalPortCode" -> obj.arrivalPortCode.toJson,
@@ -20,13 +22,14 @@ trait FlightApiV1JsonFormats extends DefaultJsonProtocol with CommonJsonFormatsV
         "estimatedPcpStartTime" -> maybePax.flatMap(_ => obj.estimatedPcpStartTime.map(SDate(_).toISOString)).toJson,
         "estimatedPcpEndTime" -> maybePax.flatMap(_ => obj.estimatedPcpEndTime.map(SDate(_).toISOString)).toJson,
         "estimatedPcpPaxCount" -> obj.estimatedPaxCount.toJson,
-        "status" -> obj.status.toJson
+        "status" -> obj.status.toJson,
+        "queuePaxCounts" -> obj.queuePaxCounts.toJson,
       )
     }
 
-    override def read(json: JsValue): FlightJsonV1 = json match {
+    override def read(json: JsValue): FlightJsonV1_1 = json match {
       case JsObject(fields) =>
-        FlightJsonV1(
+        FlightJsonV1_1(
           fields.get("arrivalPortCode").map(_.convertTo[String]).getOrElse(""),
           fields.get("arrivalTerminal").map(_.convertTo[String]).getOrElse(""),
           fields.get("code").map(_.convertTo[String]).getOrElse(""),
@@ -39,6 +42,7 @@ trait FlightApiV1JsonFormats extends DefaultJsonProtocol with CommonJsonFormatsV
           maybeSinceUnixEpochFromString(fields.get("estimatedPcpEndTime")),
           fields.get("estimatedPcpPaxCount").map(_.convertTo[Int]),
           fields.get("status").map(_.convertTo[String]).getOrElse(""),
+          fields.get("queuePaxCounts").map(_.convertTo[Seq[FlightQueuePaxCountJsonV1_1]]),
         )
       case unexpected => throw new Exception(s"Failed to parse FlightJson. Expected JsString. Got ${unexpected.getClass}")
     }
@@ -51,22 +55,22 @@ trait FlightApiV1JsonFormats extends DefaultJsonProtocol with CommonJsonFormatsV
     }
   }
 
-  implicit val flightJsonFormat: RootJsonFormat[FlightJsonV1] = jsonFormat12(FlightJsonV1.apply)
+  implicit val flightJsonFormat: RootJsonFormat[FlightJsonV1_1] = jsonFormat13(FlightJsonV1_1.apply)
 
-  implicit object jsonResponseFormat extends RootJsonFormat[FlightJsonResponseV1] {
+  implicit object jsonResponseFormat extends RootJsonFormat[FlightJsonResponseV1_1] {
 
-    override def write(obj: FlightJsonResponseV1): JsValue = JsObject(Map(
+    override def write(obj: FlightJsonResponseV1_1): JsValue = JsObject(Map(
       "periodStart" -> obj.periodStart.toJson,
       "periodEnd" -> obj.periodEnd.toJson,
       "flights" -> obj.flights.toJson,
     ))
 
-    override def read(json: JsValue): FlightJsonResponseV1 = json match {
+    override def read(json: JsValue): FlightJsonResponseV1_1 = json match {
       case JsObject(fields) =>
-        FlightJsonResponseV1(
+        FlightJsonResponseV1_1(
           periodStart = fields("periodStart").convertTo[SDateLike],
           periodEnd = fields("periodEnd").convertTo[SDateLike],
-          flights = fields("flights").convertTo[Seq[FlightJsonV1]],
+          flights = fields("flights").convertTo[Seq[FlightJsonV1_1]],
         )
       case unexpected => throw new Exception(s"Failed to parse FlightJsonResponse. Expected JsObject. Got ${unexpected.getClass}")
     }

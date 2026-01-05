@@ -1,4 +1,4 @@
-package uk.gov.homeoffice.drt.services.api.v1
+package uk.gov.homeoffice.drt.services.api.v1_1
 
 import org.apache.pekko.NotUsed
 import org.apache.pekko.stream.Materializer
@@ -8,14 +8,14 @@ import uk.gov.homeoffice.drt.arrivals.ApiFlightWithSplits
 import uk.gov.homeoffice.drt.ports.Terminals.Terminal
 import uk.gov.homeoffice.drt.ports.config.AirportConfigs
 import uk.gov.homeoffice.drt.ports.{FeedSource, PortCode}
-import uk.gov.homeoffice.drt.routes.api.v1.FlightApiV1Routes.{FlightJson, FlightJsonResponse}
+import uk.gov.homeoffice.drt.routes.api.v1_1.FlightApiV1_1Routes.{FlightJsonV1_1, FlightJsonResponseV1_1}
 import uk.gov.homeoffice.drt.time.{LocalDate, SDateLike}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-object FlightExport {
+object FlightExportV1_1 {
   def flights(flightsForDatesAndTerminals: (PortCode, List[FeedSource], LocalDate, LocalDate, Seq[Terminal]) => Source[ApiFlightWithSplits, NotUsed])
-             (implicit ec: ExecutionContext, mat: Materializer): Seq[PortCode] => (SDateLike, SDateLike) => Future[FlightJsonResponse] =
+             (implicit ec: ExecutionContext, mat: Materializer): Seq[PortCode] => (SDateLike, SDateLike) => Future[FlightJsonResponseV1_1] =
     portCodes => (start, end) => {
       val startLocal = start.toLocalDate
       val endLocal = end.toLocalDate
@@ -33,7 +33,7 @@ object FlightExport {
               .map {
                 _
                   .filter(_.apiFlight.hasPcpDuring(start, end, sourceOrder))
-                  .map(f => FlightJson(portCode, f.apiFlight))
+                  .map(f => FlightJsonV1_1(portCode, f))
               }
           }
 
@@ -41,7 +41,7 @@ object FlightExport {
             .sequence(eventualPortFlights)
             .map(_.flatten)
         }
-        .runWith(Sink.fold(Seq.empty[FlightJson])(_ ++ _))
-        .map(FlightJsonResponse(start, end, _))
+        .runWith(Sink.fold(Seq.empty[FlightJsonV1_1])(_ ++ _))
+        .map(FlightJsonResponseV1_1(start, end, _))
     }
 }
