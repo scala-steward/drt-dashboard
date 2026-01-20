@@ -1,10 +1,10 @@
 import net.nmoncho.sbt.dependencycheck.settings.{AnalyzerSettings, NvdApiSettings}
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v1364"
+lazy val drtLibVersion = "v1392"
 lazy val drtCiriumVersion = "v339"
 
-lazy val pekkoVersion = "1.1.5"
+lazy val pekkoVersion = "1.4.0"
 lazy val pekkoHttpVersion = "1.2.0"
 
 lazy val slickVersion = "3.5.2"
@@ -20,7 +20,7 @@ lazy val janinoVersion = "3.1.11"
 lazy val jacksonDatabindVersion = "2.16.1"
 lazy val notificationsJavaClientVersion = "5.2.1-RELEASE"
 lazy val scalaCsvVersion = "1.4.1"
-lazy val awsJava2SdkVersion = "2.21.46"
+lazy val awsJava2SdkVersion = "2.41.8"
 lazy val postgresqlVersion = "42.7.5"
 lazy val mockitoVersion = "4.11.0"
 lazy val poiScalaVersion ="0.25"
