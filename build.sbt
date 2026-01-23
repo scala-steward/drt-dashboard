@@ -1,7 +1,7 @@
 import net.nmoncho.sbt.dependencycheck.settings.{AnalyzerSettings, NvdApiSettings}
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v1392"
+lazy val drtLibVersion = "v1394"
 lazy val drtCiriumVersion = "v339"
 
 lazy val pekkoVersion = "1.4.0"
