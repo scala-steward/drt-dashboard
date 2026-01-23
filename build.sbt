@@ -1,36 +1,37 @@
 import net.nmoncho.sbt.dependencycheck.settings.{AnalyzerSettings, NvdApiSettings}
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v1364"
+lazy val drtLibVersion = "v1394"
 lazy val drtCiriumVersion = "v339"
 
-lazy val pekkoVersion = "1.1.5"
-lazy val pekkoHttpVersion = "1.2.0"
+lazy val pekkoVersion = "1.4.0"
+lazy val pekkoHttpVersion = "1.3.0"
 
 lazy val slickVersion = "3.5.2"
 
-lazy val jodaTimeVersion = "2.12.7"
-lazy val scalaLoggingVersion = "3.9.5"
-lazy val logBackClassicVersion = "1.4.14"
+lazy val jodaTimeVersion = "2.14.0"
+lazy val scalaLoggingVersion = "3.9.6"
+lazy val logBackClassicVersion = "1.5.24"
 lazy val scalaTagsVersion = "0.13.1"
-lazy val specs2Version = "4.20.9"
+lazy val specs2Version = "4.23.0"
 lazy val logBackJsonVersion = "0.1.5"
 lazy val scalaTestVersion = "3.2.19"
-lazy val janinoVersion = "3.1.11"
-lazy val jacksonDatabindVersion = "2.16.1"
-lazy val notificationsJavaClientVersion = "5.2.1-RELEASE"
-lazy val scalaCsvVersion = "1.4.1"
-lazy val awsJava2SdkVersion = "2.21.46"
-lazy val postgresqlVersion = "42.7.5"
-lazy val mockitoVersion = "4.11.0"
-lazy val poiScalaVersion ="0.25"
-lazy val h2Version = "2.3.232"
+lazy val janinoVersion = "3.1.12"
+lazy val jacksonDatabindVersion = "2.18.2"
+lazy val notificationsJavaClientVersion = "6.0.0-RELEASE"
+lazy val scalaCsvVersion = "2.0.0"
+lazy val awsJava2SdkVersion = "2.41.10"
+lazy val postgresqlVersion = "42.7.9"
+lazy val mockitoVersion = "5.21.0"
+//lazy val poiScalaVersion ="0.25"
+lazy val poiScalaVersion ="2.1.1"
+lazy val h2Version = "2.4.240"
 
 lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
       organization := "uk.gov.homeoffice.drt",
-      scalaVersion := "2.13.15"
+      scalaVersion := "2.13.18"
     )),
 
     version := sys.env.getOrElse("DRONE_BUILD_NUMBER", sys.env.getOrElse("BUILD_ID", "DEV")),
