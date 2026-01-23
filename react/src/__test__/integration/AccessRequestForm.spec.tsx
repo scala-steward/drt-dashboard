@@ -23,7 +23,15 @@ function submitIsNotDisabled() {
     expect(screen.getByText('Request access').closest('button')).not.toHaveAttribute('disabled');
 }
 
-describe.skip('<AccessRequestForm />', () => {
+function lineManagerIsDisabled() {
+    expect(screen.queryByLabelText('Enter your line manager\'s email address', {selector: 'input'})).toBeNull();
+}
+
+function lineManagerIsNotDisabled() {
+    expect(screen.queryByLabelText('Enter your line manager\'s email address', {selector: 'input'})).not.toBeNull();
+}
+
+describe('<AccessRequestForm />', () => {
     it('has a disabled submit button by default, and becomes enabled when a port is selected and the declaration is greed', () => {
         
         act(() => {
@@ -33,6 +41,7 @@ describe.skip('<AccessRequestForm />', () => {
         submitIsDisabled();
 
         fireEvent.click(screen.getByText('LHR'));
+        fireEvent.click(screen.getByText('No'));
         fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
 
         submitIsNotDisabled();
@@ -44,6 +53,7 @@ describe.skip('<AccessRequestForm />', () => {
         });
 
         fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
+        fireEvent.click(screen.getByText('No'));
         fireEvent.click(screen.getByText('LHR'));
 
         submitIsNotDisabled();
@@ -53,16 +63,17 @@ describe.skip('<AccessRequestForm />', () => {
         submitIsDisabled();
     });
 
-    it('enables the submit button when "all ports" is selected and disables it when it is deselected', () => {
+    it('enables the submit button when "all regions" is selected and disables it when it is deselected', () => {
         act(() => {
             render(<AccessRequestForm regions={[{name: 'Heathrow', ports: ['LHR']}]} teamEmail={"test@test.com"}/>);
         });
 
-        fireEvent.click(screen.getByText('All ports'));
+        fireEvent.click(screen.getByText('All regions'));
+        fireEvent.click(screen.getByText('No'));
         fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
 
         submitIsNotDisabled();
-        fireEvent.click(screen.getByText('All ports'));
+        fireEvent.click(screen.getByText('All regions'));
 
         submitIsDisabled();
     });
@@ -73,19 +84,76 @@ describe.skip('<AccessRequestForm />', () => {
         });
 
         act(() => {
-            fireEvent.click(screen.getByText('All ports'));
+            fireEvent.click(screen.getByText('All regions'));
         });
         submitIsDisabled();
 
         act(() => {
-            fireEvent.click(screen.getByText('All ports'));
+            fireEvent.click(screen.getByText('All regions'));
+            fireEvent.click(screen.getByText('No'));
             fireEvent.click(screen.getByText('LHR'));
         });
         submitIsDisabled();
     });
 
+    it('disables the submit button when staffing figures is not selected', () => {
+        act(() => {
+            render(<AccessRequestForm regions={[{name: 'Heathrow', ports: ['LHR']}]} teamEmail={"test@test.com"}/>);
+        });
 
-    it('displays a thank you message on submitting the form', async () => {
+        act(() => {
+            fireEvent.click(screen.getByText('All regions'));
+            fireEvent.click(screen.getByText('LHR'));
+        });
+        submitIsDisabled();
+    });
+
+    it('displays the line manager textbox input when "yes" is selected for the staffing figures radio group', () => {
+        act(() => {
+            render(<AccessRequestForm regions={[{name: 'Heathrow', ports: ['LHR']}]} teamEmail={"test@test.com"} />);
+        });
+
+        lineManagerIsDisabled();
+
+        act(() => {
+            fireEvent.click(screen.getByText('Yes'));
+        });
+
+        lineManagerIsNotDisabled();
+
+        act(() => {
+            fireEvent.click(screen.getByText('No'));
+        });
+
+        lineManagerIsDisabled();
+    })
+
+    it('displays the line manager textbox input when multiple regions selected', () => {
+        act(() => {
+            render(<AccessRequestForm regions={[{name: 'Heathrow', ports: ['LHR']}, {name: 'Luton', ports: ['LTN']}]} teamEmail={"test@test.com"} />);
+        });
+
+        lineManagerIsDisabled();
+
+        act(() => {
+            fireEvent.click(screen.getByText('No'));
+            fireEvent.click(screen.getByText('All regions'));
+        });
+
+        lineManagerIsNotDisabled();
+
+        act(() => {
+            // @ts-ignore
+            fireEvent.change(screen.queryByLabelText('Enter your line manager\'s email address', {selector: 'input'}),
+                {target: {value: 'test@test.com'}});
+            fireEvent.click(screen.getByText('I understand and agree with the above declarations'));
+        });
+
+        submitIsNotDisabled();
+    })
+
+
+    it.skip('displays a thank you message on submitting the form', async () => {
         act(() => {
             render(<AccessRequestForm regions={[{name: 'Heathrow', ports: ['LHR']}]} teamEmail={"test@test.com"}/>);
         });

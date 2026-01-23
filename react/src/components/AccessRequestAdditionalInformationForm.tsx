@@ -25,11 +25,8 @@ interface IProps {
     rccOption: boolean;
     rccRegions: string[];
     ports: string[];
-    manageStaff: boolean;
     portOrRegionText: string;
     setPortOrRegionText: ((value: (((prevState: string) => string) | string)) => void)
-    staffText: string;
-    setStaffText: ((value: (((prevState: string) => string) | string)) => void)
     saveCallback: () => void;
 }
 
@@ -48,51 +45,12 @@ export default function AccessRequestAdditionalInformationForm(props: IProps) {
         props.setPortOrRegionText(event.target.value);
     };
 
-    const handleStaffTextChange = (event:any) => {
-        props.setStaffText(event.target.value);
-    };
-
-    const rccOptionQuestions = () => {
-        return <List sx={{width: '100%', bgcolor: 'background.paper'}}>
-            <ListItem alignItems="flex-start">
-                {(props.rccRegions.length > 1) ?
-                    <Typography align="left" id="modal-modal-title" sx={{mt: 2}}>
-                        Please let us know why you need access to more than one region
-                        <TextField style={{width: "100%"}}
-                                   id="outlined-basic"
-                                   label="Enter text"
-                                   variant="outlined"
-                                   required
-                                   value={props.portOrRegionText}
-                                   onChange={handlePortOrRegionTextChange}/>
-                    </Typography>
-                    : <span/>
-                }
-            </ListItem>
-            <ListItem alignItems="flex-start">
-                {(props.manageStaff) ?
-                    <Typography align="left" id="modal-modal-description" sx={{mt: 2}}>
-                        Please let us know why you need to edit staffing
-                        <TextField style={{width: "100%"}}
-                                   id="outlined-basic"
-                                   label="Enter text"
-                                   variant="outlined"
-                                   required
-                                   value={props.staffText}
-                                   onChange={handleStaffTextChange}/>
-                    </Typography>
-                    : <span/>
-                }
-            </ListItem>
-        </List>
-    }
-
-    const portOptionQuestions = () => {
+    const additionalQuestions = () => {
         return <List sx={{width: '100%', bgcolor: 'background.paper'}}>
             <ListItem alignItems="flex-start">
                 {(props.ports.length > 1) ?
                     <Typography align="left" id="modal-modal-description" sx={{mt: 2}}>
-                        Please let us know why you need access to more than one port
+                        Why do you need data access to more than one port or region?
                         <TextField style={{width: "100%"}}
                                    id="outlined-basic"
                                    label="Enter text"
@@ -105,29 +63,12 @@ export default function AccessRequestAdditionalInformationForm(props: IProps) {
                     : <span/>
                 }
             </ListItem>
-            <ListItem alignItems="flex-start">
-                {(props.ports.length > 0 && props.manageStaff) ?
-                    <Typography align="left" id="modal-modal-description" sx={{mt: 2}}>
-                        Please let us know why you need to edit staffing
-                        <TextField style={{width: "100%"}}
-                                   id="outlined-basic"
-                                   label="Enter text"
-                                   variant="outlined"
-                                   required
-                                   value={props.staffText}
-                                   onChange={handleStaffTextChange}/>
-                    </Typography>
-                    : <span/>
-                }
-            </ListItem>
         </List>
     }
 
     const enableSubmitRequest = () => {
-        if (((props.rccOption && props.rccRegions.length > 1) || (!props.rccOption && props.ports.length > 1)) && props.manageStaff)
-            return props.portOrRegionText.length > 1 && props.staffText.length > 1
-        else if (props.manageStaff)
-            return props.staffText.length > 1
+        if (((props.rccOption && props.rccRegions.length > 1) || (!props.rccOption && props.ports.length > 1)))
+            return props.portOrRegionText.length > 1
         else if (props.rccRegions.length > 1 || props.ports.length > 1)
             return props.portOrRegionText.length > 1
     }
@@ -142,9 +83,9 @@ export default function AccessRequestAdditionalInformationForm(props: IProps) {
                     aria-describedby="form-modal-description">
                     <Box sx={style}>
                         <Typography align="left" id="form-modal-title" variant="h6" component="h2">
-                            More information required
+                            More information needed
                         </Typography>
-                        {props.rccOption ? rccOptionQuestions() : portOptionQuestions()}
+                        {additionalQuestions()}
                         <div style={{float: 'left'}}>
                             <Button variant="contained"
                                     disabled={!enableSubmitRequest()}
