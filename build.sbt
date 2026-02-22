@@ -11,7 +11,7 @@ lazy val slickVersion = "3.5.2"
 
 lazy val jodaTimeVersion = "2.14.0"
 lazy val scalaLoggingVersion = "3.9.6"
-lazy val logBackClassicVersion = "1.5.24"
+lazy val logBackClassicVersion = "1.5.32"
 lazy val scalaTagsVersion = "0.13.1"
 lazy val specs2Version = "4.23.0"
 lazy val logBackJsonVersion = "0.1.5"
