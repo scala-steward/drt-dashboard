@@ -1,7 +1,7 @@
 import net.nmoncho.sbt.dependencycheck.settings.{AnalyzerSettings, NvdApiSettings}
 import sbt.Keys.resolvers
 
-lazy val drtLibVersion = "v1394"
+lazy val drtLibVersion = "v1397"
 lazy val drtCiriumVersion = "v339"
 
 lazy val pekkoVersion = "1.4.0"
@@ -83,6 +83,7 @@ lazy val root = (project in file(".")).
     dockerExposedPorts ++= Seq(8081),
 
   )
+  .settings(SbtUpdatesSettings.sbtUpdatesSettings *)
   .enablePlugins(DockerPlugin)
   .enablePlugins(JavaAppPackaging)
 
