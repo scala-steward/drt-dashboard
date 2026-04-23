@@ -165,27 +165,6 @@ case class ArrivalUpdatesHealthCheck(minutesBeforeNow: Int, minutesAfterNow: Int
   override def url: String = s"/health-check/received-arrival-updates/${start().toISOString}/${end().toISOString}/$minimumFlights/${updateThreshold.toMinutes}"
 }
 
-case class CiriumFeedHealthCheck(
-  now: () => SDateLike,
-  lastSeenCiriumTimestamp: () => Option[SDateLike],
-  maxAgeMinutes: Int = 5
-) extends HealthCheck {
-  override def name: String = "cirium-feed"
-  override def check: Future[HealthCheckResult] = {
-    val result = lastSeenCiriumTimestamp()
-      .map { ts =>
-        val ageMinutes = (now().millisSinceEpoch - ts.millisSinceEpoch) / 60000
-        if (ageMinutes <= maxAgeMinutes)
-          HealthCheckResult.healthy(s"Cirium feed OK. Last update $ageMinutes minutes ago.")
-        else
-          HealthCheckResult.unhealthy(s"Cirium feed stale. Last update $ageMinutes minutes ago.")
-      }
-      .getOrElse(HealthCheckResult.unhealthy("No Cirium feed data received yet.")
-      )
-    Future.successful(result)
-  }
-}
-
 trait IncidentPriority {
   val name: String
 }
