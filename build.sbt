@@ -9,7 +9,7 @@ lazy val pekkoHttpVersion = "1.3.0"
 
 lazy val slickVersion = "3.5.2"
 
-lazy val jodaTimeVersion = "2.14.0"
+lazy val jodaTimeVersion = "2.14.2"
 lazy val scalaLoggingVersion = "3.9.6"
 lazy val logBackClassicVersion = "1.5.24"
 lazy val scalaTagsVersion = "0.13.1"
