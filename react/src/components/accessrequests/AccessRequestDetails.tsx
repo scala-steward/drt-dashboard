@@ -13,7 +13,6 @@ import Grid from "@mui/material/Grid";
 import axios from "axios";
 import ApiClient from "../../services/ApiClient";
 import ConfirmAccessRequest from "./ConfirmAccessRequest";
-import {KeyCloakUser} from './AccessRequestCommon';
 import moment from "moment-timezone";
 
 export interface UserRequestedAccessData {
@@ -54,42 +53,49 @@ interface IProps {
 
 export default function AccessRequestDetails(props: IProps) {
   const [requestPosted, setRequestPosted] = React.useState(false)
-  const [user, setUser] = React.useState({} as KeyCloakUser);
-  const [receivedUserDetails, setReceivedUserDetails] = React.useState(false);
+  const [failedEmails, setFailedEmails] = React.useState([] as string[])
   const [message, setMessage] = React.useState("");
   const handleClose = () => {
     props.setOpenModal(false)
-    setReceivedUserDetails(false)
   }
 
-  const updateState = (keyCloakUser: KeyCloakUser) => {
-    setReceivedUserDetails(true)
-    setUser(keyCloakUser)
-  }
-
-  const keyCloakUserDetails = () => {
+  const approveAccessRequest = async () => {
     setMessage("Granted")
-    axios.get(ApiClient.userDetailsEndpoint + '/' + props.accessRequest.email)
-      .then(response => updateState(response.data as KeyCloakUser))
+    setFailedEmails([])
+    try {
+      const response = await axios.get(ApiClient.userDetailsEndpoint + '/' + props.accessRequest.email)
+      const keyCloakUser = response.data
+
+      await axios.post(ApiClient.addUserToGroupEndpoint + '/' + keyCloakUser.id, props.accessRequest)
+
+      setRequestPosted(true)
+      props.setReceivedUserDetails(false)
+    } catch (error) {
+      console.error(`Failed to approve access request for ${props.accessRequest.email}`, error)
+      setFailedEmails([props.accessRequest.email])
+      setRequestPosted(true)
+    }
   }
 
-  const revertAccessRequest = () => {
+  const revertAccessRequest = async () => {
     setMessage("Revert")
-    axios.post(ApiClient.updateUserRequestEndpoint + "/" + "Requested", props.accessRequest)
-      .then(() => setRequestPosted(true))
-      .then(() => setReceivedUserDetails(false))
+    setFailedEmails([])
+    try {
+      await axios.post(ApiClient.updateUserRequestEndpoint + "/" + "Requested", props.accessRequest)
+      setRequestPosted(true)
+      props.setReceivedUserDetails(false)
+    } catch (error) {
+      console.error(`Failed to revert access request for ${props.accessRequest.email}`, error)
+      setFailedEmails([props.accessRequest.email])
+      setRequestPosted(true)
+    }
   }
 
   React.useEffect(() => {
-    if (receivedUserDetails && (user.id)) {
-      axios.post(ApiClient.addUserToGroupEndpoint + '/' + user.id, props.accessRequest)
-        .then(() => setRequestPosted(true))
-        .then(() => setReceivedUserDetails(false))
-    }
     if (!props.receivedUserDetails) {
       props.setOpenModal(false)
     }
-  }, [user, receivedUserDetails]);
+  }, [props.receivedUserDetails, props.setOpenModal]);
 
   const accessButton = () => {
     switch (props.status) {
@@ -100,7 +106,7 @@ export default function AccessRequestDetails(props: IProps) {
         return <Button style={{float: 'initial'}} onClick={revertAccessRequest}>Revert</Button>
 
       case "" :
-        return <Button style={{float: 'initial'}} onClick={keyCloakUserDetails}>Approve</Button>
+        return <Button style={{float: 'initial'}} onClick={approveAccessRequest}>Approve</Button>
     }
   }
 
@@ -177,10 +183,10 @@ export default function AccessRequestDetails(props: IProps) {
               </Table>
             </TableContainer>
             <Grid container>
-              <Grid xs={8}>
+              <Grid item xs={8}>
                 {accessButton()}
               </Grid>
-              <Grid xs={4}>
+              <Grid item xs={4}>
                 <Button style={{float: 'right'}} onClick={handleClose}>Close</Button>
               </Grid>
             </Grid>
@@ -199,7 +205,8 @@ export default function AccessRequestDetails(props: IProps) {
                             setReceivedUserDetails={props.setReceivedUserDetails}
                             openModel={props.openModal}
                             setOpenModel={props.setOpenModal}
-                            emails={[props.accessRequest.email ?? user.email]}/> : viewUserDetailTable()
+                            emails={failedEmails.length > 0 ? [] : [props.accessRequest.email]}
+                            failedEmails={failedEmails}/> : viewUserDetailTable()
   }
 
   return (

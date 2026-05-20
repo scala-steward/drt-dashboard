@@ -33,6 +33,54 @@ object UserRoutes extends db.UserAccessRequestJsonSupport
   with KeyCloakAuthTokenParserProtocol {
   val log: Logger = LoggerFactory.getLogger(getClass)
 
+  private def userRowForApprovedRequest(userRequestedAccessData: ClientUserRequestedAccessData): db.UserRow =
+    db.UserRow(
+      id = userRequestedAccessData.email,
+      username = userRequestedAccessData.email,
+      email = userRequestedAccessData.email,
+      latest_login = new Timestamp(DateTime.now().getMillis),
+      inactive_email_sent = None,
+      revoked_access = None,
+      drop_in_notification_at = None,
+      created_at = Some(new Timestamp(DateTime.now().getMillis)),
+    )
+
+  private def groupsToAdd(userRequestedAccessData: ClientUserRequestedAccessData): Seq[String] = {
+    val requestedGroups =
+      if (userRequestedAccessData.allPorts) {
+        val allPortsGroups = Seq("All Port Access")
+        if (userRequestedAccessData.accountType == "rccu") allPortsGroups :+ "All RCC Access" else allPortsGroups
+      } else {
+        userRequestedAccessData.getListOfPortOrRegion
+      }
+
+    val staffGroups = if (userRequestedAccessData.staffEditing) Seq("Staff Admin") else Seq.empty
+
+    (requestedGroups ++ Seq("Border Force") ++ staffGroups).distinct
+  }
+
+  private def grantUserAccess(id: String,
+                              userRequestedAccessData: ClientUserRequestedAccessData,
+                              keycloakService: IKeycloakService,
+                              userRequestService: UserRequestService,
+                              userService: UserService,
+                              notifications: EmailNotifications,
+                              clientConfig: ClientConfig,
+                             )
+                             (implicit ec: ExecutionContextExecutor): Future[String] = {
+    val addGroups = Future.sequence(groupsToAdd(userRequestedAccessData).map(group => keycloakService.addUserToGroup(id, group)))
+
+    addGroups.flatMap { _ =>
+      for {
+        _ <- userRequestService.updateUserRequest(userRequestedAccessData, "Approved")
+        _ <- userService.upsertUser(userRowForApprovedRequest(userRequestedAccessData), Some("Approved"))
+      } yield {
+        notifications.sendAccessGranted(userRequestedAccessData, clientConfig.domain, clientConfig.teamEmail)
+        s"User ${userRequestedAccessData.email} update port ${userRequestedAccessData.portOrRegionText}"
+      }
+    }
+  }
+
   def apply(clientConfig: ClientConfig,
             userService: UserService,
             userRequestService: UserRequestService,
@@ -41,13 +89,25 @@ object UserRoutes extends db.UserAccessRequestJsonSupport
            )
            (implicit ec: ExecutionContextExecutor, system: ActorSystem[Nothing]): Route = {
 
-    implicit val mat = Materializer.matFromSystem(system.classicSystem)
+    implicit val mat: Materializer = Materializer.matFromSystem(system.classicSystem)
     val sendHttpRequest: HttpRequest => Future[HttpResponse] = request => Http().singleRequest(request)
 
-    def getKeyCloakService(accessToken: String): KeycloakService = {
+    def getKeyCloakService(accessToken: String): IKeycloakService = {
       val keyClockClient = KeyCloakClient(accessToken, keyCloakUrl, sendHttpRequest)
       KeycloakService(keyClockClient)
     }
+
+    apply(clientConfig, userService, userRequestService, notifications, keyCloakUrl, getKeyCloakService)
+  }
+
+  def apply(clientConfig: ClientConfig,
+            userService: UserService,
+            userRequestService: UserRequestService,
+            notifications: EmailNotifications,
+            keyCloakUrl: String,
+            keyCloakServiceForToken: String => IKeycloakService,
+           )
+           (implicit ec: ExecutionContextExecutor): Route = {
 
     concat(
       (get & path("user")) {
@@ -126,7 +186,7 @@ object UserRoutes extends db.UserAccessRequestJsonSupport
                 headerValueByName("X-Forwarded-Email") { _ =>
                   headerValueByName("X-Forwarded-Access-Token") { xAuthToken =>
                     log.info(s"request to get user details $keyCloakUrl/data/userDetails/$userEmail}")
-                    val keycloakService = getKeyCloakService(xAuthToken)
+                    val keycloakService = keyCloakServiceForToken(xAuthToken)
                     val keyCloakUser: Future[KeyCloakUser] =
                       keycloakService.getUserForEmail(userEmail).map {
                         case Some(keyCloakUser) => keyCloakUser
@@ -146,34 +206,22 @@ object UserRoutes extends db.UserAccessRequestJsonSupport
                 headerValueByName("X-Forwarded-Email") { _ =>
                   headerValueByName("X-Forwarded-Access-Token") { xAuthToken =>
                     entity(as[ClientUserRequestedAccessData]) { userRequestedAccessData =>
-                      val keycloakService = getKeyCloakService(xAuthToken)
-                      if (userRequestedAccessData.portsRequested.nonEmpty || userRequestedAccessData.regionsRequested.nonEmpty) {
-                        if (userRequestedAccessData.allPorts) {
-                          keycloakService.addUserToGroup(id, "All Port Access")
-                          if (userRequestedAccessData.accountType == "rccu") {
-                            keycloakService.addUserToGroup(id, "All RCC Access")
-                          }
-                        } else {
-                          Future.sequence(userRequestedAccessData.getListOfPortOrRegion.map { port =>
-                            keycloakService.addUserToGroup(id, port)
-                          })
+                      val keycloakService = keyCloakServiceForToken(xAuthToken)
+                      if (userRequestedAccessData.allPorts || userRequestedAccessData.portsRequested.nonEmpty || userRequestedAccessData.regionsRequested.nonEmpty) {
+                        onComplete(grantUserAccess(
+                          id,
+                          userRequestedAccessData,
+                          keycloakService,
+                          userRequestService,
+                          userService,
+                          notifications,
+                          clientConfig,
+                        )) {
+                          case Success(value) => complete(value)
+                          case Failure(ex) =>
+                            log.error(s"Failed to approve access request for ${userRequestedAccessData.email}", ex)
+                            complete(InternalServerError, s"An error occurred: ${ex.getMessage}")
                         }
-                        keycloakService.addUserToGroup(id, "Border Force")
-                        if (userRequestedAccessData.staffEditing) {
-                          keycloakService.addUserToGroup(id, "Staff Admin")
-                        }
-                        userRequestService.updateUserRequest(userRequestedAccessData, "Approved")
-                        notifications.sendAccessGranted(userRequestedAccessData, clientConfig.domain, clientConfig.teamEmail)
-                        userService.upsertUser(
-                          db.UserRow(id = userRequestedAccessData.email,
-                            username = userRequestedAccessData.email,
-                            email = userRequestedAccessData.email,
-                            latest_login = new Timestamp(DateTime.now().getMillis),
-                            inactive_email_sent = None,
-                            revoked_access = None,
-                            drop_in_notification_at = None,
-                            created_at = Some(new Timestamp(DateTime.now().getMillis))), Some("Approved"))
-                        complete(s"User ${userRequestedAccessData.email} update port ${userRequestedAccessData.portOrRegionText}")
                       } else {
                         complete("No port or region requested")
                       }
@@ -202,4 +250,3 @@ object UserRoutes extends db.UserAccessRequestJsonSupport
     )
   }
 }
-

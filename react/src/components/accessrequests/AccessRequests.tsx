@@ -26,6 +26,9 @@ export default function AccessRequests() {
   const [selectedRowDetails, setSelectedRowDetails] = React.useState([] as UserRequestedAccessData[]);
   const [selectedRowIds, setSelectedRowIds] = React.useState<GridRowId[]>([]);
   const [users, setUsers] = React.useState([] as KeyCloakUser[]);
+  const [failedApprovalEmails, setFailedApprovalEmails] = React.useState([] as string[]);
+  const [dismissedEmails, setDismissedEmails] = React.useState([] as string[]);
+  const [failedDismissalEmails, setFailedDismissalEmails] = React.useState([] as string[]);
   const [requestPosted, setRequestPosted] = React.useState(false)
   const [dismissedPosted, setDismissedPosted] = React.useState(false)
   const [statusFilterValue, setStatusFilterValue] = React.useState("Requested")
@@ -41,14 +44,24 @@ export default function AccessRequests() {
     setRowsData(response.data as GridRowModel[])
   }
 
-  const approveAndUpdateUserDetailsState = (response: AxiosResponse) => {
-    approveUserAccessRequest(response.data as KeyCloakUser)
-    setUsers(oldUsers => [...oldUsers, response.data as KeyCloakUser]);
-  }
+  const approveUserAccessRequest = async (email: string): Promise<KeyCloakUser | null> => {
+    const accessRequest = findRequestByEmail(email)
 
-  const approveAndUpdateKeyCloakUserDetails = (emails: string[]) => {
-    emails.map(email => axios.get(ApiClient.userDetailsEndpoint + '/' + email)
-      .then(response => approveAndUpdateUserDetailsState(response)))
+    if (!accessRequest) {
+      return null
+    }
+
+    try {
+      const response = await axios.get(ApiClient.userDetailsEndpoint + '/' + email)
+      const user = response.data as KeyCloakUser
+
+      await axios.post(ApiClient.addUserToGroupEndpoint + '/' + user.id, accessRequest)
+
+      return user
+    } catch (error) {
+      console.error(`Failed to approve access request for ${email}`, error)
+      return null
+    }
   }
 
   const requestAccessRequests = () => {
@@ -68,14 +81,30 @@ export default function AccessRequests() {
     setOpenModal(true)
   }
 
-  const approveSelectedUserRequests = () => {
-    setUsers([{} as KeyCloakUser]);
+  const selectedEmails = (): string[] => selectedRowIds
+    .map(s => findAccessRequestByRowId(s)?.email)
+    .filter((s): s is string => !!s)
 
-    const emails: string[] = selectedRowIds
-      .map(s => findAccessRequestByRowId(s)?.email)
-      .filter((s): s is string => !!s);
+  const actionResults = async <T,>(tasks: {email: string, task: Promise<T | null>}[]): Promise<{successful: T[], failedEmails: string[]}> => {
+    const results = await Promise.all(tasks.map(async ({email, task}) => ({email, value: await task})))
 
-    approveAndUpdateKeyCloakUserDetails(emails)
+    return results.reduce<{successful: T[], failedEmails: string[]}>((outcome, result) => result.value === null
+      ? {...outcome, failedEmails: [...outcome.failedEmails, result.email]}
+      : {...outcome, successful: [...outcome.successful, result.value]}, {successful: [], failedEmails: []})
+  }
+
+  const approveSelectedUserRequests = async () => {
+    setUsers([]);
+    setFailedApprovalEmails([])
+
+    const {successful: approvedUsers, failedEmails} = await actionResults(selectedEmails().map(email => ({
+      email,
+      task: approveUserAccessRequest(email),
+    })))
+
+    setUsers(approvedUsers)
+    setFailedApprovalEmails(failedEmails)
+    setRequestPosted(approvedUsers.length + failedEmails.length > 0)
   }
 
   const addSelectedRowDetails = (srd: UserRequestedAccessData) => {
@@ -83,7 +112,6 @@ export default function AccessRequests() {
   }
 
   const addSelectedRows = (ids: GridRowSelectionModel) => {
-    console.log(ids);
     setSelectedRowDetails([])
     if (ids) {
       ids.map(id => findAccessRequestByRowId(id))
@@ -97,14 +125,6 @@ export default function AccessRequests() {
     return userRequestList.find(sr => sr.email == email)
   }
 
-  const approveUserAccessRequest = (user: KeyCloakUser) => {
-    const email = findRequestByEmail((user as KeyCloakUser).email)
-    if (email) {
-      axios.post(ApiClient.addUserToGroupEndpoint + '/' + (user as KeyCloakUser).id, email)
-        .then(response => console.log("User addUserToGroupEndpoint" + response))
-        .then(() => setRequestPosted(true))
-    }
-  }
 
   React.useEffect(() => {
     if (!receivedUserDetails) {
@@ -145,11 +165,26 @@ export default function AccessRequests() {
     </Box>
   }
 
-  const dismissSelectedAccessRequests = () => {
-    selectedRowDetails
-      .map(selectedRowDetail => axios.post(ApiClient.updateUserRequestEndpoint + "/" + "Dismissed", selectedRowDetail)
-        .then(response => console.log('dismiss user' + response.data)))
-    setDismissedPosted(true)
+  const dismissSelectedAccessRequests = async () => {
+    setDismissedEmails([])
+    setFailedDismissalEmails([])
+
+    const {successful: successfulDismissals, failedEmails} = await actionResults(selectedRowDetails.map(selectedRowDetail => ({
+      email: selectedRowDetail.email,
+      task: (async () => {
+        try {
+          await axios.post(ApiClient.updateUserRequestEndpoint + "/" + "Dismissed", selectedRowDetail)
+          return selectedRowDetail.email
+        } catch (error) {
+          console.error(`Failed to dismiss access request for ${selectedRowDetail.email}`, error)
+          return null
+        }
+      })(),
+    })))
+
+    setDismissedEmails(successfulDismissals)
+    setFailedDismissalEmails(failedEmails)
+    setDismissedPosted(successfulDismissals.length + failedEmails.length > 0)
   }
 
   const showDismissedRequest = () => {
@@ -161,7 +196,8 @@ export default function AccessRequests() {
                             setReceivedUserDetails={setReceivedUserDetails}
                             openModel={openModal}
                             setOpenModel={setOpenModal}
-                            emails={selectedRowDetails.map(srd => srd.email)}/> : viewSelectAccessRequest()
+                            emails={dismissedEmails}
+                            failedEmails={failedDismissalEmails}/> : viewSelectAccessRequest()
   }
 
   const showApprovedOrAccessRequest = () => {
@@ -173,7 +209,8 @@ export default function AccessRequests() {
                             setReceivedUserDetails={setReceivedUserDetails}
                             openModel={openModal}
                             setOpenModel={setOpenModal}
-                            emails={users.map(ud => ud.email)}/> : showDismissedRequest()
+                            emails={users.map(ud => ud.email)}
+                            failedEmails={failedApprovalEmails}/> : showDismissedRequest()
   }
 
   const accessRequestOrApprovedList = () => {
